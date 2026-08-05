@@ -35,9 +35,9 @@ The curriculum is organized into 12 sequential stages:
 
 ### Available
 
-- **SQL and Database Fundamentals** — 18 chapters and 90 reserved lesson pages
+- **SQL and Database Fundamentals** — 18 chapters, 90 stable lesson paths, and 90 published lessons across Chapters 1–18
 
-`courses/sql-database-fundamentals/Chapter01/Lesson1.html` is the first fully implemented lesson and establishes the shared lesson structure and presentation standard for future Big Data Academy content. The remaining lesson paths are reserved so the course structure and permanent URLs remain stable while the content is expanded.
+All 18 chapters and all 90 lessons are fully published. The course progresses from database and SQL foundations through relational modeling, querying, schema design, normalization, transactions, indexing, reusable database logic, security, application access, migrations, and a complete requirements-to-operations capstone. Every permanent lesson path is now active.
 
 ### Planned
 

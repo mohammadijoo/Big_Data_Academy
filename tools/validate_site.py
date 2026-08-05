@@ -85,8 +85,29 @@ if isinstance(curriculum, dict):
     if len(lessons) != 90:
         ERRORS.append(f"curriculum.json: expected 90 lessons, found {len(lessons)}")
     published = [lesson for lesson in lessons if lesson.get("status") == "published"]
-    if len(published) != 1 or published[0].get("path") != "Chapter01/Lesson1.html":
-        ERRORS.append("curriculum.json: Chapter01/Lesson1.html must be the only published lesson")
+    expected_published = (
+        {f"Chapter01/Lesson{i}.html" for i in range(1, 6)}
+        | {f"Chapter02/Lesson{i}.html" for i in range(1, 6)}
+        | {f"Chapter03/Lesson{i}.html" for i in range(1, 6)}
+        | {f"Chapter04/Lesson{i}.html" for i in range(1, 6)}
+        | {f"Chapter05/Lesson{i}.html" for i in range(1, 6)}
+        | {f"Chapter06/Lesson{i}.html" for i in range(1, 6)}
+        | {f"Chapter07/Lesson{i}.html" for i in range(1, 6)}
+        | {f"Chapter08/Lesson{i}.html" for i in range(1, 6)}
+        | {f"Chapter09/Lesson{i}.html" for i in range(1, 6)}
+        | {f"Chapter10/Lesson{i}.html" for i in range(1, 6)}
+        | {f"Chapter11/Lesson{i}.html" for i in range(1, 6)}
+        | {f"Chapter12/Lesson{i}.html" for i in range(1, 6)}
+        | {f"Chapter13/Lesson{i}.html" for i in range(1, 6)}
+        | {f"Chapter14/Lesson{i}.html" for i in range(1, 6)}
+        | {f"Chapter15/Lesson{i}.html" for i in range(1, 6)}
+        | {f"Chapter16/Lesson{i}.html" for i in range(1, 6)}
+        | {f"Chapter17/Lesson{i}.html" for i in range(1, 6)}
+        | {f"Chapter18/Lesson{i}.html" for i in range(1, 6)}
+    )
+    published_paths = {lesson.get("path") for lesson in published}
+    if published_paths != expected_published:
+        ERRORS.append("curriculum.json: all ninety Chapter 1–18 lessons must be published")
     for lesson in lessons:
         lesson_path = curriculum_path.parent / lesson["path"]
         if not lesson_path.exists():
