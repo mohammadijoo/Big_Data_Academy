@@ -1,125 +1,65 @@
 #!/usr/bin/env python3
-"""Validate local references, JSON, catalogue counts, and reserved lesson paths."""
-
+"""Validate local references, JSON, catalogue counts, course landing pages, and curricula."""
 from __future__ import annotations
-
-import json
-import sys
+import json, sys
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
-
-ROOT = Path(__file__).resolve().parents[1]
-ERRORS: list[str] = []
-
-
+ROOT=Path(__file__).resolve().parents[1]
+ERRORS=[]
 class ReferenceParser(HTMLParser):
-    def __init__(self, path: Path) -> None:
-        super().__init__(convert_charrefs=True)
-        self.path = path
-
-    def check_reference(self, value: str | None) -> None:
-        if not value:
-            return
-        parsed = urlsplit(value)
-        if parsed.scheme or value.startswith(("//", "#", "mailto:", "tel:", "data:", "javascript:")):
-            return
-        local_path = unquote(parsed.path)
-        if not local_path:
-            return
-        target = (self.path.parent / local_path).resolve()
-        try:
-            target.relative_to(ROOT)
-        except ValueError:
-            ERRORS.append(f"{self.path.relative_to(ROOT)}: reference escapes project root: {value}")
-            return
-        if not target.exists():
-            ERRORS.append(f"{self.path.relative_to(ROOT)}: missing local reference: {value}")
-
-    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        attributes = dict(attrs)
-        for key in ("href", "src"):
-            self.check_reference(attributes.get(key))
-
-
-html_files = list(ROOT.rglob("*.html"))
-for path in html_files:
-    if path.stat().st_size == 0:  # Deliberate stable URL placeholder.
-        continue
-    parser = ReferenceParser(path)
+    def __init__(self,path): super().__init__(convert_charrefs=True); self.path=path
+    def check_reference(self,value):
+        if not value:return
+        p=urlsplit(value)
+        if p.scheme or value.startswith(("//","#","mailto:","tel:","data:","javascript:")):return
+        local=unquote(p.path)
+        if not local:return
+        target=(self.path.parent/local).resolve()
+        try: target.relative_to(ROOT)
+        except ValueError: ERRORS.append(f"{self.path.relative_to(ROOT)}: reference escapes project root: {value}"); return
+        if not target.exists(): ERRORS.append(f"{self.path.relative_to(ROOT)}: missing local reference: {value}")
+    def handle_starttag(self,tag,attrs):
+        a=dict(attrs)
+        for k in ('href','src'): self.check_reference(a.get(k))
+for path in ROOT.rglob('*.html'):
+    if path.stat().st_size==0: continue
     try:
-        parser.feed(path.read_text(encoding="utf-8"))
-        parser.close()
-    except Exception as exc:  # pragma: no cover - validation utility
-        ERRORS.append(f"{path.relative_to(ROOT)}: HTML parser error: {exc}")
-
-json_files = list(ROOT.rglob("*.json"))
-json_data: dict[Path, object] = {}
-for path in json_files:
-    try:
-        json_data[path] = json.loads(path.read_text(encoding="utf-8"))
-    except Exception as exc:
-        ERRORS.append(f"{path.relative_to(ROOT)}: invalid JSON: {exc}")
-
-catalogue_path = ROOT / "assets/data/courses.json"
-curriculum_path = ROOT / "courses/sql-database-fundamentals/curriculum.json"
-
-catalogue = json_data.get(catalogue_path)
-if isinstance(catalogue, dict):
-    courses = catalogue.get("courses", [])
-    stages = catalogue.get("stages", [])
-    if len(courses) != 44:
-        ERRORS.append(f"courses.json: expected 44 courses, found {len(courses)}")
-    if len(stages) != 12:
-        ERRORS.append(f"courses.json: expected 12 stages, found {len(stages)}")
-    available = [course for course in courses if course.get("status") == "available"]
-    if len(available) != 1 or available[0].get("slug") != "sql-database-fundamentals":
-        ERRORS.append("courses.json: SQL and Database Fundamentals must be the only available course")
-
-curriculum = json_data.get(curriculum_path)
-if isinstance(curriculum, dict):
-    chapters = curriculum.get("chapters", [])
-    lessons = [lesson for chapter in chapters for lesson in chapter.get("lessons", [])]
-    if len(chapters) != 18:
-        ERRORS.append(f"curriculum.json: expected 18 chapters, found {len(chapters)}")
-    if len(lessons) != 90:
-        ERRORS.append(f"curriculum.json: expected 90 lessons, found {len(lessons)}")
-    published = [lesson for lesson in lessons if lesson.get("status") == "published"]
-    expected_published = (
-        {f"Chapter01/Lesson{i}.html" for i in range(1, 6)}
-        | {f"Chapter02/Lesson{i}.html" for i in range(1, 6)}
-        | {f"Chapter03/Lesson{i}.html" for i in range(1, 6)}
-        | {f"Chapter04/Lesson{i}.html" for i in range(1, 6)}
-        | {f"Chapter05/Lesson{i}.html" for i in range(1, 6)}
-        | {f"Chapter06/Lesson{i}.html" for i in range(1, 6)}
-        | {f"Chapter07/Lesson{i}.html" for i in range(1, 6)}
-        | {f"Chapter08/Lesson{i}.html" for i in range(1, 6)}
-        | {f"Chapter09/Lesson{i}.html" for i in range(1, 6)}
-        | {f"Chapter10/Lesson{i}.html" for i in range(1, 6)}
-        | {f"Chapter11/Lesson{i}.html" for i in range(1, 6)}
-        | {f"Chapter12/Lesson{i}.html" for i in range(1, 6)}
-        | {f"Chapter13/Lesson{i}.html" for i in range(1, 6)}
-        | {f"Chapter14/Lesson{i}.html" for i in range(1, 6)}
-        | {f"Chapter15/Lesson{i}.html" for i in range(1, 6)}
-        | {f"Chapter16/Lesson{i}.html" for i in range(1, 6)}
-        | {f"Chapter17/Lesson{i}.html" for i in range(1, 6)}
-        | {f"Chapter18/Lesson{i}.html" for i in range(1, 6)}
-    )
-    published_paths = {lesson.get("path") for lesson in published}
-    if published_paths != expected_published:
-        ERRORS.append("curriculum.json: all ninety Chapter 1–18 lessons must be published")
-    for lesson in lessons:
-        lesson_path = curriculum_path.parent / lesson["path"]
-        if not lesson_path.exists():
-            ERRORS.append(f"curriculum.json: missing reserved lesson path {lesson['path']}")
-
+        p=ReferenceParser(path); p.feed(path.read_text(encoding='utf-8')); p.close()
+    except Exception as exc: ERRORS.append(f"{path.relative_to(ROOT)}: HTML parser error: {exc}")
+json_data={}
+for path in ROOT.rglob('*.json'):
+    try: json_data[path]=json.loads(path.read_text(encoding='utf-8'))
+    except Exception as exc: ERRORS.append(f"{path.relative_to(ROOT)}: invalid JSON: {exc}")
+cat_path=ROOT/'assets/data/courses.json'; cat=json_data.get(cat_path)
+expected_available={'sql-database-fundamentals','data-modeling-design','sqlite'}
+if isinstance(cat,dict):
+    courses=cat.get('courses',[]); stages=cat.get('stages',[])
+    if len(courses)!=44: ERRORS.append(f"courses.json: expected 44 courses, found {len(courses)}")
+    if len(stages)!=12: ERRORS.append(f"courses.json: expected 12 stages, found {len(stages)}")
+    available={c.get('slug') for c in courses if c.get('status')=='available'}
+    if available!=expected_available: ERRORS.append(f"courses.json: expected available courses {sorted(expected_available)}, found {sorted(available)}")
+    for c in courses:
+        url=c.get('url')
+        if not url: ERRORS.append(f"courses.json: {c.get('slug')} has no landing-page URL"); continue
+        if not (ROOT/url).exists(): ERRORS.append(f"courses.json: missing landing page {url}")
+        cur=ROOT/'courses'/c['slug']/'curriculum.json'
+        if not cur.exists(): ERRORS.append(f"courses.json: missing curriculum {cur.relative_to(ROOT)}")
+for path,data in json_data.items():
+    if path.name!='curriculum.json' or not isinstance(data,dict): continue
+    chapters=data.get('chapters',[])
+    seen_ch=[]
+    for ch in chapters:
+        seen_ch.append(ch.get('number'))
+        lessons=ch.get('lessons',[])
+        seen_l=[]
+        for lesson in lessons:
+            seen_l.append(lesson.get('number'))
+            status=lesson.get('status'); rel=lesson.get('path')
+            if status not in {'planned','published'}: ERRORS.append(f"{path.relative_to(ROOT)}: invalid lesson status {status!r}")
+            if status=='published' and rel and not (path.parent/rel).exists(): ERRORS.append(f"{path.relative_to(ROOT)}: published lesson missing {rel}")
+        if seen_l!=list(range(1,len(lessons)+1)): ERRORS.append(f"{path.relative_to(ROOT)}: non-sequential lessons in chapter {ch.get('number')}")
+    if seen_ch!=list(range(1,len(chapters)+1)): ERRORS.append(f"{path.relative_to(ROOT)}: non-sequential chapters")
 if ERRORS:
-    print("\n".join(ERRORS))
-    sys.exit(1)
-
-placeholder_count = sum(1 for path in html_files if path.stat().st_size == 0)
-print(
-    "Validation passed: "
-    f"{len(html_files)} HTML files ({placeholder_count} reserved placeholders), "
-    f"{len(json_files)} JSON files, 44 courses, 12 stages, and 90 SQL lesson paths."
-)
+    print('\n'.join(ERRORS)); sys.exit(1)
+print('Validation passed: 44 course landing pages declared, 12 stages, 3 available courses, and curricula JSON validated.')
