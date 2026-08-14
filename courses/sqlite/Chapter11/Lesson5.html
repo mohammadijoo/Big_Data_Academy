@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Build the pager/page-cache mental model behind SQLite I/O, observe cache_size, mmap_size, and temp_store safely, recognize temporary B-trees, and connect SQL through VDBE, B-trees, pager, VFS, and the database file." name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>Cache, Memory Mapping, Temporary Storage, and the Pager Layer | SQLite | Big Data Academy</title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+<script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+        chtml: { scale: 1, matchFontHeight: false },
+      };
+    </script>
+<script defer="" id="MathJax-script" onerror="this.onerror=null;this.src='https://unpkg.com/mathjax@3.2.2/es5/tex-chtml.js';" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
+<span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
+<span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
+</a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a>
+<a class="is-active" href="../../../index.html#courses">Courses</a>
+<a href="../../../index.html#method">Method</a>
+<a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg></button>
+<button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu=""><a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a></nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">SQLITE</span><div><small>Course 03</small><strong>SQLite</strong></div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">×</button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 100 lessons..." type="search"/></label>
+<nav aria-label="SQLite curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter">
+<summary><span>01</span>SQLite Foundations: Embedded Databases, Files, and the First Lab</summary><div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What SQLite Is—and What Makes an Embedded Database Different</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Install SQLite and Verify the Toolchain on Windows, Linux, and macOS</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>Create, Open, Inspect, Close, and Reopen Your First Database File</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>A First Mental Model of Connections, Statements, Transactions, and Persistence</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build the Course Lab Database and Adopt Safe Working Habits</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>02</span>Mastering the sqlite3 Command-Line Shell</summary><div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>SQL Statements Versus Dot-Commands, Help, and Shell State</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Readable Output: .mode, .headers, .width, .nullvalue, and Current CLI Formatting</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>Run SQL Scripts with .read, Redirection, Batch Mode, and Exit Status</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Parameters, Safe Values, and the CLI .parameter Facility</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Import, Export, .once/.output, CSV, and Reproducible Data Exchange</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>03</span>SQLite Schema Objects, ROWID, Keys, and Table Design</summary><div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>CREATE TABLE in SQLite: Schema, sqlite_schema, and Introspection</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>ROWID Tables and INTEGER PRIMARY KEY from First Principles</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>WITHOUT ROWID Tables and Composite Primary Keys</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>Temporary Tables, In-Memory Databases, and the temp Schema</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>Design a SQLite Schema from Existing Requirements</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>04</span>SQLite’s Type System, Affinity, STRICT Tables, and Value Representation</summary><div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>Storage Classes and Dynamic Typing: The Type Belongs to the Value</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>Declared Types and Type Affinity Rules</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>STRICT Tables: Rigid Type Enforcement Where You Want It</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Dates, Times, Booleans, Money, UUIDs, and Other Logical Types</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>NULL, BLOBs, Text Encoding, Collations, and Cross-Language Boundaries</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>05</span>Constraints, Foreign Keys, Conflict Handling, and Integrity</summary><div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>NOT NULL, UNIQUE, PRIMARY KEY, CHECK, and DEFAULT</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Foreign Keys and PRAGMA foreign_keys</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>ON DELETE/UPDATE Actions, Deferred Constraints, and Transaction Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>ON CONFLICT Algorithms and Constraint-Failure Semantics</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Generated Columns, Integrity Checks, and Enforcing Cross-Column Rules</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>06</span>SQLite Data Modification: INSERT, UPDATE, DELETE, UPSERT, and RETURNING</summary><div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>INSERT Forms, Defaults, Multi-Row Inserts, and Generated Keys</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>UPDATE Correctly: Predicates, Expressions, and Avoiding Accidental Wide Changes</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>DELETE, Cascades, Soft Delete, and Data Lifecycle</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>UPSERT with ON CONFLICT DO NOTHING / DO UPDATE</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>RETURNING, changes(), total_changes(), and Observable Writes</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>07</span>SQLite Expressions, Functions, CTEs, Window Functions, and Dialect Features</summary><div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>SQLite Operators, Comparison Rules, LIKE/GLOB, and Expression Semantics</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Built-In Scalar, Aggregate, and Core Utility Functions</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Date and Time Functions in SQLite</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>WITH CTEs and Recursive Queries</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Window Functions and Analytic Queries in SQLite</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>08</span>Transactions, Atomicity, Journaling, and Savepoints</summary><div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>Autocommit, Implicit Transactions, and Explicit BEGIN/COMMIT/ROLLBACK</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>DEFERRED, IMMEDIATE, and EXCLUSIVE Transactions</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Rollback Journals and Atomic Commit from the Pager’s Point of View</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>SAVEPOINT, ROLLBACK TO, RELEASE, and Nested Units of Work</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Transaction Design, Idempotency, and Failure Injection</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>09</span>Concurrency, Locking, WAL Mode, Busy Handling, and Checkpoints</summary><div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>Readers, Writers, Locks, and Why SQLite Has One Writer at a Time</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>SQLITE_BUSY, busy_timeout, Retries, and Short Transactions</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Write-Ahead Logging: How WAL Changes Read/Write Concurrency</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>WAL Checkpoints, Autocheckpointing, Long Readers, and WAL Growth</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Concurrency Reliability, WAL-Reset History, and Production Patterns</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>10</span>Indexes and the SQLite Query Planner</summary><div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>How SQLite B-Tree Indexes Work and Why Indexes Trade Reads for Writes</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Composite Indexes, Leftmost Prefixes, Sorting, and Covering Indexes</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Partial Indexes and Indexes on Expressions</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>EXPLAIN QUERY PLAN, EXPLAIN, SCAN/SEARCH, and Planner Diagnostics</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>ANALYZE, sqlite_stat Tables, PRAGMA optimize, and Planner Statistics</a>
+</div></details>
+<details class="sidebar-chapter" open="">
+<summary><span>11</span>Database Files, Pages, B-Trees, Freelist, and Storage Internals</summary><div>
+<a class="sidebar-lesson" href="Lesson1.html"><span>01</span>The SQLite Database File: Header, Page Size, Schema Cookie, and File Format</a>
+<a class="sidebar-lesson" href="Lesson2.html"><span>02</span>Table B-Trees, Index B-Trees, Interior/Leaf Pages, and Cells</a>
+<a class="sidebar-lesson" href="Lesson3.html"><span>03</span>Payload, Overflow Pages, Large Rows, and BLOB/Text Storage</a>
+<a class="sidebar-lesson" href="Lesson4.html"><span>04</span>Freelist, Deleted Space, auto_vacuum, VACUUM, and File Shrinkage</a>
+<a class="sidebar-lesson is-current" href="Lesson5.html"><span>05</span>Cache, Memory Mapping, Temporary Storage, and the Pager Layer<i>Current</i></a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>12</span>Views, Triggers, ATTACH, Multiple Databases, and Schema-Level Automation</summary><div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>Views and Readable Query Interfaces</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Triggers: BEFORE, AFTER, INSTEAD OF, OLD/NEW, and Side Effects</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>ATTACH DATABASE, DETACH, and Cross-Database Queries</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>URI Filenames, Read-Only/Immutable Opens, Shared Cache Caveats, and Connection Options</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Application IDs, user_version, schema_version, and Database-as-File-Format Design</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>13</span>JSON and Semi-Structured Data in SQLite</summary><div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>When JSON Belongs in SQLite—and When Columns/Tables Are Better</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>JSON Paths, json_extract, -&gt; / -&gt;&gt;, and Value Construction</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>json_each, json_tree, and Querying JSON Arrays/Objects Relationally</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>JSONB, Internal Representation, and Performance Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Indexing JSON Paths, Generated Columns, Validation, and Hybrid Designs</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>14</span>Full-Text Search, R-Tree, Virtual Tables, and Extensions</summary><div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Virtual Tables and the Extension Architecture</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>FTS5 Fundamentals: Full-Text Tables, MATCH, and Tokenization</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>FTS5 Ranking, Highlighting, External Content, and Maintenance</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>R-Tree and Geospatial/Multidimensional Range Search</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Loadable Extensions, Built-In Extensions, and Supply-Chain Safety</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>15</span>Embedding SQLite in Applications</summary><div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Application Integration Architecture: Drivers, Connections, Prepared Statements, and Binding</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Python sqlite3: A Beginner-to-Production Workflow</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>Node.js and JavaScript: Built-In/Driver Options and Async Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>.NET and Java: ADO.NET/Provider and JDBC Patterns</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>The SQLite C API Mental Model and What Higher-Level Drivers Wrap</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>16</span>Backup, Export, Recovery, Integrity, and Disaster Preparedness</summary><div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Why Copying a Live Database File Can Be Unsafe</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>.backup, Online Backup API, and VACUUM INTO</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>.dump, SQL Logical Exports, and Migration/Interchange Uses</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>integrity_check, quick_check, foreign_key_check, and Corruption Diagnosis</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>.recover, Recovery Limitations, Restore Drills, and a Backup Policy</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>17</span>Schema Evolution, Migrations, Testing, and Release Compatibility</summary><div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>ALTER TABLE Capabilities and SQLite’s Schema-Rewrite Model</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Versioned Migrations with PRAGMA user_version</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Safe Table-Rebuild Migrations and Foreign-Key Handling</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Database Tests: Schema, Constraints, Queries, Transactions, and Concurrency</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Compatibility Testing Across SQLite Versions and Build Options</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>18</span>Performance Engineering, PRAGMAs, Maintenance, and Benchmarking</summary><div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Measure First: Timers, Query Plans, Dataset Shape, and Repeatable Benchmarks</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Transaction Batching and Write Throughput</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>synchronous, journal_mode, cache_size, temp_store, mmap_size, and Other PRAGMAs</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>VACUUM, ANALYZE, PRAGMA optimize, auto_vacuum, and Routine Maintenance</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Performance Anti-Patterns and When SQLite Has Reached the Wrong Workload</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>19</span>Security, Deployment, Reliability Boundaries, and When Not to Use SQLite</summary><div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>SQL Injection, Prepared Statements, and Trust Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>File Permissions, Process Identity, Secrets, and Encryption Reality</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Defensive Configuration, trusted_schema, Extension Loading, and Untrusted Databases</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>Deployment on Local Disks, Containers, Network Filesystems, Mobile, and Edge</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>When SQLite Is the Right Database—and When to Move to PostgreSQL/MySQL/DuckDB/etc.</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>20</span>Production Capstone: Build and Operate a Complete SQLite Application Database</summary><div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Capstone Requirements, Workload, Data Model, and SQLite Fit Review</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Implement the Schema, Constraints, Indexes, Views, and Migrations</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Implement Application Access, Transactions, JSON/Search Features, and Concurrency Handling</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Test, Benchmark, Back Up, Restore, and Secure the Database</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Operate, Troubleshoot, Document, and Defend the Final Architecture</a>
+</div></details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar"><button data-sidebar-open="" type="button"><span>Course navigation</span><span>Chapter 11 · Lesson 05</span></button></div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs"><a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">SQLite</a><span>/</span><span>Chapter 11 · Lesson 05</span></nav>
+<header class="lesson-header">
+<p class="eyebrow">Chapter 11 · Database Files, Pages, B-Trees, Freelist, and Storage Internals</p>
+<h1>Cache, Memory Mapping, Temporary Storage, and the Pager Layer</h1>
+<p>Build the pager/page-cache mental model behind SQLite I/O, observe cache_size, mmap_size, and temp_store safely, recognize temporary B-trees, and connect SQL through VDBE, B-trees, pager, VFS, and the database file.</p>
+<div class="lesson-meta"><span>Beginner</span><span>110–130 minutes</span><span>Pager / cache observation lab</span><span>SQLite 3.53.4 baseline</span><span>No cargo-cult tuning</span><span>Last reviewed: August 2026</span></div>
+</header>
+<nav aria-label="On this page" class="lesson-toc"><strong>On this page</strong><ol data-generated-toc=""></ol></nav>
+<div class="lesson-content">
+<section><h2>Learning outcomes</h2><p>If a query returns 10,000 rows, SQLite does not necessarily issue 10,000 operating-system reads. SQL executes above a <strong>pager</strong> and <strong>page cache</strong>. Pages that are already cached can serve many row operations, and the operating system may cache filesystem pages again below SQLite. Temporary sort/index structures can also live in memory or spill depending on build/runtime decisions.</p><div class="objectives"><div class="objective"><span>01</span><p>Explain the pager/page-cache layer and why SQL-row counts do not map one-to-one to disk operations.</p></div><div class="objective"><span>02</span><p>Distinguish SQLite’s page cache from an application cache and the OS filesystem cache.</p></div><div class="objective"><span>03</span><p>Observe cache_size, mmap_size, temp_store, page_size, and compile options without prescribing universal values.</p></div><div class="objective"><span>04</span><p>Explain memory-mapped I/O as an optional access path bounded by runtime/compile-time limits.</p></div><div class="objective"><span>05</span><p>Recognize temporary B-trees used for ORDER BY/GROUP BY/DISTINCT and understand that temp_store controls only certain temporary structures.</p></div><div class="objective"><span>06</span><p>Connect SQL → VDBE → B-trees/pager → VFS → operating-system files in one recap diagram.</p></div></div></section>
+<section><h2>The pager: SQLite’s page-oriented storage coordinator</h2><p>SQLite’s architecture separates SQL execution from file-system details. The parser/code generator produces bytecode for the <strong>VDBE</strong> (Virtual DataBase Engine). VDBE instructions operate B-tree cursors. The B-tree layer requests pages through the <strong>pager</strong>, which loads database pages into memory, participates in transaction control, and works with rollback journals/WAL. Below that, the <strong>VFS</strong> (Virtual File System) abstracts OS-specific open/read/write/lock/sync operations.</p><pre class="diagram">SQL text + bound values
+        |
+        v
+parser / planner / code generator
+        |
+        v
+VDBE bytecode execution
+        |
+        v
+B-tree cursors / records / indexes
+        |
+        v
+Pager + SQLite page cache
+        |
+        v
+VFS (OS abstraction: files, locks, sync, mmap...)
+        |
+        v
+OS filesystem cache / storage device
+        |
+        v
+main .db  (+ journal or WAL/SHM when applicable)</pre><p>This is a mental model, not a promise that every internal call follows a simple one-direction pipeline. It is enough to explain why page caching, locks, temporary structures, and VFS behavior affect execution beneath SQL.</p></section>
+<section><h2>Three different caches people often confuse</h2><table class="data-table"><thead><tr><th>Layer</th><th>What it caches</th><th>Who controls it</th></tr></thead><tbody><tr><td>Application cache</td><td>Domain objects, query results, API responses, derived data.</td><td>Your application/framework; invalidation semantics are your responsibility.</td></tr><tr><td>SQLite page cache</td><td>Recently used database pages for each open database.</td><td>SQLite/default or application-defined page-cache implementation; <code>cache_size</code> is a suggestion to that cache.</td></tr><tr><td>OS filesystem/page cache</td><td>File blocks/pages recently read or written by processes.</td><td>Operating system/kernel; SQLite does not treat it as an application result cache.</td></tr></tbody></table><p>A cache hit in one layer does not imply a hit in another. Likewise, changing <code>PRAGMA cache_size</code> does not configure your web application cache or the kernel’s cache.</p></section>
+<section><h2>Observe cache_size—do not copy a magic number</h2><p><code>PRAGMA cache_size</code> queries or changes the suggested maximum pages kept in SQLite’s page cache for one database. A positive value means pages; a negative value expresses an approximate KiB budget that SQLite converts to pages based on page size. The setting is connection/session scoped.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · safe observations</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">PRAGMA page_size;</span><span class="code-line">PRAGMA cache_size;</span><span class="code-line">PRAGMA mmap_size;</span><span class="code-line">PRAGMA temp_store;</span><span class="code-line">PRAGMA compile_options;</span></code></pre></div><p>The built-in default cache implementation honors the suggestion, but SQLite permits application-defined caches to interpret or ignore it. The default is often <code>-2000</code> (about 2 MiB), but compile-time options can change that. Record the current value; performance tuning belongs in Chapter 18 with measured workloads.</p></section>
+<section><h2>Memory-mapped I/O is another access mechanism, not “load DB into RAM”</h2><p><code>PRAGMA mmap_size</code> controls the maximum number of database-file bytes SQLite may access using memory-mapped I/O on that connection/database. A value of zero disables mmap access. The effective maximum is capped by compile/start-time limits, and changing the setting can be a no-op while mapped memory is actively used by running statements.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · observe, then restore—no tuning prescription</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">PRAGMA mmap_size;</span><span class="code-line">-- Do not set a copied value merely because another machine used it.</span><span class="code-line">-- If you experiment later, record baseline + workload + platform first.</span></code></pre></div><p>Memory mapping still goes through virtual memory and the operating system. It does not mean the entire database is resident in physical RAM or that all queries become faster.</p></section>
+<section><h2>Temporary b-trees: sorting also needs storage structures</h2><p>Chapter 10’s EQP output sometimes showed <code>USE TEMP B-TREE FOR ORDER BY</code>. When SQLite cannot obtain the required order from an existing access path, it can build a transient B-tree to sort rows. Similar transient structures may support GROUP BY, DISTINCT, compound queries, materialized subqueries, and other operations.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · force a disposable sort observation</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">DROP TABLE IF EXISTS temp_sort_probe;</span><span class="code-line">CREATE TABLE temp_sort_probe(</span><span class="code-line">  id INTEGER PRIMARY KEY,</span><span class="code-line">  category TEXT NOT NULL,</span><span class="code-line">  score INTEGER NOT NULL,</span><span class="code-line">  note TEXT NOT NULL</span><span class="code-line">);</span><span class="code-line"></span><span class="code-line">WITH RECURSIVE seq(x) AS (</span><span class="code-line">  VALUES(1) UNION ALL SELECT x+1 FROM seq WHERE x&lt;10000</span><span class="code-line">)</span><span class="code-line">INSERT INTO temp_sort_probe(category,score,note)</span><span class="code-line">SELECT printf('C%02d',x%25), x%997, printf('note-%d',x)</span><span class="code-line">FROM seq;</span><span class="code-line"></span><span class="code-line">EXPLAIN QUERY PLAN</span><span class="code-line">SELECT category, score, note</span><span class="code-line">FROM temp_sort_probe</span><span class="code-line">ORDER BY score, category;</span><span class="code-line">-- Expect a SCAN plus a USE TEMP B-TREE FOR ORDER BY-style detail</span><span class="code-line">-- when no suitable ordering index exists.</span></code></pre></div></section>
+<section><h2>temp_store controls some temporary structures—not transaction journals</h2><p><code>PRAGMA temp_store</code> selects DEFAULT, FILE, or MEMORY behavior for temporary tables and indices, subject to the build’s <code>SQLITE_TEMP_STORE</code> compile-time choice. This is not a blanket “keep all SQLite temporary activity in RAM” switch. Transaction-control files such as rollback journals and WAL have their own durability requirements and are not governed by this PRAGMA in the same way.</p><table class="data-table"><thead><tr><th>Value</th><th>Meaning at SQL level</th><th>Caveat</th></tr></thead><tbody><tr><td>0 / DEFAULT</td><td>Follow the build default.</td><td>Compile-time SQLITE_TEMP_STORE decides default behavior.</td></tr><tr><td>1 / FILE</td><td>Use file storage for affected temporary tables/indices.</td><td>Small structures may still initially live in page cache before spilling.</td></tr><tr><td>2 / MEMORY</td><td>Keep affected temporary tables/indices as in-memory database structures.</td><td>Memory pressure rises; not a guarantee about WAL/journal files.</td></tr></tbody></table><div class="callout"><strong>Do not use deprecated temp_store_directory</strong><p>The current PRAGMA documentation marks <code>temp_store_directory</code> deprecated. New applications should not build deployment assumptions around it.</p></div></section>
+<section><h2>Temporary storage may never hit disk for small work</h2><p>Even when temporary structures are file-backed in principle, SQLite uses a page cache for them. If the structure stays small enough, pages can remain in memory and no actual temporary file needs to be opened. If the structure outgrows its cache budget, it may spill. This is another reason SQL-row counts do not translate directly into disk-I/O counts.</p></section>
+<section><h2>The VFS boundary: where SQLite meets the operating system</h2><p>The <strong>VFS</strong> is SQLite’s abstraction for OS services: opening/closing files, reading/writing, obtaining file locks, syncing, randomness/time, shared memory and memory mapping as supported. Standard SQLite ships VFS implementations for major platforms, and specialized environments can register alternative VFSes.</p><p>Application developers normally do not write a VFS. But knowing it exists helps explain platform differences, network-filesystem cautions from Chapter 9, URI <code>vfs=...</code> connection options in Chapter 12, and why a storage bug can live below SQL semantics.</p></section>
+<section><h2>Observation lab: relate a temp sort to cache controls</h2><p>This lab does <strong>not</strong> try to benchmark FILE versus MEMORY temp storage. It records the current state, proves a temporary sort structure is needed, and shows which settings/build facts would have to be documented before any tuning experiment.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · storage observation checklist</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT sqlite_version();</span><span class="code-line">PRAGMA page_size;</span><span class="code-line">PRAGMA cache_size;</span><span class="code-line">PRAGMA mmap_size;</span><span class="code-line">PRAGMA temp_store;</span><span class="code-line"></span><span class="code-line">SELECT compile_options</span><span class="code-line">FROM pragma_compile_options</span><span class="code-line">WHERE compile_options LIKE 'TEMP_STORE%'</span><span class="code-line">   OR compile_options LIKE '%MMAP%'</span><span class="code-line">   OR compile_options LIKE '%CACHE%'</span><span class="code-line">ORDER BY compile_options;</span><span class="code-line"></span><span class="code-line">EXPLAIN QUERY PLAN</span><span class="code-line">SELECT category, score, note</span><span class="code-line">FROM temp_sort_probe</span><span class="code-line">ORDER BY score, category;</span></code></pre></div></section>
+<section><h2>Failure cases and safer reasoning</h2><table class="data-table"><thead><tr><th>Cargo-cult rule</th><th>Why it is unreliable</th><th>Better workflow</th></tr></thead><tbody><tr><td>“Set cache_size to one huge value.”</td><td>Memory pressure, workload, page size, driver and concurrent connections differ.</td><td>Observe defaults, measure cache/I/O behavior under representative workload later.</td></tr><tr><td>“mmap_size should equal database size.”</td><td>Effective mmap is capped and platform/address-space behavior varies.</td><td>Treat mmap as a measured platform-specific option.</td></tr><tr><td>“temp_store=MEMORY makes SQLite fully in-memory.”</td><td>Main DB/journals remain separate; only certain temp structures are affected.</td><td>Understand which files/structures the PRAGMA controls.</td></tr><tr><td>“One SELECT row means one disk read.”</td><td>Many rows can share cached pages; one row can span overflow pages.</td><td>Reason at page/access-path level and measure.</td></tr><tr><td>“OS cache and SQLite cache are duplicates, so one should be disabled.”</td><td>They operate at different layers and policies.</td><td>Do not disable safety/performance mechanisms without evidence.</td></tr></tbody></table></section>
+<section><h2>Chapter 11 recap diagram</h2><pre class="diagram">query / write
+    |
+    +--&gt; VDBE instructions
+            |
+            +--&gt; table B-tree (rowid key) / index B-tree (ordered index record)
+                    |
+                    +--&gt; leaf/interior cells
+                    |       +--&gt; local payload
+                    |       +--&gt; overflow page chain for large payload
+                    |
+                    +--&gt; pager + SQLite page cache
+                            |
+                            +--&gt; freelist / page allocation
+                            +--&gt; rollback journal or WAL transaction support
+                            |
+                            +--&gt; VFS
+                                  |
+                                  +--&gt; OS filesystem cache / disk
+
+Database file = fixed-size pages
+  page 1: 100-byte database header + B-tree content
+  other pages: B-tree / overflow / freelist / pointer-map / special pages</pre></section>
+<section><h2>Final verification and chapter checkpoint</h2><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · leave the lab clean and documented</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">PRAGMA integrity_check;</span><span class="code-line">PRAGMA foreign_key_check;</span><span class="code-line">PRAGMA page_size;</span><span class="code-line">PRAGMA page_count;</span><span class="code-line">PRAGMA freelist_count;</span><span class="code-line">PRAGMA cache_size;</span><span class="code-line">PRAGMA mmap_size;</span><span class="code-line">PRAGMA temp_store;</span><span class="code-line"></span><span class="code-line">DROP TABLE IF EXISTS temp_sort_probe;</span></code></pre></div><div class="checkpoint"><h3>Storage-internals checkpoint</h3><p>Explain the layers without tuning by folklore.</p><ol><li>Why can 10,000 returned rows require far fewer than 10,000 physical disk reads?</li><li>How is SQLite page cache different from an application result cache?</li><li>What does cache_size configure?</li><li>What does mmap_size actually limit?</li><li>What is a temporary B-tree and how can EQP reveal one?</li><li>Why does temp_store=MEMORY not mean transaction journals/WAL are memory-only?</li><li>What responsibility does the VFS provide?</li></ol><details class="answer-toggle"><summary>Review the answers</summary><p>Many rows share database pages and pages may already exist in SQLite/OS caches. The page cache stores database pages, whereas application caches store domain/results. cache_size is a suggested SQLite page-cache maximum. mmap_size is a per-database/connection upper bound on bytes eligible for memory-mapped access, subject to hard limits. Temporary B-trees support sorts/grouping/etc. and EQP can report them. temp_store governs certain temporary tables/indices, not all durability files. The VFS adapts SQLite file/locking/sync/mmap operations to the operating system.</p></details></div></section>
+<section><h2>Production judgment and Chapter 12 bridge</h2><p>Storage internals should improve diagnosis, not invite arbitrary tuning. You now have enough page-level understanding to interpret file growth, overflow, free space, VACUUM, cache settings, and temporary sorting behavior. Chapter 12 climbs back to schema-level application features: views, triggers, attached databases, URI connection options, and database-as-file-format metadata.</p><h3>Authoritative references</h3><ul><li><a href="https://sqlite.org/arch.html" rel="noopener" target="_blank">SQLite — Architecture</a>.</li><li><a href="https://sqlite.org/vfs.html" rel="noopener" target="_blank">SQLite — VFS</a>.</li><li><a href="https://sqlite.org/tempfiles.html" rel="noopener" target="_blank">SQLite — Temporary Files Used By SQLite</a>.</li><li><a href="https://sqlite.org/pragma.html#pragma_cache_size" rel="noopener" target="_blank">SQLite — PRAGMA cache_size, mmap_size, temp_store</a>.</li></ul></section>
+</div>
+<nav aria-label="Lesson navigation" class="lesson-nav"><a href="Lesson4.html"><small>Previous lesson</small><strong>Freelist, Deleted Space, auto_vacuum, VACUUM, and File Shrinkage</strong></a><a class="next" href="../Chapter12/Lesson1.html"><small>Next lesson</small><strong>Views and Readable Query Interfaces</strong></a></nav>
+</article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>If these tutorials save you time, a small donation supports new lessons, technical review, diagrams, examples, and long-term maintenance.</p>
+<div aria-label="Author links" class="social-row">
+<a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head"><span>ETH</span><small>Ethereum / ERC-20 only</small></div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
+<button class="button secondary compact" data-copy-donation="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>
+          Copy address
+        </button>
+<p>Send only assets compatible with the Ethereum/ERC-20 network. Do not send TRC-20/TRON assets.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div><strong>Big Data Academy</strong><p>A free, prerequisite-aware path from SQL foundations to distributed data systems.</p></div>
+<div><a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a></div>
+<small>Created and maintained by <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> · © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>

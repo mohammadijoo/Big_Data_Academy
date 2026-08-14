@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Make writes observable with RETURNING and row-change counters while respecting SQLite-specific ordering, trigger, scope, and driver semantics." name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>RETURNING, changes(), total_changes(), and Observable Writes | SQLite | Big Data Academy</title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+<script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+        chtml: { scale: 1, matchFontHeight: false },
+      };
+    </script>
+<script defer="" id="MathJax-script" onerror="this.onerror=null;this.src='https://unpkg.com/mathjax@3.2.2/es5/tex-chtml.js';" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
+<span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
+<span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
+</a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a>
+<a class="is-active" href="../../../index.html#courses">Courses</a>
+<a href="../../../index.html#method">Method</a>
+<a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg></button>
+<button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu=""><a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a></nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">SQLITE</span><div><small>Course 03</small><strong>SQLite</strong></div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">×</button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 100 lessons..." type="search"/></label>
+<nav aria-label="SQLite curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter">
+<summary><span>01</span>SQLite Foundations: Embedded Databases, Files, and the First Lab</summary><div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What SQLite Is—and What Makes an Embedded Database Different</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Install SQLite and Verify the Toolchain on Windows, Linux, and macOS</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>Create, Open, Inspect, Close, and Reopen Your First Database File</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>A First Mental Model of Connections, Statements, Transactions, and Persistence</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build the Course Lab Database and Adopt Safe Working Habits</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>02</span>Mastering the sqlite3 Command-Line Shell</summary><div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>SQL Statements Versus Dot-Commands, Help, and Shell State</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Readable Output: .mode, .headers, .width, .nullvalue, and Current CLI Formatting</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>Run SQL Scripts with .read, Redirection, Batch Mode, and Exit Status</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Parameters, Safe Values, and the CLI .parameter Facility</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Import, Export, .once/.output, CSV, and Reproducible Data Exchange</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>03</span>SQLite Schema Objects, ROWID, Keys, and Table Design</summary><div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>CREATE TABLE in SQLite: Schema, sqlite_schema, and Introspection</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>ROWID Tables and INTEGER PRIMARY KEY from First Principles</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>WITHOUT ROWID Tables and Composite Primary Keys</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>Temporary Tables, In-Memory Databases, and the temp Schema</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>Design a SQLite Schema from Existing Requirements</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>04</span>SQLite’s Type System, Affinity, STRICT Tables, and Value Representation</summary><div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>Storage Classes and Dynamic Typing: The Type Belongs to the Value</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>Declared Types and Type Affinity Rules</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>STRICT Tables: Rigid Type Enforcement Where You Want It</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Dates, Times, Booleans, Money, UUIDs, and Other Logical Types</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>NULL, BLOBs, Text Encoding, Collations, and Cross-Language Boundaries</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>05</span>Constraints, Foreign Keys, Conflict Handling, and Integrity</summary><div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>NOT NULL, UNIQUE, PRIMARY KEY, CHECK, and DEFAULT</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Foreign Keys and PRAGMA foreign_keys</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>ON DELETE/UPDATE Actions, Deferred Constraints, and Transaction Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>ON CONFLICT Algorithms and Constraint-Failure Semantics</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Generated Columns, Integrity Checks, and Enforcing Cross-Column Rules</a>
+</div></details>
+<details class="sidebar-chapter" open="">
+<summary><span>06</span>SQLite Data Modification: INSERT, UPDATE, DELETE, UPSERT, and RETURNING</summary><div>
+<a class="sidebar-lesson" href="Lesson1.html"><span>01</span>INSERT Forms, Defaults, Multi-Row Inserts, and Generated Keys</a>
+<a class="sidebar-lesson" href="Lesson2.html"><span>02</span>UPDATE Correctly: Predicates, Expressions, and Avoiding Accidental Wide Changes</a>
+<a class="sidebar-lesson" href="Lesson3.html"><span>03</span>DELETE, Cascades, Soft Delete, and Data Lifecycle</a>
+<a class="sidebar-lesson" href="Lesson4.html"><span>04</span>UPSERT with ON CONFLICT DO NOTHING / DO UPDATE</a>
+<a class="sidebar-lesson is-current" href="Lesson5.html"><span>05</span>RETURNING, changes(), total_changes(), and Observable Writes<i>Current</i></a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>07</span>SQLite Expressions, Functions, CTEs, Window Functions, and Dialect Features</summary><div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>SQLite Operators, Comparison Rules, LIKE/GLOB, and Expression Semantics</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Built-In Scalar, Aggregate, and Core Utility Functions</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Date and Time Functions in SQLite</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>WITH CTEs and Recursive Queries</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Window Functions and Analytic Queries in SQLite</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>08</span>Transactions, Atomicity, Journaling, and Savepoints</summary><div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>Autocommit, Implicit Transactions, and Explicit BEGIN/COMMIT/ROLLBACK</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>DEFERRED, IMMEDIATE, and EXCLUSIVE Transactions</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Rollback Journals and Atomic Commit from the Pager’s Point of View</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>SAVEPOINT, ROLLBACK TO, RELEASE, and Nested Units of Work</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Transaction Design, Idempotency, and Failure Injection</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>09</span>Concurrency, Locking, WAL Mode, Busy Handling, and Checkpoints</summary><div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>Readers, Writers, Locks, and Why SQLite Has One Writer at a Time</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>SQLITE_BUSY, busy_timeout, Retries, and Short Transactions</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Write-Ahead Logging: How WAL Changes Read/Write Concurrency</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>WAL Checkpoints, Autocheckpointing, Long Readers, and WAL Growth</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Concurrency Reliability, WAL-Reset History, and Production Patterns</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>10</span>Indexes and the SQLite Query Planner</summary><div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>How SQLite B-Tree Indexes Work and Why Indexes Trade Reads for Writes</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Composite Indexes, Leftmost Prefixes, Sorting, and Covering Indexes</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Partial Indexes and Indexes on Expressions</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>EXPLAIN QUERY PLAN, EXPLAIN, SCAN/SEARCH, and Planner Diagnostics</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>ANALYZE, sqlite_stat Tables, PRAGMA optimize, and Planner Statistics</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>11</span>Database Files, Pages, B-Trees, Freelist, and Storage Internals</summary><div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>The SQLite Database File: Header, Page Size, Schema Cookie, and File Format</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Table B-Trees, Index B-Trees, Interior/Leaf Pages, and Cells</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Payload, Overflow Pages, Large Rows, and BLOB/Text Storage</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>Freelist, Deleted Space, auto_vacuum, VACUUM, and File Shrinkage</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Cache, Memory Mapping, Temporary Storage, and the Pager Layer</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>12</span>Views, Triggers, ATTACH, Multiple Databases, and Schema-Level Automation</summary><div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>Views and Readable Query Interfaces</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Triggers: BEFORE, AFTER, INSTEAD OF, OLD/NEW, and Side Effects</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>ATTACH DATABASE, DETACH, and Cross-Database Queries</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>URI Filenames, Read-Only/Immutable Opens, Shared Cache Caveats, and Connection Options</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Application IDs, user_version, schema_version, and Database-as-File-Format Design</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>13</span>JSON and Semi-Structured Data in SQLite</summary><div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>When JSON Belongs in SQLite—and When Columns/Tables Are Better</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>JSON Paths, json_extract, -&gt; / -&gt;&gt;, and Value Construction</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>json_each, json_tree, and Querying JSON Arrays/Objects Relationally</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>JSONB, Internal Representation, and Performance Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Indexing JSON Paths, Generated Columns, Validation, and Hybrid Designs</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>14</span>Full-Text Search, R-Tree, Virtual Tables, and Extensions</summary><div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Virtual Tables and the Extension Architecture</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>FTS5 Fundamentals: Full-Text Tables, MATCH, and Tokenization</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>FTS5 Ranking, Highlighting, External Content, and Maintenance</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>R-Tree and Geospatial/Multidimensional Range Search</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Loadable Extensions, Built-In Extensions, and Supply-Chain Safety</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>15</span>Embedding SQLite in Applications</summary><div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Application Integration Architecture: Drivers, Connections, Prepared Statements, and Binding</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Python sqlite3: A Beginner-to-Production Workflow</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>Node.js and JavaScript: Built-In/Driver Options and Async Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>.NET and Java: ADO.NET/Provider and JDBC Patterns</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>The SQLite C API Mental Model and What Higher-Level Drivers Wrap</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>16</span>Backup, Export, Recovery, Integrity, and Disaster Preparedness</summary><div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Why Copying a Live Database File Can Be Unsafe</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>.backup, Online Backup API, and VACUUM INTO</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>.dump, SQL Logical Exports, and Migration/Interchange Uses</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>integrity_check, quick_check, foreign_key_check, and Corruption Diagnosis</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>.recover, Recovery Limitations, Restore Drills, and a Backup Policy</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>17</span>Schema Evolution, Migrations, Testing, and Release Compatibility</summary><div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>ALTER TABLE Capabilities and SQLite’s Schema-Rewrite Model</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Versioned Migrations with PRAGMA user_version</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Safe Table-Rebuild Migrations and Foreign-Key Handling</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Database Tests: Schema, Constraints, Queries, Transactions, and Concurrency</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Compatibility Testing Across SQLite Versions and Build Options</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>18</span>Performance Engineering, PRAGMAs, Maintenance, and Benchmarking</summary><div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Measure First: Timers, Query Plans, Dataset Shape, and Repeatable Benchmarks</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Transaction Batching and Write Throughput</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>synchronous, journal_mode, cache_size, temp_store, mmap_size, and Other PRAGMAs</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>VACUUM, ANALYZE, PRAGMA optimize, auto_vacuum, and Routine Maintenance</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Performance Anti-Patterns and When SQLite Has Reached the Wrong Workload</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>19</span>Security, Deployment, Reliability Boundaries, and When Not to Use SQLite</summary><div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>SQL Injection, Prepared Statements, and Trust Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>File Permissions, Process Identity, Secrets, and Encryption Reality</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Defensive Configuration, trusted_schema, Extension Loading, and Untrusted Databases</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>Deployment on Local Disks, Containers, Network Filesystems, Mobile, and Edge</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>When SQLite Is the Right Database—and When to Move to PostgreSQL/MySQL/DuckDB/etc.</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>20</span>Production Capstone: Build and Operate a Complete SQLite Application Database</summary><div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Capstone Requirements, Workload, Data Model, and SQLite Fit Review</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Implement the Schema, Constraints, Indexes, Views, and Migrations</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Implement Application Access, Transactions, JSON/Search Features, and Concurrency Handling</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Test, Benchmark, Back Up, Restore, and Secure the Database</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Operate, Troubleshoot, Document, and Defend the Final Architecture</a>
+</div></details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar"><button data-sidebar-open="" type="button"><span>Course navigation</span><span>Chapter 06 · Lesson 05</span></button></div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs"><a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">SQLite</a><span>/</span><span>Chapter 06 · Lesson 05</span></nav>
+<header class="lesson-header">
+<p class="eyebrow">Chapter 06 · SQLite Data Modification: INSERT, UPDATE, DELETE, UPSERT, and RETURNING</p>
+<h1>RETURNING, changes(), total_changes(), and Observable Writes</h1>
+<p>Make writes observable with RETURNING and row-change counters while respecting SQLite-specific ordering, trigger, scope, and driver semantics.</p>
+<div class="lesson-meta"><span>Beginner</span><span>95–115 minutes</span><span>Application-command workflow</span><span>SQLite 3.53.4 baseline</span><span>UPDATE FROM: SQLite 3.33.0+</span><span>UPSERT: SQLite 3.24.0+; generalized 3.35.0+</span><span>RETURNING: SQLite 3.35.0+</span><span>Last reviewed: August 2026</span></div>
+</header>
+<nav aria-label="On this page" class="lesson-toc"><strong>On this page</strong><ol data-generated-toc=""></ol></nav>
+<div class="lesson-content"><section><h2>Learning outcomes</h2><p>Applications need evidence about writes: Which ID did SQLite choose? What values were stored after defaults and affinity? Did an optimistic update match exactly one row? SQLite provides several tools, but they answer different questions.</p><div class="objectives"><div class="objective"><span>01</span><p>Use RETURNING with top-level INSERT, UPDATE, and DELETE.</p></div><div class="objective"><span>02</span><p>Explain SQLite RETURNING ordering, trigger timing, virtual-table, and composability limitations.</p></div><div class="objective"><span>03</span><p>Distinguish changes() from total_changes() and understand their connection scope.</p></div><div class="objective"><span>04</span><p>Treat driver rowcount/generated-key APIs as adapter contracts, not portable SQL guarantees.</p></div><div class="objective"><span>05</span><p>Use returned rows as structured command confirmation without a second SELECT.</p></div><div class="objective"><span>06</span><p>Build an application-like write workflow that validates both returned state and expected scope.</p></div></div></section><section><h2>RETURNING turns a write into a result-producing command</h2><p>SQLite supports RETURNING since 3.35.0. It can appear on top-level INSERT, UPDATE, and DELETE statements and returns one result row for each row directly changed by that statement.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · generated values returned in one round trip</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">DROP TABLE IF EXISTS command_note;</span><span class="code-line">CREATE TABLE command_note(</span><span class="code-line">  note_id INTEGER PRIMARY KEY,</span><span class="code-line">  device_code TEXT NOT NULL,</span><span class="code-line">  status TEXT NOT NULL DEFAULT 'open',</span><span class="code-line">  version INTEGER NOT NULL DEFAULT 1,</span><span class="code-line">  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP</span><span class="code-line">);</span><span class="code-line"></span><span class="code-line">INSERT INTO command_note(device_code)</span><span class="code-line">VALUES ('PUMP-007')</span><span class="code-line">RETURNING note_id, device_code, status, version, created_at;</span></code></pre></div><p>The caller receives the actual ID and defaults SQLite stored. This often expresses intent more directly than INSERT followed by a separate SELECT.</p></section><section><h2>UPDATE and DELETE can return the affected rows</h2><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · write confirmation rows</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">UPDATE command_note</span><span class="code-line">SET status='closed', version=version+1</span><span class="code-line">WHERE note_id=1 AND version=1</span><span class="code-line">RETURNING note_id, status, version;</span><span class="code-line"></span><span class="code-line">DELETE FROM command_note</span><span class="code-line">WHERE note_id=1</span><span class="code-line">RETURNING note_id, device_code, status;</span></code></pre></div><p>For UPDATE, column references in RETURNING reflect the post-update values. For DELETE, they reflect the row before deletion. If the optimistic UPDATE predicate matches zero rows, it returns zero rows—an application-visible concurrency signal.</p></section><section><h2>SQLite RETURNING is not “PostgreSQL behavior everywhere”</h2><p>The syntax was inspired by PostgreSQL, but current SQLite has important limits. Do not infer capabilities from another database product.</p><table class="data-table"><thead><tr><th>SQLite RETURNING rule</th><th>Practical consequence</th></tr></thead><tbody><tr><td>Top-level DML only</td><td>Cannot use RETURNING inside trigger-body statements.</td></tr><tr><td>Not usable as a subquery/CTE data source</td><td>You cannot pipe DML RETURNING rows directly into another SQLite query as if it were a table.</td></tr><tr><td>Returned row order is arbitrary</td><td>Do not attach meaning to emission order; there is no RETURNING ORDER BY guarantee.</td></tr><tr><td>Only directly modified rows are returned</td><td>Foreign-key cascades and trigger side effects are not emitted as extra RETURNING rows.</td></tr><tr><td>AFTER-trigger changes are not reflected</td><td>Returned values are those seen by the top-level statement before later AFTER-trigger modifications.</td></tr><tr><td>UPDATE/DELETE RETURNING unavailable on virtual tables</td><td>Do not assume virtual-table DML supports it.</td></tr></tbody></table><p>Self-referential subqueries inside RETURNING can also be indeterminate because SQLite does not guarantee the relative ordering of internal row changes and those subquery evaluations.</p></section><section><h2>changes(): scope of the most recent direct write</h2><p>The SQL function <code>changes()</code> reports the number of rows inserted, updated, or deleted by the most recently completed DML statement on the current connection. It excludes auxiliary changes from triggers, foreign-key actions, and REPLACE conflict resolution.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · changes counts direct DML rows</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">DROP TABLE IF EXISTS count_demo;</span><span class="code-line">CREATE TABLE count_demo(id INTEGER PRIMARY KEY, value TEXT);</span><span class="code-line">INSERT INTO count_demo(value) VALUES ('a'),('b'),('c');</span><span class="code-line">SELECT changes() AS last_statement_rows; -- 3</span><span class="code-line"></span><span class="code-line">UPDATE count_demo SET value=upper(value) WHERE id IN (1,2);</span><span class="code-line">SELECT changes() AS direct_updated;       -- 2</span><span class="code-line"></span><span class="code-line">-- An UPDATE can count a matched row even when the assigned value is equal.</span><span class="code-line">UPDATE count_demo SET value=value WHERE id=1;</span><span class="code-line">SELECT changes() AS matched_update;       -- 1</span></code></pre></div><p>That last result is a reason not to interpret “1 row changed” as “the business value definitely became different.” It tells you the UPDATE affected one row according to SQLite's DML accounting.</p></section><section><h2>total_changes(): connection-lifetime cumulative activity</h2><p><code>total_changes()</code> accumulates INSERT, UPDATE, and DELETE changes performed by the current connection since it was opened. Unlike <code>changes()</code>, the total includes rows changed by foreign-key actions and triggers, though REPLACE deletions have special exclusions.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · cumulative per-connection counter</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT total_changes() AS connection_total_before;</span><span class="code-line">INSERT INTO count_demo(value) VALUES ('d');</span><span class="code-line">UPDATE count_demo SET value='B2' WHERE id=2;</span><span class="code-line">DELETE FROM count_demo WHERE id=3;</span><span class="code-line">SELECT total_changes() AS connection_total_after;</span></code></pre></div><p>Because the starting value depends on what that connection has already done, <code>total_changes()</code> is not a database-global activity counter. Other connections' writes are excluded.</p></section><section><h2>Driver rowcount and generated-key APIs are adapter semantics</h2><p>Language drivers expose conveniences such as cursor rowcount or last inserted ID, but exact behavior can differ by API, statement type, batching method, and when the property is read. Treat the driver's documentation as part of your application contract.</p><table class="data-table"><thead><tr><th>Need</th><th>SQLite-level option</th><th>Application guidance</th></tr></thead><tbody><tr><td>Generated INTEGER PRIMARY KEY</td><td><code>RETURNING id</code> or <code>last_insert_rowid()</code></td><td>Prefer RETURNING when you also need defaults/other stored values; otherwise use the same-connection driver API.</td></tr><tr><td>Expected target count</td><td><code>changes()</code></td><td>Compare with expected cardinality before commit for high-risk commands.</td></tr><tr><td>Cumulative connection activity</td><td><code>total_changes()</code></td><td>Useful diagnostics; not a database-global metric.</td></tr><tr><td>Driver cursor rowcount</td><td>Driver-specific</td><td>Verify adapter docs/tests; do not assume identical semantics across Python, Node, Java, .NET, etc.</td></tr></tbody></table></section><section><h2>Application-like command workflow</h2><p>The strongest pattern combines identity, concurrency, and returned state in one statement. Here a caller closes a note only if it still has the version previously read.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · observable optimistic command</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">DROP TABLE IF EXISTS app_note;</span><span class="code-line">CREATE TABLE app_note(</span><span class="code-line">  note_id INTEGER PRIMARY KEY,</span><span class="code-line">  device_code TEXT NOT NULL,</span><span class="code-line">  status TEXT NOT NULL CHECK(status IN ('open','closed')),</span><span class="code-line">  version INTEGER NOT NULL DEFAULT 1,</span><span class="code-line">  closed_at TEXT</span><span class="code-line">);</span><span class="code-line">INSERT INTO app_note(device_code,status) VALUES ('PUMP-007','open');</span><span class="code-line"></span><span class="code-line">BEGIN;</span><span class="code-line">UPDATE app_note</span><span class="code-line">SET status='closed',</span><span class="code-line">    closed_at='2026-08-12T07:15:00Z',</span><span class="code-line">    version=version+1</span><span class="code-line">WHERE note_id=1</span><span class="code-line">  AND version=1</span><span class="code-line">  AND status='open'</span><span class="code-line">RETURNING note_id, status, version, closed_at;</span><span class="code-line">-- Application expects exactly one returned row.</span><span class="code-line">COMMIT;</span></code></pre></div><p>If zero rows return, do not “fix” that by broadening the WHERE clause. Re-read the row: it may already be closed, deleted, or at another version. If more rows could ever return for a command intended to affect one entity, the predicate/key design is wrong.</p></section><section><h2>RETURNING plus UPSERT</h2><p>RETURNING also reports both inserted and updated rows from an UPSERT, making synchronization APIs easier to observe.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · one result shape for insert or update</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">DROP TABLE IF EXISTS api_device;</span><span class="code-line">CREATE TABLE api_device(</span><span class="code-line">  device_id INTEGER PRIMARY KEY,</span><span class="code-line">  external_key TEXT UNIQUE NOT NULL,</span><span class="code-line">  label TEXT NOT NULL,</span><span class="code-line">  version INTEGER NOT NULL</span><span class="code-line">);</span><span class="code-line"></span><span class="code-line">INSERT INTO api_device(external_key,label,version)</span><span class="code-line">VALUES ('asset-100','Pump',1)</span><span class="code-line">ON CONFLICT(external_key) DO UPDATE SET</span><span class="code-line">  label=excluded.label,</span><span class="code-line">  version=excluded.version</span><span class="code-line">RETURNING device_id, external_key, label, version;</span></code></pre></div><p>The result confirms final top-level row values, but it does not tell you solely from the row whether the branch was INSERT or UPDATE unless your schema/workflow returns additional evidence that distinguishes the path.</p></section><section><h2>Failure cases and production judgment</h2><table class="data-table"><thead><tr><th>Mistake</th><th>Why misleading</th><th>Safer interpretation</th></tr></thead><tbody><tr><td>Assuming RETURNING order</td><td>SQLite does not guarantee output order.</td><td>Treat rows as an unordered result unless the application sorts them after receipt.</td></tr><tr><td>Assuming RETURNING includes cascade rows</td><td>It reports direct top-level changes only.</td><td>Audit related tables separately when lifecycle scope matters.</td></tr><tr><td>Using changes() as business validation</td><td>Counts scope, not domain correctness.</td><td>Keep constraints and invariants; compare count only as one piece of evidence.</td></tr><tr><td>Using total_changes() as database activity</td><td>It is connection-local.</td><td>Use observability appropriate to the whole system if you need global activity.</td></tr><tr><td>Reading last inserted ID on another connection</td><td>Identity state is connection-local.</td><td>Use the same connection or RETURNING.</td></tr><tr><td>Expecting AFTER-trigger values in RETURNING</td><td>Returned values precede later AFTER-trigger modifications.</td><td>Avoid hidden mutation when callers require exact final state, or perform an explicit follow-up read when justified.</td></tr></tbody></table></section><section><h2>Chapter 6 final lab</h2><p>Exercise the complete write lifecycle: insert with generated identity, optimistic update, idempotent UPSERT, and delete with returned evidence.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · observable write lifecycle</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">DROP TABLE IF EXISTS command_device;</span><span class="code-line">CREATE TABLE command_device(</span><span class="code-line">  device_id INTEGER PRIMARY KEY,</span><span class="code-line">  external_key TEXT UNIQUE NOT NULL,</span><span class="code-line">  label TEXT NOT NULL,</span><span class="code-line">  version INTEGER NOT NULL DEFAULT 1</span><span class="code-line">);</span><span class="code-line"></span><span class="code-line">INSERT INTO command_device(external_key,label)</span><span class="code-line">VALUES ('asset-901','Pump 901')</span><span class="code-line">RETURNING device_id, external_key, label, version;</span><span class="code-line"></span><span class="code-line">UPDATE command_device</span><span class="code-line">SET label='Pump 901A', version=version+1</span><span class="code-line">WHERE external_key='asset-901' AND version=1</span><span class="code-line">RETURNING device_id, label, version;</span><span class="code-line"></span><span class="code-line">INSERT INTO command_device(external_key,label,version)</span><span class="code-line">VALUES ('asset-901','Pump 901A',2)</span><span class="code-line">ON CONFLICT(external_key) DO UPDATE SET</span><span class="code-line"> label=excluded.label, version=excluded.version</span><span class="code-line">WHERE excluded.version&gt;command_device.version</span><span class="code-line">RETURNING device_id, external_key, label, version;</span><span class="code-line">-- This third command returns zero rows because equal version makes DO UPDATE a no-op.</span><span class="code-line"></span><span class="code-line">DELETE FROM command_device</span><span class="code-line">WHERE external_key='asset-901'</span><span class="code-line">RETURNING device_id, external_key, label, version;</span><span class="code-line"></span><span class="code-line">SELECT count(*) AS final_rows FROM command_device; -- 0</span></code></pre></div><p>Notice the third statement: an UPSERT can encounter a uniqueness conflict yet return no row if its conditional DO UPDATE becomes a no-op. “No returned row” is meaningful application evidence, not automatically an error.</p><div class="checkpoint"><h3>Chapter 6 checkpoint</h3><p>Connect syntax to observable state.</p><ol><li>Why can RETURNING simplify generated-key handling?</li><li>Does RETURNING guarantee row order?</li><li>Does changes() include foreign-key cascades?</li><li>What does total_changes() measure?</li><li>Can a zero-row optimistic UPDATE be safely retried by removing its version predicate?</li></ol><details class="answer-toggle"><summary>Review the answers</summary><p>RETURNING can give the generated ID and stored defaults in the same write command. Returned order is arbitrary. changes() excludes FK cascades and trigger side effects. total_changes() is cumulative activity for one connection. Removing the version predicate would defeat optimistic concurrency; re-read state and decide how to handle the conflict.</p></details></div></section><section><h2>Summary and bridge to Chapter 7</h2><p>Chapter 6 made writes predictable: INSERT delegates identity/defaults to SQLite, UPDATE verifies scope and concurrency, DELETE models lifecycle and cascade reach, UPSERT reconciles logical entities by uniqueness, and RETURNING/change counters make direct outcomes visible. Chapter 7 now deepens the expression language used inside all of those statements—operators, functions, CTEs, recursive queries, and window functions.</p><h3>Authoritative references</h3><ul><li><a href="https://sqlite.org/lang_returning.html" rel="noopener" target="_blank">SQLite — RETURNING</a>.</li><li><a href="https://sqlite.org/c3ref/changes.html" rel="noopener" target="_blank">SQLite — changes()</a>.</li><li><a href="https://sqlite.org/c3ref/total_changes.html" rel="noopener" target="_blank">SQLite — total_changes()</a>.</li><li><a href="https://sqlite.org/c3ref/last_insert_rowid.html" rel="noopener" target="_blank">SQLite — last_insert_rowid()</a>.</li><li><a href="https://sqlite.org/lang_upsert.html" rel="noopener" target="_blank">SQLite — UPSERT</a>.</li></ul></section></div>
+<nav aria-label="Lesson navigation" class="lesson-nav"><a href="Lesson4.html"><small>Previous lesson</small><strong>UPSERT with ON CONFLICT DO NOTHING / DO UPDATE</strong></a><a class="next" href="../Chapter07/Lesson1.html"><small>Next lesson</small><strong>SQLite Operators, Comparison Rules, LIKE/GLOB, and Expression Semantics</strong></a></nav>
+</article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>If these tutorials save you time, a small donation supports new lessons, technical review, diagrams, examples, and long-term maintenance.</p>
+<div aria-label="Author links" class="social-row">
+<a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head"><span>ETH</span><small>Ethereum / ERC-20 only</small></div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
+<button class="button secondary compact" data-copy-donation="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>
+          Copy address
+        </button>
+<p>Send only assets compatible with the Ethereum/ERC-20 network. Do not send TRC-20/TRON assets.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div><strong>Big Data Academy</strong><p>A free, prerequisite-aware path from SQL foundations to distributed data systems.</p></div>
+<div><a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a></div>
+<small>Created and maintained by <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> · © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>

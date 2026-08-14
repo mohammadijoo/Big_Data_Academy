@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Explain why DELETE normally creates reusable free pages instead of shrinking the file, compare auto_vacuum modes, and safely measure VACUUM, incremental_vacuum, and VACUUM INTO on disposable databases." name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>Freelist, Deleted Space, auto_vacuum, VACUUM, and File Shrinkage | SQLite | Big Data Academy</title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+<script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+        chtml: { scale: 1, matchFontHeight: false },
+      };
+    </script>
+<script defer="" id="MathJax-script" onerror="this.onerror=null;this.src='https://unpkg.com/mathjax@3.2.2/es5/tex-chtml.js';" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
+<span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
+<span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
+</a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a>
+<a class="is-active" href="../../../index.html#courses">Courses</a>
+<a href="../../../index.html#method">Method</a>
+<a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg></button>
+<button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu=""><a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a></nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">SQLITE</span><div><small>Course 03</small><strong>SQLite</strong></div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">×</button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 100 lessons..." type="search"/></label>
+<nav aria-label="SQLite curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter">
+<summary><span>01</span>SQLite Foundations: Embedded Databases, Files, and the First Lab</summary><div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What SQLite Is—and What Makes an Embedded Database Different</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Install SQLite and Verify the Toolchain on Windows, Linux, and macOS</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>Create, Open, Inspect, Close, and Reopen Your First Database File</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>A First Mental Model of Connections, Statements, Transactions, and Persistence</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build the Course Lab Database and Adopt Safe Working Habits</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>02</span>Mastering the sqlite3 Command-Line Shell</summary><div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>SQL Statements Versus Dot-Commands, Help, and Shell State</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Readable Output: .mode, .headers, .width, .nullvalue, and Current CLI Formatting</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>Run SQL Scripts with .read, Redirection, Batch Mode, and Exit Status</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Parameters, Safe Values, and the CLI .parameter Facility</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Import, Export, .once/.output, CSV, and Reproducible Data Exchange</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>03</span>SQLite Schema Objects, ROWID, Keys, and Table Design</summary><div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>CREATE TABLE in SQLite: Schema, sqlite_schema, and Introspection</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>ROWID Tables and INTEGER PRIMARY KEY from First Principles</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>WITHOUT ROWID Tables and Composite Primary Keys</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>Temporary Tables, In-Memory Databases, and the temp Schema</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>Design a SQLite Schema from Existing Requirements</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>04</span>SQLite’s Type System, Affinity, STRICT Tables, and Value Representation</summary><div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>Storage Classes and Dynamic Typing: The Type Belongs to the Value</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>Declared Types and Type Affinity Rules</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>STRICT Tables: Rigid Type Enforcement Where You Want It</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Dates, Times, Booleans, Money, UUIDs, and Other Logical Types</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>NULL, BLOBs, Text Encoding, Collations, and Cross-Language Boundaries</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>05</span>Constraints, Foreign Keys, Conflict Handling, and Integrity</summary><div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>NOT NULL, UNIQUE, PRIMARY KEY, CHECK, and DEFAULT</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Foreign Keys and PRAGMA foreign_keys</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>ON DELETE/UPDATE Actions, Deferred Constraints, and Transaction Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>ON CONFLICT Algorithms and Constraint-Failure Semantics</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Generated Columns, Integrity Checks, and Enforcing Cross-Column Rules</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>06</span>SQLite Data Modification: INSERT, UPDATE, DELETE, UPSERT, and RETURNING</summary><div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>INSERT Forms, Defaults, Multi-Row Inserts, and Generated Keys</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>UPDATE Correctly: Predicates, Expressions, and Avoiding Accidental Wide Changes</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>DELETE, Cascades, Soft Delete, and Data Lifecycle</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>UPSERT with ON CONFLICT DO NOTHING / DO UPDATE</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>RETURNING, changes(), total_changes(), and Observable Writes</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>07</span>SQLite Expressions, Functions, CTEs, Window Functions, and Dialect Features</summary><div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>SQLite Operators, Comparison Rules, LIKE/GLOB, and Expression Semantics</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Built-In Scalar, Aggregate, and Core Utility Functions</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Date and Time Functions in SQLite</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>WITH CTEs and Recursive Queries</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Window Functions and Analytic Queries in SQLite</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>08</span>Transactions, Atomicity, Journaling, and Savepoints</summary><div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>Autocommit, Implicit Transactions, and Explicit BEGIN/COMMIT/ROLLBACK</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>DEFERRED, IMMEDIATE, and EXCLUSIVE Transactions</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Rollback Journals and Atomic Commit from the Pager’s Point of View</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>SAVEPOINT, ROLLBACK TO, RELEASE, and Nested Units of Work</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Transaction Design, Idempotency, and Failure Injection</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>09</span>Concurrency, Locking, WAL Mode, Busy Handling, and Checkpoints</summary><div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>Readers, Writers, Locks, and Why SQLite Has One Writer at a Time</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>SQLITE_BUSY, busy_timeout, Retries, and Short Transactions</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Write-Ahead Logging: How WAL Changes Read/Write Concurrency</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>WAL Checkpoints, Autocheckpointing, Long Readers, and WAL Growth</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Concurrency Reliability, WAL-Reset History, and Production Patterns</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>10</span>Indexes and the SQLite Query Planner</summary><div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>How SQLite B-Tree Indexes Work and Why Indexes Trade Reads for Writes</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Composite Indexes, Leftmost Prefixes, Sorting, and Covering Indexes</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Partial Indexes and Indexes on Expressions</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>EXPLAIN QUERY PLAN, EXPLAIN, SCAN/SEARCH, and Planner Diagnostics</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>ANALYZE, sqlite_stat Tables, PRAGMA optimize, and Planner Statistics</a>
+</div></details>
+<details class="sidebar-chapter" open="">
+<summary><span>11</span>Database Files, Pages, B-Trees, Freelist, and Storage Internals</summary><div>
+<a class="sidebar-lesson" href="Lesson1.html"><span>01</span>The SQLite Database File: Header, Page Size, Schema Cookie, and File Format</a>
+<a class="sidebar-lesson" href="Lesson2.html"><span>02</span>Table B-Trees, Index B-Trees, Interior/Leaf Pages, and Cells</a>
+<a class="sidebar-lesson" href="Lesson3.html"><span>03</span>Payload, Overflow Pages, Large Rows, and BLOB/Text Storage</a>
+<a class="sidebar-lesson is-current" href="Lesson4.html"><span>04</span>Freelist, Deleted Space, auto_vacuum, VACUUM, and File Shrinkage<i>Current</i></a>
+<a class="sidebar-lesson" href="Lesson5.html"><span>05</span>Cache, Memory Mapping, Temporary Storage, and the Pager Layer</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>12</span>Views, Triggers, ATTACH, Multiple Databases, and Schema-Level Automation</summary><div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>Views and Readable Query Interfaces</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Triggers: BEFORE, AFTER, INSTEAD OF, OLD/NEW, and Side Effects</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>ATTACH DATABASE, DETACH, and Cross-Database Queries</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>URI Filenames, Read-Only/Immutable Opens, Shared Cache Caveats, and Connection Options</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Application IDs, user_version, schema_version, and Database-as-File-Format Design</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>13</span>JSON and Semi-Structured Data in SQLite</summary><div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>When JSON Belongs in SQLite—and When Columns/Tables Are Better</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>JSON Paths, json_extract, -&gt; / -&gt;&gt;, and Value Construction</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>json_each, json_tree, and Querying JSON Arrays/Objects Relationally</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>JSONB, Internal Representation, and Performance Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Indexing JSON Paths, Generated Columns, Validation, and Hybrid Designs</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>14</span>Full-Text Search, R-Tree, Virtual Tables, and Extensions</summary><div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Virtual Tables and the Extension Architecture</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>FTS5 Fundamentals: Full-Text Tables, MATCH, and Tokenization</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>FTS5 Ranking, Highlighting, External Content, and Maintenance</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>R-Tree and Geospatial/Multidimensional Range Search</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Loadable Extensions, Built-In Extensions, and Supply-Chain Safety</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>15</span>Embedding SQLite in Applications</summary><div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Application Integration Architecture: Drivers, Connections, Prepared Statements, and Binding</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Python sqlite3: A Beginner-to-Production Workflow</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>Node.js and JavaScript: Built-In/Driver Options and Async Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>.NET and Java: ADO.NET/Provider and JDBC Patterns</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>The SQLite C API Mental Model and What Higher-Level Drivers Wrap</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>16</span>Backup, Export, Recovery, Integrity, and Disaster Preparedness</summary><div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Why Copying a Live Database File Can Be Unsafe</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>.backup, Online Backup API, and VACUUM INTO</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>.dump, SQL Logical Exports, and Migration/Interchange Uses</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>integrity_check, quick_check, foreign_key_check, and Corruption Diagnosis</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>.recover, Recovery Limitations, Restore Drills, and a Backup Policy</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>17</span>Schema Evolution, Migrations, Testing, and Release Compatibility</summary><div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>ALTER TABLE Capabilities and SQLite’s Schema-Rewrite Model</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Versioned Migrations with PRAGMA user_version</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Safe Table-Rebuild Migrations and Foreign-Key Handling</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Database Tests: Schema, Constraints, Queries, Transactions, and Concurrency</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Compatibility Testing Across SQLite Versions and Build Options</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>18</span>Performance Engineering, PRAGMAs, Maintenance, and Benchmarking</summary><div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Measure First: Timers, Query Plans, Dataset Shape, and Repeatable Benchmarks</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Transaction Batching and Write Throughput</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>synchronous, journal_mode, cache_size, temp_store, mmap_size, and Other PRAGMAs</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>VACUUM, ANALYZE, PRAGMA optimize, auto_vacuum, and Routine Maintenance</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Performance Anti-Patterns and When SQLite Has Reached the Wrong Workload</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>19</span>Security, Deployment, Reliability Boundaries, and When Not to Use SQLite</summary><div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>SQL Injection, Prepared Statements, and Trust Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>File Permissions, Process Identity, Secrets, and Encryption Reality</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Defensive Configuration, trusted_schema, Extension Loading, and Untrusted Databases</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>Deployment on Local Disks, Containers, Network Filesystems, Mobile, and Edge</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>When SQLite Is the Right Database—and When to Move to PostgreSQL/MySQL/DuckDB/etc.</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>20</span>Production Capstone: Build and Operate a Complete SQLite Application Database</summary><div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Capstone Requirements, Workload, Data Model, and SQLite Fit Review</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Implement the Schema, Constraints, Indexes, Views, and Migrations</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Implement Application Access, Transactions, JSON/Search Features, and Concurrency Handling</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Test, Benchmark, Back Up, Restore, and Secure the Database</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Operate, Troubleshoot, Document, and Defend the Final Architecture</a>
+</div></details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar"><button data-sidebar-open="" type="button"><span>Course navigation</span><span>Chapter 11 · Lesson 04</span></button></div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs"><a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">SQLite</a><span>/</span><span>Chapter 11 · Lesson 04</span></nav>
+<header class="lesson-header">
+<p class="eyebrow">Chapter 11 · Database Files, Pages, B-Trees, Freelist, and Storage Internals</p>
+<h1>Freelist, Deleted Space, auto_vacuum, VACUUM, and File Shrinkage</h1>
+<p>Explain why DELETE normally creates reusable free pages instead of shrinking the file, compare auto_vacuum modes, and safely measure VACUUM, incremental_vacuum, and VACUUM INTO on disposable databases.</p>
+<div class="lesson-meta"><span>Beginner</span><span>120–140 minutes</span><span>Freelist + VACUUM lab</span><span>SQLite 3.53.4 baseline</span><span>Disposable databases only</span><span>Last reviewed: August 2026</span></div>
+</header>
+<nav aria-label="On this page" class="lesson-toc"><strong>On this page</strong><ol data-generated-toc=""></ol></nav>
+<div class="lesson-content">
+<section><h2>Learning outcomes</h2><p>Deleting 100,000 rows can leave a database file almost the same size. That is not evidence that DELETE failed. In the default auto-vacuum mode, SQLite keeps freed pages inside the file on a <strong>freelist</strong> so later inserts can reuse them without asking the filesystem to grow the file again. File shrinkage is a separate operation and has its own costs.</p><div class="objectives"><div class="objective"><span>01</span><p>Explain live pages versus freelist pages and why DELETE normally does not shrink the file under auto_vacuum=NONE.</p></div><div class="objective"><span>02</span><p>Observe freelist_count before and after large deletes.</p></div><div class="objective"><span>03</span><p>Compare NONE, FULL, and INCREMENTAL auto_vacuum behavior and the pointer-map requirement.</p></div><div class="objective"><span>04</span><p>Explain VACUUM as a database rebuild/compaction with disk-space, locking, and rowid implications.</p></div><div class="objective"><span>05</span><p>Distinguish VACUUM, PRAGMA incremental_vacuum, and VACUUM INTO.</p></div><div class="objective"><span>06</span><p>Run safe create/delete/measure/vacuum experiments only on disposable databases and avoid routine VACUUM folklore.</p></div></div></section>
+<section><h2>Freelist: free inside the file is not free outside the file</h2><p>When a page is no longer needed by a table/index, SQLite can place it on the database <strong>freelist</strong>. The page still occupies bytes in the file but is available for reuse by future allocations. This avoids unnecessary filesystem shrink/grow churn.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · observe free pages</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">PRAGMA auto_vacuum;</span><span class="code-line">PRAGMA page_size;</span><span class="code-line">PRAGMA page_count;</span><span class="code-line">PRAGMA freelist_count;</span><span class="code-line"></span><span class="code-line">-- After a large DELETE:</span><span class="code-line">PRAGMA page_count;</span><span class="code-line">PRAGMA freelist_count;</span></code></pre></div><p>With the common <code>auto_vacuum=NONE</code> setting, expect <code>freelist_count</code> to rise while <code>page_count</code> and file size may remain almost unchanged.</p></section>
+<section><h2>auto_vacuum modes</h2><table class="data-table"><thead><tr><th>Mode</th><th>What happens to free pages</th><th>Tradeoff / setup rule</th></tr></thead><tbody><tr><td><code>NONE</code> (0)</td><td>Freed pages stay on freelist for reuse; file does not automatically shrink.</td><td>Default unless compile-time overridden. Full VACUUM can reclaim external file space.</td></tr><tr><td><code>FULL</code> (1)</td><td>At each commit, freelist pages are moved toward file end and file is truncated.</td><td>Requires pointer-map metadata; can increase fragmentation and does not repack partially filled pages like VACUUM.</td></tr><tr><td><code>INCREMENTAL</code> (2)</td><td>Tracks pointer maps like FULL, but reclaim happens only when <code>incremental_vacuum</code> is invoked.</td><td>Lets the application choose when/how much freelist truncation to request.</td></tr></tbody></table><p>SQLite must know how pages refer to one another to move free pages safely for auto-vacuum, so enabling FULL/INCREMENTAL requires database-format support established before normal table population or by setting the mode and rebuilding with VACUUM. Switching between FULL and INCREMENTAL is easier because both already have the pointer-map infrastructure.</p></section>
+<section><h2>Disposable experiment A: NONE + VACUUM</h2><div class="code-window" data-code-block="" data-language="python"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>python · vacuum-none.py</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">from pathlib import Path</span><span class="code-line">import sqlite3</span><span class="code-line"></span><span class="code-line">p = Path("vacuum-none.db")</span><span class="code-line">p.unlink(missing_ok=True)</span><span class="code-line">con = sqlite3.connect(p)</span><span class="code-line">con.execute("PRAGMA auto_vacuum=NONE")</span><span class="code-line">con.execute("CREATE TABLE payload(id INTEGER PRIMARY KEY, body BLOB NOT NULL)")</span><span class="code-line">con.executemany("INSERT INTO payload(body) VALUES(?)", [(b"x"*4096,) for _ in range(6000)])</span><span class="code-line">con.commit()</span><span class="code-line"></span><span class="code-line">def snap(label):</span><span class="code-line">    pages = con.execute("PRAGMA page_count").fetchone()[0]</span><span class="code-line">    free = con.execute("PRAGMA freelist_count").fetchone()[0]</span><span class="code-line">    print(label, "pages=", pages, "free=", free, "bytes=", p.stat().st_size)</span><span class="code-line"></span><span class="code-line">snap("after insert")</span><span class="code-line">con.execute("DELETE FROM payload WHERE id &lt;= 5500")</span><span class="code-line">con.commit()</span><span class="code-line">snap("after delete")</span><span class="code-line"></span><span class="code-line">con.execute("VACUUM")</span><span class="code-line">snap("after VACUUM")</span><span class="code-line">con.close()</span></code></pre></div><p>Expect the delete to create many free pages without proportionally shrinking the file. VACUUM rebuilds a compact database and normally reduces both page_count and file length. Your exact counts are local.</p></section>
+<section><h2>What VACUUM actually means operationally</h2><p><code>VACUUM</code> rebuilds the database into a new compact image and replaces the original through SQLite’s transactional machinery. It can reclaim freelist space and reduce fragmentation/partially filled pages. It is therefore much heavier than “remove free pages.”</p><table class="data-table"><thead><tr><th>Operational consideration</th><th>Why it matters</th></tr></thead><tbody><tr><td>Free disk space</td><td>SQLite needs temporary space to build the compact copy; plan headroom.</td></tr><tr><td>Locks / active statements</td><td>VACUUM cannot run while its connection has an open transaction and requires exclusive write access to complete.</td></tr><tr><td>Time / I/O</td><td>Rewriting the database can be substantial for large files.</td></tr><tr><td>ROWIDs</td><td>VACUUM may change rowids for tables that do not declare an explicit INTEGER PRIMARY KEY. Application code must never treat hidden rowids as durable external IDs.</td></tr><tr><td>Page size / auto-vacuum format changes</td><td>VACUUM is also the mechanism used for some persistent file-format changes.</td></tr></tbody></table><div class="callout"><strong>No weekly-VACUUM rule</strong><p>Run VACUUM for a reason: reclaiming substantial unused disk space, changing supported file-format settings, or deliberately compacting a fragmented database after measurement. Rebuilding every database on a fixed schedule can add unnecessary I/O and downtime.</p></div></section>
+<section><h2>VACUUM INTO: compact copy instead of in-place rebuild</h2><p><code>VACUUM INTO 'file'</code> produces a compact database copy at a target filename rather than replacing the source. It can be useful for creating a cleaned snapshot/export. The destination must be handled as a new artifact; it is not a substitute for the online backup API’s concurrency semantics in every scenario.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · create a compact copy</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">-- Run from the source database connection.</span><span class="code-line">VACUUM INTO 'fieldnotes-compact-copy.db';</span><span class="code-line"></span><span class="code-line">-- Then open the output separately and verify:</span><span class="code-line">-- PRAGMA integrity_check;</span><span class="code-line">-- PRAGMA foreign_key_check;</span></code></pre></div><p>SQLite 3.53.x also has newer URI options for VACUUM INTO targets, but this chapter intentionally uses the simple portable form.</p></section>
+<section><h2>Disposable experiment B: INCREMENTAL auto-vacuum</h2><p>Incremental auto-vacuum must be enabled before the database is populated (or enabled through a VACUUM rebuild). This fresh-file lab sets it before table creation.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · incremental-vacuum.sql</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">-- On a NEW disposable database:</span><span class="code-line">PRAGMA auto_vacuum=INCREMENTAL;</span><span class="code-line">VACUUM;   -- establishes the format if needed before normal use</span><span class="code-line">PRAGMA auto_vacuum;</span><span class="code-line"></span><span class="code-line">CREATE TABLE payload(id INTEGER PRIMARY KEY, body BLOB NOT NULL);</span><span class="code-line">-- Populate with your local seeder, then delete most rows.</span><span class="code-line"></span><span class="code-line">PRAGMA page_count;</span><span class="code-line">PRAGMA freelist_count;</span><span class="code-line"></span><span class="code-line">PRAGMA incremental_vacuum(100);</span><span class="code-line">PRAGMA page_count;</span><span class="code-line">PRAGMA freelist_count;</span><span class="code-line"></span><span class="code-line">-- Run again only if your maintenance policy intentionally wants more reclamation.</span><span class="code-line">PRAGMA incremental_vacuum(100);</span></code></pre></div><p><code>incremental_vacuum(N)</code> requests removal of up to N pages from the freelist and truncates the file by the pages it can reclaim. It does nothing when the database is not in INCREMENTAL mode.</p></section>
+<section><h2>FULL auto-vacuum is not “VACUUM every commit”</h2><p>FULL auto-vacuum moves freelist pages toward the file end and truncates at commit. It does <strong>not</strong> perform the complete repacking/defragmentation of a VACUUM rebuild and can itself increase fragmentation by moving pages. Choose it for a workload that values automatic file truncation enough to justify the pointer-map and layout tradeoffs.</p></section>
+<section><h2>Failure cases</h2><table class="data-table"><thead><tr><th>Mistake</th><th>Observed problem</th><th>Correction</th></tr></thead><tbody><tr><td>Assume DELETE shrinks a NONE-mode file.</td><td>File remains large, freelist increases.</td><td>Reuse the space or plan a justified VACUUM.</td></tr><tr><td>Run incremental_vacuum on a NONE database.</td><td>No effect.</td><td>Use it only on a database prepared for INCREMENTAL auto-vacuum.</td></tr><tr><td>Enable auto_vacuum after tables exist and expect immediate format change.</td><td>Setting alone cannot add required pointer-map support to populated layout.</td><td>Follow documented set-mode + VACUUM process.</td></tr><tr><td>VACUUM a live production DB without capacity planning.</td><td>Contention, long I/O, insufficient disk risk.</td><td>Measure size, free disk, maintenance window, backups and workload first.</td></tr><tr><td>Expose hidden rowid as a permanent document ID.</td><td>VACUUM may change it for tables without INTEGER PRIMARY KEY.</td><td>Use an explicit stable key.</td></tr></tbody></table></section>
+<section><h2>Integrity and verification after maintenance</h2><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · post-maintenance checks</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">PRAGMA page_count;</span><span class="code-line">PRAGMA freelist_count;</span><span class="code-line">PRAGMA auto_vacuum;</span><span class="code-line">PRAGMA integrity_check;</span><span class="code-line">PRAGMA foreign_key_check;</span><span class="code-line">SELECT COUNT(*) FROM payload;</span></code></pre></div><p>File-size maintenance must not replace semantic verification. <code>integrity_check</code> validates structural/index/constraint consistency but, as Chapter 5 taught, foreign keys require the separate <code>foreign_key_check</code>.</p></section>
+<section><h2>Checkpoint and bridge</h2><div class="checkpoint"><h3>Space-management checkpoint</h3><p>Choose the least disruptive tool that meets the requirement.</p><ol><li>Why does DELETE often leave the file size unchanged?</li><li>What does freelist_count measure?</li><li>What extra database-format support do FULL/INCREMENTAL auto-vacuum need?</li><li>How does FULL auto-vacuum differ from VACUUM?</li><li>When does incremental_vacuum have an effect?</li><li>Why can hidden rowid be unsafe as an external identity across VACUUM?</li></ol><details class="answer-toggle"><summary>Review the answers</summary><p>DELETE commonly returns pages to an internal freelist instead of truncating the file. freelist_count is the number of unused pages in that file. FULL/INCREMENTAL require pointer-map information. FULL truncates freelist pages at commit but does not fully repack like VACUUM. incremental_vacuum acts only in INCREMENTAL mode. A hidden rowid is not guaranteed stable across a VACUUM when there is no explicit INTEGER PRIMARY KEY.</p></details></div></section>
+<section><h2>Production judgment and next step</h2><p>Page allocation explains file size, but page access is mediated through memory. Lesson 5 completes the storage model with the pager, page cache, memory mapping, temporary B-trees/files, the OS cache, and the VFS boundary.</p><h3>Authoritative references</h3><ul><li><a href="https://sqlite.org/pragma.html#pragma_auto_vacuum" rel="noopener" target="_blank">SQLite — PRAGMA auto_vacuum, freelist_count, incremental_vacuum</a>.</li><li><a href="https://sqlite.org/lang_vacuum.html" rel="noopener" target="_blank">SQLite — VACUUM</a>.</li><li><a href="https://sqlite.org/fileformat.html#the_freelist" rel="noopener" target="_blank">SQLite — Database File Format: freelist</a>.</li><li><a href="https://sqlite.org/pragma.html#pragma_integrity_check" rel="noopener" target="_blank">SQLite — Integrity checking PRAGMAs</a>.</li></ul></section>
+</div>
+<nav aria-label="Lesson navigation" class="lesson-nav"><a href="Lesson3.html"><small>Previous lesson</small><strong>Payload, Overflow Pages, Large Rows, and BLOB/Text Storage</strong></a><a class="next" href="Lesson5.html"><small>Next lesson</small><strong>Cache, Memory Mapping, Temporary Storage, and the Pager Layer</strong></a></nav>
+</article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>If these tutorials save you time, a small donation supports new lessons, technical review, diagrams, examples, and long-term maintenance.</p>
+<div aria-label="Author links" class="social-row">
+<a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head"><span>ETH</span><small>Ethereum / ERC-20 only</small></div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
+<button class="button secondary compact" data-copy-donation="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>
+          Copy address
+        </button>
+<p>Send only assets compatible with the Ethereum/ERC-20 network. Do not send TRC-20/TRON assets.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div><strong>Big Data Academy</strong><p>A free, prerequisite-aware path from SQL foundations to distributed data systems.</p></div>
+<div><a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a></div>
+<small>Created and maintained by <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> · © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>

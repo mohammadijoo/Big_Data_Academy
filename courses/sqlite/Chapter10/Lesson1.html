@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Connect SQLite rowid-table and index B-trees to measured access paths, create and inspect explicit and implicit indexes, and establish the reusable FieldNotes planner dataset for the chapter." name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>How SQLite B-Tree Indexes Work and Why Indexes Trade Reads for Writes | SQLite | Big Data Academy</title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+<script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+        chtml: { scale: 1, matchFontHeight: false },
+      };
+    </script>
+<script defer="" id="MathJax-script" onerror="this.onerror=null;this.src='https://unpkg.com/mathjax@3.2.2/es5/tex-chtml.js';" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
+<span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
+<span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
+</a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a>
+<a class="is-active" href="../../../index.html#courses">Courses</a>
+<a href="../../../index.html#method">Method</a>
+<a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg></button>
+<button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu=""><a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a></nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">SQLITE</span><div><small>Course 03</small><strong>SQLite</strong></div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">×</button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 100 lessons..." type="search"/></label>
+<nav aria-label="SQLite curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter">
+<summary><span>01</span>SQLite Foundations: Embedded Databases, Files, and the First Lab</summary><div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What SQLite Is—and What Makes an Embedded Database Different</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Install SQLite and Verify the Toolchain on Windows, Linux, and macOS</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>Create, Open, Inspect, Close, and Reopen Your First Database File</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>A First Mental Model of Connections, Statements, Transactions, and Persistence</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build the Course Lab Database and Adopt Safe Working Habits</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>02</span>Mastering the sqlite3 Command-Line Shell</summary><div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>SQL Statements Versus Dot-Commands, Help, and Shell State</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Readable Output: .mode, .headers, .width, .nullvalue, and Current CLI Formatting</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>Run SQL Scripts with .read, Redirection, Batch Mode, and Exit Status</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Parameters, Safe Values, and the CLI .parameter Facility</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Import, Export, .once/.output, CSV, and Reproducible Data Exchange</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>03</span>SQLite Schema Objects, ROWID, Keys, and Table Design</summary><div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>CREATE TABLE in SQLite: Schema, sqlite_schema, and Introspection</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>ROWID Tables and INTEGER PRIMARY KEY from First Principles</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>WITHOUT ROWID Tables and Composite Primary Keys</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>Temporary Tables, In-Memory Databases, and the temp Schema</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>Design a SQLite Schema from Existing Requirements</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>04</span>SQLite’s Type System, Affinity, STRICT Tables, and Value Representation</summary><div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>Storage Classes and Dynamic Typing: The Type Belongs to the Value</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>Declared Types and Type Affinity Rules</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>STRICT Tables: Rigid Type Enforcement Where You Want It</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Dates, Times, Booleans, Money, UUIDs, and Other Logical Types</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>NULL, BLOBs, Text Encoding, Collations, and Cross-Language Boundaries</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>05</span>Constraints, Foreign Keys, Conflict Handling, and Integrity</summary><div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>NOT NULL, UNIQUE, PRIMARY KEY, CHECK, and DEFAULT</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Foreign Keys and PRAGMA foreign_keys</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>ON DELETE/UPDATE Actions, Deferred Constraints, and Transaction Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>ON CONFLICT Algorithms and Constraint-Failure Semantics</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Generated Columns, Integrity Checks, and Enforcing Cross-Column Rules</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>06</span>SQLite Data Modification: INSERT, UPDATE, DELETE, UPSERT, and RETURNING</summary><div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>INSERT Forms, Defaults, Multi-Row Inserts, and Generated Keys</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>UPDATE Correctly: Predicates, Expressions, and Avoiding Accidental Wide Changes</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>DELETE, Cascades, Soft Delete, and Data Lifecycle</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>UPSERT with ON CONFLICT DO NOTHING / DO UPDATE</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>RETURNING, changes(), total_changes(), and Observable Writes</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>07</span>SQLite Expressions, Functions, CTEs, Window Functions, and Dialect Features</summary><div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>SQLite Operators, Comparison Rules, LIKE/GLOB, and Expression Semantics</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Built-In Scalar, Aggregate, and Core Utility Functions</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Date and Time Functions in SQLite</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>WITH CTEs and Recursive Queries</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Window Functions and Analytic Queries in SQLite</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>08</span>Transactions, Atomicity, Journaling, and Savepoints</summary><div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>Autocommit, Implicit Transactions, and Explicit BEGIN/COMMIT/ROLLBACK</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>DEFERRED, IMMEDIATE, and EXCLUSIVE Transactions</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Rollback Journals and Atomic Commit from the Pager’s Point of View</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>SAVEPOINT, ROLLBACK TO, RELEASE, and Nested Units of Work</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Transaction Design, Idempotency, and Failure Injection</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>09</span>Concurrency, Locking, WAL Mode, Busy Handling, and Checkpoints</summary><div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>Readers, Writers, Locks, and Why SQLite Has One Writer at a Time</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>SQLITE_BUSY, busy_timeout, Retries, and Short Transactions</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Write-Ahead Logging: How WAL Changes Read/Write Concurrency</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>WAL Checkpoints, Autocheckpointing, Long Readers, and WAL Growth</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Concurrency Reliability, WAL-Reset History, and Production Patterns</a>
+</div></details>
+<details class="sidebar-chapter" open="">
+<summary><span>10</span>Indexes and the SQLite Query Planner</summary><div>
+<a class="sidebar-lesson is-current" href="Lesson1.html"><span>01</span>How SQLite B-Tree Indexes Work and Why Indexes Trade Reads for Writes<i>Current</i></a>
+<a class="sidebar-lesson" href="Lesson2.html"><span>02</span>Composite Indexes, Leftmost Prefixes, Sorting, and Covering Indexes</a>
+<a class="sidebar-lesson" href="Lesson3.html"><span>03</span>Partial Indexes and Indexes on Expressions</a>
+<a class="sidebar-lesson" href="Lesson4.html"><span>04</span>EXPLAIN QUERY PLAN, EXPLAIN, SCAN/SEARCH, and Planner Diagnostics</a>
+<a class="sidebar-lesson" href="Lesson5.html"><span>05</span>ANALYZE, sqlite_stat Tables, PRAGMA optimize, and Planner Statistics</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>11</span>Database Files, Pages, B-Trees, Freelist, and Storage Internals</summary><div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>The SQLite Database File: Header, Page Size, Schema Cookie, and File Format</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Table B-Trees, Index B-Trees, Interior/Leaf Pages, and Cells</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Payload, Overflow Pages, Large Rows, and BLOB/Text Storage</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>Freelist, Deleted Space, auto_vacuum, VACUUM, and File Shrinkage</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Cache, Memory Mapping, Temporary Storage, and the Pager Layer</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>12</span>Views, Triggers, ATTACH, Multiple Databases, and Schema-Level Automation</summary><div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>Views and Readable Query Interfaces</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Triggers: BEFORE, AFTER, INSTEAD OF, OLD/NEW, and Side Effects</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>ATTACH DATABASE, DETACH, and Cross-Database Queries</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>URI Filenames, Read-Only/Immutable Opens, Shared Cache Caveats, and Connection Options</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Application IDs, user_version, schema_version, and Database-as-File-Format Design</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>13</span>JSON and Semi-Structured Data in SQLite</summary><div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>When JSON Belongs in SQLite—and When Columns/Tables Are Better</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>JSON Paths, json_extract, -&gt; / -&gt;&gt;, and Value Construction</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>json_each, json_tree, and Querying JSON Arrays/Objects Relationally</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>JSONB, Internal Representation, and Performance Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Indexing JSON Paths, Generated Columns, Validation, and Hybrid Designs</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>14</span>Full-Text Search, R-Tree, Virtual Tables, and Extensions</summary><div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Virtual Tables and the Extension Architecture</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>FTS5 Fundamentals: Full-Text Tables, MATCH, and Tokenization</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>FTS5 Ranking, Highlighting, External Content, and Maintenance</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>R-Tree and Geospatial/Multidimensional Range Search</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Loadable Extensions, Built-In Extensions, and Supply-Chain Safety</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>15</span>Embedding SQLite in Applications</summary><div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Application Integration Architecture: Drivers, Connections, Prepared Statements, and Binding</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Python sqlite3: A Beginner-to-Production Workflow</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>Node.js and JavaScript: Built-In/Driver Options and Async Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>.NET and Java: ADO.NET/Provider and JDBC Patterns</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>The SQLite C API Mental Model and What Higher-Level Drivers Wrap</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>16</span>Backup, Export, Recovery, Integrity, and Disaster Preparedness</summary><div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Why Copying a Live Database File Can Be Unsafe</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>.backup, Online Backup API, and VACUUM INTO</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>.dump, SQL Logical Exports, and Migration/Interchange Uses</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>integrity_check, quick_check, foreign_key_check, and Corruption Diagnosis</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>.recover, Recovery Limitations, Restore Drills, and a Backup Policy</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>17</span>Schema Evolution, Migrations, Testing, and Release Compatibility</summary><div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>ALTER TABLE Capabilities and SQLite’s Schema-Rewrite Model</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Versioned Migrations with PRAGMA user_version</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Safe Table-Rebuild Migrations and Foreign-Key Handling</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Database Tests: Schema, Constraints, Queries, Transactions, and Concurrency</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Compatibility Testing Across SQLite Versions and Build Options</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>18</span>Performance Engineering, PRAGMAs, Maintenance, and Benchmarking</summary><div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Measure First: Timers, Query Plans, Dataset Shape, and Repeatable Benchmarks</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Transaction Batching and Write Throughput</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>synchronous, journal_mode, cache_size, temp_store, mmap_size, and Other PRAGMAs</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>VACUUM, ANALYZE, PRAGMA optimize, auto_vacuum, and Routine Maintenance</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Performance Anti-Patterns and When SQLite Has Reached the Wrong Workload</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>19</span>Security, Deployment, Reliability Boundaries, and When Not to Use SQLite</summary><div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>SQL Injection, Prepared Statements, and Trust Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>File Permissions, Process Identity, Secrets, and Encryption Reality</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Defensive Configuration, trusted_schema, Extension Loading, and Untrusted Databases</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>Deployment on Local Disks, Containers, Network Filesystems, Mobile, and Edge</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>When SQLite Is the Right Database—and When to Move to PostgreSQL/MySQL/DuckDB/etc.</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>20</span>Production Capstone: Build and Operate a Complete SQLite Application Database</summary><div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Capstone Requirements, Workload, Data Model, and SQLite Fit Review</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Implement the Schema, Constraints, Indexes, Views, and Migrations</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Implement Application Access, Transactions, JSON/Search Features, and Concurrency Handling</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Test, Benchmark, Back Up, Restore, and Secure the Database</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Operate, Troubleshoot, Document, and Defend the Final Architecture</a>
+</div></details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar"><button data-sidebar-open="" type="button"><span>Course navigation</span><span>Chapter 10 · Lesson 01</span></button></div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs"><a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">SQLite</a><span>/</span><span>Chapter 10 · Lesson 01</span></nav>
+<header class="lesson-header">
+<p class="eyebrow">Chapter 10 · Indexes and the SQLite Query Planner</p>
+<h1>How SQLite B-Tree Indexes Work and Why Indexes Trade Reads for Writes</h1>
+<p>Connect SQLite rowid-table and index B-trees to measured access paths, create and inspect explicit and implicit indexes, and establish the reusable FieldNotes planner dataset for the chapter.</p>
+<div class="lesson-meta"><span>Beginner</span><span>115–135 minutes</span><span>Reusable planner dataset</span><span>SQLite 3.53.4 baseline</span><span>30,000-row disposable lab</span><span>Last reviewed: August 2026</span></div>
+</header>
+<nav aria-label="On this page" class="lesson-toc"><strong>On this page</strong><ol data-generated-toc=""></ol></nav>
+<div class="lesson-content">
+<section><h2>Learning outcomes</h2><p>Chapter 9 showed why every extra write has concurrency consequences. An index is one of those extra writes: it can make an important read path dramatically cheaper, but SQLite must also store and maintain that index whenever affected rows change. The right question is therefore not “should this column be indexed?” It is “which measured access pattern deserves an additional maintained B-tree?”</p><div class="objectives"><div class="objective"><span>01</span><p>Connect rowid table B-trees and index B-trees to SQLite schema objects without repeating the file-format chapter prematurely.</p></div><div class="objective"><span>02</span><p>Create, inspect, use, and drop explicit indexes and distinguish them from constraint-created implicit indexes.</p></div><div class="objective"><span>03</span><p>Read SCAN and SEARCH evidence from EXPLAIN QUERY PLAN before claiming that an index helps.</p></div><div class="objective"><span>04</span><p>Explain qualitatively how an index can reduce page visits or satisfy ordering while increasing storage and write work.</p></div><div class="objective"><span>05</span><p>Build a reproducible FieldNotes planner dataset large enough to make plan choices visible.</p></div><div class="objective"><span>06</span><p>Avoid duplicate indexes on INTEGER PRIMARY KEY, UNIQUE constraints, and already-covered prefixes.</p></div></div></section>
+<section><h2>From prerequisite B-tree intuition to SQLite storage</h2><p>You already know the abstract B-tree idea: sorted keys let an engine navigate toward a small key range instead of testing every row. SQLite makes this concrete. An ordinary <strong>rowid table</strong> is stored in a table B-tree keyed by its integer rowid. A separately declared SQL index is stored in an <strong>index B-tree</strong>. For a rowid table, an index entry contains the indexed key values plus enough row identity to reach the corresponding table row.</p><pre class="diagram">rowid table B-tree                     secondary index B-tree
+------------------                     ----------------------
+key = rowid                             key = indexed value(s), rowid
+payload = row columns                   payload/key identifies table row
+
+       SEARCH index                         table lookup (if needed)
+            |                                      |
+            v                                      v
+   matching rowid(s) ----------------------&gt; rowid table B-tree</pre><p>Chapter 11 will inspect pages, interior/leaf cells, overflow, and file-format details. Here, this model is enough to explain why a non-covering secondary-index lookup may involve both an index traversal and one or more table lookups.</p></section>
+<section><h2>The first indexing rule: start from a query, not a column</h2><p>Suppose FieldNotes frequently asks for all maintenance notes for one device. Without a supporting index on <code>maintenance_note.device_id</code>, SQLite may have to examine the whole table and test the predicate. A suitable index gives the planner another algorithm: navigate to the matching key range and visit only candidate entries. But the planner is cost-based; merely creating an index does not force it to use the index.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · observe the plan before adding an index</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">EXPLAIN QUERY PLAN</span><span class="code-line">SELECT note_id, occurred_at, status, summary</span><span class="code-line">FROM maintenance_note</span><span class="code-line">WHERE device_id = 42;</span></code></pre></div><p>On the chapter dataset before the index exists, the important plan word should be <code>SCAN maintenance_note</code>. Treat exact formatting as diagnostic output, not a stable interface.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · add a candidate index and inspect again</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">CREATE INDEX idx_note_device</span><span class="code-line">ON maintenance_note(device_id);</span><span class="code-line"></span><span class="code-line">EXPLAIN QUERY PLAN</span><span class="code-line">SELECT note_id, occurred_at, status, summary</span><span class="code-line">FROM maintenance_note</span><span class="code-line">WHERE device_id = 42;</span></code></pre></div><p>The important change is normally from SCAN to a <code>SEARCH ... USING INDEX idx_note_device (device_id=?)</code>-style access path.</p></section>
+<section><h2>Build the reusable FieldNotes planner database</h2><p>The chapter uses enough rows to make access-path differences visible while remaining small and disposable. The SQL below defines the schema. A short Python seeder then creates 100 sites, 1,000 devices, and 30,000 maintenance notes with deliberately non-uniform status values.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · schema.sql</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">PRAGMA foreign_keys = ON;</span><span class="code-line">DROP TABLE IF EXISTS maintenance_note;</span><span class="code-line">DROP TABLE IF EXISTS device;</span><span class="code-line">DROP TABLE IF EXISTS site;</span><span class="code-line"></span><span class="code-line">CREATE TABLE site(</span><span class="code-line">  site_id INTEGER PRIMARY KEY,</span><span class="code-line">  site_code TEXT NOT NULL UNIQUE,</span><span class="code-line">  name TEXT NOT NULL</span><span class="code-line">);</span><span class="code-line"></span><span class="code-line">CREATE TABLE device(</span><span class="code-line">  device_id INTEGER PRIMARY KEY,</span><span class="code-line">  site_id INTEGER NOT NULL REFERENCES site(site_id),</span><span class="code-line">  device_code TEXT NOT NULL UNIQUE,</span><span class="code-line">  kind TEXT NOT NULL,</span><span class="code-line">  active INTEGER NOT NULL DEFAULT 1 CHECK(active IN (0,1))</span><span class="code-line">);</span><span class="code-line"></span><span class="code-line">CREATE TABLE maintenance_note(</span><span class="code-line">  note_id INTEGER PRIMARY KEY,</span><span class="code-line">  device_id INTEGER NOT NULL REFERENCES device(device_id),</span><span class="code-line">  occurred_at TEXT NOT NULL,</span><span class="code-line">  status TEXT NOT NULL CHECK(status IN ('open','closed','deferred')),</span><span class="code-line">  priority INTEGER NOT NULL CHECK(priority BETWEEN 1 AND 5),</span><span class="code-line">  technician TEXT NOT NULL,</span><span class="code-line">  duration_min INTEGER NOT NULL CHECK(duration_min &gt;= 0),</span><span class="code-line">  cost_cents INTEGER NOT NULL CHECK(cost_cents &gt;= 0),</span><span class="code-line">  summary TEXT NOT NULL</span><span class="code-line">);</span></code></pre></div><div class="code-window" data-code-block="" data-language="python"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>python · seed_planner.py</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">import sqlite3</span><span class="code-line">from pathlib import Path</span><span class="code-line"></span><span class="code-line">path = Path("fieldnotes-planner.db")</span><span class="code-line">path.unlink(missing_ok=True)</span><span class="code-line">con = sqlite3.connect(path)</span><span class="code-line">con.executescript(open("schema.sql", encoding="utf-8").read())</span><span class="code-line"></span><span class="code-line">con.executemany(</span><span class="code-line">    "INSERT INTO site(site_code,name) VALUES(?,?)",</span><span class="code-line">    [(f"SITE-{i:03d}", f"Operations Site {i:03d}") for i in range(1,101)]</span><span class="code-line">)</span><span class="code-line">con.executemany(</span><span class="code-line">    "INSERT INTO device(site_id,device_code,kind,active) VALUES(?,?,?,?)",</span><span class="code-line">    [((i-1)%100+1, f"DEV-{i:05d}", ("pump","fan","sensor")[i%3], 0 if i%23==0 else 1)</span><span class="code-line">     for i in range(1,1001)]</span><span class="code-line">)</span><span class="code-line">rows=[]</span><span class="code-line">for i in range(1,30001):</span><span class="code-line">    status = "open" if i%10==0 else ("deferred" if i%17==0 else "closed")</span><span class="code-line">    rows.append((</span><span class="code-line">        (i-1)%1000+1,</span><span class="code-line">        f"2026-{(i%8)+1:02d}-{(i%28)+1:02d}T{(i%24):02d}:{(i%60):02d}:00Z",</span><span class="code-line">        status, (i%5)+1, f"tech-{i%40:02d}", i%181, 500+(i%25000),</span><span class="code-line">        f"Routine field observation {i}"</span><span class="code-line">    ))</span><span class="code-line">con.executemany("""INSERT INTO maintenance_note</span><span class="code-line">(device_id,occurred_at,status,priority,technician,duration_min,cost_cents,summary)</span><span class="code-line">VALUES(?,?,?,?,?,?,?,?)""", rows)</span><span class="code-line">con.commit()</span><span class="code-line">print(con.execute("SELECT COUNT(*) FROM maintenance_note").fetchone()[0])  # 30000</span><span class="code-line">con.close()</span></code></pre></div></section>
+<section><h2>CREATE INDEX, UNIQUE INDEX, and implicit indexes</h2><p>An explicit index is a named schema object you create with <code>CREATE INDEX</code>. <code>CREATE UNIQUE INDEX</code> adds a uniqueness rule: two rows may not have equal non-NULL index keys, while SQLite treats NULL values as distinct for UNIQUE index purposes. Separately, SQLite may create persistent internal indexes to implement many UNIQUE and non-rowid PRIMARY KEY constraints.</p><table class="data-table"><thead><tr><th>Schema feature</th><th>Typical storage consequence in a rowid table</th><th>Do you add a duplicate index?</th></tr></thead><tbody><tr><td><code>INTEGER PRIMARY KEY</code></td><td>Aliases the rowid/table B-tree key; no separate PK index is needed.</td><td>No.</td></tr><tr><td><code>UNIQUE(device_code)</code></td><td>SQLite creates an internal uniqueness index such as <code>sqlite_autoindex_device_1</code>.</td><td>Normally no.</td></tr><tr><td>Explicit <code>CREATE INDEX idx_note_device ...</code></td><td>Creates a named index B-tree.</td><td>Only if a real access pattern justifies it.</td></tr><tr><td>Explicit <code>CREATE UNIQUE INDEX</code></td><td>Creates an index B-tree plus uniqueness enforcement.</td><td>Do not duplicate an equivalent UNIQUE constraint/index.</td></tr></tbody></table></section>
+<section><h2>Inspect what SQLite actually created</h2><p>Schema introspection prevents accidental duplicate indexes and reveals whether an index came from your DDL or a constraint.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · CLI and PRAGMA inspection</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">.indexes</span><span class="code-line">.schema device</span><span class="code-line">.schema maintenance_note</span><span class="code-line"></span><span class="code-line">SELECT type, name, tbl_name, sql</span><span class="code-line">FROM sqlite_schema</span><span class="code-line">WHERE type = 'index'</span><span class="code-line">ORDER BY tbl_name, name;</span><span class="code-line"></span><span class="code-line">PRAGMA index_list('device');</span><span class="code-line">PRAGMA index_list('maintenance_note');</span><span class="code-line">PRAGMA index_xinfo('idx_note_device');</span></code></pre></div><p>For an internal autoindex, the <code>sql</code> column in <code>sqlite_schema</code> is normally NULL because no independent CREATE INDEX statement exists. <code>PRAGMA index_list</code> also reports origin information that helps distinguish CREATE INDEX, UNIQUE-constraint, and PRIMARY-KEY origins.</p></section>
+<section><h2>Indexes trade read work for write/storage work</h2><p>Every maintained index is another sorted structure SQLite must update when an INSERT, DELETE, or relevant UPDATE changes its keys. That may add B-tree searches, page modifications, journal/WAL frames, cache pressure, and file space. On the read side, the same structure may avoid scanning thousands of irrelevant rows or may deliver rows in an order that avoids a separate sort.</p><table class="data-table"><thead><tr><th>Potential benefit</th><th>Corresponding cost</th></tr></thead><tbody><tr><td>Visit a narrow key range instead of scanning all rows.</td><td>Extra index pages occupy storage/cache.</td></tr><tr><td>Use index order to help ORDER BY/GROUP BY.</td><td>INSERT/DELETE must maintain another B-tree.</td></tr><tr><td>Cover a query without table lookups.</td><td>Wider index entries increase storage and write amplification.</td></tr><tr><td>Enforce uniqueness.</td><td>Conflicting writes must probe the uniqueness structure.</td></tr></tbody></table><div class="callout"><strong>No universal “index = faster” guarantee</strong><p>For a query that returns most of a table, a table scan may cost less than bouncing through an index and then doing many table lookups. SQLite is allowed to ignore an existing index when its estimated plan cost is higher.</p></div></section>
+<section><h2>A qualitative storage observation</h2><p>Use page counts as an observation, not a benchmark. Record the database page count before and after creating a full index. The count may grow because the new B-tree needs pages. Dropping the index frees its pages for reuse, but the database file need not immediately shrink; Chapter 11 will explain freelist and VACUUM behavior.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · observe page allocation</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">PRAGMA page_size;</span><span class="code-line">PRAGMA page_count;</span><span class="code-line">CREATE INDEX idx_note_device ON maintenance_note(device_id);</span><span class="code-line">PRAGMA page_count;</span><span class="code-line">DROP INDEX idx_note_device;</span><span class="code-line">PRAGMA freelist_count;</span><span class="code-line">PRAGMA page_count;</span></code></pre></div></section>
+<section><h2>Failure cases and safer corrections</h2><table class="data-table"><thead><tr><th>Mistake</th><th>What happens</th><th>Safer correction</th></tr></thead><tbody><tr><td>Index every column “just in case”.</td><td>Writes and storage get more expensive; many indexes may never be selected.</td><td>Inventory actual queries and plans first.</td></tr><tr><td>Create an index on an <code>INTEGER PRIMARY KEY</code>.</td><td>At best redundant; rowid lookup is already direct.</td><td>Use the PK as-is.</td></tr><tr><td>Duplicate a UNIQUE autoindex with another equivalent index.</td><td>Same key is maintained twice without a new access path.</td><td>Inspect <code>index_list</code>/<code>sqlite_schema</code>.</td></tr><tr><td>Assume an index is used because its name looks right.</td><td>Planner may choose SCAN or a different index.</td><td>Run EQP on the real query and realistic data.</td></tr><tr><td>Drop an index because one test query did not use it.</td><td>Another production query or uniqueness rule may depend on it.</td><td>Map index-to-query/constraint ownership before removal.</td></tr></tbody></table></section>
+<section><h2>Baseline lab: prove the plan transition</h2><p>Start from a fresh chapter database. Record the plan for <code>device_id=42</code>, create <code>idx_note_device</code>, record the plan again, and run the query to verify the result count is unchanged. The index changes the algorithm, not query semantics.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · verification query</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT COUNT(*) AS notes_for_device_42</span><span class="code-line">FROM maintenance_note</span><span class="code-line">WHERE device_id = 42;</span><span class="code-line">-- With 30,000 notes distributed over 1,000 devices, expect 30.</span><span class="code-line"></span><span class="code-line">DROP INDEX idx_note_device;</span><span class="code-line">EXPLAIN QUERY PLAN</span><span class="code-line">SELECT COUNT(*) FROM maintenance_note WHERE device_id=42;</span><span class="code-line">-- Return to the baseline scan before Lesson 2.</span></code></pre></div><div class="checkpoint"><h3>Index foundations checkpoint</h3><p>Reason from storage and plans.</p><ol><li>What is the difference between the rowid table B-tree and a secondary index B-tree?</li><li>Why does INTEGER PRIMARY KEY usually need no extra primary-key index?</li><li>What evidence tells you whether a query is scanning or searching?</li><li>Why might SQLite ignore an index that exists?</li><li>Why can DROP INDEX increase freelist_count without shrinking the file?</li><li>What should you inspect before adding an index to a UNIQUE column?</li></ol><details class="answer-toggle"><summary>Review the answers</summary><p>A rowid table B-tree stores rows keyed by rowid; a secondary index stores ordered index keys plus row identity. INTEGER PRIMARY KEY aliases the rowid. EQP exposes SCAN/SEARCH evidence. The planner may estimate a scan as cheaper, especially for broad result sets. Dropping an index frees pages for reuse but file shrink is separate. Inspect schema/index metadata because a UNIQUE constraint often already has an internal index.</p></details></div></section>
+<section><h2>Production judgment and bridge</h2><p>Indexing is now an evidence loop: define the access pattern, inspect the baseline plan, create the smallest candidate structure, inspect the new plan, test realistic data, and account for write/storage cost. Lesson 2 moves from single-column indexes to the harder design problem—column order in composite indexes and whether one index can serve filtering, sorting, and projection together.</p><h3>Authoritative references</h3><ul><li><a href="https://sqlite.org/queryplanner.html" rel="noopener" target="_blank">SQLite — Query Planning</a>.</li><li><a href="https://sqlite.org/fileformat.html" rel="noopener" target="_blank">SQLite — Database File Format: representation of SQL indices</a>.</li><li><a href="https://sqlite.org/lang_createindex.html" rel="noopener" target="_blank">SQLite — CREATE INDEX</a>.</li><li><a href="https://sqlite.org/eqp.html" rel="noopener" target="_blank">SQLite — EXPLAIN QUERY PLAN</a>.</li></ul></section>
+</div>
+<nav aria-label="Lesson navigation" class="lesson-nav"><a href="../Chapter09/Lesson5.html"><small>Previous lesson</small><strong>Concurrency Reliability, WAL-Reset History, and Production Patterns</strong></a><a class="next" href="Lesson2.html"><small>Next lesson</small><strong>Composite Indexes, Leftmost Prefixes, Sorting, and Covering Indexes</strong></a></nav>
+</article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>If these tutorials save you time, a small donation supports new lessons, technical review, diagrams, examples, and long-term maintenance.</p>
+<div aria-label="Author links" class="social-row">
+<a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head"><span>ETH</span><small>Ethereum / ERC-20 only</small></div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
+<button class="button secondary compact" data-copy-donation="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>
+          Copy address
+        </button>
+<p>Send only assets compatible with the Ethereum/ERC-20 network. Do not send TRC-20/TRON assets.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div><strong>Big Data Academy</strong><p>A free, prerequisite-aware path from SQL foundations to distributed data systems.</p></div>
+<div><a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a></div>
+<small>Created and maintained by <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> · © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>

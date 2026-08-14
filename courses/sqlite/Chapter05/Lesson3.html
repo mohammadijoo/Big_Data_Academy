@@ -1,0 +1,275 @@
+<!doctype html>
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Model parent-row lifecycles deliberately with foreign-key actions and use deferred constraints when a transaction must pass through a temporary inconsistency before commit." name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>ON DELETE/UPDATE Actions, Deferred Constraints, and Transaction Boundaries | SQLite | Big Data Academy</title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+<script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+        chtml: { scale: 1, matchFontHeight: false },
+      };
+    </script>
+<script defer="" id="MathJax-script" onerror="this.onerror=null;this.src='https://unpkg.com/mathjax@3.2.2/es5/tex-chtml.js';" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
+<span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
+<span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
+</a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a>
+<a class="is-active" href="../../../index.html#courses">Courses</a>
+<a href="../../../index.html#method">Method</a>
+<a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg></button>
+<button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu=""><a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a></nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">SQLITE</span><div><small>Course 03</small><strong>SQLite</strong></div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">×</button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 100 lessons..." type="search"/></label>
+<nav aria-label="SQLite curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter">
+<summary><span>01</span>SQLite Foundations: Embedded Databases, Files, and the First Lab</summary><div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What SQLite Is—and What Makes an Embedded Database Different</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Install SQLite and Verify the Toolchain on Windows, Linux, and macOS</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>Create, Open, Inspect, Close, and Reopen Your First Database File</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>A First Mental Model of Connections, Statements, Transactions, and Persistence</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build the Course Lab Database and Adopt Safe Working Habits</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>02</span>Mastering the sqlite3 Command-Line Shell</summary><div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>SQL Statements Versus Dot-Commands, Help, and Shell State</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Readable Output: .mode, .headers, .width, .nullvalue, and Current CLI Formatting</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>Run SQL Scripts with .read, Redirection, Batch Mode, and Exit Status</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Parameters, Safe Values, and the CLI .parameter Facility</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Import, Export, .once/.output, CSV, and Reproducible Data Exchange</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>03</span>SQLite Schema Objects, ROWID, Keys, and Table Design</summary><div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>CREATE TABLE in SQLite: Schema, sqlite_schema, and Introspection</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>ROWID Tables and INTEGER PRIMARY KEY from First Principles</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>WITHOUT ROWID Tables and Composite Primary Keys</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>Temporary Tables, In-Memory Databases, and the temp Schema</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>Design a SQLite Schema from Existing Requirements</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>04</span>SQLite’s Type System, Affinity, STRICT Tables, and Value Representation</summary><div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>Storage Classes and Dynamic Typing: The Type Belongs to the Value</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>Declared Types and Type Affinity Rules</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>STRICT Tables: Rigid Type Enforcement Where You Want It</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Dates, Times, Booleans, Money, UUIDs, and Other Logical Types</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>NULL, BLOBs, Text Encoding, Collations, and Cross-Language Boundaries</a>
+</div></details>
+<details class="sidebar-chapter" open="">
+<summary><span>05</span>Constraints, Foreign Keys, Conflict Handling, and Integrity</summary><div>
+<a class="sidebar-lesson" href="Lesson1.html"><span>01</span>NOT NULL, UNIQUE, PRIMARY KEY, CHECK, and DEFAULT</a>
+<a class="sidebar-lesson" href="Lesson2.html"><span>02</span>Foreign Keys and PRAGMA foreign_keys</a>
+<a class="sidebar-lesson is-current" href="Lesson3.html"><span>03</span>ON DELETE/UPDATE Actions, Deferred Constraints, and Transaction Boundaries<i>Current</i></a>
+<a class="sidebar-lesson" href="Lesson4.html"><span>04</span>ON CONFLICT Algorithms and Constraint-Failure Semantics</a>
+<a class="sidebar-lesson" href="Lesson5.html"><span>05</span>Generated Columns, Integrity Checks, and Enforcing Cross-Column Rules</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>06</span>SQLite Data Modification: INSERT, UPDATE, DELETE, UPSERT, and RETURNING</summary><div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>INSERT Forms, Defaults, Multi-Row Inserts, and Generated Keys</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>UPDATE Correctly: Predicates, Expressions, and Avoiding Accidental Wide Changes</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>DELETE, Cascades, Soft Delete, and Data Lifecycle</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>UPSERT with ON CONFLICT DO NOTHING / DO UPDATE</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>RETURNING, changes(), total_changes(), and Observable Writes</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>07</span>SQLite Expressions, Functions, CTEs, Window Functions, and Dialect Features</summary><div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>SQLite Operators, Comparison Rules, LIKE/GLOB, and Expression Semantics</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Built-In Scalar, Aggregate, and Core Utility Functions</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Date and Time Functions in SQLite</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>WITH CTEs and Recursive Queries</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Window Functions and Analytic Queries in SQLite</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>08</span>Transactions, Atomicity, Journaling, and Savepoints</summary><div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>Autocommit, Implicit Transactions, and Explicit BEGIN/COMMIT/ROLLBACK</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>DEFERRED, IMMEDIATE, and EXCLUSIVE Transactions</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Rollback Journals and Atomic Commit from the Pager’s Point of View</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>SAVEPOINT, ROLLBACK TO, RELEASE, and Nested Units of Work</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Transaction Design, Idempotency, and Failure Injection</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>09</span>Concurrency, Locking, WAL Mode, Busy Handling, and Checkpoints</summary><div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>Readers, Writers, Locks, and Why SQLite Has One Writer at a Time</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>SQLITE_BUSY, busy_timeout, Retries, and Short Transactions</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Write-Ahead Logging: How WAL Changes Read/Write Concurrency</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>WAL Checkpoints, Autocheckpointing, Long Readers, and WAL Growth</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Concurrency Reliability, WAL-Reset History, and Production Patterns</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>10</span>Indexes and the SQLite Query Planner</summary><div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>How SQLite B-Tree Indexes Work and Why Indexes Trade Reads for Writes</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Composite Indexes, Leftmost Prefixes, Sorting, and Covering Indexes</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Partial Indexes and Indexes on Expressions</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>EXPLAIN QUERY PLAN, EXPLAIN, SCAN/SEARCH, and Planner Diagnostics</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>ANALYZE, sqlite_stat Tables, PRAGMA optimize, and Planner Statistics</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>11</span>Database Files, Pages, B-Trees, Freelist, and Storage Internals</summary><div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>The SQLite Database File: Header, Page Size, Schema Cookie, and File Format</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Table B-Trees, Index B-Trees, Interior/Leaf Pages, and Cells</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Payload, Overflow Pages, Large Rows, and BLOB/Text Storage</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>Freelist, Deleted Space, auto_vacuum, VACUUM, and File Shrinkage</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Cache, Memory Mapping, Temporary Storage, and the Pager Layer</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>12</span>Views, Triggers, ATTACH, Multiple Databases, and Schema-Level Automation</summary><div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>Views and Readable Query Interfaces</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Triggers: BEFORE, AFTER, INSTEAD OF, OLD/NEW, and Side Effects</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>ATTACH DATABASE, DETACH, and Cross-Database Queries</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>URI Filenames, Read-Only/Immutable Opens, Shared Cache Caveats, and Connection Options</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Application IDs, user_version, schema_version, and Database-as-File-Format Design</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>13</span>JSON and Semi-Structured Data in SQLite</summary><div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>When JSON Belongs in SQLite—and When Columns/Tables Are Better</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>JSON Paths, json_extract, -&gt; / -&gt;&gt;, and Value Construction</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>json_each, json_tree, and Querying JSON Arrays/Objects Relationally</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>JSONB, Internal Representation, and Performance Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Indexing JSON Paths, Generated Columns, Validation, and Hybrid Designs</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>14</span>Full-Text Search, R-Tree, Virtual Tables, and Extensions</summary><div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Virtual Tables and the Extension Architecture</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>FTS5 Fundamentals: Full-Text Tables, MATCH, and Tokenization</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>FTS5 Ranking, Highlighting, External Content, and Maintenance</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>R-Tree and Geospatial/Multidimensional Range Search</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Loadable Extensions, Built-In Extensions, and Supply-Chain Safety</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>15</span>Embedding SQLite in Applications</summary><div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Application Integration Architecture: Drivers, Connections, Prepared Statements, and Binding</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Python sqlite3: A Beginner-to-Production Workflow</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>Node.js and JavaScript: Built-In/Driver Options and Async Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>.NET and Java: ADO.NET/Provider and JDBC Patterns</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>The SQLite C API Mental Model and What Higher-Level Drivers Wrap</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>16</span>Backup, Export, Recovery, Integrity, and Disaster Preparedness</summary><div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Why Copying a Live Database File Can Be Unsafe</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>.backup, Online Backup API, and VACUUM INTO</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>.dump, SQL Logical Exports, and Migration/Interchange Uses</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>integrity_check, quick_check, foreign_key_check, and Corruption Diagnosis</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>.recover, Recovery Limitations, Restore Drills, and a Backup Policy</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>17</span>Schema Evolution, Migrations, Testing, and Release Compatibility</summary><div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>ALTER TABLE Capabilities and SQLite’s Schema-Rewrite Model</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Versioned Migrations with PRAGMA user_version</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Safe Table-Rebuild Migrations and Foreign-Key Handling</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Database Tests: Schema, Constraints, Queries, Transactions, and Concurrency</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Compatibility Testing Across SQLite Versions and Build Options</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>18</span>Performance Engineering, PRAGMAs, Maintenance, and Benchmarking</summary><div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Measure First: Timers, Query Plans, Dataset Shape, and Repeatable Benchmarks</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Transaction Batching and Write Throughput</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>synchronous, journal_mode, cache_size, temp_store, mmap_size, and Other PRAGMAs</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>VACUUM, ANALYZE, PRAGMA optimize, auto_vacuum, and Routine Maintenance</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Performance Anti-Patterns and When SQLite Has Reached the Wrong Workload</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>19</span>Security, Deployment, Reliability Boundaries, and When Not to Use SQLite</summary><div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>SQL Injection, Prepared Statements, and Trust Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>File Permissions, Process Identity, Secrets, and Encryption Reality</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Defensive Configuration, trusted_schema, Extension Loading, and Untrusted Databases</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>Deployment on Local Disks, Containers, Network Filesystems, Mobile, and Edge</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>When SQLite Is the Right Database—and When to Move to PostgreSQL/MySQL/DuckDB/etc.</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>20</span>Production Capstone: Build and Operate a Complete SQLite Application Database</summary><div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Capstone Requirements, Workload, Data Model, and SQLite Fit Review</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Implement the Schema, Constraints, Indexes, Views, and Migrations</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Implement Application Access, Transactions, JSON/Search Features, and Concurrency Handling</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Test, Benchmark, Back Up, Restore, and Secure the Database</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Operate, Troubleshoot, Document, and Defend the Final Architecture</a>
+</div></details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar"><button data-sidebar-open="" type="button"><span>Course navigation</span><span>Chapter 05 · Lesson 03</span></button></div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs"><a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">SQLite</a><span>/</span><span>Chapter 05 · Lesson 03</span></nav>
+<header class="lesson-header">
+<p class="eyebrow">Chapter 05 · Constraints, Foreign Keys, Conflict Handling, and Integrity</p>
+<h1>ON DELETE/UPDATE Actions, Deferred Constraints, and Transaction Boundaries</h1>
+<p>Model parent-row lifecycles deliberately with foreign-key actions and use deferred constraints when a transaction must pass through a temporary inconsistency before commit.</p>
+<div class="lesson-meta"><span>Beginner</span><span>90–110 minutes</span><span>Lifecycle + deferred-transaction lab</span><span>SQLite 3.53.4 baseline</span><span>Foreign keys require supported build + connection policy</span><span>Generated columns require SQLite 3.31.0+</span><span>Last reviewed: August 2026</span></div>
+</header>
+<nav aria-label="On this page" class="lesson-toc"><strong>On this page</strong><ol data-generated-toc=""></ol></nav>
+<div class="lesson-content"><section><h2>Learning outcomes</h2><p>A foreign key says a relationship must be valid. An <code>ON DELETE</code> or <code>ON UPDATE</code> action says what should happen when the parent lifecycle threatens that relationship. Those actions encode business meaning, so choose them from requirements—not because one option saves application code.</p><div class="objectives"><div class="objective"><span>01</span><p>Explain NO ACTION, RESTRICT, SET NULL, SET DEFAULT, and CASCADE using parent/child lifecycle scenarios.</p></div><div class="objective"><span>02</span><p>Distinguish NO ACTION from RESTRICT timing, especially with deferred constraints.</p></div><div class="objective"><span>03</span><p>Choose actions only when child optionality/defaults and business ownership make the resulting state valid.</p></div><div class="objective"><span>04</span><p>Use DEFERRABLE INITIALLY DEFERRED when a transaction must pass through a temporary foreign-key violation.</p></div><div class="objective"><span>05</span><p>Predict what happens when COMMIT sees an unresolved deferred violation and recover with fix-or-rollback.</p></div><div class="objective"><span>06</span><p>Review FieldNotes relationships and justify each action rather than copying one global policy.</p></div></div></section><section><h2>Five actions answer one lifecycle question</h2><p>Imagine deleting a <code>site</code> that still has <code>device</code> rows. SQLite can reject the operation or modify the children, but the correct choice depends on whether devices are owned by the site, may be unassigned, should move to a sentinel site, or must prevent deletion.</p><table class="data-table"><thead><tr><th>Action</th><th>Parent delete/update effect</th><th>Typical design question</th></tr></thead><tbody><tr><td><code>NO ACTION</code></td><td>No special transformation; the constraint must be satisfied at its normal check point.</td><td>Should the application arrange a valid state before statement/transaction completion?</td></tr><tr><td><code>RESTRICT</code></td><td>Rejects the parent key change as soon as dependent children are encountered.</td><td>Must this parent be protected immediately from lifecycle changes?</td></tr><tr><td><code>SET NULL</code></td><td>Sets child key columns to NULL.</td><td>Is an unassigned child a valid business state, and are those columns nullable?</td></tr><tr><td><code>SET DEFAULT</code></td><td>Sets child key columns to their DEFAULT values.</td><td>Does that default itself identify a valid parent or NULL?</td></tr><tr><td><code>CASCADE</code></td><td>Deletes dependent children or updates child keys with the parent.</td><td>Are children truly owned by the parent so propagation matches business semantics?</td></tr></tbody></table></section><section><h2>CASCADE is an ownership decision, not a convenience switch</h2><p>For an owned detail table such as a device’s ephemeral calibration samples, deleting the device may legitimately delete all samples. For maintenance history required by audit policy, deleting history automatically may be unacceptable even if it is convenient.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · CASCADE deletes owned children</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">PRAGMA foreign_keys = ON;</span><span class="code-line">DROP TABLE IF EXISTS sample;</span><span class="code-line">DROP TABLE IF EXISTS owned_device;</span><span class="code-line"></span><span class="code-line">CREATE TABLE owned_device (</span><span class="code-line">    device_id INTEGER PRIMARY KEY,</span><span class="code-line">    code TEXT NOT NULL UNIQUE</span><span class="code-line">);</span><span class="code-line">CREATE TABLE sample (</span><span class="code-line">    sample_id INTEGER PRIMARY KEY,</span><span class="code-line">    device_id INTEGER NOT NULL</span><span class="code-line">      REFERENCES owned_device(device_id) ON DELETE CASCADE,</span><span class="code-line">    value REAL NOT NULL</span><span class="code-line">);</span><span class="code-line"></span><span class="code-line">INSERT INTO owned_device VALUES (1, 'PUMP-007');</span><span class="code-line">INSERT INTO sample(device_id, value) VALUES (1, 12.1), (1, 12.4);</span><span class="code-line">DELETE FROM owned_device WHERE device_id = 1;</span><span class="code-line">SELECT count(*) AS remaining_samples FROM sample;</span></code></pre></div><p>The count is zero because the relationship explicitly says the sample lifecycle follows the device lifecycle. That is a data-model assertion. If it is wrong, the database will enforce the wrong business rule perfectly.</p></section><section><h2>SET NULL and SET DEFAULT must still produce valid child state</h2><p><code>SET NULL</code> only makes sense if the child key columns permit NULL. <code>SET DEFAULT</code> is not an escape hatch: after SQLite substitutes the default, the foreign key must still be satisfied.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · SET NULL preserves the child but removes the assignment</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">PRAGMA foreign_keys = ON;</span><span class="code-line">DROP TABLE IF EXISTS assignment;</span><span class="code-line">DROP TABLE IF EXISTS technician;</span><span class="code-line"></span><span class="code-line">CREATE TABLE technician (</span><span class="code-line">    technician_id INTEGER PRIMARY KEY,</span><span class="code-line">    name TEXT NOT NULL</span><span class="code-line">);</span><span class="code-line">CREATE TABLE assignment (</span><span class="code-line">    assignment_id INTEGER PRIMARY KEY,</span><span class="code-line">    technician_id INTEGER DEFAULT NULL</span><span class="code-line">      REFERENCES technician(technician_id) ON DELETE SET NULL,</span><span class="code-line">    task TEXT NOT NULL</span><span class="code-line">);</span><span class="code-line"></span><span class="code-line">INSERT INTO technician VALUES (10, 'Mina');</span><span class="code-line">INSERT INTO assignment VALUES (1, 10, 'Inspect seal');</span><span class="code-line">DELETE FROM technician WHERE technician_id = 10;</span><span class="code-line">SELECT assignment_id, technician_id, task FROM assignment;</span></code></pre></div><p>The assignment remains and <code>technician_id</code> becomes NULL. If the column had been NOT NULL, this action would collide with another constraint. Likewise, a <code>SET DEFAULT 0</code> action fails unless parent key 0 exists (or the default is NULL and NULL is allowed).</p></section><section><h2>NO ACTION versus RESTRICT: timing can differ</h2><p>Both can prevent an invalid parent change, but RESTRICT is stricter about <em>when</em> the failure is raised. RESTRICT fires immediately when the parent key is touched, even if the foreign key itself is deferred. NO ACTION waits until the normal foreign-key check point—end of statement for an immediate constraint or COMMIT for a deferred one.</p><div class="callout"><strong>Why this matters</strong><p>A deferred NO ACTION relationship can temporarily be inconsistent inside a transaction and become valid before COMMIT. A RESTRICT action does not grant that temporary window for the parent operation it guards.</p></div></section><section><h2>Deferred constraints allow temporary inconsistency inside one transaction</h2><p>Foreign keys are immediate by default. An immediate violation must be resolved by the end of the statement. A foreign key declared <code>DEFERRABLE INITIALLY DEFERRED</code> may be violated temporarily while an explicit transaction is open, but COMMIT refuses to make the invalid state durable.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · child first, parent second, valid at COMMIT</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">PRAGMA foreign_keys = ON;</span><span class="code-line">DROP TABLE IF EXISTS deferred_note;</span><span class="code-line">DROP TABLE IF EXISTS deferred_device;</span><span class="code-line"></span><span class="code-line">CREATE TABLE deferred_device (</span><span class="code-line">    device_id INTEGER PRIMARY KEY,</span><span class="code-line">    code TEXT NOT NULL UNIQUE</span><span class="code-line">);</span><span class="code-line">CREATE TABLE deferred_note (</span><span class="code-line">    note_id INTEGER PRIMARY KEY,</span><span class="code-line">    device_id INTEGER NOT NULL,</span><span class="code-line">    text TEXT NOT NULL,</span><span class="code-line">    FOREIGN KEY (device_id)</span><span class="code-line">      REFERENCES deferred_device(device_id)</span><span class="code-line">      DEFERRABLE INITIALLY DEFERRED</span><span class="code-line">);</span><span class="code-line"></span><span class="code-line">BEGIN;</span><span class="code-line">INSERT INTO deferred_note(note_id, device_id, text)</span><span class="code-line">VALUES (1, 500, 'Imported child first');</span><span class="code-line"></span><span class="code-line">-- Temporarily inconsistent, but still inside the transaction.</span><span class="code-line">PRAGMA foreign_key_check;</span><span class="code-line"></span><span class="code-line">INSERT INTO deferred_device(device_id, code)</span><span class="code-line">VALUES (500, 'PUMP-500');</span><span class="code-line">COMMIT;</span><span class="code-line"></span><span class="code-line">PRAGMA foreign_key_check;</span></code></pre></div><p>The first insert is accepted only because the explicit transaction is open and the foreign key is deferred. After the parent row arrives, COMMIT succeeds. Without an explicit transaction, the implicit transaction ends with the statement, so a deferred constraint has no useful temporary window.</p></section><section><h2>If COMMIT fails, the transaction is still unresolved</h2><p>A failed COMMIT caused by a deferred foreign-key violation does not magically commit the valid subset. The transaction remains open. You can add the missing parent and try COMMIT again, or explicitly ROLLBACK.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · failed commit followed by explicit rollback</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">BEGIN;</span><span class="code-line">INSERT INTO deferred_note(note_id, device_id, text)</span><span class="code-line">VALUES (2, 999, 'No parent will arrive');</span><span class="code-line"></span><span class="code-line">-- This fails: FOREIGN KEY constraint failed.</span><span class="code-line">COMMIT;</span><span class="code-line"></span><span class="code-line">-- The transaction is still open. Choose one recovery path.</span><span class="code-line">ROLLBACK;</span><span class="code-line"></span><span class="code-line">SELECT count(*) AS note_2_exists</span><span class="code-line">FROM deferred_note</span><span class="code-line">WHERE note_id = 2;</span></code></pre></div><p>After ROLLBACK, the count is zero. Production code should treat COMMIT as an operation that can fail and should have a defined rollback/error path rather than assuming all errors occur during individual INSERT/UPDATE statements.</p></section><section><h2>PRAGMA defer_foreign_keys is a transaction-scoped override</h2><p>SQLite also provides <code>PRAGMA defer_foreign_keys=ON</code>, which temporarily defers all foreign-key constraints until the outer transaction completes. It resets at COMMIT or ROLLBACK. This can be useful in carefully designed migrations, but it is broader than declaring one relationship deferred in the schema.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · broad temporary deferral</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">BEGIN;</span><span class="code-line">PRAGMA defer_foreign_keys = ON;</span><span class="code-line">-- Carefully ordered migration work here.</span><span class="code-line">-- All FK checks are deferred to the transaction boundary.</span><span class="code-line">COMMIT;</span></code></pre></div><p>Prefer schema-declared deferral when the business workflow genuinely needs it. A broad PRAGMA during ordinary application work can hide ordering bugs until COMMIT and make failures harder to localize.</p></section><section><h2>Design exercise: choose the action from meaning</h2><table class="data-table"><thead><tr><th>Relationship</th><th>Question</th><th>Reasonable starting choice</th></tr></thead><tbody><tr><td>site → device</td><td>Can a site record disappear while its devices still exist?</td><td>Often <code>RESTRICT</code>/<code>NO ACTION</code>; deleting a site should require an explicit migration/retirement workflow.</td></tr><tr><td>device → transient sample</td><td>Are samples meaningless without the device?</td><td>Often <code>ON DELETE CASCADE</code> if policy permits deletion.</td></tr><tr><td>technician → assignment</td><td>Can an assignment survive employee removal as unassigned work?</td><td>Possibly <code>SET NULL</code> if nullable and history requirements agree.</td></tr><tr><td>status_code → note</td><td>Should deleting a code silently rewrite notes to a generic code?</td><td>Usually restrict; <code>SET DEFAULT</code> only if a real sentinel parent row is deliberate.</td></tr><tr><td>natural parent code rename → child code</td><td>Should children follow a stable-key update?</td><td><code>ON UPDATE CASCADE</code> can be reasonable, though stable surrogate parent keys reduce this need.</td></tr></tbody></table><p>There is no universal “best” action. Document ownership, audit retention, optionality, and deletion semantics before writing the clause.</p><div class="checkpoint"><h3>Lifecycle checkpoint</h3><p>Predict the resulting database state.</p><ol><li>Why can <code>ON DELETE SET NULL</code> fail even though SET NULL is a valid foreign-key action?</li><li>What is the default action when no ON DELETE/UPDATE action is specified?</li><li>Why is RESTRICT observably different from deferred NO ACTION?</li><li>Can a transaction COMMIT while a deferred foreign-key violation still exists?</li><li>After a deferred COMMIT failure, what should application code do?</li></ol><details class="answer-toggle"><summary>Review the answers</summary><p>SET NULL conflicts with NOT NULL if the child key is mandatory. The default is NO ACTION. RESTRICT rejects the guarded parent change immediately, whereas deferred NO ACTION can wait until COMMIT. COMMIT cannot succeed with unresolved deferred violations. The application must repair the transaction and retry commit or roll it back explicitly.</p></details></div></section><section><h2>Summary and bridge</h2><p>Foreign-key actions are lifecycle semantics: protect, clear, default, propagate, or defer. Deferred constraints give one transaction a controlled temporary inconsistency, but durable state must still satisfy the relationship. Lesson 4 zooms into another failure dimension: when a UNIQUE, NOT NULL, CHECK, or PRIMARY KEY conflict happens, how much of the current statement or transaction does SQLite preserve?</p><h3>Authoritative references</h3><ul><li><a href="https://sqlite.org/foreignkeys.html" rel="noopener" target="_blank">SQLite — Foreign Key Support: Deferred Constraints and Actions</a>.</li><li><a href="https://sqlite.org/pragma.html#pragma_defer_foreign_keys" rel="noopener" target="_blank">SQLite — PRAGMA defer_foreign_keys</a>.</li><li><a href="https://sqlite.org/lang_transaction.html" rel="noopener" target="_blank">SQLite — Transactions</a>.</li><li><a href="https://sqlite.org/lang_createtable.html" rel="noopener" target="_blank">SQLite — CREATE TABLE</a>.</li></ul></section></div>
+<nav aria-label="Lesson navigation" class="lesson-nav"><a href="Lesson2.html"><small>Previous lesson</small><strong>Foreign Keys and PRAGMA foreign_keys</strong></a><a class="next" href="Lesson4.html"><small>Next lesson</small><strong>ON CONFLICT Algorithms and Constraint-Failure Semantics</strong></a></nav>
+</article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>If these tutorials save you time, a small donation supports new lessons, technical review, diagrams, examples, and long-term maintenance.</p>
+<div aria-label="Author links" class="social-row">
+<a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head"><span>ETH</span><small>Ethereum / ERC-20 only</small></div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
+<button class="button secondary compact" data-copy-donation="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>
+          Copy address
+        </button>
+<p>Send only assets compatible with the Ethereum/ERC-20 network. Do not send TRC-20/TRON assets.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div><strong>Big Data Academy</strong><p>A free, prerequisite-aware path from SQL foundations to distributed data systems.</p></div>
+<div><a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a></div>
+<small>Created and maintained by <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> · © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>

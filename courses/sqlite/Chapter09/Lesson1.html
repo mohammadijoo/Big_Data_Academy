@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Understand how SQLite coordinates multiple connections to one database file, why rollback mode permits many readers but only one writer, and how to diagnose a controlled lock conflict before changing settings." name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>Readers, Writers, Locks, and Why SQLite Has One Writer at a Time | SQLite | Big Data Academy</title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+<script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+        chtml: { scale: 1, matchFontHeight: false },
+      };
+    </script>
+<script defer="" id="MathJax-script" onerror="this.onerror=null;this.src='https://unpkg.com/mathjax@3.2.2/es5/tex-chtml.js';" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
+<span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
+<span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
+</a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a>
+<a class="is-active" href="../../../index.html#courses">Courses</a>
+<a href="../../../index.html#method">Method</a>
+<a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg></button>
+<button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu=""><a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a></nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">SQLITE</span><div><small>Course 03</small><strong>SQLite</strong></div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">×</button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 100 lessons..." type="search"/></label>
+<nav aria-label="SQLite curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter">
+<summary><span>01</span>SQLite Foundations: Embedded Databases, Files, and the First Lab</summary><div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What SQLite Is—and What Makes an Embedded Database Different</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Install SQLite and Verify the Toolchain on Windows, Linux, and macOS</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>Create, Open, Inspect, Close, and Reopen Your First Database File</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>A First Mental Model of Connections, Statements, Transactions, and Persistence</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build the Course Lab Database and Adopt Safe Working Habits</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>02</span>Mastering the sqlite3 Command-Line Shell</summary><div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>SQL Statements Versus Dot-Commands, Help, and Shell State</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Readable Output: .mode, .headers, .width, .nullvalue, and Current CLI Formatting</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>Run SQL Scripts with .read, Redirection, Batch Mode, and Exit Status</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Parameters, Safe Values, and the CLI .parameter Facility</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Import, Export, .once/.output, CSV, and Reproducible Data Exchange</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>03</span>SQLite Schema Objects, ROWID, Keys, and Table Design</summary><div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>CREATE TABLE in SQLite: Schema, sqlite_schema, and Introspection</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>ROWID Tables and INTEGER PRIMARY KEY from First Principles</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>WITHOUT ROWID Tables and Composite Primary Keys</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>Temporary Tables, In-Memory Databases, and the temp Schema</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>Design a SQLite Schema from Existing Requirements</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>04</span>SQLite’s Type System, Affinity, STRICT Tables, and Value Representation</summary><div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>Storage Classes and Dynamic Typing: The Type Belongs to the Value</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>Declared Types and Type Affinity Rules</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>STRICT Tables: Rigid Type Enforcement Where You Want It</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Dates, Times, Booleans, Money, UUIDs, and Other Logical Types</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>NULL, BLOBs, Text Encoding, Collations, and Cross-Language Boundaries</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>05</span>Constraints, Foreign Keys, Conflict Handling, and Integrity</summary><div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>NOT NULL, UNIQUE, PRIMARY KEY, CHECK, and DEFAULT</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Foreign Keys and PRAGMA foreign_keys</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>ON DELETE/UPDATE Actions, Deferred Constraints, and Transaction Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>ON CONFLICT Algorithms and Constraint-Failure Semantics</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Generated Columns, Integrity Checks, and Enforcing Cross-Column Rules</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>06</span>SQLite Data Modification: INSERT, UPDATE, DELETE, UPSERT, and RETURNING</summary><div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>INSERT Forms, Defaults, Multi-Row Inserts, and Generated Keys</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>UPDATE Correctly: Predicates, Expressions, and Avoiding Accidental Wide Changes</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>DELETE, Cascades, Soft Delete, and Data Lifecycle</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>UPSERT with ON CONFLICT DO NOTHING / DO UPDATE</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>RETURNING, changes(), total_changes(), and Observable Writes</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>07</span>SQLite Expressions, Functions, CTEs, Window Functions, and Dialect Features</summary><div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>SQLite Operators, Comparison Rules, LIKE/GLOB, and Expression Semantics</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Built-In Scalar, Aggregate, and Core Utility Functions</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Date and Time Functions in SQLite</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>WITH CTEs and Recursive Queries</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Window Functions and Analytic Queries in SQLite</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>08</span>Transactions, Atomicity, Journaling, and Savepoints</summary><div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>Autocommit, Implicit Transactions, and Explicit BEGIN/COMMIT/ROLLBACK</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>DEFERRED, IMMEDIATE, and EXCLUSIVE Transactions</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Rollback Journals and Atomic Commit from the Pager’s Point of View</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>SAVEPOINT, ROLLBACK TO, RELEASE, and Nested Units of Work</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Transaction Design, Idempotency, and Failure Injection</a>
+</div></details>
+<details class="sidebar-chapter" open="">
+<summary><span>09</span>Concurrency, Locking, WAL Mode, Busy Handling, and Checkpoints</summary><div>
+<a class="sidebar-lesson is-current" href="Lesson1.html"><span>01</span>Readers, Writers, Locks, and Why SQLite Has One Writer at a Time<i>Current</i></a>
+<a class="sidebar-lesson" href="Lesson2.html"><span>02</span>SQLITE_BUSY, busy_timeout, Retries, and Short Transactions</a>
+<a class="sidebar-lesson" href="Lesson3.html"><span>03</span>Write-Ahead Logging: How WAL Changes Read/Write Concurrency</a>
+<a class="sidebar-lesson" href="Lesson4.html"><span>04</span>WAL Checkpoints, Autocheckpointing, Long Readers, and WAL Growth</a>
+<a class="sidebar-lesson" href="Lesson5.html"><span>05</span>Concurrency Reliability, WAL-Reset History, and Production Patterns</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>10</span>Indexes and the SQLite Query Planner</summary><div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>How SQLite B-Tree Indexes Work and Why Indexes Trade Reads for Writes</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Composite Indexes, Leftmost Prefixes, Sorting, and Covering Indexes</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Partial Indexes and Indexes on Expressions</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>EXPLAIN QUERY PLAN, EXPLAIN, SCAN/SEARCH, and Planner Diagnostics</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>ANALYZE, sqlite_stat Tables, PRAGMA optimize, and Planner Statistics</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>11</span>Database Files, Pages, B-Trees, Freelist, and Storage Internals</summary><div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>The SQLite Database File: Header, Page Size, Schema Cookie, and File Format</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Table B-Trees, Index B-Trees, Interior/Leaf Pages, and Cells</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Payload, Overflow Pages, Large Rows, and BLOB/Text Storage</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>Freelist, Deleted Space, auto_vacuum, VACUUM, and File Shrinkage</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Cache, Memory Mapping, Temporary Storage, and the Pager Layer</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>12</span>Views, Triggers, ATTACH, Multiple Databases, and Schema-Level Automation</summary><div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>Views and Readable Query Interfaces</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Triggers: BEFORE, AFTER, INSTEAD OF, OLD/NEW, and Side Effects</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>ATTACH DATABASE, DETACH, and Cross-Database Queries</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>URI Filenames, Read-Only/Immutable Opens, Shared Cache Caveats, and Connection Options</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Application IDs, user_version, schema_version, and Database-as-File-Format Design</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>13</span>JSON and Semi-Structured Data in SQLite</summary><div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>When JSON Belongs in SQLite—and When Columns/Tables Are Better</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>JSON Paths, json_extract, -&gt; / -&gt;&gt;, and Value Construction</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>json_each, json_tree, and Querying JSON Arrays/Objects Relationally</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>JSONB, Internal Representation, and Performance Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Indexing JSON Paths, Generated Columns, Validation, and Hybrid Designs</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>14</span>Full-Text Search, R-Tree, Virtual Tables, and Extensions</summary><div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Virtual Tables and the Extension Architecture</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>FTS5 Fundamentals: Full-Text Tables, MATCH, and Tokenization</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>FTS5 Ranking, Highlighting, External Content, and Maintenance</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>R-Tree and Geospatial/Multidimensional Range Search</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Loadable Extensions, Built-In Extensions, and Supply-Chain Safety</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>15</span>Embedding SQLite in Applications</summary><div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Application Integration Architecture: Drivers, Connections, Prepared Statements, and Binding</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Python sqlite3: A Beginner-to-Production Workflow</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>Node.js and JavaScript: Built-In/Driver Options and Async Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>.NET and Java: ADO.NET/Provider and JDBC Patterns</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>The SQLite C API Mental Model and What Higher-Level Drivers Wrap</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>16</span>Backup, Export, Recovery, Integrity, and Disaster Preparedness</summary><div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Why Copying a Live Database File Can Be Unsafe</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>.backup, Online Backup API, and VACUUM INTO</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>.dump, SQL Logical Exports, and Migration/Interchange Uses</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>integrity_check, quick_check, foreign_key_check, and Corruption Diagnosis</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>.recover, Recovery Limitations, Restore Drills, and a Backup Policy</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>17</span>Schema Evolution, Migrations, Testing, and Release Compatibility</summary><div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>ALTER TABLE Capabilities and SQLite’s Schema-Rewrite Model</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Versioned Migrations with PRAGMA user_version</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Safe Table-Rebuild Migrations and Foreign-Key Handling</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Database Tests: Schema, Constraints, Queries, Transactions, and Concurrency</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Compatibility Testing Across SQLite Versions and Build Options</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>18</span>Performance Engineering, PRAGMAs, Maintenance, and Benchmarking</summary><div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Measure First: Timers, Query Plans, Dataset Shape, and Repeatable Benchmarks</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Transaction Batching and Write Throughput</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>synchronous, journal_mode, cache_size, temp_store, mmap_size, and Other PRAGMAs</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>VACUUM, ANALYZE, PRAGMA optimize, auto_vacuum, and Routine Maintenance</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Performance Anti-Patterns and When SQLite Has Reached the Wrong Workload</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>19</span>Security, Deployment, Reliability Boundaries, and When Not to Use SQLite</summary><div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>SQL Injection, Prepared Statements, and Trust Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>File Permissions, Process Identity, Secrets, and Encryption Reality</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Defensive Configuration, trusted_schema, Extension Loading, and Untrusted Databases</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>Deployment on Local Disks, Containers, Network Filesystems, Mobile, and Edge</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>When SQLite Is the Right Database—and When to Move to PostgreSQL/MySQL/DuckDB/etc.</a>
+</div></details>
+<details class="sidebar-chapter">
+<summary><span>20</span>Production Capstone: Build and Operate a Complete SQLite Application Database</summary><div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Capstone Requirements, Workload, Data Model, and SQLite Fit Review</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Implement the Schema, Constraints, Indexes, Views, and Migrations</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Implement Application Access, Transactions, JSON/Search Features, and Concurrency Handling</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Test, Benchmark, Back Up, Restore, and Secure the Database</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Operate, Troubleshoot, Document, and Defend the Final Architecture</a>
+</div></details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar"><button data-sidebar-open="" type="button"><span>Course navigation</span><span>Chapter 09 · Lesson 01</span></button></div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs"><a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">SQLite</a><span>/</span><span>Chapter 09 · Lesson 01</span></nav>
+<header class="lesson-header">
+<p class="eyebrow">Chapter 09 · Concurrency, Locking, WAL Mode, Busy Handling, and Checkpoints</p>
+<h1>Readers, Writers, Locks, and Why SQLite Has One Writer at a Time</h1>
+<p>Understand how SQLite coordinates multiple connections to one database file, why rollback mode permits many readers but only one writer, and how to diagnose a controlled lock conflict before changing settings.</p>
+<div class="lesson-meta"><span>Beginner</span><span>105–125 minutes</span><span>Two-connection rollback-lock lab</span><span>SQLite 3.53.4 baseline</span><span>Local filesystem required</span><span>Last reviewed: August 2026</span></div>
+</header>
+<nav aria-label="On this page" class="lesson-toc"><strong>On this page</strong><ol data-generated-toc=""></ol></nav>
+<div class="lesson-content">
+<section><h2>Learning outcomes</h2><p>Chapter 8 gave one connection a correct transaction model. Concurrency begins when <em>another</em> connection opens the same database file while the first one is still reading or writing. SQLite must preserve isolation and atomicity across those independent actors, and it does so through the pager, journal/WAL machinery, and operating-system file locks. This lesson starts in the default rollback-journal model because its lock transitions make the single-writer rule easiest to see.</p><div class="objectives"><div class="objective"><span>01</span><p>Distinguish connection, thread, process, and host/filesystem concurrency.</p></div><div class="objective"><span>02</span><p>Explain the high-level SHARED, RESERVED, PENDING, and EXCLUSIVE lock states used by rollback mode.</p></div><div class="objective"><span>03</span><p>Explain why many readers can coexist but only one write transaction can own writer capability for one database file.</p></div><div class="objective"><span>04</span><p>Reproduce a controlled two-connection lock conflict without touching valuable data.</p></div><div class="objective"><span>05</span><p>Read a lock-conflict timeline before reaching for timeouts or WAL.</p></div><div class="objective"><span>06</span><p>Use a diagnosis checklist that finds transaction scope and ownership before tuning.</p></div></div></section>
+<section><h2>One file, two actors: what exactly is concurrent?</h2><p>Two Python connections in one process, two browser threads, two command-line shells, and two unrelated programs can all reach the same SQLite file. They are not the same operational situation, even though the pager ultimately has to coordinate compatible file access.</p><table class="data-table"><thead><tr><th>Concurrency layer</th><th>What it means</th><th>Question to ask first</th></tr></thead><tbody><tr><td>Connection concurrency</td><td>Two SQLite database handles are open on the same file.</td><td>Are their transactions overlapping, and which one is writing?</td></tr><tr><td>Thread concurrency</td><td>Two threads may call SQLite APIs concurrently.</td><td>Does the driver permit a connection to cross threads, and what SQLite threading mode was built/configured?</td></tr><tr><td>Process concurrency</td><td>Different OS processes open the same path.</td><td>Do both see the same physical file and functioning OS locks?</td></tr><tr><td>Host/filesystem concurrency</td><td>Different machines reach a shared path.</td><td>Does the filesystem provide the locking/shared-memory guarantees required by the chosen journal mode?</td></tr></tbody></table><p>A common debugging mistake is to collapse all four into “SQLite is locked.” Name the layer first. A database can be perfectly healthy while an application violates its own driver threading rules, or while two valid processes simply contend for the one writer.</p></section>
+<section><h2>The pager is the concurrency coordinator</h2><p>SQLite’s <strong>pager</strong> is the layer that treats the database as fixed-size pages and coordinates caching, transactions, journal recovery, and file locking. In rollback-journal mode, developers usually need only a high-level picture of four lock states. These are database-file lock states—not row locks.</p><table class="data-table"><thead><tr><th>Lock state</th><th>High-level meaning</th><th>What it permits</th></tr></thead><tbody><tr><td>SHARED</td><td>A reader is using a consistent database snapshot.</td><td>Multiple SHARED readers may coexist.</td></tr><tr><td>RESERVED</td><td>One connection has declared/obtained writer intent while readers may still exist.</td><td>Only one RESERVED holder for the file; existing/new readers can still obtain SHARED locks.</td></tr><tr><td>PENDING</td><td>A writer is waiting to reach the final exclusive phase and prevents new readers from arriving.</td><td>Existing readers may finish; new SHARED locks are blocked.</td></tr><tr><td>EXCLUSIVE</td><td>The writer has exclusive file access for the phase that requires it.</td><td>No other concurrent file access that conflicts with the exclusive operation.</td></tr></tbody></table><div class="callout"><strong>Do not build application logic around lock-state trivia</strong><p>The pager and VFS own these details. Learn the states to explain observed behavior, not to write code that polls OS locks or manipulates SQLite companion files manually.</p></div></section>
+<section><h2>Why “many readers, one writer” is a real engine rule</h2><p>Many readers are compatible because they can all observe a stable committed database state. Two independent writers are harder: both could attempt to modify the same pages, journal state, schema, or freelist. SQLite serializes write transactions for a database file rather than exposing row-level write locks. In rollback mode, a writer can begin while readers still exist, but it must eventually reach a commit phase compatible with those readers finishing.</p><pre class="diagram">Connection A                         Connection B
+------------                         ------------
+BEGIN; SELECT ...
+SHARED lock  ----------------------&gt; reader active
+
+                                    BEGIN IMMEDIATE;
+                                    RESERVED / writer intent
+                                    UPDATE ... (uncommitted)
+
+A still reading  ------------------&gt; writer may not finish exclusive commit yet
+END A read                           |
+                                    v
+                                    commit can complete
+
+Rule: readers may overlap portions of a write transaction,
+      but there is still only one writer for the database file.</pre></section>
+<section><h2>Rollback mode is not “the whole database is always exclusively locked”</h2><p>The phrase “SQLite locks the whole database” is too crude to be useful. The lock is file-oriented, but rollback-mode version 3 deliberately delays the most exclusive phase so readers can coexist with a writer for part of the write transaction. The important application-level rule is narrower: only one connection can own the write transaction for a database file at a time, and commit may need readers to clear.</p><div class="callout"><strong>Chapter 8 connection</strong><p>BEGIN IMMEDIATE is useful because it attempts to acquire write capability at the beginning. A failure there tells you about writer contention before the application performs the rest of its transactional work.</p></div></section>
+<section><h2>Controlled two-shell experiment</h2><p>Use a disposable directory and one database file. The two shell windows must open the <em>same resolved path</em>. Set zero wait time so the conflict is visible immediately.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · one-time setup in shell A</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">sqlite3 concurrency-lab.db</span><span class="code-line">PRAGMA journal_mode=DELETE;</span><span class="code-line">CREATE TABLE counter(id INTEGER PRIMARY KEY, value INTEGER NOT NULL);</span><span class="code-line">INSERT INTO counter(id,value) VALUES(1,0);</span><span class="code-line">.timeout 0</span></code></pre></div>
+<p>Leave shell A open and start an explicit writer:</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · shell A — hold the write transaction</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">BEGIN IMMEDIATE;</span><span class="code-line">UPDATE counter SET value=value+1 WHERE id=1;</span><span class="code-line">SELECT value FROM counter WHERE id=1;</span><span class="code-line">-- A sees 1 inside its uncommitted transaction.</span><span class="code-line">-- Do not COMMIT yet.</span></code></pre></div>
+<p>Open shell B on the same file:</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · shell B — second writer collides</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">sqlite3 concurrency-lab.db</span><span class="code-line">.timeout 0</span><span class="code-line">SELECT value FROM counter WHERE id=1;</span><span class="code-line">-- expected in rollback mode while A is uncommitted: 0</span><span class="code-line"></span><span class="code-line">BEGIN IMMEDIATE;</span><span class="code-line">-- expected: database is locked / SQLITE_BUSY</span></code></pre></div>
+<p>Now execute <code>COMMIT;</code> in A and retry <code>BEGIN IMMEDIATE;</code> in B. B should now acquire the writer position. The database was not corrupt and no “unlock command” was missing; B encountered ordinary contention.</p></section>
+<section><h2>A second rollback-mode timeline: a reader can delay commit</h2><p>To expose the reader/writer relationship, let A hold an explicit read transaction while B writes. B can obtain writer intent and modify its private transactional state, but commit may need to wait/fail while A keeps a conflicting read lock.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · shell A — long reader</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">BEGIN;</span><span class="code-line">SELECT value FROM counter WHERE id=1;</span><span class="code-line">-- Keep this transaction open.</span></code></pre></div><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · shell B — write and attempt commit</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">.timeout 0</span><span class="code-line">BEGIN IMMEDIATE;</span><span class="code-line">UPDATE counter SET value=value+1 WHERE id=1;</span><span class="code-line">COMMIT;</span><span class="code-line">-- With A still holding the read transaction, COMMIT can report SQLITE_BUSY.</span></code></pre></div><p>End A with <code>COMMIT;</code> or <code>ROLLBACK;</code>, then let B retry its commit if the transaction is still active. This is why an interactive shell left sitting after <code>BEGIN</code> can be a real concurrency participant.</p></section>
+<section><h2>Network filesystems are not “just another path”</h2><p>SQLite relies on VFS/operating-system locking behaving correctly. The official locking documentation warns that network filesystem locking has historically been unreliable on some NFS and Windows-network configurations. WAL has an even stricter same-host shared-memory requirement that Lesson 3 will cover. Do not diagnose a shared-network deployment as if it were two local processes until you have verified the filesystem semantics SQLite requires.</p></section>
+<section><h2>Diagnose before tuning</h2><p>When an application reports “database is locked,” capture state before adding a giant timeout or changing journal mode.</p><table class="data-table"><thead><tr><th>Question</th><th>Evidence to collect</th><th>Why it matters</th></tr></thead><tbody><tr><td>Which physical database file?</td><td>Absolute/resolved path from each process; <code>.databases</code>.</td><td>A typo can create a second file; aliases/network mounts can change locking assumptions.</td></tr><tr><td>Which connection owns a transaction?</td><td>BEGIN/COMMIT/ROLLBACK logs; driver transaction state if available.</td><td>Long or forgotten transactions are the most actionable cause.</td></tr><tr><td>Is the blocker reading or writing?</td><td>Operation timeline and journal mode.</td><td>Rollback readers can delay writer commit; writers conflict with writers in all modes.</td></tr><tr><td>How long is the transaction open?</td><td>Monotonic timestamps around BEGIN and COMMIT.</td><td>User think-time, HTTP calls, sleeps, or large loops often belong outside.</td></tr><tr><td>What journal mode is active?</td><td><code>PRAGMA journal_mode;</code>.</td><td>Rollback and WAL have different reader/writer interactions.</td></tr><tr><td>What error code is it really?</td><td>Primary/extended result code from driver.</td><td>SQLITE_BUSY and SQLITE_LOCKED have different meanings.</td></tr><tr><td>Where is the file stored?</td><td>Local disk, container volume, NFS/SMB/etc.</td><td>Filesystem guarantees are part of correctness, not just performance.</td></tr></tbody></table></section>
+<section><h2>Reproducible lab and cleanup</h2><p>Repeat the two-shell writer conflict three times: first with a zero timeout, then after making the first transaction shorter, and finally after moving any artificial sleep/user interaction outside the transaction. Record <em>who</em> held the transaction and for how long. Do not leave a shell sitting inside BEGIN after the lab.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · clean end state</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">-- In both shells, ensure no explicit transaction remains.</span><span class="code-line">ROLLBACK;  -- harmless only if a transaction is active; otherwise expect an error</span><span class="code-line">.quit</span><span class="code-line"></span><span class="code-line">-- Delete concurrency-lab.db only after both processes have closed it.</span></code></pre></div><div class="checkpoint"><h3>Locking checkpoint</h3><p>Reason from the timeline rather than memorizing an error string.</p><ol><li>Can two separate connections read one rollback-mode SQLite database at the same time?</li><li>Can two separate connections own write transactions on the same database file at the same time?</li><li>Why can a writer exist while a rollback-mode reader is still active?</li><li>What does BEGIN IMMEDIATE reveal earlier than a deferred write?</li><li>Why is a network-mounted path a correctness question, not merely a speed question?</li><li>Name three things to collect before changing a busy timeout.</li></ol><details class="answer-toggle"><summary>Review the answers</summary><p>Multiple SHARED readers can coexist. SQLite serializes writers for one database file. Rollback mode delays the final exclusive phase, so a writer can hold writer intent and private changes while readers finish. BEGIN IMMEDIATE attempts writer acquisition at the start. Network filesystems must implement locking correctly, and WAL additionally requires same-host shared memory. Useful evidence includes resolved file paths, transaction start/end times, journal mode, the actual SQLite result code, and which connection is reading or writing.</p></details></div></section>
+<section><h2>Production judgment and bridge</h2><p>The one-writer rule is not a defect to “turn off.” It is part of SQLite’s concurrency architecture. Your job is to keep write transactions small, identify contention precisely, choose the appropriate journal mode, and decide whether the workload still fits a single-file embedded database. Lesson 2 turns the observed writer collision into an explicit busy-wait and retry policy.</p><h3>Authoritative references</h3><ul><li><a href="https://sqlite.org/lockingv3.html" rel="noopener" target="_blank">SQLite — File Locking And Concurrency In SQLite Version 3</a>.</li><li><a href="https://sqlite.org/lang_transaction.html" rel="noopener" target="_blank">SQLite — Transaction</a>.</li><li><a href="https://sqlite.org/rescode.html" rel="noopener" target="_blank">SQLite — Result and Error Codes</a>.</li><li><a href="https://sqlite.org/howtocorrupt.html" rel="noopener" target="_blank">SQLite — How To Corrupt An SQLite Database File</a>.</li></ul></section>
+</div>
+<nav aria-label="Lesson navigation" class="lesson-nav"><a href="../Chapter08/Lesson5.html"><small>Previous lesson</small><strong>Transaction Design, Idempotency, and Failure Injection</strong></a><a class="next" href="Lesson2.html"><small>Next lesson</small><strong>SQLITE_BUSY, busy_timeout, Retries, and Short Transactions</strong></a></nav>
+</article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>If these tutorials save you time, a small donation supports new lessons, technical review, diagrams, examples, and long-term maintenance.</p>
+<div aria-label="Author links" class="social-row">
+<a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head"><span>ETH</span><small>Ethereum / ERC-20 only</small></div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
+<button class="button secondary compact" data-copy-donation="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>
+          Copy address
+        </button>
+<p>Send only assets compatible with the Ethereum/ERC-20 network. Do not send TRC-20/TRON assets.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div><strong>Big Data Academy</strong><p>A free, prerequisite-aware path from SQL foundations to distributed data systems.</p></div>
+<div><a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a></div>
+<small>Created and maintained by <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> · © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>
