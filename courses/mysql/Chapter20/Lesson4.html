@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Plan rolling upgrades for asynchronous replication and Group Replication/InnoDB Cluster with supported version combinations, GTID correctness, drain/rejoin gates, and mixed-version observation." name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>Rolling Upgrade Considerations for Replication and High-Availability Topologies | MySQL | Big Data Academy</title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+<script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+        chtml: { scale: 1, matchFontHeight: false },
+      };
+    </script>
+<script defer="" id="MathJax-script" onerror="this.onerror=null;this.src='https://unpkg.com/mathjax@3.2.2/es5/tex-chtml.js';" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
+<span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
+<span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
+</a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a>
+<a class="is-active" href="../../../index.html#courses">Courses</a>
+<a href="../../../index.html#method">Method</a>
+<a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg></button>
+<button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu=""><a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a></nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">MYSQL</span><div><small>Course 04</small><strong>MySQL</strong></div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">×</button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 110 lessons..." type="search"/></label>
+<nav aria-label="MySQL curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter"><summary><span>01</span>MySQL Platform Foundations, Editions, Releases, and Lab Setup</summary><div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What MySQL Is: Server Architecture, Client/Server Boundaries, and Common Workloads</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Community vs Enterprise Capabilities, Licensing Awareness, and Deployment Choices</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>LTS vs Innovation Releases: Version Selection, Support Windows, and Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Install MySQL on Windows, Linux, Containers, and Verify the Toolchain</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build a Reproducible Course Lab with Sample Data, Accounts, and Safety Conventions</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>02</span>Server Architecture, Processes, Files, Connections, and Configuration</summary><div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>mysqld Startup, Data Directory, Configuration Files, and Option Precedence</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Connection Lifecycle, Threads, Sessions, Timeouts, and Resource Consumption</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>System Variables, Status Variables, Dynamic Configuration, and SET PERSIST</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Character Sets, Collations, Time Zones, Locales, and Server Defaults</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Configuration Validation, Startup Failures, Error Logs, and a Baseline Server Profile</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>03</span>Schemas, Tables, Data Types, Keys, Constraints, and SQL Modes</summary><div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>Databases and Schemas in MySQL: Namespaces, Metadata, and Object Ownership</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Numeric, String, Temporal, JSON, Spatial, and Binary Data Types</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK, DEFAULT, and Generated Columns</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>AUTO_INCREMENT, Surrogate vs Natural Keys, and Identifier Design</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>SQL Modes, Strictness, Implicit Conversion, Truncation, and Data-Quality Boundaries</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>04</span>Core SQL Querying: Filtering, Joins, Subqueries, CTEs, and Set Operations</summary><div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>SELECT Execution Basics, Projection, Predicates, NULL Semantics, and Ordering</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>INNER, OUTER, CROSS, and Self Joins with Cardinality Reasoning</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>Scalar, Correlated, EXISTS, IN, and Derived-Table Subqueries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Common Table Expressions, Recursive CTEs, and Hierarchical Queries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>UNION, INTERSECT, EXCEPT, Query Composition, and Readability Patterns</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>05</span>Advanced SQL: Aggregation, Window Functions, JSON, and Analytical Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>GROUP BY, HAVING, Functional Dependence, ROLLUP, and Aggregation Design</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Window Frames, Ranking, Running Totals, Gaps-and-Islands, and Top-N per Group</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>JSON Documents, Paths, JSON_TABLE, Indexable JSON Patterns, and Validation</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Date/Time, String, Regular Expression, Numeric, and Conditional Functions</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Reporting Queries, Cohort-Style Analysis, Pivots by Conditional Aggregation, and Reusable Views</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>06</span>Data Modification, Transactions, Locking, and Concurrency Semantics</summary><div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>INSERT, Multi-Row Writes, INSERT ... SELECT, and Generated Values</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>UPDATE, DELETE, Multi-Table DML, and Guardrails Against Wide Changes</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Transactions, Autocommit, COMMIT, ROLLBACK, SAVEPOINT, and Error Handling</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Isolation Levels, Consistent Reads, Locking Reads, MVCC, and Anomalies</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Deadlocks, Lock Waits, Retry Design, Idempotency, and Concurrency Testing</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>07</span>InnoDB Storage Architecture and Transaction Internals</summary><div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>InnoDB Tablespaces, Pages, Extents, Segments, and Row Formats</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Clustered Indexes, Secondary Indexes, Hidden Columns, and Record Layout</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Buffer Pool Architecture, Change Buffer, Adaptive Hashing, and Caching Behavior</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Redo Logs, Undo Logs, Doublewrite, Checkpoints, and Crash Recovery</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Purge, History List, Long Transactions, MVCC Cleanup, and Storage Health</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>08</span>Index Engineering and Access Path Design</summary><div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>B-Tree Index Structure, Selectivity, Cardinality, and Leftmost-Prefix Rules</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>Composite Index Ordering, Covering Indexes, Prefix Indexes, and Redundant Indexes</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Functional, Multi-Valued, FULLTEXT, and Spatial Index Use Cases</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>Index Condition Pushdown, Loose/Tight Index Scans, and Skip-Scan Concepts</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Designing an Index Portfolio from Workload Evidence and Write-Cost Constraints</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>09</span>Optimizer, EXPLAIN, Statistics, and Query Plan Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>How the MySQL Optimizer Builds Access Paths, Join Orders, and Cost Estimates</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>EXPLAIN, EXPLAIN ANALYZE, FORMAT=TREE/JSON, and Iterator Timing</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Histograms, Persistent Statistics, Cardinality Errors, and ANALYZE TABLE</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Join Algorithms, Semijoin/Antijoin Transformations, Derived Tables, and Materialization</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Plan Regressions, Optimizer Hints, Invisible Indexes, and Evidence-Driven Tuning</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>10</span>Stored Programs, Views, Triggers, Events, and Server-Side Logic</summary><div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Views, Updatability, SQL SECURITY, Definer Context, and Dependency Management</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Stored Procedures, Functions, Parameters, Condition Handlers, and Diagnostics</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Triggers, OLD/NEW Rows, Ordering, Auditing Uses, and Hidden Coupling Risks</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Event Scheduler, Recurring Maintenance Jobs, Failure Handling, and Observability</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>When Server-Side Logic Helps—and When Application Logic Is the Better Boundary</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>11</span>Users, Roles, Authentication, Authorization, and Least Privilege</summary><div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Accounts, Host Matching, Authentication Plugins, Password Policy, and Account Lifecycle</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Privileges, Roles, DEFAULT ROLE, Dynamic Privileges, and Delegated Administration</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Object-Level vs Administrative Privilege Design and Separation of Duties</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>PROXY, DEFINER, SQL SECURITY, Stored Objects, and Privilege-Escalation Risks</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Design and Audit a Least-Privilege Access Model for Applications and Operators</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>12</span>Encryption, TLS, Secrets, Auditing, and Security Hardening</summary><div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>TLS for Client Connections, Certificate Validation, and Secure Transport Enforcement</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Data-at-Rest Encryption Concepts, Key Management Boundaries, and Backup Encryption</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Secrets Handling for Applications, Option Files, Environment Variables, and Rotation</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>Audit Logging Options, General/Slow Logs, Privacy, and Forensic Considerations</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Hardening Checklist: Network Exposure, Local Files, Plugins, Accounts, and Patch Discipline</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>13</span>Backup, Restore, Binary Logs, and Point-in-Time Recovery</summary><div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>Logical vs Physical Backup: mysqldump, MySQL Shell, Snapshots, and Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>Consistent Backups with Transactions, Locks, Replication Coordinates, and Large Datasets</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>Binary Log Formats, GTIDs, Retention, and Recovery Prerequisites</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Point-in-Time Recovery from Full Backup plus Binary Logs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Restore Testing, RPO/RTO Measurement, Corruption Drills, and Backup Automation</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>14</span>Asynchronous Replication, GTIDs, Topologies, and Operational Safety</summary><div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Source/Replica Architecture, Binary Log Flow, Relay Logs, and Replication Threads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>GTID-Based Replication, Auto-Positioning, Failover Readiness, and Errant Transactions</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Statement, Row, and Mixed Logging Semantics with Determinism Risks</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Replication Filters, Delayed Replicas, Read Scaling, and Reporting Workloads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Lag Diagnosis, Broken Replication, Data Drift, Re-Synchronization, and Promotion Runbooks</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>15</span>Group Replication, InnoDB Cluster, Router, and High Availability</summary><div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Consensus-Oriented Group Replication Concepts, Membership, Quorum, and Failure Modes</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Single-Primary vs Multi-Primary Modes, Conflict Detection, and Workload Constraints</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>MySQL Shell AdminAPI, InnoDB Cluster Lifecycle, Recovery, and Rejoin Operations</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>MySQL Router, Connection Routing, Read/Write Splitting, and Application Failover</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Failure Injection, Split-Brain Avoidance, Maintenance, Upgrades, and HA Acceptance Tests</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>16</span>Performance Schema, sys Schema, Logs, Metrics, and Observability</summary><div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Performance Schema Instruments, Consumers, Events, and Measurement Overhead</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>sys Schema Views for Sessions, Statements, Waits, I/O, Memory, and Index Usage</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>Slow Query Log, Error Log, General Log, and Structured Diagnostic Workflows</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>Key OS and MySQL Metrics: CPU, I/O, Buffer Pool, Connections, Temp Tables, and Redo</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Build a Production Dashboard, Alert Thresholds, Baselines, and Incident Timelines</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>17</span>Memory, I/O, Temporary Work, and Server Performance Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Buffer Pool Sizing, Working Sets, Dirty Pages, Flushing, and Memory Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Per-Connection Buffers, Sort/Join Buffers, Memory Multipliers, and OOM Risk</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Temporary Tables, Spill to Disk, tmpdir, Internal Temp Engines, and Query Rewrite</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Redo Capacity, I/O Capacity, Flush Methods, Storage Latency, and Checkpoint Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Benchmarking Methodology, Warm vs Cold Cache, Concurrency, Percentiles, and Repeatability</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>18</span>Partitioning, Large Tables, Archiving, and Data Lifecycle</summary><div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Partitioning Concepts, Supported Strategies, Partition Pruning, and Design Constraints</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Partition Keys, Unique-Key Rules, Hot/Cold Data, and Operational Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Online DDL, Instant/In-Place/Copy Algorithms, Locks, and Schema Change Planning</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Archiving, Purging, Retention Jobs, and Avoiding Massive Delete Pathologies</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Managing Multi-Terabyte Tables: Capacity, Maintenance Windows, and Growth Forecasts</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>19</span>Application Integration, Connectors, Pools, ORMs, and Reliability Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>Connection Strings, TLS, Timeouts, Pools, and Session Initialization Contracts</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Prepared Statements, Parameter Binding, SQL Injection Defense, and Type Mapping</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Transaction Boundaries in Application Code, Retries, Idempotency, and Lost Connections</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>ORM Query Generation, N+1 Problems, Pagination, Bulk Writes, and Plan Visibility</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Health Checks, Graceful Degradation, Read Replicas, Migrations, and Deployment Coordination</a>
+</div></details>
+<details class="sidebar-chapter" open=""><summary><span>20</span>Schema Migration, Upgrades, Compatibility, and Zero/Low-Downtime Change</summary><div>
+<a class="sidebar-lesson" href="Lesson1.html"><span>01</span>Versioned Schema Migrations, Expand/Contract Patterns, and Backward Compatibility</a>
+<a class="sidebar-lesson" href="Lesson2.html"><span>02</span>Online Schema Change Strategies, Native DDL Capabilities, and External Tool Concepts</a>
+<a class="sidebar-lesson" href="Lesson3.html"><span>03</span>Pre-Upgrade Checks, Deprecated Features, SQL Modes, Collations, and Authentication Changes</a>
+<a class="sidebar-lesson is-current" href="Lesson4.html"><span>04</span>Rolling Upgrade Considerations for Replication and High-Availability Topologies<i>Current</i></a>
+<a class="sidebar-lesson" href="Lesson5.html"><span>05</span>Rollback Planning, Data Validation, Canaries, and Post-Upgrade Performance Verification</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>21</span>Specialized MySQL Capabilities: NDB, Document Store, Spatial, and Search</summary><div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>NDB Cluster Architecture, Distribution, Availability, and When It Fits</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>X Protocol, MySQL Shell, Document Store Concepts, and CRUD APIs</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Spatial Types, SRIDs, Spatial Functions, R-Tree Indexing, and GIS Workloads</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>FULLTEXT Search, Tokenization, Relevance, Stopwords, and Search-System Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>Choosing Native Features vs Dedicated Systems for Search, Analytics, and Distributed Scale</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>22</span>Production Capstone: Design, Secure, Scale, Tune, and Recover MySQL</summary><div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Define SLOs, Workload, Data Model, Capacity Forecast, and Architecture Decision Record</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>Build the Production Schema, Index Portfolio, Security Model, and Migration Pipeline</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>Load Test, Capture Plans, Tune Queries/Server, and Establish Performance Baselines</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Implement Backups, PITR, Replication/HA, Monitoring, Alerts, and Incident Runbooks</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Execute Failure/Recovery Drills and Defend the Final MySQL Production Design</a>
+</div></details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar"><button data-sidebar-open="" type="button"><span>Course navigation</span><span>Chapter 20 · Lesson 04</span></button></div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs"><a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">MySQL</a><span>/</span><span>Chapter 20 · Lesson 04</span></nav>
+<header class="lesson-header"><p class="eyebrow">Chapter 20 · Schema Migration, Upgrades, Compatibility, and Zero/Low-Downtime Change</p><h1>Rolling Upgrade Considerations for Replication and High-Availability Topologies</h1><p>Plan rolling upgrades for asynchronous replication and Group Replication/InnoDB Cluster with supported version combinations, GTID correctness, drain/rejoin gates, and mixed-version observation.</p><div class="lesson-meta"><span>Advanced</span><span>180–250 min</span><span>migration/upgrade compatibility lab</span><span>MySQL Community Server 8.4.10 LTS</span><span>MySQL Shell 8.4.10 for upgrade checks</span><span>single node mandatory · topology extension optional</span><span>Last reviewed: August 2026</span></div></header>
+<nav aria-label="On this page" class="lesson-toc"><strong>On this page</strong><ol data-generated-toc=""></ol></nav>
+<div class="lesson-content">
+<section><h2>Learning outcomes</h2><p>A standalone upgrade can use downtime; a replicated or highly available deployment adds ordering and mixed-version constraints. ServiceHub must remain correct while nodes are drained, upgraded, validated, and rejoined. A reachable node is not automatically safe: it may be behind, divergent, read-only by compatibility policy, or using an unsupported version combination.</p><div class="objectives"><div class="objective"><span>01</span><p>Verify exact source/replica and Group Replication mixed-version support before touching nodes.</p></div><div class="objective"><span>02</span><p>Use topology-aware drain, upgrade, rejoin, catch-up, and serve gates.</p></div><div class="objective"><span>03</span><p>Track GTID sets, receiver/applier state, Group Replication membership, logs, and business invariants.</p></div><div class="objective"><span>04</span><p>Include MySQL Shell, Router, and application connectors in the compatibility matrix.</p></div><div class="objective"><span>05</span><p>Write promotion, abort, repair, and rebuild decisions instead of skipping errors.</p></div></div></section>
+<section><h2>Asynchronous replication: validate upgraded redundancy before the writer</h2><p>A common rolling scheme upgrades replicas while the source remains the known writer, validates each replica, then performs the final source upgrade or a controlled promotion according to the exact supported path. The plan must be based on current source/replica compatibility documentation, not an assumption that any newer replica can replicate from any older source.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · capture source/replica state before drain</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT @@version,@@server_uuid,@@server_id,@@gtid_mode;</span><span class="code-line">SELECT @@global.gtid_executed,@@global.gtid_purged;</span><span class="code-line">SHOW REPLICA STATUS\G</span><span class="code-line"></span><span class="code-line">SELECT CHANNEL_NAME,SERVICE_STATE,LAST_ERROR_NUMBER,LAST_ERROR_MESSAGE</span><span class="code-line">FROM performance_schema.replication_connection_status;</span><span class="code-line">SELECT CHANNEL_NAME,SERVICE_STATE,LAST_ERROR_NUMBER,LAST_ERROR_MESSAGE</span><span class="code-line">FROM performance_schema.replication_applier_status;</span></code></pre></div><p>Record GTID and business-state evidence before and after each node. A replica can be connected while its applier is stopped or its data is wrong. “Seconds behind” is useful only as one signal.</p></section>
+<section><h2>Group Replication member-version policy affects upgrade order</h2><p>For online upgrades in single-primary Group Replication, Oracle recommends upgrading secondaries and then the primary. During a mixed-version window, compatibility policies constrain what upgraded members can do. Newer members can remain read-only while older members are still present. In multi-primary mode that reduces the number of writable members until the group reaches a compatible version state.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · inspect Group Replication membership and role</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT MEMBER_ID,MEMBER_HOST,MEMBER_PORT,</span><span class="code-line">       MEMBER_STATE,MEMBER_ROLE,MEMBER_VERSION</span><span class="code-line">FROM performance_schema.replication_group_members</span><span class="code-line">ORDER BY MEMBER_HOST,MEMBER_PORT;</span><span class="code-line"></span><span class="code-line">SELECT @@version,@@super_read_only,@@group_replication_start_on_boot;</span><span class="code-line">SELECT @@global.gtid_executed;</span></code></pre></div><p>For raw Group Replication, a member is deliberately taken offline, prevented from prematurely rejoining while the server upgrade is incomplete, upgraded, validated, then rejoined and allowed to catch up. In an InnoDB Cluster, use current MySQL Shell/AdminAPI procedures so cluster metadata remains authoritative.</p></section>
+<section><h2>Every node passes the same drain/rejoin gates</h2><div class="table-wrap"><table class="data-table"><thead><tr><th>Stage</th><th>Evidence</th><th>Abort/rebuild trigger</th></tr></thead><tbody><tr><td>drain</td><td>traffic removed; role intentionally offline</td><td>connections still writing</td></tr><tr><td>upgrade</td><td>supported path; clean startup/error log</td><td>upgrade/metadata errors</td></tr><tr><td>rejoin</td><td>receiver/applier or GR member healthy</td><td>compatibility/error state</td></tr><tr><td>catch-up</td><td>GTID gap closes; invariants match</td><td>errant/divergent history</td></tr><tr><td>serve</td><td>role/read-only state matches policy</td><td>unexpected writable newer node</td></tr><tr><td>next node</td><td>observation window stable</td><td>latency/error/lag regression</td></tr></tbody></table></div></section>
+<section><h2>Failure scenario: never skip replication errors to save the schedule</h2><p>If an upgraded replica fails while applying a transaction, manually skipping the event may make status look healthy while silently creating data drift. Pause the rollout, preserve the error and GTID evidence, determine whether the problem is data-, version-, or infrastructure-specific, and rebuild/reprovision when correctness cannot be proved.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · read-only evidence before repair or promotion</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT @@version,@@server_uuid,@@global.gtid_executed;</span><span class="code-line">SHOW REPLICA STATUS\G</span><span class="code-line"></span><span class="code-line">-- Written decision questions:</span><span class="code-line">-- Is the old writer fenced if promotion is considered?</span><span class="code-line">-- Is the candidate caught up and GTID-compatible?</span><span class="code-line">-- Do business invariants match?</span><span class="code-line">-- Is the failure reproducible on staging?</span><span class="code-line">-- Repair, rebuild, abort rollout, or promote? Why?</span><span class="code-line">-- Do not fabricate GTIDs or skip an unexplained transaction.</span></code></pre></div><p>Availability and correctness can conflict during maintenance. It is safer to leave a suspect node out of service than to force it green without understanding the failure.</p></section>
+<section><h2>Shell, Router, connector, and application behavior are part of the topology</h2><p>InnoDB Cluster operations depend on MySQL Shell/AdminAPI, and applications may reach the topology through MySQL Router. Test selected Shell and Router versions against the server target. Test real application connectors through the same endpoint and TLS/authentication policy used in production. A database server that upgrades cleanly can still be an application outage if the client stack is incompatible.</p><div class="code-window" data-code-block="" data-language="text"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>text · mixed-version observation window</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">Before upgrading the next node verify:</span><span class="code-line">- member/replica state stable</span><span class="code-line">- GTID catch-up complete</span><span class="code-line">- no receiver/applier errors</span><span class="code-line">- expected primary/source role</span><span class="code-line">- Router endpoint healthy (if used)</span><span class="code-line">- real connector TLS/authentication test passes</span><span class="code-line">- read/write business invariants match</span><span class="code-line">- error rate and latency stay inside accepted baseline bands</span><span class="code-line">- backup/PITR continuity is preserved</span><span class="code-line">- abort/rebuild plan remains executable</span></code></pre></div></section>
+<section><h2>GTID set comparison makes catch-up decisions explicit</h2><p>Global Transaction Identifiers (GTIDs) let operators compare transaction history without relying only on binary-log file names. During a rolling upgrade, compare the candidate’s executed set with the source or group’s expected set. A missing subset can mean the node still needs to catch up; an unexpected extra set can be an errant transaction and should block promotion until explained.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · GTID readiness comparisons</div><button class="copy-code" data-copy-code="" type="button">Copy</button></div><pre><code><span class="code-line">SELECT @@global.gtid_executed AS local_executed;</span><span class="code-line"></span><span class="code-line">-- Paste captured sets from source/candidate into a controlled diagnostic:</span><span class="code-line">SELECT GTID_SUBSET(@candidate_set,@source_set) AS candidate_has_no_extra_gtids,</span><span class="code-line">       GTID_SUBTRACT(@source_set,@candidate_set) AS source_transactions_missing_on_candidate,</span><span class="code-line">       GTID_SUBTRACT(@candidate_set,@source_set) AS candidate_errant_transactions;</span></code></pre></div><p>Do not fabricate GTIDs to force these expressions to look clean. If a candidate has unexpected history, rebuild or reconcile it according to the documented recovery plan.</p></section><section><h2>Rolling upgrade is a timeline, not a loop over hostnames</h2><p>Each node passes through drain, offline/upgrade, startup validation, replication/group rejoin, catch-up, canary, and observation. The next node is not touched until the current node has passed all gates. This prevents a latent incompatibility from being replicated across the entire redundancy set before anyone notices.</p><p>In a single-primary Group Replication group, upgrading secondaries first preserves the existing primary while newer members are validated. When the primary is eventually upgraded, primary election and member-version compatibility policies must be understood in advance. In multi-primary mode, newer upgraded members can be read-only while older versions remain, which temporarily reduces writable capacity. Capacity planning during the maintenance window must account for that.</p></section><section><h2>Application draining and Router behavior need their own acceptance test</h2><p>A database node can be “offline for maintenance” while application pools still hold established connections. Before shutting a node down, stop new routing to it and allow or terminate existing sessions according to the application’s transaction policy. Through MySQL Router or another proxy, verify that the intended endpoint no longer selects the node. Then test a transaction/reconnect path from the real application connector.</p><p>For a primary/source transition, define how ambiguous commits are handled. A connection can fail after the server committed but before the client received acknowledgment. The application must use idempotency/reconciliation rules from Chapter 19 rather than blindly retrying every write after failover.</p></section><section><h2>Abort conditions protect correctness during a mixed-version window</h2><div class="table-wrap"><table class="data-table"><thead><tr><th>Signal</th><th>Continue</th><th>Stop rollout</th></tr></thead><tbody><tr><td>replication/group state</td><td>healthy, expected role</td><td>receiver/applier/member error</td></tr><tr><td>GTID</td><td>expected missing set closes</td><td>unexplained errant set</td></tr><tr><td>business invariants</td><td>match baseline</td><td>count/checksum/semantic drift</td></tr><tr><td>application</td><td>auth/reconnect tests pass</td><td>connector failures or retry storm</td></tr><tr><td>latency/error</td><td>inside approved band</td><td>sustained regression</td></tr><tr><td>recovery</td><td>backup/PITR chain preserved</td><td>recovery evidence missing</td></tr></tbody></table></div><p>A low-downtime upgrade is successful when the system remains correct and recoverable throughout, not merely when all nodes eventually report the new version.</p></section><div class="checkpoint"><h3>Knowledge check</h3><ol><li>Why often upgrade replicas/secondaries first?</li><li>Can a connected replica be promoted automatically?</li><li>How can newer Group Replication members behave during mixed versions?</li><li>Why is skipping an applier error unsafe?</li><li>Which adjacent components belong in the matrix?</li></ol><details class="answer-toggle"><summary>Reveal answers</summary><div><ol><li>It validates upgraded redundancy while preserving a known writer, subject to supported version policy.</li><li>No. It must be caught up, GTID-compatible, and business-correct.</li><li>Compatibility policy can keep them read-only until the group is sufficiently upgraded.</li><li>It can hide data divergence.</li><li>MySQL Shell/AdminAPI, Router when used, and the actual application connectors/drivers.</li></ol></div></details></div><section><h3>Authoritative references</h3><ul>
+<li><a href="https://dev.mysql.com/doc/refman/8.4/en/upgrading.html" rel="noreferrer" target="_blank">MySQL 8.4 — Upgrading MySQL</a></li>
+<li><a href="https://dev.mysql.com/doc/refman/8.4/en/upgrade-paths.html" rel="noreferrer" target="_blank">MySQL 8.4 — Upgrade Paths</a></li>
+<li><a href="https://dev.mysql.com/doc/refman/8.4/en/upgrade-best-practices.html" rel="noreferrer" target="_blank">MySQL 8.4 — Upgrade Best Practices</a></li>
+<li><a href="https://dev.mysql.com/doc/mysql-shell/8.4/en/mysql-shell-utilities-upgrade.html" rel="noreferrer" target="_blank">MySQL Shell 8.4 — Upgrade Checker Utility</a></li>
+<li><a href="https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl.html" rel="noreferrer" target="_blank">MySQL 8.4 — InnoDB and Online DDL</a></li>
+<li><a href="https://dev.mysql.com/doc/refman/8.4/en/group-replication-upgrade.html" rel="noreferrer" target="_blank">MySQL 8.4 — Upgrading Group Replication</a></li>
+<li><a href="https://dev.mysql.com/doc/refman/8.4/en/downgrading.html" rel="noreferrer" target="_blank">MySQL 8.4 — Downgrading MySQL</a></li>
+<li><a href="https://dev.mysql.com/doc/refman/8.4/en/native-pluggable-authentication.html" rel="noreferrer" target="_blank">MySQL 8.4 — Native Authentication Plugin</a></li>
+<li><a href="https://dev.mysql.com/downloads/mysql/8.4.html" rel="noreferrer" target="_blank">MySQL Community Server 8.4 Downloads</a></li>
+<li><a href="https://dev.mysql.com/downloads/shell/8.4.html" rel="noreferrer" target="_blank">MySQL Shell 8.4 Downloads</a></li>
+</ul></section>
+</div>
+<nav aria-label="Lesson navigation" class="lesson-nav"><a class="prev" href="Lesson3.html"><small>Previous lesson</small><strong>Pre-Upgrade Checks, Deprecated Features, SQL Modes, Collations, and Authentication Changes</strong></a><a class="next" href="Lesson5.html"><small>Next lesson</small><strong>Rollback Planning, Data Validation, Canaries, and Post-Upgrade Performance Verification</strong></a></nav></article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>If these tutorials save you time, a small donation supports new lessons, technical review, diagrams, examples, and long-term maintenance.</p>
+<div aria-label="Author links" class="social-row">
+<a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head"><span>ETH</span><small>Ethereum / ERC-20 only</small></div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
+<button class="button secondary compact" data-copy-donation="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy address</button>
+<p>Send only assets compatible with the Ethereum/ERC-20 network. Do not send TRC-20/TRON assets.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div><strong>Big Data Academy</strong><p>A free, prerequisite-aware path from SQL foundations to distributed data systems.</p></div>
+<div><a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a></div>
+<small>Created and maintained by <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> · © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Build immutable ordered migrations and use expand/contract deployment so old and new ServiceHub application versions can overlap safely." name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>Versioned Schema Migrations, Expand/Contract Patterns, and Backward Compatibility | MySQL | Big Data Academy</title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+<script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+        chtml: { scale: 1, matchFontHeight: false },
+      };
+    </script>
+<script defer="" id="MathJax-script" onerror="this.onerror=null;this.src='https://unpkg.com/mathjax@3.2.2/es5/tex-chtml.js';" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
+<span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
+<span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
+</a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a>
+<a class="is-active" href="../../../index.html#courses">Courses</a>
+<a href="../../../index.html#method">Method</a>
+<a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg></button>
+<button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu=""><a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a></nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">MYSQL</span><div><small>Course 04</small><strong>MySQL</strong></div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">×</button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 110 lessons..." type="search"/></label>
+<nav aria-label="MySQL curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter"><summary><span>01</span>MySQL Platform Foundations, Editions, Releases, and Lab Setup</summary><div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What MySQL Is: Server Architecture, Client/Server Boundaries, and Common Workloads</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Community vs Enterprise Capabilities, Licensing Awareness, and Deployment Choices</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>LTS vs Innovation Releases: Version Selection, Support Windows, and Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Install MySQL on Windows, Linux, Containers, and Verify the Toolchain</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build a Reproducible Course Lab with Sample Data, Accounts, and Safety Conventions</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>02</span>Server Architecture, Processes, Files, Connections, and Configuration</summary><div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>mysqld Startup, Data Directory, Configuration Files, and Option Precedence</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Connection Lifecycle, Threads, Sessions, Timeouts, and Resource Consumption</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>System Variables, Status Variables, Dynamic Configuration, and SET PERSIST</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Character Sets, Collations, Time Zones, Locales, and Server Defaults</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Configuration Validation, Startup Failures, Error Logs, and a Baseline Server Profile</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>03</span>Schemas, Tables, Data Types, Keys, Constraints, and SQL Modes</summary><div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>Databases and Schemas in MySQL: Namespaces, Metadata, and Object Ownership</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Numeric, String, Temporal, JSON, Spatial, and Binary Data Types</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK, DEFAULT, and Generated Columns</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>AUTO_INCREMENT, Surrogate vs Natural Keys, and Identifier Design</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>SQL Modes, Strictness, Implicit Conversion, Truncation, and Data-Quality Boundaries</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>04</span>Core SQL Querying: Filtering, Joins, Subqueries, CTEs, and Set Operations</summary><div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>SELECT Execution Basics, Projection, Predicates, NULL Semantics, and Ordering</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>INNER, OUTER, CROSS, and Self Joins with Cardinality Reasoning</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>Scalar, Correlated, EXISTS, IN, and Derived-Table Subqueries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Common Table Expressions, Recursive CTEs, and Hierarchical Queries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>UNION, INTERSECT, EXCEPT, Query Composition, and Readability Patterns</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>05</span>Advanced SQL: Aggregation, Window Functions, JSON, and Analytical Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>GROUP BY, HAVING, Functional Dependence, ROLLUP, and Aggregation Design</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Window Frames, Ranking, Running Totals, Gaps-and-Islands, and Top-N per Group</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>JSON Documents, Paths, JSON_TABLE, Indexable JSON Patterns, and Validation</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Date/Time, String, Regular Expression, Numeric, and Conditional Functions</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Reporting Queries, Cohort-Style Analysis, Pivots by Conditional Aggregation, and Reusable Views</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>06</span>Data Modification, Transactions, Locking, and Concurrency Semantics</summary><div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>INSERT, Multi-Row Writes, INSERT ... SELECT, and Generated Values</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>UPDATE, DELETE, Multi-Table DML, and Guardrails Against Wide Changes</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Transactions, Autocommit, COMMIT, ROLLBACK, SAVEPOINT, and Error Handling</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Isolation Levels, Consistent Reads, Locking Reads, MVCC, and Anomalies</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Deadlocks, Lock Waits, Retry Design, Idempotency, and Concurrency Testing</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>07</span>InnoDB Storage Architecture and Transaction Internals</summary><div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>InnoDB Tablespaces, Pages, Extents, Segments, and Row Formats</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Clustered Indexes, Secondary Indexes, Hidden Columns, and Record Layout</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Buffer Pool Architecture, Change Buffer, Adaptive Hashing, and Caching Behavior</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Redo Logs, Undo Logs, Doublewrite, Checkpoints, and Crash Recovery</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Purge, History List, Long Transactions, MVCC Cleanup, and Storage Health</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>08</span>Index Engineering and Access Path Design</summary><div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>B-Tree Index Structure, Selectivity, Cardinality, and Leftmost-Prefix Rules</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>Composite Index Ordering, Covering Indexes, Prefix Indexes, and Redundant Indexes</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Functional, Multi-Valued, FULLTEXT, and Spatial Index Use Cases</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>Index Condition Pushdown, Loose/Tight Index Scans, and Skip-Scan Concepts</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Designing an Index Portfolio from Workload Evidence and Write-Cost Constraints</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>09</span>Optimizer, EXPLAIN, Statistics, and Query Plan Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>How the MySQL Optimizer Builds Access Paths, Join Orders, and Cost Estimates</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>EXPLAIN, EXPLAIN ANALYZE, FORMAT=TREE/JSON, and Iterator Timing</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Histograms, Persistent Statistics, Cardinality Errors, and ANALYZE TABLE</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Join Algorithms, Semijoin/Antijoin Transformations, Derived Tables, and Materialization</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Plan Regressions, Optimizer Hints, Invisible Indexes, and Evidence-Driven Tuning</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>10</span>Stored Programs, Views, Triggers, Events, and Server-Side Logic</summary><div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Views, Updatability, SQL SECURITY, Definer Context, and Dependency Management</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Stored Procedures, Functions, Parameters, Condition Handlers, and Diagnostics</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Triggers, OLD/NEW Rows, Ordering, Auditing Uses, and Hidden Coupling Risks</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Event Scheduler, Recurring Maintenance Jobs, Failure Handling, and Observability</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>When Server-Side Logic Helps—and When Application Logic Is the Better Boundary</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>11</span>Users, Roles, Authentication, Authorization, and Least Privilege</summary><div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Accounts, Host Matching, Authentication Plugins, Password Policy, and Account Lifecycle</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Privileges, Roles, DEFAULT ROLE, Dynamic Privileges, and Delegated Administration</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Object-Level vs Administrative Privilege Design and Separation of Duties</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>PROXY, DEFINER, SQL SECURITY, Stored Objects, and Privilege-Escalation Risks</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Design and Audit a Least-Privilege Access Model for Applications and Operators</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>12</span>Encryption, TLS, Secrets, Auditing, and Security Hardening</summary><div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>TLS for Client Connections, Certificate Validation, and Secure Transport Enforcement</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Data-at-Rest Encryption Concepts, Key Management Boundaries, and Backup Encryption</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Secrets Handling for Applications, Option Files, Environment Variables, and Rotation</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>Audit Logging Options, General/Slow Logs, Privacy, and Forensic Considerations</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Hardening Checklist: Network Exposure, Local Files, Plugins, Accounts, and Patch Discipline</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>13</span>Backup, Restore, Binary Logs, and Point-in-Time Recovery</summary><div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>Logical vs Physical Backup: mysqldump, MySQL Shell, Snapshots, and Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>Consistent Backups with Transactions, Locks, Replication Coordinates, and Large Datasets</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>Binary Log Formats, GTIDs, Retention, and Recovery Prerequisites</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Point-in-Time Recovery from Full Backup plus Binary Logs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Restore Testing, RPO/RTO Measurement, Corruption Drills, and Backup Automation</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>14</span>Asynchronous Replication, GTIDs, Topologies, and Operational Safety</summary><div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Source/Replica Architecture, Binary Log Flow, Relay Logs, and Replication Threads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>GTID-Based Replication, Auto-Positioning, Failover Readiness, and Errant Transactions</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Statement, Row, and Mixed Logging Semantics with Determinism Risks</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Replication Filters, Delayed Replicas, Read Scaling, and Reporting Workloads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Lag Diagnosis, Broken Replication, Data Drift, Re-Synchronization, and Promotion Runbooks</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>15</span>Group Replication, InnoDB Cluster, Router, and High Availability</summary><div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Consensus-Oriented Group Replication Concepts, Membership, Quorum, and Failure Modes</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Single-Primary vs Multi-Primary Modes, Conflict Detection, and Workload Constraints</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>MySQL Shell AdminAPI, InnoDB Cluster Lifecycle, Recovery, and Rejoin Operations</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>MySQL Router, Connection Routing, Read/Write Splitting, and Application Failover</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Failure Injection, Split-Brain Avoidance, Maintenance, Upgrades, and HA Acceptance Tests</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>16</span>Performance Schema, sys Schema, Logs, Metrics, and Observability</summary><div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Performance Schema Instruments, Consumers, Events, and Measurement Overhead</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>sys Schema Views for Sessions, Statements, Waits, I/O, Memory, and Index Usage</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>Slow Query Log, Error Log, General Log, and Structured Diagnostic Workflows</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>Key OS and MySQL Metrics: CPU, I/O, Buffer Pool, Connections, Temp Tables, and Redo</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Build a Production Dashboard, Alert Thresholds, Baselines, and Incident Timelines</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>17</span>Memory, I/O, Temporary Work, and Server Performance Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Buffer Pool Sizing, Working Sets, Dirty Pages, Flushing, and Memory Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Per-Connection Buffers, Sort/Join Buffers, Memory Multipliers, and OOM Risk</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Temporary Tables, Spill to Disk, tmpdir, Internal Temp Engines, and Query Rewrite</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Redo Capacity, I/O Capacity, Flush Methods, Storage Latency, and Checkpoint Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Benchmarking Methodology, Warm vs Cold Cache, Concurrency, Percentiles, and Repeatability</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>18</span>Partitioning, Large Tables, Archiving, and Data Lifecycle</summary><div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Partitioning Concepts, Supported Strategies, Partition Pruning, and Design Constraints</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Partition Keys, Unique-Key Rules, Hot/Cold Data, and Operational Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Online DDL, Instant/In-Place/Copy Algorithms, Locks, and Schema Change Planning</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Archiving, Purging, Retention Jobs, and Avoiding Massive Delete Pathologies</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Managing Multi-Terabyte Tables: Capacity, Maintenance Windows, and Growth Forecasts</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>19</span>Application Integration, Connectors, Pools, ORMs, and Reliability Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>Connection Strings, TLS, Timeouts, Pools, and Session Initialization Contracts</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Prepared Statements, Parameter Binding, SQL Injection Defense, and Type Mapping</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Transaction Boundaries in Application Code, Retries, Idempotency, and Lost Connections</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>ORM Query Generation, N+1 Problems, Pagination, Bulk Writes, and Plan Visibility</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Health Checks, Graceful Degradation, Read Replicas, Migrations, and Deployment Coordination</a>
+</div></details>
+<details class="sidebar-chapter" open=""><summary><span>20</span>Schema Migration, Upgrades, Compatibility, and Zero/Low-Downtime Change</summary><div>
+<a class="sidebar-lesson is-current" href="Lesson1.html"><span>01</span>Versioned Schema Migrations, Expand/Contract Patterns, and Backward Compatibility<i>Current</i></a>
+<a class="sidebar-lesson" href="Lesson2.html"><span>02</span>Online Schema Change Strategies, Native DDL Capabilities, and External Tool Concepts</a>
+<a class="sidebar-lesson" href="Lesson3.html"><span>03</span>Pre-Upgrade Checks, Deprecated Features, SQL Modes, Collations, and Authentication Changes</a>
+<a class="sidebar-lesson" href="Lesson4.html"><span>04</span>Rolling Upgrade Considerations for Replication and High-Availability Topologies</a>
+<a class="sidebar-lesson" href="Lesson5.html"><span>05</span>Rollback Planning, Data Validation, Canaries, and Post-Upgrade Performance Verification</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>21</span>Specialized MySQL Capabilities: NDB, Document Store, Spatial, and Search</summary><div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>NDB Cluster Architecture, Distribution, Availability, and When It Fits</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>X Protocol, MySQL Shell, Document Store Concepts, and CRUD APIs</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Spatial Types, SRIDs, Spatial Functions, R-Tree Indexing, and GIS Workloads</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>FULLTEXT Search, Tokenization, Relevance, Stopwords, and Search-System Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>Choosing Native Features vs Dedicated Systems for Search, Analytics, and Distributed Scale</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>22</span>Production Capstone: Design, Secure, Scale, Tune, and Recover MySQL</summary><div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Define SLOs, Workload, Data Model, Capacity Forecast, and Architecture Decision Record</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>Build the Production Schema, Index Portfolio, Security Model, and Migration Pipeline</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>Load Test, Capture Plans, Tune Queries/Server, and Establish Performance Baselines</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Implement Backups, PITR, Replication/HA, Monitoring, Alerts, and Incident Runbooks</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Execute Failure/Recovery Drills and Defend the Final MySQL Production Design</a>
+</div></details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar"><button data-sidebar-open="" type="button"><span>Course navigation</span><span>Chapter 20 · Lesson 01</span></button></div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs"><a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">MySQL</a><span>/</span><span>Chapter 20 · Lesson 01</span></nav>
+<header class="lesson-header"><p class="eyebrow">Chapter 20 · Schema Migration, Upgrades, Compatibility, and Zero/Low-Downtime Change</p><h1>Versioned Schema Migrations, Expand/Contract Patterns, and Backward Compatibility</h1><p>Build immutable ordered migrations and use expand/contract deployment so old and new ServiceHub application versions can overlap safely.</p><div class="lesson-meta"><span>Advanced</span><span>180–250 min</span><span>migration/upgrade compatibility lab</span><span>MySQL Community Server 8.4.10 LTS</span><span>MySQL Shell 8.4.10 for upgrade checks</span><span>single node mandatory · topology extension optional</span><span>Last reviewed: August 2026</span></div></header>
+<nav aria-label="On this page" class="lesson-toc"><strong>On this page</strong><ol data-generated-toc=""></ol></nav>
+<div class="lesson-content">
+<section><h2>Learning outcomes</h2><p>ServiceHub now deploys multiple application instances, so a schema change cannot be treated as a single instantaneous event. Old code may still be processing requests while new code starts, a backfill may run for a long period, and rollback may require the old representation to remain usable. The practical engineering problem is therefore release compatibility, not merely writing a syntactically valid <code>ALTER TABLE</code>.</p><div class="objectives"><div class="objective"><span>01</span><p>Create an immutable, ordered migration ledger with checksum, owner, status, and verification evidence.</p></div><div class="objective"><span>02</span><p>Apply the expand → dual-compatible application → bounded backfill → contract pattern.</p></div><div class="objective"><span>03</span><p>Prove old and new application shapes can overlap safely against one evolving schema.</p></div><div class="objective"><span>04</span><p>Detect checksum drift, lock risk, and destructive compatibility failures during preflight.</p></div><div class="objective"><span>05</span><p>Define migration gates, rollback boundaries, and production evidence before contract changes.</p></div></div><div class="callout info"><strong>Disposable lab</strong><p>This chapter uses <code>servicehub_change_lab</code>. Mandatory work needs one local MySQL Community Server 8.4.10 LTS. Topology exercises later in the chapter are optional extensions.</p></div></section>
+<section><h2>Versioned migrations are release artifacts</h2><p>A <strong>schema migration</strong> moves the database from one known structural state to another. A reliable migration is ordered and immutable after application. If an operator edits an already-applied file, its checksum changes and the release system should report drift rather than silently rewriting history. This is the same reason source-control commits and container images are identified precisely: rollback and diagnosis depend on knowing what actually ran.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · create the lab and migration ledger</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">DROP DATABASE IF EXISTS servicehub_change_lab;</span><span class="code-line">CREATE DATABASE servicehub_change_lab</span><span class="code-line">  CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;</span><span class="code-line">USE servicehub_change_lab;</span><span class="code-line"></span><span class="code-line">CREATE TABLE schema_migrations (</span><span class="code-line">  version_no BIGINT PRIMARY KEY,</span><span class="code-line">  migration_name VARCHAR(180) NOT NULL,</span><span class="code-line">  checksum_sha256 CHAR(64) NOT NULL,</span><span class="code-line">  owner_name VARCHAR(100) NOT NULL,</span><span class="code-line">  status ENUM('applying','applied','failed') NOT NULL,</span><span class="code-line">  started_at DATETIME(6) NOT NULL,</span><span class="code-line">  finished_at DATETIME(6) NULL,</span><span class="code-line">  UNIQUE KEY uq_migration_name (migration_name)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">CREATE TABLE work_orders (</span><span class="code-line">  work_order_id BIGINT PRIMARY KEY,</span><span class="code-line">  tenant_id BIGINT NOT NULL,</span><span class="code-line">  customer_id BIGINT NOT NULL,</span><span class="code-line">  status VARCHAR(24) NOT NULL,</span><span class="code-line">  summary VARCHAR(240) NOT NULL,</span><span class="code-line">  opened_at DATETIME(6) NOT NULL,</span><span class="code-line">  KEY ix_tenant_opened (tenant_id, opened_at, work_order_id)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">INSERT INTO work_orders VALUES</span><span class="code-line">(1001,17,501,'open','Pump vibration inspection','2026-08-15 08:10:00.000000'),</span><span class="code-line">(1002,17,502,'waiting','Replace pressure sensor','2026-08-15 09:15:00.000000');</span></code></pre></div><p>The ledger is deliberately simple so the mechanism is visible. Real migration frameworks usually maintain an equivalent metadata table. A failed migration is not repaired by editing history; create a new corrective migration and preserve the old evidence.</p></section>
+<section><h2>Expand first so old code can ignore the new capability</h2><p>ServiceHub wants a human-facing <code>public_reference</code>. Renaming the primary key or immediately adding a required non-null column would force every application instance to switch at the same moment. The <strong>expand phase</strong> adds capability while preserving the old contract.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · migration 2026081601 — compatible expansion</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SET @version = 2026081601;</span><span class="code-line">SET @checksum = '4d1130d0f5e69f5be3a0b975dc943246d2615fc74da1fe2042ef1d21f9a92d0e';</span><span class="code-line"></span><span class="code-line">INSERT INTO schema_migrations</span><span class="code-line">(version_no,migration_name,checksum_sha256,owner_name,status,started_at)</span><span class="code-line">VALUES (@version,'add_public_reference',@checksum,'servicehub-platform','applying',NOW(6));</span><span class="code-line"></span><span class="code-line">ALTER TABLE work_orders</span><span class="code-line">  ADD COLUMN public_reference VARCHAR(40) NULL,</span><span class="code-line">  ALGORITHM=INSTANT;</span><span class="code-line"></span><span class="code-line">UPDATE schema_migrations</span><span class="code-line">SET status='applied', finished_at=NOW(6)</span><span class="code-line">WHERE version_no=@version;</span><span class="code-line"></span><span class="code-line">SHOW CREATE TABLE work_orders\G</span><span class="code-line">SELECT * FROM schema_migrations ORDER BY version_no;</span></code></pre></div><p>Using <code>ALGORITHM=INSTANT</code> is a fail-fast availability contract on this baseline. If the operation cannot use that exact algorithm, MySQL rejects it rather than silently choosing a more disruptive alternative. The old application still sees all columns it expects.</p></section>
+<section><h2>Old and new application versions overlap during deployment</h2><p>During the overlap, old code inserts without the new field. New code writes it when available. Then a bounded backfill fills historical rows. This makes compatibility observable rather than theoretical.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · prove overlap and bounded backfill</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">-- Old application shape.</span><span class="code-line">INSERT INTO work_orders</span><span class="code-line">(work_order_id,tenant_id,customer_id,status,summary,opened_at)</span><span class="code-line">VALUES (1003,17,503,'open','Legacy client request',NOW(6));</span><span class="code-line"></span><span class="code-line">-- New application shape.</span><span class="code-line">INSERT INTO work_orders</span><span class="code-line">(work_order_id,tenant_id,customer_id,status,summary,opened_at,public_reference)</span><span class="code-line">VALUES (1004,17,504,'open','New client request',NOW(6),'WO-001004');</span><span class="code-line"></span><span class="code-line">-- Repeat in bounded batches on a production-sized table.</span><span class="code-line">UPDATE work_orders</span><span class="code-line">SET public_reference = CONCAT('WO-', LPAD(work_order_id,6,'0'))</span><span class="code-line">WHERE public_reference IS NULL</span><span class="code-line">ORDER BY work_order_id</span><span class="code-line">LIMIT 100;</span><span class="code-line"></span><span class="code-line">SELECT work_order_id,public_reference,summary</span><span class="code-line">FROM work_orders ORDER BY work_order_id;</span></code></pre></div><p>Expected state: every row has a reference after the backfill, while the old write shape still succeeded. At this point new code can switch reads to the new column, but contract is not yet justified merely because the data is ready.</p></section>
+<section><h2>Wrong approach: destructive rename or drop in the same release</h2><p>A tempting one-step deployment renames/drops the legacy column and immediately deploys new binaries. If old instances still serve traffic, they fail with “unknown column.” The DDL can succeed perfectly while the release fails. The repair is staged compatibility: expand, deploy compatible code, backfill, verify no old version remains, then contract.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · preflight contract without executing it yet</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT COUNT(*) AS rows_missing_reference</span><span class="code-line">FROM work_orders WHERE public_reference IS NULL;</span><span class="code-line"></span><span class="code-line">SELECT version_no,migration_name,checksum_sha256,status</span><span class="code-line">FROM schema_migrations ORDER BY version_no;</span><span class="code-line"></span><span class="code-line">-- Deliberately deferred until fleet and rollback gates pass:</span><span class="code-line">-- ALTER TABLE work_orders DROP COLUMN legacy_column, ALGORITHM=INSTANT;</span></code></pre></div><div class="callout warning"><strong>Fast is not reversible</strong><p>A drop may be metadata-fast but release-irreversible if it destroys the only copy of data required by the previous application. Define the rollback boundary before contract.</p></div></section>
+<section><h2>Migration acceptance matrix</h2><div class="table-wrap"><table class="data-table"><thead><tr><th>Gate</th><th>Evidence</th><th>Reject when</th></tr></thead><tbody><tr><td>artifact</td><td>ordered version, checksum, owner</td><td>applied checksum differs</td></tr><tr><td>compatibility</td><td>old/new integration tests</td><td>either version fails</td></tr><tr><td>data</td><td>backfill counts and invariants</td><td>NULL/invalid state remains</td></tr><tr><td>locking</td><td>representative DDL preflight</td><td>unexpected copy or MDL exposure</td></tr><tr><td>rollback</td><td>documented reversible stage</td><td>legacy data already destroyed</td></tr></tbody></table></div><p>Store migration version, application version, and change-window annotations in deployment telemetry. The operator should be able to answer which application version expects which schema state without reconstructing it from memory.</p></section>
+<section><h2>What MySQL is doing during expand and backfill</h2><p>The expand DDL changes the table definition that MySQL stores in its transactional data dictionary. For an operation that truly qualifies for <code>ALGORITHM=INSTANT</code>, InnoDB does not rewrite every existing record simply to add the nullable column. That is why the operation can be fast even on a large table. The database still needs metadata locks around the definition change, however, and future row versions must understand the new definition. The important production distinction is therefore <em>row rewrite cost</em> versus <em>metadata coordination</em>; eliminating the first does not eliminate the second.</p><p>The backfill is ordinary transactional DML. Each batch generates undo needed for transaction rollback and multiversion concurrency control (MVCC), redo needed for crash recovery, and—when binary logging is enabled—binary-log events needed for replication and point-in-time recovery. A single enormous update can therefore create long transactions, history-list growth, lock pressure, redo bursts, and replica lag. Batching is not magic: it is a way to place explicit boundaries around that work so operators can observe progress, pause, retry, and avoid monopolizing resources.</p><div class="callout info"><strong>Operational mental model</strong><p>Expand changes the allowed shape. Backfill changes stored state. Application deployment changes which shape is read and written. Contract removes the old shape. Treat these as four independently observable phases rather than one migration command.</p></div></section><section><h2>Detect migration drift before applying anything new</h2><p>A migration ledger is valuable only if the release process compares the recorded checksum with the artifact it is about to trust. The following lab simulates drift without editing production history. It does not change the stored checksum; it merely proves that a mismatch can be detected and converted into a hard deployment failure.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · checksum drift gate</div><button class="copy-code" data-copy-code="" type="button">Copy</button></div><pre><code><span class="code-line">SET @artifact_checksum = '0000000000000000000000000000000000000000000000000000000000000000';</span><span class="code-line">SELECT version_no, migration_name, checksum_sha256 AS recorded_checksum,</span><span class="code-line">       @artifact_checksum AS artifact_checksum,</span><span class="code-line">       checksum_sha256 = @artifact_checksum AS checksum_matches</span><span class="code-line">FROM schema_migrations</span><span class="code-line">WHERE version_no = 2026081601;</span></code></pre></div><p>Expected result: <code>checksum_matches</code> is <code>0</code>. That result does not tell you which copy is correct; it tells you the release history and artifact disagree. The safe action is to stop, recover the original artifact from source control/build storage, and investigate. Updating the ledger to make the mismatch disappear destroys evidence.</p></section><section><h2>Production rollout sequence and monitoring signals</h2><p>A mature expand/contract release has explicit gates between phases. During expand, watch metadata-lock waits and DDL errors. During dual-compatible deployment, compare error rates between old and new application versions and verify both write shapes. During backfill, record rows completed, remaining rows, transaction duration, redo/binlog growth, replica lag, lock waits, and host I/O. During contract, verify old-version instance count is zero and that rollback no longer requires the legacy representation.</p><div class="table-wrap"><table class="data-table"><thead><tr><th>Phase</th><th>Primary risk</th><th>Useful evidence</th></tr></thead><tbody><tr><td>expand</td><td>metadata-lock surprise</td><td>Performance Schema MDL + DDL result</td></tr><tr><td>dual-compatible</td><td>mixed-version semantic mismatch</td><td>integration tests + version-tagged errors</td></tr><tr><td>backfill</td><td>resource/replication pressure</td><td>batch progress + redo/binlog/lag</td></tr><tr><td>read switch</td><td>new representation incorrect</td><td>business invariant comparison</td></tr><tr><td>contract</td><td>destroying rollback compatibility</td><td>fleet version inventory + recovery decision</td></tr></tbody></table></div><p>Do not use a universal batch size or deployment delay. The correct batch size depends on row width, indexes, storage latency, transaction concurrency, replication topology, and the service-level objective. Start conservatively, measure, and change one variable at a time.</p></section><section><h2>Hands-on verification before moving to Lesson 2</h2><p>Re-run the old insert shape after the expand migration, verify the new insert shape, ensure the backfill has no remaining null references, and compare the stored migration checksum with the artifact checksum. Then open a second session and confirm ordinary reads still work while no long backfill transaction remains. Record the exact server version and schema definition with <code>SELECT @@version</code> and <code>SHOW CREATE TABLE</code>. The lab is successful only when the evidence shows compatibility, not merely when every command returned “Query OK.”</p></section><div class="checkpoint"><h3>Knowledge check</h3><ol><li>Why should applied migrations be immutable?</li><li>What does expand accomplish?</li><li>Why is successful DDL insufficient evidence?</li><li>When is contract appropriate?</li><li>What does explicit ALGORITHM=INSTANT provide?</li></ol><details class="answer-toggle"><summary>Reveal answers</summary><div><ol><li>So history and checksums remain trustworthy; fixes become new migrations.</li><li>It adds a new representation while preserving the old application contract.</li><li>Application versions and data state may still be incompatible.</li><li>After old code is gone, backfill and invariants pass, and rollback no longer needs legacy state.</li><li>A fail-fast requirement that prevents silent fallback to a more disruptive method.</li></ol></div></details></div><section><h3>Authoritative references</h3><ul>
+<li><a href="https://dev.mysql.com/doc/refman/8.4/en/upgrading.html" rel="noreferrer" target="_blank">MySQL 8.4 — Upgrading MySQL</a></li>
+<li><a href="https://dev.mysql.com/doc/refman/8.4/en/upgrade-paths.html" rel="noreferrer" target="_blank">MySQL 8.4 — Upgrade Paths</a></li>
+<li><a href="https://dev.mysql.com/doc/refman/8.4/en/upgrade-best-practices.html" rel="noreferrer" target="_blank">MySQL 8.4 — Upgrade Best Practices</a></li>
+<li><a href="https://dev.mysql.com/doc/mysql-shell/8.4/en/mysql-shell-utilities-upgrade.html" rel="noreferrer" target="_blank">MySQL Shell 8.4 — Upgrade Checker Utility</a></li>
+<li><a href="https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl.html" rel="noreferrer" target="_blank">MySQL 8.4 — InnoDB and Online DDL</a></li>
+<li><a href="https://dev.mysql.com/doc/refman/8.4/en/group-replication-upgrade.html" rel="noreferrer" target="_blank">MySQL 8.4 — Upgrading Group Replication</a></li>
+<li><a href="https://dev.mysql.com/doc/refman/8.4/en/downgrading.html" rel="noreferrer" target="_blank">MySQL 8.4 — Downgrading MySQL</a></li>
+<li><a href="https://dev.mysql.com/doc/refman/8.4/en/native-pluggable-authentication.html" rel="noreferrer" target="_blank">MySQL 8.4 — Native Authentication Plugin</a></li>
+<li><a href="https://dev.mysql.com/downloads/mysql/8.4.html" rel="noreferrer" target="_blank">MySQL Community Server 8.4 Downloads</a></li>
+<li><a href="https://dev.mysql.com/downloads/shell/8.4.html" rel="noreferrer" target="_blank">MySQL Shell 8.4 Downloads</a></li>
+</ul></section>
+</div>
+<nav aria-label="Lesson navigation" class="lesson-nav"><a class="prev" href="../Chapter19/Lesson5.html"><small>Previous lesson</small><strong>Health Checks, Graceful Degradation, Read Replicas, Migrations, and Deployment Coordination</strong></a><a class="next" href="Lesson2.html"><small>Next lesson</small><strong>Online Schema Change Strategies, Native DDL Capabilities, and External Tool Concepts</strong></a></nav></article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>If these tutorials save you time, a small donation supports new lessons, technical review, diagrams, examples, and long-term maintenance.</p>
+<div aria-label="Author links" class="social-row">
+<a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head"><span>ETH</span><small>Ethereum / ERC-20 only</small></div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
+<button class="button secondary compact" data-copy-donation="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy address</button>
+<p>Send only assets compatible with the Ethereum/ERC-20 network. Do not send TRC-20/TRON assets.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div><strong>Big Data Academy</strong><p>A free, prerequisite-aware path from SQL foundations to distributed data systems.</p></div>
+<div><a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a></div>
+<small>Created and maintained by <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> · © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>

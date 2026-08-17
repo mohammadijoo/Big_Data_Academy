@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Design reliable MySQL aggregates from an explicit row grain, with correct WHERE/HAVING semantics, ONLY_FULL_GROUP_BY functional-dependence checks, NULL handling, and ROLLUP subtotals." name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>GROUP BY, HAVING, Functional Dependence, ROLLUP, and Aggregation Design | Big Data Academy</title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+<script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+        chtml: { scale: 1, matchFontHeight: false },
+      };
+    </script>
+<script defer="" id="MathJax-script" onerror="this.onerror=null;this.src='https://unpkg.com/mathjax@3.2.2/es5/tex-chtml.js';" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
+<span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
+<span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
+</a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a>
+<a class="is-active" href="../../../index.html#courses">Courses</a>
+<a href="../../../index.html#method">Method</a>
+<a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg></button>
+<button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu=""><a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a></nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">MYSQL</span><div><small>Course 04</small><strong>MySQL</strong></div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">×</button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 110 lessons..." type="search"/></label>
+<nav aria-label="MySQL curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter"><summary><span>01</span>MySQL Platform Foundations, Editions, Releases, and Lab Setup</summary><div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What MySQL Is: Server Architecture, Client/Server Boundaries, and Common Workloads</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Community vs Enterprise Capabilities, Licensing Awareness, and Deployment Choices</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>LTS vs Innovation Releases: Version Selection, Support Windows, and Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Install MySQL on Windows, Linux, Containers, and Verify the Toolchain</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build a Reproducible Course Lab with Sample Data, Accounts, and Safety Conventions</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>02</span>Server Architecture, Processes, Files, Connections, and Configuration</summary><div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>mysqld Startup, Data Directory, Configuration Files, and Option Precedence</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Connection Lifecycle, Threads, Sessions, Timeouts, and Resource Consumption</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>System Variables, Status Variables, Dynamic Configuration, and SET PERSIST</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Character Sets, Collations, Time Zones, Locales, and Server Defaults</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Configuration Validation, Startup Failures, Error Logs, and a Baseline Server Profile</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>03</span>Schemas, Tables, Data Types, Keys, Constraints, and SQL Modes</summary><div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>Databases and Schemas in MySQL: Namespaces, Metadata, and Object Ownership</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Numeric, String, Temporal, JSON, Spatial, and Binary Data Types</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK, DEFAULT, and Generated Columns</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>AUTO_INCREMENT, Surrogate vs Natural Keys, and Identifier Design</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>SQL Modes, Strictness, Implicit Conversion, Truncation, and Data-Quality Boundaries</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>04</span>Core SQL Querying: Filtering, Joins, Subqueries, CTEs, and Set Operations</summary><div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>SELECT Execution Basics, Projection, Predicates, NULL Semantics, and Ordering</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>INNER, OUTER, CROSS, and Self Joins with Cardinality Reasoning</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>Scalar, Correlated, EXISTS, IN, and Derived-Table Subqueries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Common Table Expressions, Recursive CTEs, and Hierarchical Queries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>UNION, INTERSECT, EXCEPT, Query Composition, and Readability Patterns</a>
+</div></details>
+<details class="sidebar-chapter" open=""><summary><span>05</span>Advanced SQL: Aggregation, Window Functions, JSON, and Analytical Patterns</summary><div>
+<a class="sidebar-lesson is-current" href="Lesson1.html"><span>01</span>GROUP BY, HAVING, Functional Dependence, ROLLUP, and Aggregation Design<i>Current</i></a>
+<a class="sidebar-lesson" href="Lesson2.html"><span>02</span>Window Frames, Ranking, Running Totals, Gaps-and-Islands, and Top-N per Group</a>
+<a class="sidebar-lesson" href="Lesson3.html"><span>03</span>JSON Documents, Paths, JSON_TABLE, Indexable JSON Patterns, and Validation</a>
+<a class="sidebar-lesson" href="Lesson4.html"><span>04</span>Date/Time, String, Regular Expression, Numeric, and Conditional Functions</a>
+<a class="sidebar-lesson" href="Lesson5.html"><span>05</span>Reporting Queries, Cohort-Style Analysis, Pivots by Conditional Aggregation, and Reusable Views</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>06</span>Data Modification, Transactions, Locking, and Concurrency Semantics</summary><div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>INSERT, Multi-Row Writes, INSERT ... SELECT, and Generated Values</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>UPDATE, DELETE, Multi-Table DML, and Guardrails Against Wide Changes</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Transactions, Autocommit, COMMIT, ROLLBACK, SAVEPOINT, and Error Handling</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Isolation Levels, Consistent Reads, Locking Reads, MVCC, and Anomalies</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Deadlocks, Lock Waits, Retry Design, Idempotency, and Concurrency Testing</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>07</span>InnoDB Storage Architecture and Transaction Internals</summary><div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>InnoDB Tablespaces, Pages, Extents, Segments, and Row Formats</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Clustered Indexes, Secondary Indexes, Hidden Columns, and Record Layout</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Buffer Pool Architecture, Change Buffer, Adaptive Hashing, and Caching Behavior</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Redo Logs, Undo Logs, Doublewrite, Checkpoints, and Crash Recovery</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Purge, History List, Long Transactions, MVCC Cleanup, and Storage Health</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>08</span>Index Engineering and Access Path Design</summary><div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>B-Tree Index Structure, Selectivity, Cardinality, and Leftmost-Prefix Rules</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>Composite Index Ordering, Covering Indexes, Prefix Indexes, and Redundant Indexes</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Functional, Multi-Valued, FULLTEXT, and Spatial Index Use Cases</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>Index Condition Pushdown, Loose/Tight Index Scans, and Skip-Scan Concepts</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Designing an Index Portfolio from Workload Evidence and Write-Cost Constraints</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>09</span>Optimizer, EXPLAIN, Statistics, and Query Plan Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>How the MySQL Optimizer Builds Access Paths, Join Orders, and Cost Estimates</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>EXPLAIN, EXPLAIN ANALYZE, FORMAT=TREE/JSON, and Iterator Timing</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Histograms, Persistent Statistics, Cardinality Errors, and ANALYZE TABLE</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Join Algorithms, Semijoin/Antijoin Transformations, Derived Tables, and Materialization</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Plan Regressions, Optimizer Hints, Invisible Indexes, and Evidence-Driven Tuning</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>10</span>Stored Programs, Views, Triggers, Events, and Server-Side Logic</summary><div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Views, Updatability, SQL SECURITY, Definer Context, and Dependency Management</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Stored Procedures, Functions, Parameters, Condition Handlers, and Diagnostics</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Triggers, OLD/NEW Rows, Ordering, Auditing Uses, and Hidden Coupling Risks</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Event Scheduler, Recurring Maintenance Jobs, Failure Handling, and Observability</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>When Server-Side Logic Helps—and When Application Logic Is the Better Boundary</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>11</span>Users, Roles, Authentication, Authorization, and Least Privilege</summary><div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Accounts, Host Matching, Authentication Plugins, Password Policy, and Account Lifecycle</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Privileges, Roles, DEFAULT ROLE, Dynamic Privileges, and Delegated Administration</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Object-Level vs Administrative Privilege Design and Separation of Duties</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>PROXY, DEFINER, SQL SECURITY, Stored Objects, and Privilege-Escalation Risks</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Design and Audit a Least-Privilege Access Model for Applications and Operators</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>12</span>Encryption, TLS, Secrets, Auditing, and Security Hardening</summary><div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>TLS for Client Connections, Certificate Validation, and Secure Transport Enforcement</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Data-at-Rest Encryption Concepts, Key Management Boundaries, and Backup Encryption</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Secrets Handling for Applications, Option Files, Environment Variables, and Rotation</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>Audit Logging Options, General/Slow Logs, Privacy, and Forensic Considerations</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Hardening Checklist: Network Exposure, Local Files, Plugins, Accounts, and Patch Discipline</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>13</span>Backup, Restore, Binary Logs, and Point-in-Time Recovery</summary><div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>Logical vs Physical Backup: mysqldump, MySQL Shell, Snapshots, and Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>Consistent Backups with Transactions, Locks, Replication Coordinates, and Large Datasets</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>Binary Log Formats, GTIDs, Retention, and Recovery Prerequisites</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Point-in-Time Recovery from Full Backup plus Binary Logs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Restore Testing, RPO/RTO Measurement, Corruption Drills, and Backup Automation</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>14</span>Asynchronous Replication, GTIDs, Topologies, and Operational Safety</summary><div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Source/Replica Architecture, Binary Log Flow, Relay Logs, and Replication Threads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>GTID-Based Replication, Auto-Positioning, Failover Readiness, and Errant Transactions</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Statement, Row, and Mixed Logging Semantics with Determinism Risks</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Replication Filters, Delayed Replicas, Read Scaling, and Reporting Workloads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Lag Diagnosis, Broken Replication, Data Drift, Re-Synchronization, and Promotion Runbooks</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>15</span>Group Replication, InnoDB Cluster, Router, and High Availability</summary><div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Consensus-Oriented Group Replication Concepts, Membership, Quorum, and Failure Modes</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Single-Primary vs Multi-Primary Modes, Conflict Detection, and Workload Constraints</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>MySQL Shell AdminAPI, InnoDB Cluster Lifecycle, Recovery, and Rejoin Operations</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>MySQL Router, Connection Routing, Read/Write Splitting, and Application Failover</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Failure Injection, Split-Brain Avoidance, Maintenance, Upgrades, and HA Acceptance Tests</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>16</span>Performance Schema, sys Schema, Logs, Metrics, and Observability</summary><div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Performance Schema Instruments, Consumers, Events, and Measurement Overhead</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>sys Schema Views for Sessions, Statements, Waits, I/O, Memory, and Index Usage</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>Slow Query Log, Error Log, General Log, and Structured Diagnostic Workflows</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>Key OS and MySQL Metrics: CPU, I/O, Buffer Pool, Connections, Temp Tables, and Redo</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Build a Production Dashboard, Alert Thresholds, Baselines, and Incident Timelines</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>17</span>Memory, I/O, Temporary Work, and Server Performance Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Buffer Pool Sizing, Working Sets, Dirty Pages, Flushing, and Memory Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Per-Connection Buffers, Sort/Join Buffers, Memory Multipliers, and OOM Risk</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Temporary Tables, Spill to Disk, tmpdir, Internal Temp Engines, and Query Rewrite</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Redo Capacity, I/O Capacity, Flush Methods, Storage Latency, and Checkpoint Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Benchmarking Methodology, Warm vs Cold Cache, Concurrency, Percentiles, and Repeatability</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>18</span>Partitioning, Large Tables, Archiving, and Data Lifecycle</summary><div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Partitioning Concepts, Supported Strategies, Partition Pruning, and Design Constraints</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Partition Keys, Unique-Key Rules, Hot/Cold Data, and Operational Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Online DDL, Instant/In-Place/Copy Algorithms, Locks, and Schema Change Planning</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Archiving, Purging, Retention Jobs, and Avoiding Massive Delete Pathologies</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Managing Multi-Terabyte Tables: Capacity, Maintenance Windows, and Growth Forecasts</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>19</span>Application Integration, Connectors, Pools, ORMs, and Reliability Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>Connection Strings, TLS, Timeouts, Pools, and Session Initialization Contracts</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Prepared Statements, Parameter Binding, SQL Injection Defense, and Type Mapping</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Transaction Boundaries in Application Code, Retries, Idempotency, and Lost Connections</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>ORM Query Generation, N+1 Problems, Pagination, Bulk Writes, and Plan Visibility</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Health Checks, Graceful Degradation, Read Replicas, Migrations, and Deployment Coordination</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>20</span>Schema Migration, Upgrades, Compatibility, and Zero/Low-Downtime Change</summary><div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Versioned Schema Migrations, Expand/Contract Patterns, and Backward Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Online Schema Change Strategies, Native DDL Capabilities, and External Tool Concepts</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Pre-Upgrade Checks, Deprecated Features, SQL Modes, Collations, and Authentication Changes</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Rolling Upgrade Considerations for Replication and High-Availability Topologies</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Rollback Planning, Data Validation, Canaries, and Post-Upgrade Performance Verification</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>21</span>Specialized MySQL Capabilities: NDB, Document Store, Spatial, and Search</summary><div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>NDB Cluster Architecture, Distribution, Availability, and When It Fits</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>X Protocol, MySQL Shell, Document Store Concepts, and CRUD APIs</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Spatial Types, SRIDs, Spatial Functions, R-Tree Indexing, and GIS Workloads</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>FULLTEXT Search, Tokenization, Relevance, Stopwords, and Search-System Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>Choosing Native Features vs Dedicated Systems for Search, Analytics, and Distributed Scale</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>22</span>Production Capstone: Design, Secure, Scale, Tune, and Recover MySQL</summary><div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Define SLOs, Workload, Data Model, Capacity Forecast, and Architecture Decision Record</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>Build the Production Schema, Index Portfolio, Security Model, and Migration Pipeline</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>Load Test, Capture Plans, Tune Queries/Server, and Establish Performance Baselines</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Implement Backups, PITR, Replication/HA, Monitoring, Alerts, and Incident Runbooks</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Execute Failure/Recovery Drills and Defend the Final MySQL Production Design</a>
+</div></details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar"><button data-sidebar-open="" type="button"><span>Course navigation</span><span>Chapter 02 · Lesson 05</span></button></div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs"><a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">MySQL</a><span>/</span><span>Chapter 05 · Lesson 01</span></nav>
+<header class="lesson-header"><p class="eyebrow">Chapter 05 · Advanced SQL: Aggregation, Window Functions, JSON, and Analytical Patterns</p>
+<h1>GROUP BY, HAVING, Functional Dependence, ROLLUP, and Aggregation Design</h1>
+<p>Design reliable MySQL aggregates from an explicit row grain, with correct WHERE/HAVING semantics, ONLY_FULL_GROUP_BY functional-dependence checks, NULL handling, and ROLLUP subtotals.</p>
+<div class="lesson-meta"><span>Beginner</span><span>80–100 min</span><span>Aggregation correctness lab</span><span>MySQL 8.4 LTS · current downloadable baseline 8.4.10</span><span>GROUP BY + ROLLUP</span><span>Last reviewed: August 2026</span></div></header>
+<nav aria-label="On this page" class="lesson-toc"><strong>On this page</strong><ol data-generated-toc=""></ol></nav>
+<div class="lesson-content">
+<section><h2>Learning outcomes</h2>
+<p>A manager asks for “one row per region showing closed work, open work, labor, and parts cost, plus subtotals.” That request sounds like a few aggregate functions, but reliable aggregation begins before <code>SUM()</code> or <code>COUNT()</code>: you must define the <em>grain</em> of one output row. If the grain is unclear, joins can multiply facts, nonaggregated columns can become nondeterministic, and subtotal <code>NULL</code> values can be mistaken for ordinary missing data.</p>
+<p>This lesson builds aggregation from the row-grain contract outward. It reconnects the portable SQL ideas from the prerequisite course, then focuses on MySQL behavior under <code>ONLY_FULL_GROUP_BY</code>, functional-dependence detection, and <code>ROLLUP</code>/<code>GROUPING()</code>.</p>
+<div class="objectives"><div class="objective"><span>01</span><p>Define the grain of an aggregate result before writing GROUP BY and verify it with controlled row counts.</p></div><div class="objective"><span>02</span><p>Distinguish WHERE from HAVING and aggregate expressions from nonaggregate expressions.</p></div><div class="objective"><span>03</span><p>Explain how ONLY_FULL_GROUP_BY and MySQL functional-dependence detection protect deterministic grouped results.</p></div><div class="objective"><span>04</span><p>Use ROLLUP and GROUPING() to produce and label subtotal/grand-total rows without confusing them with ordinary NULLs.</p></div><div class="objective"><span>05</span><p>Build and verify a regional ServiceHub operational summary with production-minded correctness checks.</p></div></div>
+<div class="callout"><strong>Baseline</strong><p>Mandatory labs use MySQL Community Server 8.4 LTS, with the current downloadable 8.4.10 build as the reproducible reference. Capture SELECT VERSION() and @@SESSION.sql_mode before comparing results because grouping behavior depends on sql_mode.</p></div>
+</section>
+<section><h2>Create the Chapter 05 analytics laboratory</h2>
+<p>The chapter extends the ServiceHub domain from Chapter 04. Six customers belong to four regions; twelve work orders carry status, priority, labor minutes, exact <code>DECIMAL</code> parts cost, and optional JSON attributes. A small service-day table is included for the window-function lesson. The dataset stays intentionally small so you can calculate expected answers by hand before asking MySQL.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · create and seed the ServiceHub analytics lab</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">DROP DATABASE IF EXISTS servicehub_analytics_lab;</span><span class="code-line">CREATE DATABASE servicehub_analytics_lab</span><span class="code-line">  CHARACTER SET utf8mb4</span><span class="code-line">  COLLATE utf8mb4_0900_ai_ci;</span><span class="code-line">USE servicehub_analytics_lab;</span><span class="code-line"></span><span class="code-line">CREATE TABLE customers (</span><span class="code-line">  customer_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,</span><span class="code-line">  customer_name VARCHAR(100) NOT NULL,</span><span class="code-line">  region VARCHAR(20) NOT NULL,</span><span class="code-line">  signup_date DATE NOT NULL</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">CREATE TABLE technicians (</span><span class="code-line">  technician_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,</span><span class="code-line">  technician_name VARCHAR(100) NOT NULL,</span><span class="code-line">  team_name VARCHAR(30) NOT NULL</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">CREATE TABLE work_orders (</span><span class="code-line">  work_order_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,</span><span class="code-line">  customer_id BIGINT UNSIGNED NOT NULL,</span><span class="code-line">  technician_id BIGINT UNSIGNED NULL,</span><span class="code-line">  status VARCHAR(20) NOT NULL,</span><span class="code-line">  priority TINYINT UNSIGNED NOT NULL,</span><span class="code-line">  opened_at DATETIME NOT NULL,</span><span class="code-line">  closed_at DATETIME NULL,</span><span class="code-line">  labor_minutes INT UNSIGNED NOT NULL,</span><span class="code-line">  parts_cost DECIMAL(10,2) NOT NULL DEFAULT 0.00,</span><span class="code-line">  summary VARCHAR(180) NOT NULL,</span><span class="code-line">  attributes JSON NULL,</span><span class="code-line">  CONSTRAINT chk_priority CHECK (priority BETWEEN 1 AND 3),</span><span class="code-line">  CONSTRAINT chk_attributes_object CHECK (</span><span class="code-line">    attributes IS NULL OR JSON_TYPE(attributes) = 'OBJECT'</span><span class="code-line">  ),</span><span class="code-line">  CONSTRAINT fk_analytics_customer</span><span class="code-line">    FOREIGN KEY (customer_id) REFERENCES customers(customer_id),</span><span class="code-line">  CONSTRAINT fk_analytics_technician</span><span class="code-line">    FOREIGN KEY (technician_id) REFERENCES technicians(technician_id)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">CREATE TABLE service_days (</span><span class="code-line">  customer_id BIGINT UNSIGNED NOT NULL,</span><span class="code-line">  service_date DATE NOT NULL,</span><span class="code-line">  PRIMARY KEY (customer_id, service_date),</span><span class="code-line">  CONSTRAINT fk_service_days_customer</span><span class="code-line">    FOREIGN KEY (customer_id) REFERENCES customers(customer_id)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">INSERT INTO customers VALUES</span><span class="code-line">  (1,'Northwind Clinic','north','2026-01-05'),</span><span class="code-line">  (2,'Contoso Foods','south','2026-01-20'),</span><span class="code-line">  (3,'Alpine School','north','2026-02-03'),</span><span class="code-line">  (4,'Fabrikam Lab','east','2026-02-14'),</span><span class="code-line">  (5,'Tailspin Hotel','west','2026-03-01'),</span><span class="code-line">  (6,'Adventure Works','south','2026-03-21');</span><span class="code-line"></span><span class="code-line">INSERT INTO technicians VALUES</span><span class="code-line">  (10,'Mina','operations'),</span><span class="code-line">  (11,'Arman','electrical'),</span><span class="code-line">  (12,'Sara','mechanical'),</span><span class="code-line">  (13,'Laleh','controls');</span><span class="code-line"></span><span class="code-line">INSERT INTO work_orders VALUES</span><span class="code-line">  (1001,1,11,'closed',1,'2026-01-10 08:00:00','2026-01-10 10:00:00', 90,120.50,'Sterilizer temperature alarm',</span><span class="code-line">   JSON_OBJECT('channel','portal','asset',JSON_OBJECT('type','sterilizer','critical',TRUE),'skills',JSON_ARRAY('electrical','controls'),'sla_hours',4,'note',NULL)),</span><span class="code-line">  (1002,1,12,'closed',2,'2026-01-20 09:30:00','2026-01-21 12:15:00',160, 75.00,'Pump seal replacement',</span><span class="code-line">   JSON_OBJECT('channel','phone','asset',JSON_OBJECT('type','pump','critical',FALSE),'skills',JSON_ARRAY('mechanical'),'sla_hours',24)),</span><span class="code-line">  (1003,1,11,'open',1,'2026-02-05 08:30:00',NULL,45,0.00,'Sterilizer controller diagnostic',</span><span class="code-line">   JSON_OBJECT('channel','portal','asset',JSON_OBJECT('type','sterilizer','critical',TRUE),'skills',JSON_ARRAY('electrical','controls'),'sla_hours',4)),</span><span class="code-line">  (1004,2,13,'closed',2,'2026-02-06 10:00:00','2026-02-06 11:30:00',60,25.00,'Conveyor sensor alignment',</span><span class="code-line">   JSON_OBJECT('channel','api','asset',JSON_OBJECT('type','conveyor','critical',FALSE),'skills',JSON_ARRAY('controls'),'sla_hours',8)),</span><span class="code-line">  (1005,2,12,'closed',2,'2026-02-07 10:00:00','2026-02-07 12:00:00',60,25.00,'Packaging pump inspection',</span><span class="code-line">   JSON_OBJECT('channel','phone','asset',JSON_OBJECT('type','pump','critical',FALSE),'skills',JSON_ARRAY('mechanical'),'sla_hours',8)),</span><span class="code-line">  (1006,3,11,'closed',3,'2026-03-01 07:30:00','2026-03-02 13:00:00',200,300.00,'Boiler pressure sensor replacement',</span><span class="code-line">   JSON_OBJECT('channel','email','asset',JSON_OBJECT('type','boiler','critical',TRUE),'skills',JSON_ARRAY('electrical'),'sla_hours',12)),</span><span class="code-line">  (1007,3,13,'open',2,'2026-03-02 08:00:00',NULL,120,80.00,'HVAC controller tuning',</span><span class="code-line">   JSON_OBJECT('channel','portal','asset',JSON_OBJECT('type','hvac','critical',TRUE),'skills',JSON_ARRAY('controls'),'sla_hours',8)),</span><span class="code-line">  (1008,4,13,'closed',1,'2026-03-03 08:00:00','2026-03-03 09:00:00',60,15.00,'Microscope stage calibration',</span><span class="code-line">   JSON_OBJECT('channel','portal','asset',JSON_OBJECT('type','microscope','critical',FALSE),'skills',JSON_ARRAY('calibration','controls'),'sla_hours',4)),</span><span class="code-line">  (1009,4,11,'closed',2,'2026-03-03 08:00:00','2026-03-03 10:00:00',60,15.00,'Lab sensor cable replacement',</span><span class="code-line">   JSON_OBJECT('channel','email','asset',JSON_OBJECT('type','sensor','critical',FALSE),'skills',JSON_ARRAY('electrical'),'sla_hours',8)),</span><span class="code-line">  (1010,5,12,'open',3,'2026-04-01 09:00:00',NULL,30,0.00,'Guest elevator pump noise',NULL),</span><span class="code-line">  (1011,6,13,'closed',1,'2026-04-02 08:00:00','2026-04-02 09:15:00',75,50.00,'Line controller firmware check',</span><span class="code-line">   JSON_OBJECT('channel','api','asset',JSON_OBJECT('type','controller','critical',TRUE),'skills',JSON_ARRAY('controls'),'sla_hours',4)),</span><span class="code-line">  (1012,6,11,'closed',1,'2026-04-03 08:00:00','2026-04-04 10:00:00',75,50.00,'Motor sensor fault tracing',</span><span class="code-line">   JSON_OBJECT('channel','api','asset',JSON_OBJECT('type','motor','critical',TRUE),'skills',JSON_ARRAY('electrical'),'sla_hours',4));</span><span class="code-line"></span><span class="code-line">INSERT INTO service_days VALUES</span><span class="code-line">  (1,'2026-01-10'),(1,'2026-01-11'),(1,'2026-01-12'),(1,'2026-01-20'),(1,'2026-01-21'),</span><span class="code-line">  (2,'2026-02-06'),(2,'2026-02-08'),(2,'2026-02-09'),</span><span class="code-line">  (3,'2026-03-01'),(3,'2026-03-02'),(3,'2026-03-03'),(3,'2026-03-10');</span></code></pre></div>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · record the session contract and seed counts</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT VERSION() AS server_version,</span><span class="code-line">       DATABASE() AS current_schema,</span><span class="code-line">       @@SESSION.sql_mode AS session_sql_mode;</span><span class="code-line"></span><span class="code-line">SELECT COUNT(*) AS customers FROM customers;</span><span class="code-line">SELECT COUNT(*) AS technicians FROM technicians;</span><span class="code-line">SELECT COUNT(*) AS work_orders FROM work_orders;</span><span class="code-line">SELECT COUNT(*) AS service_days FROM service_days;</span></code></pre></div>
+<p>Expected seed counts are 6 customers, 4 technicians, 12 work orders, and 12 service-day rows. The work-order table contains 9 closed rows and 3 open rows. Treat these counts as test fixtures: if they differ, repair the seed state before debugging an aggregate.</p>
+</section>
+<section><h2>Start with grain: what does one output row mean?</h2>
+<p>Suppose the report grain is <strong>one row per region</strong>. Then every selected expression must either identify that region or summarize rows inside that region. If you later add <code>status</code> to <code>GROUP BY</code>, the grain changes to one row per <em>region and status</em>. That is a different report, not a formatting tweak.</p>
+<div class="table-wrap"><table class="data-table"><thead><tr><th>Requested report</th><th>Grain</th><th>Typical grouping key</th></tr></thead><tbody><tr><td>Regional workload</td><td>one row per region</td><td>region</td></tr><tr><td>Regional workload by state</td><td>one row per region + status</td><td>region, status</td></tr><tr><td>Technician daily labor</td><td>one row per technician + calendar day</td><td>technician_id, DATE(opened_at)</td></tr><tr><td>Grand total</td><td>one row for the entire qualifying set</td><td>no GROUP BY</td></tr></tbody></table></div>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · one row per region</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT c.region,</span><span class="code-line">       COUNT(*) AS work_order_count,</span><span class="code-line">       SUM(w.labor_minutes) AS labor_minutes,</span><span class="code-line">       SUM(w.parts_cost) AS parts_cost</span><span class="code-line">FROM work_orders AS w</span><span class="code-line">JOIN customers AS c ON c.customer_id = w.customer_id</span><span class="code-line">GROUP BY c.region</span><span class="code-line">ORDER BY c.region;</span></code></pre></div>
+<p>The expected counts by region are east 2, north 5, south 4, and west 1. Before trusting labor or money totals, verify the counts. Counts are often the fastest way to detect accidental join multiplication.</p>
+</section>
+<section><h2>WHERE filters rows before grouping; HAVING filters groups</h2>
+<p><code>WHERE</code> answers “which input rows are eligible?” <code>HAVING</code> answers “which groups survive after aggregation?” Use the earliest semantically correct filter. If you need only closed work orders, put <code>status='closed'</code> in <code>WHERE</code>; do not group all rows and then simulate that row filter indirectly.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · separate row filtering from group filtering</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT c.region,</span><span class="code-line">       COUNT(*) AS closed_orders,</span><span class="code-line">       SUM(w.parts_cost) AS closed_parts_cost</span><span class="code-line">FROM work_orders AS w</span><span class="code-line">JOIN customers AS c ON c.customer_id = w.customer_id</span><span class="code-line">WHERE w.status = 'closed'</span><span class="code-line">GROUP BY c.region</span><span class="code-line">HAVING COUNT(*) &gt;= 2</span><span class="code-line">ORDER BY c.region;</span><span class="code-line">-- east: 2, north: 3, south: 4; west is absent</span></code></pre></div>
+<p>The <code>WHERE</code> clause removes open work orders before aggregation. <code>HAVING COUNT(*) &gt;= 2</code> then removes any region whose remaining group has fewer than two closed orders. Putting an aggregate such as <code>COUNT(*)</code> in <code>WHERE</code> is conceptually wrong because the group does not exist at that stage.</p>
+</section>
+<section><h2>ONLY_FULL_GROUP_BY: make nondeterminism visible</h2>
+<p>With <code>ONLY_FULL_GROUP_BY</code> enabled—which is part of the default MySQL 8.4 SQL mode—MySQL rejects a grouped query when a selected nonaggregate expression is neither grouped nor functionally dependent on the grouping columns. This is a correctness guard, not an inconvenience to disable reflexively.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · intentional nondeterministic grouped query</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT @@SESSION.sql_mode;</span><span class="code-line"></span><span class="code-line">-- Wrong: a customer can have work orders with different statuses.</span><span class="code-line">SELECT customer_id, status, COUNT(*) AS order_count</span><span class="code-line">FROM work_orders</span><span class="code-line">GROUP BY customer_id;</span><span class="code-line">-- Expected with ONLY_FULL_GROUP_BY: error 1055 (expression not in GROUP BY</span><span class="code-line">-- and not functionally dependent on grouped columns).</span></code></pre></div>
+<p>If you disabled <code>ONLY_FULL_GROUP_BY</code>, MySQL could choose an arbitrary <code>status</code> value from each customer group. Adding <code>ORDER BY</code> does not make that choice deterministic because ordering happens after the grouped value has already been chosen.</p>
+<div class="callout warning"><strong>Wrong repair</strong><p>Do not remove ONLY_FULL_GROUP_BY merely to make an ambiguous report execute. Repair the grain: group by status if status is part of the row identity, aggregate it if a summary is intended, or remove it if it does not belong in the result.</p></div>
+</section>
+<section><h2>Functional dependence: when a non-grouped column is still deterministic</h2>
+<p>Functional dependence means one value uniquely determines another. A primary key determines every other column in its row. MySQL can detect many such relationships and accept a nonaggregated expression when the grouping key guarantees exactly one value for it.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · group by a primary key while selecting its dependent name</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT c.customer_id,</span><span class="code-line">       c.customer_name,</span><span class="code-line">       COUNT(w.work_order_id) AS order_count</span><span class="code-line">FROM customers AS c</span><span class="code-line">LEFT JOIN work_orders AS w</span><span class="code-line">  ON w.customer_id = c.customer_id</span><span class="code-line">GROUP BY c.customer_id</span><span class="code-line">ORDER BY c.customer_id;</span></code></pre></div>
+<p><code>customer_name</code> is not listed in <code>GROUP BY</code>, but <code>customers.customer_id</code> is a primary key, so each grouped customer ID determines exactly one customer name. That is different from the earlier <code>status</code> example, where one customer can have both open and closed orders.</p>
+<p><code>ANY_VALUE()</code> exists for cases where you intentionally accept an arbitrary representative or where a real dependence is outside what MySQL can infer. It is not a substitute for understanding grain.</p>
+</section>
+<section><h2>NULL and aggregate functions: know what is counted</h2>
+<p><code>COUNT(*)</code> counts rows. <code>COUNT(expression)</code> counts non-<code>NULL</code> expression values. Most numeric aggregates ignore <code>NULL</code> inputs. This matters with <code>closed_at</code>: open work orders have no close timestamp, so <code>COUNT(closed_at)</code> counts closed rows in this particular schema, whereas <code>COUNT(*)</code> counts all rows.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · observe COUNT variants</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT COUNT(*) AS all_orders,</span><span class="code-line">       COUNT(closed_at) AS rows_with_close_time,</span><span class="code-line">       COUNT(DISTINCT customer_id) AS customers_with_orders</span><span class="code-line">FROM work_orders;</span><span class="code-line">-- Expected: 12, 9, 6</span></code></pre></div>
+<p>Do not rely on a nullable column as a proxy for business state unless the schema contract guarantees that relationship. Here it is pedagogically useful, but the authoritative state is still the <code>status</code> column and its business rules.</p>
+</section>
+<section><h2>ROLLUP and GROUPING(): distinguish real NULL from subtotal NULL</h2>
+<p><code>WITH ROLLUP</code> adds super-aggregate rows. For grouping keys, MySQL represents those higher-level rows with <code>NULL</code>. That creates an ambiguity if the underlying data can also contain ordinary <code>NULL</code>. <code>GROUPING()</code> resolves it: it returns 1 when the expression is a super-aggregate placeholder and 0 for an ordinary grouped value.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · regional and status subtotals with explicit labels</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT</span><span class="code-line">  CASE WHEN GROUPING(c.region) = 1 THEN 'ALL REGIONS' ELSE c.region END AS region,</span><span class="code-line">  CASE WHEN GROUPING(w.status) = 1 THEN 'ALL STATUSES' ELSE w.status END AS status,</span><span class="code-line">  COUNT(*) AS order_count,</span><span class="code-line">  SUM(w.labor_minutes) AS labor_minutes,</span><span class="code-line">  SUM(w.parts_cost) AS parts_cost</span><span class="code-line">FROM work_orders AS w</span><span class="code-line">JOIN customers AS c ON c.customer_id = w.customer_id</span><span class="code-line">GROUP BY c.region, w.status WITH ROLLUP</span><span class="code-line">ORDER BY GROUPING(c.region), c.region,</span><span class="code-line">         GROUPING(w.status), w.status;</span></code></pre></div>
+<p>The rows labeled <code>ALL STATUSES</code> are regional subtotals; the final <code>ALL REGIONS / ALL STATUSES</code> row is the grand total. Use <code>GROUPING()</code> rather than testing <code>region IS NULL</code> if real data can contain a <code>NULL</code> region.</p>
+</section>
+<section><h2>Hands-on lab: build an operational aggregation contract</h2>
+<ol>
+<li>Recreate the seed and verify the four fixture counts.</li>
+<li>Write one row per region with order count, closed count, open count, labor minutes, and parts cost.</li>
+<li>Move a <code>status='closed'</code> condition between <code>WHERE</code> and conditional aggregation; explain why the resulting grain/meaning changes.</li>
+<li>Trigger the <code>ONLY_FULL_GROUP_BY</code> error by selecting <code>status</code> while grouping only by customer.</li>
+<li>Repair the query by choosing a correct grain, not by disabling the mode.</li>
+<li>Add <code>WITH ROLLUP</code> and label subtotal rows with <code>GROUPING()</code>.</li>
+</ol>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · verification report</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT c.region,</span><span class="code-line">       COUNT(*) AS all_orders,</span><span class="code-line">       SUM(CASE WHEN w.status='closed' THEN 1 ELSE 0 END) AS closed_orders,</span><span class="code-line">       SUM(CASE WHEN w.status='open' THEN 1 ELSE 0 END) AS open_orders,</span><span class="code-line">       SUM(w.labor_minutes) AS labor_minutes,</span><span class="code-line">       SUM(w.parts_cost) AS parts_cost</span><span class="code-line">FROM work_orders AS w</span><span class="code-line">JOIN customers AS c ON c.customer_id=w.customer_id</span><span class="code-line">GROUP BY c.region</span><span class="code-line">ORDER BY c.region;</span></code></pre></div>
+<div class="checkpoint"><h3>Knowledge check</h3><ol><li>What is the grain of SELECT region, status, COUNT(*) ... GROUP BY region, status?</li><li>Why should a row-level status filter normally be in WHERE rather than HAVING?</li><li>What problem does ONLY_FULL_GROUP_BY prevent?</li><li>Why can customer_name be selected when grouping by the customers primary key?</li><li>How does GROUPING(region) differ from region IS NULL in a ROLLUP result?</li></ol><details class="answer-toggle"><summary>Reveal answers</summary><div><ol><li>One output row per distinct region-and-status pair.</li><li>WHERE removes ineligible input rows before grouping; HAVING is for conditions on the resulting groups.</li><li>It prevents nondeterministic selection of nonaggregated values that are neither grouped nor functionally dependent on the grouping key.</li><li>A primary key uniquely determines the other columns in its row, and MySQL can detect that functional dependence.</li><li>GROUPING(region)=1 specifically identifies a super-aggregate placeholder introduced by ROLLUP; region IS NULL cannot distinguish that from an ordinary NULL grouped value.</li></ol></div></details></div>
+</section>
+<section><h2>Production judgment and next bridge</h2>
+<p>Aggregation belongs close to the data when it reduces rows cleanly and the query remains operationally affordable. But a correct aggregate can still be expensive: broad scans, large sorts, many groups, and join multiplication can consume CPU, memory, and temporary-table I/O. Watch query latency, rows examined, temporary-table behavior, and plan changes; Chapter 09 will teach systematic plan engineering.</p>
+<p><strong>Next:</strong> grouped aggregates collapse rows. Window functions let you calculate rankings, running values, previous/next comparisons, and per-group top-N while preserving individual rows.</p>
+<h3>Authoritative references</h3><ul><li><a href="https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions-and-modifiers.html" rel="noopener" target="_blank">MySQL 8.4 Reference Manual — Aggregate Functions</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/group-by-modifiers.html" rel="noopener" target="_blank">MySQL 8.4 Reference Manual — GROUP BY Modifiers / ROLLUP</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/group-by-handling.html" rel="noopener" target="_blank">MySQL 8.4 Reference Manual — MySQL Handling of GROUP BY</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/group-by-functional-dependence.html" rel="noopener" target="_blank">MySQL 8.4 Reference Manual — Detection of Functional Dependence</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/miscellaneous-functions.html" rel="noopener" target="_blank">MySQL 8.4 Reference Manual — Miscellaneous Functions / GROUPING and ANY_VALUE</a></li></ul>
+</section>
+</div>
+<nav aria-label="Lesson navigation" class="lesson-nav"><a class="prev" href="../Chapter04/Lesson5.html"><small>Previous lesson</small><strong>UNION, INTERSECT, EXCEPT, Query Composition, and Readability Patterns</strong></a><a class="next" href="Lesson2.html"><small>Next lesson</small><strong>Window Frames, Ranking, Running Totals, Gaps-and-Islands, and Top-N per Group</strong></a></nav>
+</article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>If these tutorials save you time, a small donation supports new lessons, technical review, diagrams, examples, and long-term maintenance.</p>
+<div aria-label="Author links" class="social-row">
+<a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head"><span>ETH</span><small>Ethereum / ERC-20 only</small></div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
+<button class="button secondary compact" data-copy-donation="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy address</button>
+<p>Send only assets compatible with the Ethereum/ERC-20 network. Do not send TRC-20/TRON assets.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div><strong>Big Data Academy</strong><p>A free, prerequisite-aware path from SQL foundations to distributed data systems.</p></div>
+<div><a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a></div>
+<small>Created and maintained by <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> · © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>

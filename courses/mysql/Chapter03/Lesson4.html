@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Understand MySQL AUTO_INCREMENT as an identifier allocator, observe LAST_INSERT_ID connection semantics and gaps, and choose InnoDB primary-key shapes with locality and index footprint in mind." name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>AUTO_INCREMENT, Surrogate vs Natural Keys, and Identifier Design | Big Data Academy</title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+<script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+        chtml: { scale: 1, matchFontHeight: false },
+      };
+    </script>
+<script defer="" id="MathJax-script" onerror="this.onerror=null;this.src='https://unpkg.com/mathjax@3.2.2/es5/tex-chtml.js';" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
+<span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
+<span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
+</a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a>
+<a class="is-active" href="../../../index.html#courses">Courses</a>
+<a href="../../../index.html#method">Method</a>
+<a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg></button>
+<button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu=""><a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a></nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">MYSQL</span><div><small>Course 04</small><strong>MySQL</strong></div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">×</button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 110 lessons..." type="search"/></label>
+<nav aria-label="MySQL curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter"><summary><span>01</span>MySQL Platform Foundations, Editions, Releases, and Lab Setup</summary><div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What MySQL Is: Server Architecture, Client/Server Boundaries, and Common Workloads</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Community vs Enterprise Capabilities, Licensing Awareness, and Deployment Choices</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>LTS vs Innovation Releases: Version Selection, Support Windows, and Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Install MySQL on Windows, Linux, Containers, and Verify the Toolchain</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build a Reproducible Course Lab with Sample Data, Accounts, and Safety Conventions</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>02</span>Server Architecture, Processes, Files, Connections, and Configuration</summary><div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>mysqld Startup, Data Directory, Configuration Files, and Option Precedence</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Connection Lifecycle, Threads, Sessions, Timeouts, and Resource Consumption</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>System Variables, Status Variables, Dynamic Configuration, and SET PERSIST</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Character Sets, Collations, Time Zones, Locales, and Server Defaults</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Configuration Validation, Startup Failures, Error Logs, and a Baseline Server Profile</a>
+</div></details>
+<details class="sidebar-chapter" open=""><summary><span>03</span>Schemas, Tables, Data Types, Keys, Constraints, and SQL Modes</summary><div>
+<a class="sidebar-lesson" href="Lesson1.html"><span>01</span>Databases and Schemas in MySQL: Namespaces, Metadata, and Object Ownership</a>
+<a class="sidebar-lesson" href="Lesson2.html"><span>02</span>Numeric, String, Temporal, JSON, Spatial, and Binary Data Types</a>
+<a class="sidebar-lesson" href="Lesson3.html"><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK, DEFAULT, and Generated Columns</a>
+<a class="sidebar-lesson is-current" href="Lesson4.html"><span>04</span>AUTO_INCREMENT, Surrogate vs Natural Keys, and Identifier Design<i>Current</i></a>
+<a class="sidebar-lesson" href="Lesson5.html"><span>05</span>SQL Modes, Strictness, Implicit Conversion, Truncation, and Data-Quality Boundaries</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>04</span>Core SQL Querying: Filtering, Joins, Subqueries, CTEs, and Set Operations</summary><div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>SELECT Execution Basics, Projection, Predicates, NULL Semantics, and Ordering</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>INNER, OUTER, CROSS, and Self Joins with Cardinality Reasoning</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>Scalar, Correlated, EXISTS, IN, and Derived-Table Subqueries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Common Table Expressions, Recursive CTEs, and Hierarchical Queries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>UNION, INTERSECT, EXCEPT, Query Composition, and Readability Patterns</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>05</span>Advanced SQL: Aggregation, Window Functions, JSON, and Analytical Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>GROUP BY, HAVING, Functional Dependence, ROLLUP, and Aggregation Design</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Window Frames, Ranking, Running Totals, Gaps-and-Islands, and Top-N per Group</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>JSON Documents, Paths, JSON_TABLE, Indexable JSON Patterns, and Validation</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Date/Time, String, Regular Expression, Numeric, and Conditional Functions</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Reporting Queries, Cohort-Style Analysis, Pivots by Conditional Aggregation, and Reusable Views</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>06</span>Data Modification, Transactions, Locking, and Concurrency Semantics</summary><div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>INSERT, Multi-Row Writes, INSERT ... SELECT, and Generated Values</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>UPDATE, DELETE, Multi-Table DML, and Guardrails Against Wide Changes</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Transactions, Autocommit, COMMIT, ROLLBACK, SAVEPOINT, and Error Handling</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Isolation Levels, Consistent Reads, Locking Reads, MVCC, and Anomalies</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Deadlocks, Lock Waits, Retry Design, Idempotency, and Concurrency Testing</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>07</span>InnoDB Storage Architecture and Transaction Internals</summary><div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>InnoDB Tablespaces, Pages, Extents, Segments, and Row Formats</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Clustered Indexes, Secondary Indexes, Hidden Columns, and Record Layout</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Buffer Pool Architecture, Change Buffer, Adaptive Hashing, and Caching Behavior</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Redo Logs, Undo Logs, Doublewrite, Checkpoints, and Crash Recovery</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Purge, History List, Long Transactions, MVCC Cleanup, and Storage Health</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>08</span>Index Engineering and Access Path Design</summary><div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>B-Tree Index Structure, Selectivity, Cardinality, and Leftmost-Prefix Rules</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>Composite Index Ordering, Covering Indexes, Prefix Indexes, and Redundant Indexes</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Functional, Multi-Valued, FULLTEXT, and Spatial Index Use Cases</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>Index Condition Pushdown, Loose/Tight Index Scans, and Skip-Scan Concepts</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Designing an Index Portfolio from Workload Evidence and Write-Cost Constraints</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>09</span>Optimizer, EXPLAIN, Statistics, and Query Plan Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>How the MySQL Optimizer Builds Access Paths, Join Orders, and Cost Estimates</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>EXPLAIN, EXPLAIN ANALYZE, FORMAT=TREE/JSON, and Iterator Timing</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Histograms, Persistent Statistics, Cardinality Errors, and ANALYZE TABLE</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Join Algorithms, Semijoin/Antijoin Transformations, Derived Tables, and Materialization</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Plan Regressions, Optimizer Hints, Invisible Indexes, and Evidence-Driven Tuning</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>10</span>Stored Programs, Views, Triggers, Events, and Server-Side Logic</summary><div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Views, Updatability, SQL SECURITY, Definer Context, and Dependency Management</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Stored Procedures, Functions, Parameters, Condition Handlers, and Diagnostics</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Triggers, OLD/NEW Rows, Ordering, Auditing Uses, and Hidden Coupling Risks</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Event Scheduler, Recurring Maintenance Jobs, Failure Handling, and Observability</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>When Server-Side Logic Helps—and When Application Logic Is the Better Boundary</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>11</span>Users, Roles, Authentication, Authorization, and Least Privilege</summary><div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Accounts, Host Matching, Authentication Plugins, Password Policy, and Account Lifecycle</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Privileges, Roles, DEFAULT ROLE, Dynamic Privileges, and Delegated Administration</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Object-Level vs Administrative Privilege Design and Separation of Duties</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>PROXY, DEFINER, SQL SECURITY, Stored Objects, and Privilege-Escalation Risks</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Design and Audit a Least-Privilege Access Model for Applications and Operators</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>12</span>Encryption, TLS, Secrets, Auditing, and Security Hardening</summary><div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>TLS for Client Connections, Certificate Validation, and Secure Transport Enforcement</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Data-at-Rest Encryption Concepts, Key Management Boundaries, and Backup Encryption</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Secrets Handling for Applications, Option Files, Environment Variables, and Rotation</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>Audit Logging Options, General/Slow Logs, Privacy, and Forensic Considerations</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Hardening Checklist: Network Exposure, Local Files, Plugins, Accounts, and Patch Discipline</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>13</span>Backup, Restore, Binary Logs, and Point-in-Time Recovery</summary><div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>Logical vs Physical Backup: mysqldump, MySQL Shell, Snapshots, and Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>Consistent Backups with Transactions, Locks, Replication Coordinates, and Large Datasets</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>Binary Log Formats, GTIDs, Retention, and Recovery Prerequisites</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Point-in-Time Recovery from Full Backup plus Binary Logs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Restore Testing, RPO/RTO Measurement, Corruption Drills, and Backup Automation</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>14</span>Asynchronous Replication, GTIDs, Topologies, and Operational Safety</summary><div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Source/Replica Architecture, Binary Log Flow, Relay Logs, and Replication Threads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>GTID-Based Replication, Auto-Positioning, Failover Readiness, and Errant Transactions</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Statement, Row, and Mixed Logging Semantics with Determinism Risks</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Replication Filters, Delayed Replicas, Read Scaling, and Reporting Workloads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Lag Diagnosis, Broken Replication, Data Drift, Re-Synchronization, and Promotion Runbooks</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>15</span>Group Replication, InnoDB Cluster, Router, and High Availability</summary><div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Consensus-Oriented Group Replication Concepts, Membership, Quorum, and Failure Modes</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Single-Primary vs Multi-Primary Modes, Conflict Detection, and Workload Constraints</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>MySQL Shell AdminAPI, InnoDB Cluster Lifecycle, Recovery, and Rejoin Operations</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>MySQL Router, Connection Routing, Read/Write Splitting, and Application Failover</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Failure Injection, Split-Brain Avoidance, Maintenance, Upgrades, and HA Acceptance Tests</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>16</span>Performance Schema, sys Schema, Logs, Metrics, and Observability</summary><div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Performance Schema Instruments, Consumers, Events, and Measurement Overhead</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>sys Schema Views for Sessions, Statements, Waits, I/O, Memory, and Index Usage</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>Slow Query Log, Error Log, General Log, and Structured Diagnostic Workflows</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>Key OS and MySQL Metrics: CPU, I/O, Buffer Pool, Connections, Temp Tables, and Redo</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Build a Production Dashboard, Alert Thresholds, Baselines, and Incident Timelines</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>17</span>Memory, I/O, Temporary Work, and Server Performance Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Buffer Pool Sizing, Working Sets, Dirty Pages, Flushing, and Memory Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Per-Connection Buffers, Sort/Join Buffers, Memory Multipliers, and OOM Risk</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Temporary Tables, Spill to Disk, tmpdir, Internal Temp Engines, and Query Rewrite</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Redo Capacity, I/O Capacity, Flush Methods, Storage Latency, and Checkpoint Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Benchmarking Methodology, Warm vs Cold Cache, Concurrency, Percentiles, and Repeatability</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>18</span>Partitioning, Large Tables, Archiving, and Data Lifecycle</summary><div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Partitioning Concepts, Supported Strategies, Partition Pruning, and Design Constraints</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Partition Keys, Unique-Key Rules, Hot/Cold Data, and Operational Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Online DDL, Instant/In-Place/Copy Algorithms, Locks, and Schema Change Planning</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Archiving, Purging, Retention Jobs, and Avoiding Massive Delete Pathologies</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Managing Multi-Terabyte Tables: Capacity, Maintenance Windows, and Growth Forecasts</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>19</span>Application Integration, Connectors, Pools, ORMs, and Reliability Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>Connection Strings, TLS, Timeouts, Pools, and Session Initialization Contracts</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Prepared Statements, Parameter Binding, SQL Injection Defense, and Type Mapping</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Transaction Boundaries in Application Code, Retries, Idempotency, and Lost Connections</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>ORM Query Generation, N+1 Problems, Pagination, Bulk Writes, and Plan Visibility</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Health Checks, Graceful Degradation, Read Replicas, Migrations, and Deployment Coordination</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>20</span>Schema Migration, Upgrades, Compatibility, and Zero/Low-Downtime Change</summary><div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Versioned Schema Migrations, Expand/Contract Patterns, and Backward Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Online Schema Change Strategies, Native DDL Capabilities, and External Tool Concepts</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Pre-Upgrade Checks, Deprecated Features, SQL Modes, Collations, and Authentication Changes</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Rolling Upgrade Considerations for Replication and High-Availability Topologies</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Rollback Planning, Data Validation, Canaries, and Post-Upgrade Performance Verification</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>21</span>Specialized MySQL Capabilities: NDB, Document Store, Spatial, and Search</summary><div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>NDB Cluster Architecture, Distribution, Availability, and When It Fits</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>X Protocol, MySQL Shell, Document Store Concepts, and CRUD APIs</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Spatial Types, SRIDs, Spatial Functions, R-Tree Indexing, and GIS Workloads</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>FULLTEXT Search, Tokenization, Relevance, Stopwords, and Search-System Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>Choosing Native Features vs Dedicated Systems for Search, Analytics, and Distributed Scale</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>22</span>Production Capstone: Design, Secure, Scale, Tune, and Recover MySQL</summary><div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Define SLOs, Workload, Data Model, Capacity Forecast, and Architecture Decision Record</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>Build the Production Schema, Index Portfolio, Security Model, and Migration Pipeline</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>Load Test, Capture Plans, Tune Queries/Server, and Establish Performance Baselines</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Implement Backups, PITR, Replication/HA, Monitoring, Alerts, and Incident Runbooks</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Execute Failure/Recovery Drills and Defend the Final MySQL Production Design</a>
+</div></details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar"><button data-sidebar-open="" type="button"><span>Course navigation</span><span>Chapter 02 · Lesson 05</span></button></div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs"><a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">MySQL</a><span>/</span><span>Chapter 03 · Lesson 04</span></nav>
+<header class="lesson-header"><p class="eyebrow">Chapter 03 · Schemas, Tables, Data Types, Keys, Constraints, and SQL Modes</p>
+<h1>AUTO_INCREMENT, Surrogate vs Natural Keys, and Identifier Design</h1>
+<p>Understand MySQL AUTO_INCREMENT as an identifier allocator, observe LAST_INSERT_ID connection semantics and gaps, and choose InnoDB primary-key shapes with locality and index footprint in mind.</p>
+<div class="lesson-meta"><span>Beginner</span><span>60–80 min</span><span>Identifier-design lab</span><span>MySQL 8.4 LTS · current released baseline 8.4.11</span><span>AUTO_INCREMENT + keys</span><span>Last reviewed: August 2026</span></div></header>
+<nav aria-label="On this page" class="lesson-toc"><strong>On this page</strong><ol data-generated-toc=""></ol></nav>
+<div class="lesson-content">
+<section><h2>Learning outcomes</h2>
+<p>Identifiers are not row counts. They are durable labels used by foreign keys, URLs, APIs, logs, caches, and indexes. MySQL’s <code>AUTO_INCREMENT</code> is a convenient allocator, but it does not promise a gapless sequence and should not be used as an accounting counter or proof of table cardinality.</p>
+<p>InnoDB adds another dimension: the primary key is the clustered index, and every secondary index record carries the primary-key value needed to locate the row. Key width and insertion locality therefore affect more than aesthetics.</p>
+<div class="objectives"><div class="objective"><span>01</span><p>Explain AUTO_INCREMENT allocation, gaps, explicit values, and connection-specific LAST_INSERT_ID().</p></div><div class="objective"><span>02</span><p>Distinguish surrogate keys, natural keys, and business UNIQUE constraints without treating one strategy as universal.</p></div><div class="objective"><span>03</span><p>Explain why InnoDB primary-key width is repeated in secondary indexes and why locality matters.</p></div><div class="objective"><span>04</span><p>Compare monotonic integer keys with random UUID-like identifiers and outline practical tradeoffs.</p></div><div class="objective"><span>05</span><p>Build an identifier experiment that proves rollback/deletion does not imply safe identifier reuse.</p></div></div>
+</section>
+<section><h2>AUTO_INCREMENT allocates identity values</h2>
+<p>An integer column with <code>AUTO_INCREMENT</code> can receive a generated value when an insert omits the column or supplies the documented generating form. The generated value is unique under the table’s rules, but the sequence may contain gaps due to failed statements, rollbacks, deletes, explicit values, concurrency, or allocation behavior.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · basic allocation and connection-local observation</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">DROP TABLE IF EXISTS servicehub_lab.id_probe;</span><span class="code-line">CREATE TABLE servicehub_lab.id_probe (</span><span class="code-line">  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,</span><span class="code-line">  label VARCHAR(80) NOT NULL,</span><span class="code-line">  PRIMARY KEY (id)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">INSERT INTO servicehub_lab.id_probe (label) VALUES ('first');</span><span class="code-line">SELECT LAST_INSERT_ID() AS generated_id;</span><span class="code-line"></span><span class="code-line">INSERT INTO servicehub_lab.id_probe (label)</span><span class="code-line">VALUES ('second'), ('third'), ('fourth');</span><span class="code-line">SELECT LAST_INSERT_ID() AS first_id_from_multirow_insert;</span><span class="code-line"></span><span class="code-line">SELECT * FROM servicehub_lab.id_probe ORDER BY id;</span></code></pre></div>
+<p>For a multi-row insert, <code>LAST_INSERT_ID()</code> reports the first generated value for that statement. Its value is connection-specific, so another session inserting rows does not overwrite the current session’s <code>LAST_INSERT_ID()</code>. Applications should still use their driver’s documented generated-key API rather than guessing with <code>MAX(id)</code>.</p>
+</section>
+<section><h2>Failure drill: treating IDs as a gapless business sequence</h2>
+<p>Suppose invoices are legally required to have a controlled business document number. Reusing the table’s auto-increment primary key as that legal sequence couples persistence identity to an allocator that is explicitly not a gapless business counter.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · observe a gap after rollback</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">START TRANSACTION;</span><span class="code-line">INSERT INTO servicehub_lab.id_probe (label) VALUES ('rolled-back');</span><span class="code-line">SELECT LAST_INSERT_ID() AS allocated_inside_tx;</span><span class="code-line">ROLLBACK;</span><span class="code-line"></span><span class="code-line">INSERT INTO servicehub_lab.id_probe (label) VALUES ('after-rollback');</span><span class="code-line">SELECT LAST_INSERT_ID() AS next_allocated_id;</span><span class="code-line"></span><span class="code-line">SELECT * FROM servicehub_lab.id_probe ORDER BY id;</span></code></pre></div>
+<p>The exact next value can depend on server/table state, but the safe invariant is that you must not expect rollback to make an allocated identifier available as a gapless accounting number. Likewise, deleting row 3 does not turn “3” into a safe reusable identity.</p>
+<div class="callout warning"><strong>Wrong approach</strong><p>Never calculate the next key with SELECT MAX(id)+1 in application code. Concurrent sessions can race, and the pattern recreates a problem the server’s allocator already solves.</p></div>
+</section>
+<section><h2>Surrogate key versus natural key is a design decision, not a religion</h2>
+<p>A <em>natural key</em> comes from the domain, such as a stable externally assigned code. A <em>surrogate key</em> is introduced specifically as row identity, often a numeric auto-increment value. A common MySQL design uses a surrogate primary key for InnoDB organization plus a <code>UNIQUE</code> constraint on the natural business identifier.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · surrogate identity plus natural uniqueness</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SHOW CREATE TABLE servicehub_lab.customers;</span><span class="code-line"></span><span class="code-line">SELECT INDEX_NAME, NON_UNIQUE, SEQ_IN_INDEX,</span><span class="code-line">       COLUMN_NAME, CARDINALITY</span><span class="code-line">FROM INFORMATION_SCHEMA.STATISTICS</span><span class="code-line">WHERE TABLE_SCHEMA='servicehub_lab'</span><span class="code-line">  AND TABLE_NAME='customers'</span><span class="code-line">ORDER BY INDEX_NAME, SEQ_IN_INDEX;</span></code></pre></div>
+<p>This pattern is useful when the business key is long, externally mutable, composite, or inconvenient for referencing tables. But do not automatically add meaningless surrogates everywhere. Small stable composite keys can be excellent primary keys when they match the access pattern and lifecycle.</p>
+</section>
+<section><h2>Why InnoDB cares about primary-key shape</h2>
+<p>InnoDB stores row data in the clustered index, normally the primary key. Secondary indexes contain their own key plus the primary-key value for the row. That means a wide primary key is repeated across every secondary index entry. A 32-byte or multi-column primary key can therefore amplify storage and cache cost in a table with many secondary indexes.</p>
+<div class="table-wrap"><table class="data-table"><thead><tr><th>Primary-key shape</th><th>Advantages</th><th>Costs / risks</th></tr></thead><tbody><tr><td>BIGINT AUTO_INCREMENT</td><td>Compact, simple, strong insert locality, easy foreign keys</td><td>Central allocator semantics; not globally unique across independent systems without coordination.</td></tr><tr><td>Natural VARCHAR/composite</td><td>Encodes business identity directly</td><td>Can be wide/mutable; repeated in secondary indexes; collation affects comparison.</td></tr><tr><td>Random UUID text</td><td>Portable globally unique representation</td><td>Very wide and random insertion order; text form increases index footprint.</td></tr><tr><td>16-byte binary UUID-like</td><td>More compact than text UUID</td><td>Still may have random locality; harder for humans to inspect.</td></tr><tr><td>Time-ordered UUID-like/application ID</td><td>Distributed generation plus better locality potential</td><td>Requires a clearly specified generation/ordering format and connector support.</td></tr></tbody></table></div>
+<p>Avoid unsupported claims such as “random UUIDs are always slow.” Workload, table size, page fill, caching, storage, insert concurrency, and secondary-index count all matter. The correct lesson is to understand the mechanism and measure on representative data.</p>
+</section>
+<section><h2>Composite keys and AUTO_INCREMENT restrictions</h2>
+<p>MySQL’s rules for <code>AUTO_INCREMENT</code> interact with indexes and storage engines. For InnoDB, treat an auto-increment column as a simple integer identity that is indexed appropriately, normally the leading/sole primary-key column. Avoid exotic composite auto-increment patterns unless current storage-engine documentation explicitly supports the design and you have a strong reason.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · inspect allocator-related metadata</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT TABLE_SCHEMA, TABLE_NAME, AUTO_INCREMENT</span><span class="code-line">FROM INFORMATION_SCHEMA.TABLES</span><span class="code-line">WHERE TABLE_SCHEMA='servicehub_lab'</span><span class="code-line">  AND TABLE_NAME IN ('customers','work_orders','id_probe');</span><span class="code-line"></span><span class="code-line">SHOW CREATE TABLE servicehub_lab.id_probe;</span><span class="code-line">SHOW VARIABLES LIKE 'innodb_autoinc_lock_mode';</span></code></pre></div>
+<p><code>AUTO_INCREMENT</code> metadata is useful operationally but is not a trustworthy row-count substitute. Estimates and allocator state answer different questions from <code>COUNT(*)</code>.</p>
+</section>
+<section><h2>Connection semantics: never guess another session’s generated key</h2>
+<p>Open two clients if possible. Insert from Session A, read <code>LAST_INSERT_ID()</code> there, then insert from Session B. Return to Session A and observe that its connection-specific value is not replaced by Session B’s insert. This is why connection pooling requires discipline: read the generated key from the same logical database operation/connection context that performed the insert.</p>
+<div class="code-window" data-code-block="" data-language="text"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>text · two-session timeline</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">Session A                         Session B</span><span class="code-line">---------                         ---------</span><span class="code-line">INSERT row A;</span><span class="code-line">SELECT LAST_INSERT_ID(); -&gt; A_id</span><span class="code-line">                                  INSERT row B;</span><span class="code-line">                                  SELECT LAST_INSERT_ID(); -&gt; B_id</span><span class="code-line">SELECT LAST_INSERT_ID(); -&gt; A_id</span><span class="code-line"></span><span class="code-line">Do not replace this with SELECT MAX(id).</span></code></pre></div>
+</section>
+<section><h2>Hands-on lab: compare key designs with evidence</h2>
+<ol>
+<li>Create <code>id_probe</code> and record its <code>SHOW CREATE TABLE</code>.</li>
+<li>Insert one row and a multi-row batch; record <code>LAST_INSERT_ID()</code> behavior.</li>
+<li>Run the rollback experiment and record observed gaps without trying to “repair” them.</li>
+<li>Create a second table with a natural <code>VARCHAR</code> primary key and one secondary index; inspect <code>INFORMATION_SCHEMA.STATISTICS</code>.</li>
+<li>Create a third table with a <code>BIGINT</code> primary key plus a unique business key; compare the DDL/index metadata.</li>
+<li>If you want to benchmark UUID-like keys, generate a representative local dataset and measure insert/index size under identical conditions; do not copy benchmark numbers from the lesson.</li>
+</ol>
+<div class="checkpoint"><h3>Knowledge check</h3><ol><li>Why can AUTO_INCREMENT values contain gaps?</li><li>What does LAST_INSERT_ID() return after a multi-row insert?</li><li>Why is SELECT MAX(id)+1 unsafe for key allocation?</li><li>Why can a wide InnoDB primary key increase every secondary index?</li><li>When might a surrogate primary key plus UNIQUE natural key be preferable to the natural key as PRIMARY KEY?</li></ol><details class="answer-toggle"><summary>Reveal answers</summary><div><ol><li>Allocation, failed/rolled-back statements, deletes, explicit values, and concurrency can all prevent a gapless sequence.</li><li>The first automatically generated value from that multi-row statement for the current connection.</li><li>Two concurrent sessions can observe the same maximum and race to choose the same next value.</li><li>InnoDB secondary index entries carry the primary-key value used to locate the clustered row.</li><li>When the natural key is long, mutable, composite, externally controlled, or otherwise expensive/inconvenient as the clustered/reference key.</li></ol></div></details></div>
+</section>
+<section><h2>Production judgment and references</h2>
+<p>Choose identifier strategy alongside replication, sharding, offline creation, API exposure, privacy, and data-retention requirements. A local auto-increment integer is excellent for many single-primary MySQL applications. Distributed ID generation may be justified when independent writers must create globally unique identifiers without a central round trip. Keep that architectural requirement separate from fashion.</p>
+<p>Monitor key-range exhaustion for bounded integer types, allocator surprises after bulk imports/restores, and index growth caused by wide keys. Never renumber primary keys merely to make them visually contiguous.</p>
+<p>The final lesson in this chapter makes another hidden dependency explicit: <code>sql_mode</code>. The same insert text can fail, warn, coerce, or group differently if sessions run under different mode contracts.</p>
+<h3>Authoritative references</h3><ul><li><a href="https://dev.mysql.com/doc/refman/8.4/en/example-auto-increment.html" rel="noopener" target="_blank">MySQL 8.4 Reference Manual — Using AUTO_INCREMENT</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/innodb-auto-increment-handling.html" rel="noopener" target="_blank">MySQL 8.4 Reference Manual — AUTO_INCREMENT Handling in InnoDB</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/information-functions.html#function_last-insert-id" rel="noopener" target="_blank">MySQL 8.4 Reference Manual — LAST_INSERT_ID()</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html" rel="noopener" target="_blank">MySQL 8.4 Reference Manual — Clustered and Secondary Indexes</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/optimizing-innodb-storage-layout.html" rel="noopener" target="_blank">MySQL 8.4 Reference Manual — Optimizing Storage Layout for InnoDB</a></li></ul>
+</section>
+</div>
+<nav aria-label="Lesson navigation" class="lesson-nav"><a class="prev" href="Lesson3.html"><small>Previous lesson</small><strong>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK, DEFAULT, and Generated Columns</strong></a><a class="next" href="Lesson5.html"><small>Next lesson</small><strong>SQL Modes, Strictness, Implicit Conversion, Truncation, and Data-Quality Boundaries</strong></a></nav>
+</article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>If these tutorials save you time, a small donation supports new lessons, technical review, diagrams, examples, and long-term maintenance.</p>
+<div aria-label="Author links" class="social-row">
+<a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head"><span>ETH</span><small>Ethereum / ERC-20 only</small></div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
+<button class="button secondary compact" data-copy-donation="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy address</button>
+<p>Send only assets compatible with the Ethereum/ERC-20 network. Do not send TRC-20/TRON assets.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div><strong>Big Data Academy</strong><p>A free, prerequisite-aware path from SQL foundations to distributed data systems.</p></div>
+<div><a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a></div>
+<small>Created and maintained by <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> · © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>

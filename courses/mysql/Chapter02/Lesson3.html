@@ -1,0 +1,302 @@
+<!doctype html>
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta content="Differentiate MySQL system variables from status measurements, global from session scope, runtime from durable configuration, and practice safe SET PERSIST and rollback workflows." name="description" />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>System Variables, Status Variables, Dynamic Configuration, and SET PERSIST | Big Data Academy</title>
+    <link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml" />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+    <script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+        chtml: { scale: 1, matchFontHeight: false },
+      };
+    </script>
+    <script defer id="MathJax-script"
+      src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"
+      onerror="this.onerror=null;this.src='https://unpkg.com/mathjax@3.2.2/es5/tex-chtml.js';"></script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
+          <span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
+          <span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
+        </a>
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a>
+          <a class="is-active" href="../../../index.html#courses">Courses</a>
+          <a href="../../../index.html#method">Method</a>
+          <a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+        </nav>
+        <div class="header-actions">
+          <button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg></button>
+          <button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+        </div>
+      </div>
+      <nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu=""><a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a></nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"><span class="course-glyph">MYSQL</span><div><small>Course 04</small><strong>MySQL</strong></div></a>
+          <button aria-label="Close course navigation" data-sidebar-close="" type="button">×</button>
+        </div>
+        <label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 110 lessons..." type="search" /></label>
+        <nav class="sidebar-curriculum" aria-label="MySQL curriculum">
+<details class="sidebar-chapter"><summary><span>01</span>MySQL Platform Foundations, Editions, Releases, and Lab Setup</summary><div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What MySQL Is: Server Architecture, Client/Server Boundaries, and Common Workloads</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Community vs Enterprise Capabilities, Licensing Awareness, and Deployment Choices</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>LTS vs Innovation Releases: Version Selection, Support Windows, and Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Install MySQL on Windows, Linux, Containers, and Verify the Toolchain</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build a Reproducible Course Lab with Sample Data, Accounts, and Safety Conventions</a>
+</div></details>
+<details class="sidebar-chapter" open><summary><span>02</span>Server Architecture, Processes, Files, Connections, and Configuration</summary><div>
+<a class="sidebar-lesson" href="Lesson1.html"><span>01</span>mysqld Startup, Data Directory, Configuration Files, and Option Precedence</a>
+<a class="sidebar-lesson" href="Lesson2.html"><span>02</span>Connection Lifecycle, Threads, Sessions, Timeouts, and Resource Consumption</a>
+<a class="sidebar-lesson is-current" href="Lesson3.html"><span>03</span>System Variables, Status Variables, Dynamic Configuration, and SET PERSIST<i>Current</i></a>
+<a class="sidebar-lesson" href="Lesson4.html"><span>04</span>Character Sets, Collations, Time Zones, Locales, and Server Defaults</a>
+<a class="sidebar-lesson" href="Lesson5.html"><span>05</span>Configuration Validation, Startup Failures, Error Logs, and a Baseline Server Profile</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>03</span>Schemas, Tables, Data Types, Keys, Constraints, and SQL Modes</summary><div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>Databases and Schemas in MySQL: Namespaces, Metadata, and Object Ownership</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Numeric, String, Temporal, JSON, Spatial, and Binary Data Types</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK, DEFAULT, and Generated Columns</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>AUTO_INCREMENT, Surrogate vs Natural Keys, and Identifier Design</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>SQL Modes, Strictness, Implicit Conversion, Truncation, and Data-Quality Boundaries</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>04</span>Core SQL Querying: Filtering, Joins, Subqueries, CTEs, and Set Operations</summary><div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>SELECT Execution Basics, Projection, Predicates, NULL Semantics, and Ordering</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>INNER, OUTER, CROSS, and Self Joins with Cardinality Reasoning</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>Scalar, Correlated, EXISTS, IN, and Derived-Table Subqueries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Common Table Expressions, Recursive CTEs, and Hierarchical Queries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>UNION, INTERSECT, EXCEPT, Query Composition, and Readability Patterns</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>05</span>Advanced SQL: Aggregation, Window Functions, JSON, and Analytical Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>GROUP BY, HAVING, Functional Dependence, ROLLUP, and Aggregation Design</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Window Frames, Ranking, Running Totals, Gaps-and-Islands, and Top-N per Group</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>JSON Documents, Paths, JSON_TABLE, Indexable JSON Patterns, and Validation</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Date/Time, String, Regular Expression, Numeric, and Conditional Functions</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Reporting Queries, Cohort-Style Analysis, Pivots by Conditional Aggregation, and Reusable Views</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>06</span>Data Modification, Transactions, Locking, and Concurrency Semantics</summary><div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>INSERT, Multi-Row Writes, INSERT ... SELECT, and Generated Values</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>UPDATE, DELETE, Multi-Table DML, and Guardrails Against Wide Changes</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Transactions, Autocommit, COMMIT, ROLLBACK, SAVEPOINT, and Error Handling</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Isolation Levels, Consistent Reads, Locking Reads, MVCC, and Anomalies</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Deadlocks, Lock Waits, Retry Design, Idempotency, and Concurrency Testing</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>07</span>InnoDB Storage Architecture and Transaction Internals</summary><div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>InnoDB Tablespaces, Pages, Extents, Segments, and Row Formats</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Clustered Indexes, Secondary Indexes, Hidden Columns, and Record Layout</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Buffer Pool Architecture, Change Buffer, Adaptive Hashing, and Caching Behavior</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Redo Logs, Undo Logs, Doublewrite, Checkpoints, and Crash Recovery</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Purge, History List, Long Transactions, MVCC Cleanup, and Storage Health</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>08</span>Index Engineering and Access Path Design</summary><div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>B-Tree Index Structure, Selectivity, Cardinality, and Leftmost-Prefix Rules</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>Composite Index Ordering, Covering Indexes, Prefix Indexes, and Redundant Indexes</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Functional, Multi-Valued, FULLTEXT, and Spatial Index Use Cases</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>Index Condition Pushdown, Loose/Tight Index Scans, and Skip-Scan Concepts</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Designing an Index Portfolio from Workload Evidence and Write-Cost Constraints</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>09</span>Optimizer, EXPLAIN, Statistics, and Query Plan Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>How the MySQL Optimizer Builds Access Paths, Join Orders, and Cost Estimates</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>EXPLAIN, EXPLAIN ANALYZE, FORMAT=TREE/JSON, and Iterator Timing</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Histograms, Persistent Statistics, Cardinality Errors, and ANALYZE TABLE</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Join Algorithms, Semijoin/Antijoin Transformations, Derived Tables, and Materialization</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Plan Regressions, Optimizer Hints, Invisible Indexes, and Evidence-Driven Tuning</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>10</span>Stored Programs, Views, Triggers, Events, and Server-Side Logic</summary><div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Views, Updatability, SQL SECURITY, Definer Context, and Dependency Management</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Stored Procedures, Functions, Parameters, Condition Handlers, and Diagnostics</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Triggers, OLD/NEW Rows, Ordering, Auditing Uses, and Hidden Coupling Risks</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Event Scheduler, Recurring Maintenance Jobs, Failure Handling, and Observability</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>When Server-Side Logic Helps—and When Application Logic Is the Better Boundary</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>11</span>Users, Roles, Authentication, Authorization, and Least Privilege</summary><div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Accounts, Host Matching, Authentication Plugins, Password Policy, and Account Lifecycle</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Privileges, Roles, DEFAULT ROLE, Dynamic Privileges, and Delegated Administration</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Object-Level vs Administrative Privilege Design and Separation of Duties</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>PROXY, DEFINER, SQL SECURITY, Stored Objects, and Privilege-Escalation Risks</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Design and Audit a Least-Privilege Access Model for Applications and Operators</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>12</span>Encryption, TLS, Secrets, Auditing, and Security Hardening</summary><div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>TLS for Client Connections, Certificate Validation, and Secure Transport Enforcement</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Data-at-Rest Encryption Concepts, Key Management Boundaries, and Backup Encryption</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Secrets Handling for Applications, Option Files, Environment Variables, and Rotation</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>Audit Logging Options, General/Slow Logs, Privacy, and Forensic Considerations</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Hardening Checklist: Network Exposure, Local Files, Plugins, Accounts, and Patch Discipline</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>13</span>Backup, Restore, Binary Logs, and Point-in-Time Recovery</summary><div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>Logical vs Physical Backup: mysqldump, MySQL Shell, Snapshots, and Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>Consistent Backups with Transactions, Locks, Replication Coordinates, and Large Datasets</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>Binary Log Formats, GTIDs, Retention, and Recovery Prerequisites</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Point-in-Time Recovery from Full Backup plus Binary Logs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Restore Testing, RPO/RTO Measurement, Corruption Drills, and Backup Automation</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>14</span>Asynchronous Replication, GTIDs, Topologies, and Operational Safety</summary><div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Source/Replica Architecture, Binary Log Flow, Relay Logs, and Replication Threads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>GTID-Based Replication, Auto-Positioning, Failover Readiness, and Errant Transactions</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Statement, Row, and Mixed Logging Semantics with Determinism Risks</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Replication Filters, Delayed Replicas, Read Scaling, and Reporting Workloads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Lag Diagnosis, Broken Replication, Data Drift, Re-Synchronization, and Promotion Runbooks</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>15</span>Group Replication, InnoDB Cluster, Router, and High Availability</summary><div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Consensus-Oriented Group Replication Concepts, Membership, Quorum, and Failure Modes</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Single-Primary vs Multi-Primary Modes, Conflict Detection, and Workload Constraints</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>MySQL Shell AdminAPI, InnoDB Cluster Lifecycle, Recovery, and Rejoin Operations</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>MySQL Router, Connection Routing, Read/Write Splitting, and Application Failover</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Failure Injection, Split-Brain Avoidance, Maintenance, Upgrades, and HA Acceptance Tests</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>16</span>Performance Schema, sys Schema, Logs, Metrics, and Observability</summary><div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Performance Schema Instruments, Consumers, Events, and Measurement Overhead</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>sys Schema Views for Sessions, Statements, Waits, I/O, Memory, and Index Usage</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>Slow Query Log, Error Log, General Log, and Structured Diagnostic Workflows</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>Key OS and MySQL Metrics: CPU, I/O, Buffer Pool, Connections, Temp Tables, and Redo</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Build a Production Dashboard, Alert Thresholds, Baselines, and Incident Timelines</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>17</span>Memory, I/O, Temporary Work, and Server Performance Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Buffer Pool Sizing, Working Sets, Dirty Pages, Flushing, and Memory Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Per-Connection Buffers, Sort/Join Buffers, Memory Multipliers, and OOM Risk</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Temporary Tables, Spill to Disk, tmpdir, Internal Temp Engines, and Query Rewrite</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Redo Capacity, I/O Capacity, Flush Methods, Storage Latency, and Checkpoint Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Benchmarking Methodology, Warm vs Cold Cache, Concurrency, Percentiles, and Repeatability</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>18</span>Partitioning, Large Tables, Archiving, and Data Lifecycle</summary><div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Partitioning Concepts, Supported Strategies, Partition Pruning, and Design Constraints</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Partition Keys, Unique-Key Rules, Hot/Cold Data, and Operational Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Online DDL, Instant/In-Place/Copy Algorithms, Locks, and Schema Change Planning</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Archiving, Purging, Retention Jobs, and Avoiding Massive Delete Pathologies</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Managing Multi-Terabyte Tables: Capacity, Maintenance Windows, and Growth Forecasts</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>19</span>Application Integration, Connectors, Pools, ORMs, and Reliability Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>Connection Strings, TLS, Timeouts, Pools, and Session Initialization Contracts</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Prepared Statements, Parameter Binding, SQL Injection Defense, and Type Mapping</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Transaction Boundaries in Application Code, Retries, Idempotency, and Lost Connections</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>ORM Query Generation, N+1 Problems, Pagination, Bulk Writes, and Plan Visibility</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Health Checks, Graceful Degradation, Read Replicas, Migrations, and Deployment Coordination</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>20</span>Schema Migration, Upgrades, Compatibility, and Zero/Low-Downtime Change</summary><div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Versioned Schema Migrations, Expand/Contract Patterns, and Backward Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Online Schema Change Strategies, Native DDL Capabilities, and External Tool Concepts</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Pre-Upgrade Checks, Deprecated Features, SQL Modes, Collations, and Authentication Changes</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Rolling Upgrade Considerations for Replication and High-Availability Topologies</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Rollback Planning, Data Validation, Canaries, and Post-Upgrade Performance Verification</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>21</span>Specialized MySQL Capabilities: NDB, Document Store, Spatial, and Search</summary><div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>NDB Cluster Architecture, Distribution, Availability, and When It Fits</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>X Protocol, MySQL Shell, Document Store Concepts, and CRUD APIs</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Spatial Types, SRIDs, Spatial Functions, R-Tree Indexing, and GIS Workloads</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>FULLTEXT Search, Tokenization, Relevance, Stopwords, and Search-System Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>Choosing Native Features vs Dedicated Systems for Search, Analytics, and Distributed Scale</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>22</span>Production Capstone: Design, Secure, Scale, Tune, and Recover MySQL</summary><div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Define SLOs, Workload, Data Model, Capacity Forecast, and Architecture Decision Record</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>Build the Production Schema, Index Portfolio, Security Model, and Migration Pipeline</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>Load Test, Capture Plans, Tune Queries/Server, and Establish Performance Baselines</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Implement Backups, PITR, Replication/HA, Monitoring, Alerts, and Incident Runbooks</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Execute Failure/Recovery Drills and Defend the Final MySQL Production Design</a>
+</div></details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar"><button data-sidebar-open="" type="button"><span>Course navigation</span><span>Chapter 02 · Lesson 03</span></button></div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs"><a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">MySQL</a><span>/</span><span>Chapter 02 · Lesson 03</span></nav>
+          <header class="lesson-header">
+            <p class="eyebrow">Chapter 02 · Server Architecture, Processes, Files, Connections, and Configuration</p>
+            <h1>System Variables, Status Variables, Dynamic Configuration, and SET PERSIST</h1>
+            <p>Differentiate MySQL system variables from status measurements, global from session scope, runtime from durable configuration, and practice safe SET PERSIST and rollback workflows.</p>
+            <div class="lesson-meta"><span>Beginner</span><span>45–60 min</span><span>SET PERSIST lab</span><span>MySQL 8.4 LTS · current released baseline 8.4.10</span><span>Dynamic configuration</span><span>Last reviewed: August 2026</span></div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc"><strong>On this page</strong><ol data-generated-toc=""></ol></nav>
+          <div class="lesson-content">
+<section><h2>Learning outcomes</h2>
+<p>ServiceHub's team wants to change a timeout “temporarily,” then make the same value survive restart. Someone checks a status counter, mistakes it for a setting, and tries <code>SET GLOBAL Threads_connected = 20</code>. Another person uses <code>SET GLOBAL</code> successfully and assumes the value is now permanent. Both errors come from mixing two different categories: configuration variables and measurements.</p>
+<p>System variables configure server or session behavior. Status variables report observed server/session activity. This lesson makes that distinction concrete and then introduces the supported persistence path for eligible global variables.</p><div class="objectives"><div class="objective"><span>01</span><p>Differentiate system variables from status variables and explain why counters are not configuration knobs.</p></div><div class="objective"><span>02</span><p>Distinguish GLOBAL and SESSION scope, dynamic versus startup-only variables, and inherited session defaults.</p></div><div class="objective"><span>03</span><p>Use SET GLOBAL, SET SESSION, SET PERSIST, SET PERSIST_ONLY, and RESET PERSIST with the correct intent.</p></div><div class="objective"><span>04</span><p>Inspect variable provenance and persisted state through Performance Schema instead of editing mysqld-auto.cnf.</p></div><div class="objective"><span>05</span><p>Perform a reversible configuration experiment and document the original value, runtime effect, persistence effect, and rollback.</p></div></div><div class="callout"><strong>Privilege note</strong><p>Changing global or persisted variables requires administrative privileges such as SYSTEM_VARIABLES_ADMIN or equivalent authority. Use a dedicated local administrator for this lab, not the least-privilege ServiceHub application account.</p></div></section>
+<section><h2>Configuration versus measurement</h2>
+<p>A <strong>system variable</strong> is a configurable value the server uses to control behavior. Examples include <code>max_connections</code>, <code>wait_timeout</code>, and <code>sql_mode</code>. A <strong>status variable</strong> is a measurement the server reports, such as <code>Threads_connected</code> or <code>Questions</code>. Status values can change because workload changes; they are not normally assigned with <code>SET</code>.</p><div class="table-wrap"><table class="data-table"><thead><tr><th>Category</th><th>Example</th><th>Question it answers</th></tr></thead><tbody><tr><td>System variable</td><td><code>@@GLOBAL.max_connections</code></td><td>What connection limit is configured?</td></tr><tr><td>System variable</td><td><code>@@SESSION.sql_mode</code></td><td>What SQL-mode policy applies in this session?</td></tr><tr><td>Status variable</td><td><code>Threads_connected</code></td><td>How many connections are open now?</td></tr><tr><td>Status variable</td><td><code>Connections</code></td><td>How many accepted connections have occurred since startup?</td></tr><tr><td>Status variable</td><td><code>Uptime</code></td><td>How long has this server instance been running?</td></tr></tbody></table></div><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · compare settings and observations</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SHOW GLOBAL VARIABLES LIKE &#x27;max_connections&#x27;;</span><span class="code-line">SHOW GLOBAL STATUS LIKE &#x27;Threads_connected&#x27;;</span><span class="code-line"></span><span class="code-line">SELECT @@GLOBAL.max_connections AS configured_limit;</span><span class="code-line">SELECT VARIABLE_VALUE AS current_connections</span><span class="code-line">FROM performance_schema.global_status</span><span class="code-line">WHERE VARIABLE_NAME = &#x27;Threads_connected&#x27;;</span></code></pre></div><div class="callout warning"><strong>Wrong model</strong><p>If Threads_connected is 40, setting max_connections to 20 does not “reduce the counter to 20.” It changes the admission limit for connections; existing behavior and exact consequences must be reasoned about separately.</p></div></section>
+<section><h2>GLOBAL and SESSION are different scopes</h2>
+<p>Some system variables exist only globally, some only per session, and many have both scopes. A global value usually controls the server-wide policy and becomes the default from which new sessions initialize their session value. An existing session can continue with an older session value after the global default changes.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · scope experiment with max_execution_time</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT @@GLOBAL.max_execution_time AS global_before,</span><span class="code-line">       @@SESSION.max_execution_time AS session_before;</span><span class="code-line"></span><span class="code-line">SET SESSION max_execution_time = 2500;</span><span class="code-line">SELECT @@GLOBAL.max_execution_time AS global_after,</span><span class="code-line">       @@SESSION.max_execution_time AS session_after;</span><span class="code-line"></span><span class="code-line">-- This session changed; other existing sessions did not.</span></code></pre></div><p><code>max_execution_time</code> is useful for a lab because it limits eligible read-only SELECT execution time in milliseconds without changing storage. The exact applicability of the variable is documented and should be rechecked if the course baseline changes.</p>
+<p>When a session-only variable is sufficient, prefer that narrow scope. It minimizes blast radius. Global changes affect new sessions and potentially server behavior beyond one application.</p></section>
+<section><h2>Dynamic versus restart-required settings</h2>
+<p>A <strong>dynamic</strong> system variable can be changed while the server is running. A non-dynamic or read-only-at-runtime variable requires startup configuration. Scope and dynamism are separate properties: a variable can be global and dynamic, global and startup-only, or global/session and dynamic.</p>
+<p>Do not guess. The reference manual lists scope and dynamic status for each variable, and Performance Schema exposes metadata. The following query is useful for inspection:</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · inspect variable metadata</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT VARIABLE_NAME,</span><span class="code-line">       VARIABLE_SOURCE,</span><span class="code-line">       VARIABLE_PATH,</span><span class="code-line">       MIN_VALUE,</span><span class="code-line">       MAX_VALUE,</span><span class="code-line">       SET_TIME,</span><span class="code-line">       SET_USER,</span><span class="code-line">       SET_HOST</span><span class="code-line">FROM performance_schema.variables_info</span><span class="code-line">WHERE VARIABLE_NAME IN (&#x27;max_execution_time&#x27;,&#x27;max_connections&#x27;,&#x27;port&#x27;);</span></code></pre></div><p>Attempting to set a read-only variable produces an error rather than silently changing it. That failure is useful evidence: it tells you this setting belongs to startup configuration or another documented mechanism.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · intentional failure</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SET GLOBAL version = &#x27;not-a-version&#x27;;</span><span class="code-line">-- Expected class of result:</span><span class="code-line">-- ERROR: Variable &#x27;version&#x27; is a read only variable</span></code></pre></div></section>
+<section><h2>SET GLOBAL changes runtime, not durable policy</h2>
+<p><code>SET GLOBAL</code> changes the global runtime value for a dynamic global variable. Unless another mechanism stores that choice, a restart reconstructs configuration from startup sources and the runtime-only change can disappear.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · runtime-only change</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT @@GLOBAL.max_execution_time AS before_value;</span><span class="code-line">SET GLOBAL max_execution_time = 5000;</span><span class="code-line">SELECT @@GLOBAL.max_execution_time AS runtime_value;</span><span class="code-line"></span><span class="code-line">-- Open a new connection and inspect @@SESSION.max_execution_time.</span><span class="code-line">-- Record the original value so you can restore it.</span></code></pre></div><div class="callout warning"><strong>Operational trap</strong><p>A successful SET GLOBAL is not evidence that the value will survive restart. Treat runtime-only changes as temporary unless your configuration-management process deliberately records them elsewhere.</p></div></section>
+<section><h2>SET PERSIST and SET PERSIST_ONLY</h2>
+<p><code>SET PERSIST</code> combines two actions for eligible global variables: it changes the global runtime value and writes a durable setting into the server-managed <code>mysqld-auto.cnf</code>. <code>SET PERSIST_ONLY</code> writes the durable value without changing the current runtime value, which is useful for variables intended to take effect at a future startup.</p><div class="table-wrap"><table class="data-table"><thead><tr><th>Statement</th><th>Runtime global value now</th><th>Persisted for future startup</th></tr></thead><tbody><tr><td><code>SET GLOBAL x = value</code></td><td>Yes</td><td>No</td></tr><tr><td><code>SET PERSIST x = value</code></td><td>Yes</td><td>Yes</td></tr><tr><td><code>SET PERSIST_ONLY x = value</code></td><td>No</td><td>Yes</td></tr><tr><td><code>RESET PERSIST x</code></td><td>No direct runtime reset</td><td>Removes persisted entry</td></tr></tbody></table></div><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · controlled persistence experiment</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">-- 1) Record the current values and source.</span><span class="code-line">SELECT @@GLOBAL.max_execution_time;</span><span class="code-line">SELECT VARIABLE_NAME, VARIABLE_SOURCE, VARIABLE_PATH</span><span class="code-line">FROM performance_schema.variables_info</span><span class="code-line">WHERE VARIABLE_NAME=&#x27;max_execution_time&#x27;;</span><span class="code-line"></span><span class="code-line">-- 2) Persist a lab value.</span><span class="code-line">SET PERSIST max_execution_time = 5000;</span><span class="code-line"></span><span class="code-line">-- 3) Verify runtime and durable state.</span><span class="code-line">SELECT @@GLOBAL.max_execution_time;</span><span class="code-line">SELECT * FROM performance_schema.persisted_variables</span><span class="code-line">WHERE VARIABLE_NAME=&#x27;max_execution_time&#x27;;</span><span class="code-line"></span><span class="code-line">-- 4) Remove the persisted entry when the lab is complete.</span><span class="code-line">RESET PERSIST max_execution_time;</span><span class="code-line"></span><span class="code-line">-- 5) Restore the original runtime value explicitly if needed.</span></code></pre></div><p>Persisting a variable requires privilege and the variable must be persistible. Session-only variables cannot be persisted. Some sensitive or special variables are nonpersistible or persist-restricted. Treat an error as a signal to read that variable's documentation rather than trying to force the file.</p></section>
+<section><h2>What happens to existing sessions?</h2>
+<p>Suppose <code>max_execution_time</code> has both global and session values. If you change the global value, already-open sessions do not necessarily adopt it. New sessions normally initialize from the new global value. This is why configuration rollouts that affect session defaults can appear “partially applied” until pools recycle connections.</p><div class="code-window" data-code-block="" data-language="text"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>text · timeline</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">T0: global max_execution_time = 0</span><span class="code-line">T1: Session A connects -&gt; session value becomes 0</span><span class="code-line">T2: administrator SET PERSIST max_execution_time = 5000</span><span class="code-line">T3: Session A may still have session value 0</span><span class="code-line">T4: Session B connects -&gt; session value initializes from new global 5000</span><span class="code-line">T5: pool gradually recycles -&gt; more sessions inherit new default</span></code></pre></div><p>Application operators need to coordinate server changes with connection pools. A documented server change may require pool recycle or explicit session initialization to make behavior deterministic.</p></section>
+<section><h2>Failure lab: wrong scope and wrong persistence assumption</h2>
+<p>Run these mistakes intentionally on the disposable lab and read the error or resulting state.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · three common mistakes</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">-- Mistake 1: use SESSION for a global-only variable.</span><span class="code-line">SET SESSION max_connections = 200;</span><span class="code-line">-- Expected: error explaining max_connections is GLOBAL.</span><span class="code-line"></span><span class="code-line">-- Mistake 2: assume runtime means persistent.</span><span class="code-line">SET GLOBAL max_execution_time = 3000;</span><span class="code-line">SELECT @@GLOBAL.max_execution_time;</span><span class="code-line">-- The value changed now, but no persisted_variables row was created by SET GLOBAL.</span><span class="code-line"></span><span class="code-line">-- Mistake 3: try to persist a nonpersistible variable.</span><span class="code-line">SET PERSIST port = 3307;</span><span class="code-line">-- Expected: error; port is not an arbitrary runtime/persistable knob.</span></code></pre></div><p>The correct repair depends on intent. Session behavior belongs in session initialization where possible. Runtime-only emergency changes should be documented and later reconciled with managed configuration. Durable changes should use a supported persistent mechanism and be reviewed like code.</p></section>
+<section><h2>Hands-on lab: change, verify, revert, and prove the revert</h2>
+<ol>
+<li>Record <code>@@GLOBAL.max_execution_time</code> and the current <code>variables_info</code> row.</li>
+<li>Run <code>SET PERSIST max_execution_time = 5000</code>.</li>
+<li>Verify the global value, the persisted row, and the variable source.</li>
+<li>Open a fresh client session and compare its session value with a client that was already connected.</li>
+<li>Run <code>RESET PERSIST max_execution_time</code> to remove the durable entry.</li>
+<li>Restore the runtime global value you recorded in step 1.</li>
+<li>If you control the disposable server and can restart safely, restart once and prove that the removed persisted setting no longer reappears. Otherwise document why restart verification was skipped.</li>
+</ol><div class="checkpoint"><h3>Knowledge check</h3><ol><li>Why is Threads_connected a status variable rather than a system variable?</li><li>What is the key difference between SET GLOBAL and SET PERSIST?</li><li>Why might an existing application connection not see a newly changed global session default?</li><li>What SQL interface shows values stored in mysqld-auto.cnf?</li><li>Why is RESET PERSIST not the same as changing the current global runtime value?</li></ol><details class="answer-toggle"><summary>Reveal answers</summary><div><ol><li>It reports observed current connections rather than configuring behavior.</li><li>SET GLOBAL changes runtime only; SET PERSIST also records eligible configuration for future starts.</li><li>Session variables are initialized per connection and can retain their prior value.</li><li><code>performance_schema.persisted_variables</code>.</li><li>RESET PERSIST removes the durable entry; it does not automatically rewind the in-memory global value to whatever it used to be.</li></ol></div></details></div></section>
+<section><h2>Production judgment and references</h2>
+<p>Every production setting change should answer four questions: what scope changes, when does it take effect, does it survive restart, and how do we roll it back? Record the before value and provenance, change one thing at a time, verify from the server, observe workload effects, and reconcile runtime state with configuration management.</p>
+<p>Avoid large batches of unrelated <code>SET PERSIST</code> changes. Persisted settings are powerful because they bypass the need to edit option files, but that also means they can become invisible drift if your deployment system does not inventory them.</p>
+<h3>Authoritative references</h3><ul><li><a href="https://dev.mysql.com/doc/refman/8.4/en/set-variable.html" target="_blank" rel="noopener">MySQL 8.4 Reference Manual — SET Syntax for Variable Assignment</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/persisted-system-variables.html" target="_blank" rel="noopener">MySQL 8.4 Reference Manual — Persisted System Variables</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/nonpersistible-system-variables.html" target="_blank" rel="noopener">MySQL 8.4 Reference Manual — Nonpersistible and Persist-Restricted Variables</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/performance-schema-system-variable-tables.html" target="_blank" rel="noopener">MySQL 8.4 Reference Manual — Performance Schema System Variable Tables</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/server-status-variables.html" target="_blank" rel="noopener">MySQL 8.4 Reference Manual — Server Status Variables</a></li></ul><p><strong>Next:</strong> configuration is not only numbers. Character sets, collations, time zones, and locale defaults can silently change how text and temporal values are interpreted.</p></section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav"><a class="prev" href="Lesson2.html"><small>Previous lesson</small><strong>Connection Lifecycle, Threads, Sessions, Timeouts, and Resource Consumption</strong></a><a class="next" href="Lesson4.html"><small>Next lesson</small><strong>Character Sets, Collations, Time Zones, Locales, and Server Defaults</strong></a></nav>
+        </article>
+<div class="lesson-support">
+  <section aria-labelledby="support-title" class="support-section section-shell">
+    <div class="support-grid reveal">
+      <div>
+        <p class="eyebrow">Keep knowledge open</p>
+        <h2 id="support-title">Help the academy stay free and grow.</h2>
+        <p>If these tutorials save you time, a small donation supports new lessons, technical review, diagrams, examples, and long-term maintenance.</p>
+        <div aria-label="Author links" class="social-row">
+          <a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+          <a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+          <a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+          <a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+        </div>
+      </div>
+      <div class="donation-card">
+        <div class="donation-head"><span>ETH</span><small>Ethereum / ERC-20 only</small></div>
+        <code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
+        <button class="button secondary compact" data-copy-donation="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy address</button>
+        <p>Send only assets compatible with the Ethereum/ERC-20 network. Do not send TRC-20/TRON assets.</p>
+      </div>
+    </div>
+  </section>
+</div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div><strong>Big Data Academy</strong><p>A free, prerequisite-aware path from SQL foundations to distributed data systems.</p></div>
+        <div><a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a></div>
+        <small>Created and maintained by <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> · © 2026</small>
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>

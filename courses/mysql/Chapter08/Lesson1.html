@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Design the first useful access paths from evidence: understand B-tree ordering, distinguish estimated cardinality from measured distinctness, and test exactly which parts of a composite index constrain a query." name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>B-Tree Index Structure, Selectivity, Cardinality, and Leftmost-Prefix Rules | Big Data Academy</title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+<script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+        chtml: { scale: 1, matchFontHeight: false },
+      };
+    </script>
+<script defer="" id="MathJax-script" onerror="this.onerror=null;this.src='https://unpkg.com/mathjax@3.2.2/es5/tex-chtml.js';" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
+<span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
+<span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
+</a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a>
+<a class="is-active" href="../../../index.html#courses">Courses</a>
+<a href="../../../index.html#method">Method</a>
+<a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg></button>
+<button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu=""><a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a></nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">MYSQL</span><div><small>Course 04</small><strong>MySQL</strong></div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">×</button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 110 lessons..." type="search"/></label>
+<nav aria-label="MySQL curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter"><summary><span>01</span>MySQL Platform Foundations, Editions, Releases, and Lab Setup</summary><div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What MySQL Is: Server Architecture, Client/Server Boundaries, and Common Workloads</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Community vs Enterprise Capabilities, Licensing Awareness, and Deployment Choices</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>LTS vs Innovation Releases: Version Selection, Support Windows, and Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Install MySQL on Windows, Linux, Containers, and Verify the Toolchain</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build a Reproducible Course Lab with Sample Data, Accounts, and Safety Conventions</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>02</span>Server Architecture, Processes, Files, Connections, and Configuration</summary><div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>mysqld Startup, Data Directory, Configuration Files, and Option Precedence</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Connection Lifecycle, Threads, Sessions, Timeouts, and Resource Consumption</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>System Variables, Status Variables, Dynamic Configuration, and SET PERSIST</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Character Sets, Collations, Time Zones, Locales, and Server Defaults</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Configuration Validation, Startup Failures, Error Logs, and a Baseline Server Profile</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>03</span>Schemas, Tables, Data Types, Keys, Constraints, and SQL Modes</summary><div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>Databases and Schemas in MySQL: Namespaces, Metadata, and Object Ownership</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Numeric, String, Temporal, JSON, Spatial, and Binary Data Types</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK, DEFAULT, and Generated Columns</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>AUTO_INCREMENT, Surrogate vs Natural Keys, and Identifier Design</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>SQL Modes, Strictness, Implicit Conversion, Truncation, and Data-Quality Boundaries</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>04</span>Core SQL Querying: Filtering, Joins, Subqueries, CTEs, and Set Operations</summary><div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>SELECT Execution Basics, Projection, Predicates, NULL Semantics, and Ordering</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>INNER, OUTER, CROSS, and Self Joins with Cardinality Reasoning</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>Scalar, Correlated, EXISTS, IN, and Derived-Table Subqueries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Common Table Expressions, Recursive CTEs, and Hierarchical Queries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>UNION, INTERSECT, EXCEPT, Query Composition, and Readability Patterns</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>05</span>Advanced SQL: Aggregation, Window Functions, JSON, and Analytical Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>GROUP BY, HAVING, Functional Dependence, ROLLUP, and Aggregation Design</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Window Frames, Ranking, Running Totals, Gaps-and-Islands, and Top-N per Group</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>JSON Documents, Paths, JSON_TABLE, Indexable JSON Patterns, and Validation</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Date/Time, String, Regular Expression, Numeric, and Conditional Functions</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Reporting Queries, Cohort-Style Analysis, Pivots by Conditional Aggregation, and Reusable Views</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>06</span>Data Modification, Transactions, Locking, and Concurrency Semantics</summary><div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>INSERT, Multi-Row Writes, INSERT ... SELECT, and Generated Values</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>UPDATE, DELETE, Multi-Table DML, and Guardrails Against Wide Changes</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Transactions, Autocommit, COMMIT, ROLLBACK, SAVEPOINT, and Error Handling</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Isolation Levels, Consistent Reads, Locking Reads, MVCC, and Anomalies</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Deadlocks, Lock Waits, Retry Design, Idempotency, and Concurrency Testing</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>07</span>InnoDB Storage Architecture and Transaction Internals</summary><div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>InnoDB Tablespaces, Pages, Extents, Segments, and Row Formats</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Clustered Indexes, Secondary Indexes, Hidden Columns, and Record Layout</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Buffer Pool Architecture, Change Buffer, Adaptive Hashing, and Caching Behavior</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Redo Logs, Undo Logs, Doublewrite, Checkpoints, and Crash Recovery</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Purge, History List, Long Transactions, MVCC Cleanup, and Storage Health</a>
+</div></details>
+<details class="sidebar-chapter" open=""><summary><span>08</span>Index Engineering and Access Path Design</summary><div>
+<a class="sidebar-lesson is-current" href="Lesson1.html"><span>01</span>B-Tree Index Structure, Selectivity, Cardinality, and Leftmost-Prefix Rules<i>Current</i></a>
+<a class="sidebar-lesson" href="Lesson2.html"><span>02</span>Composite Index Ordering, Covering Indexes, Prefix Indexes, and Redundant Indexes</a>
+<a class="sidebar-lesson" href="Lesson3.html"><span>03</span>Functional, Multi-Valued, FULLTEXT, and Spatial Index Use Cases</a>
+<a class="sidebar-lesson" href="Lesson4.html"><span>04</span>Index Condition Pushdown, Loose/Tight Index Scans, and Skip-Scan Concepts</a>
+<a class="sidebar-lesson" href="Lesson5.html"><span>05</span>Designing an Index Portfolio from Workload Evidence and Write-Cost Constraints</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>09</span>Optimizer, EXPLAIN, Statistics, and Query Plan Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>How the MySQL Optimizer Builds Access Paths, Join Orders, and Cost Estimates</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>EXPLAIN, EXPLAIN ANALYZE, FORMAT=TREE/JSON, and Iterator Timing</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Histograms, Persistent Statistics, Cardinality Errors, and ANALYZE TABLE</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Join Algorithms, Semijoin/Antijoin Transformations, Derived Tables, and Materialization</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Plan Regressions, Optimizer Hints, Invisible Indexes, and Evidence-Driven Tuning</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>10</span>Stored Programs, Views, Triggers, Events, and Server-Side Logic</summary><div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Views, Updatability, SQL SECURITY, Definer Context, and Dependency Management</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Stored Procedures, Functions, Parameters, Condition Handlers, and Diagnostics</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Triggers, OLD/NEW Rows, Ordering, Auditing Uses, and Hidden Coupling Risks</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Event Scheduler, Recurring Maintenance Jobs, Failure Handling, and Observability</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>When Server-Side Logic Helps—and When Application Logic Is the Better Boundary</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>11</span>Users, Roles, Authentication, Authorization, and Least Privilege</summary><div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Accounts, Host Matching, Authentication Plugins, Password Policy, and Account Lifecycle</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Privileges, Roles, DEFAULT ROLE, Dynamic Privileges, and Delegated Administration</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Object-Level vs Administrative Privilege Design and Separation of Duties</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>PROXY, DEFINER, SQL SECURITY, Stored Objects, and Privilege-Escalation Risks</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Design and Audit a Least-Privilege Access Model for Applications and Operators</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>12</span>Encryption, TLS, Secrets, Auditing, and Security Hardening</summary><div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>TLS for Client Connections, Certificate Validation, and Secure Transport Enforcement</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Data-at-Rest Encryption Concepts, Key Management Boundaries, and Backup Encryption</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Secrets Handling for Applications, Option Files, Environment Variables, and Rotation</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>Audit Logging Options, General/Slow Logs, Privacy, and Forensic Considerations</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Hardening Checklist: Network Exposure, Local Files, Plugins, Accounts, and Patch Discipline</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>13</span>Backup, Restore, Binary Logs, and Point-in-Time Recovery</summary><div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>Logical vs Physical Backup: mysqldump, MySQL Shell, Snapshots, and Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>Consistent Backups with Transactions, Locks, Replication Coordinates, and Large Datasets</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>Binary Log Formats, GTIDs, Retention, and Recovery Prerequisites</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Point-in-Time Recovery from Full Backup plus Binary Logs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Restore Testing, RPO/RTO Measurement, Corruption Drills, and Backup Automation</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>14</span>Asynchronous Replication, GTIDs, Topologies, and Operational Safety</summary><div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Source/Replica Architecture, Binary Log Flow, Relay Logs, and Replication Threads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>GTID-Based Replication, Auto-Positioning, Failover Readiness, and Errant Transactions</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Statement, Row, and Mixed Logging Semantics with Determinism Risks</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Replication Filters, Delayed Replicas, Read Scaling, and Reporting Workloads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Lag Diagnosis, Broken Replication, Data Drift, Re-Synchronization, and Promotion Runbooks</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>15</span>Group Replication, InnoDB Cluster, Router, and High Availability</summary><div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Consensus-Oriented Group Replication Concepts, Membership, Quorum, and Failure Modes</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Single-Primary vs Multi-Primary Modes, Conflict Detection, and Workload Constraints</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>MySQL Shell AdminAPI, InnoDB Cluster Lifecycle, Recovery, and Rejoin Operations</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>MySQL Router, Connection Routing, Read/Write Splitting, and Application Failover</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Failure Injection, Split-Brain Avoidance, Maintenance, Upgrades, and HA Acceptance Tests</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>16</span>Performance Schema, sys Schema, Logs, Metrics, and Observability</summary><div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Performance Schema Instruments, Consumers, Events, and Measurement Overhead</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>sys Schema Views for Sessions, Statements, Waits, I/O, Memory, and Index Usage</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>Slow Query Log, Error Log, General Log, and Structured Diagnostic Workflows</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>Key OS and MySQL Metrics: CPU, I/O, Buffer Pool, Connections, Temp Tables, and Redo</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Build a Production Dashboard, Alert Thresholds, Baselines, and Incident Timelines</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>17</span>Memory, I/O, Temporary Work, and Server Performance Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Buffer Pool Sizing, Working Sets, Dirty Pages, Flushing, and Memory Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Per-Connection Buffers, Sort/Join Buffers, Memory Multipliers, and OOM Risk</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Temporary Tables, Spill to Disk, tmpdir, Internal Temp Engines, and Query Rewrite</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Redo Capacity, I/O Capacity, Flush Methods, Storage Latency, and Checkpoint Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Benchmarking Methodology, Warm vs Cold Cache, Concurrency, Percentiles, and Repeatability</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>18</span>Partitioning, Large Tables, Archiving, and Data Lifecycle</summary><div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Partitioning Concepts, Supported Strategies, Partition Pruning, and Design Constraints</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Partition Keys, Unique-Key Rules, Hot/Cold Data, and Operational Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Online DDL, Instant/In-Place/Copy Algorithms, Locks, and Schema Change Planning</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Archiving, Purging, Retention Jobs, and Avoiding Massive Delete Pathologies</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Managing Multi-Terabyte Tables: Capacity, Maintenance Windows, and Growth Forecasts</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>19</span>Application Integration, Connectors, Pools, ORMs, and Reliability Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>Connection Strings, TLS, Timeouts, Pools, and Session Initialization Contracts</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Prepared Statements, Parameter Binding, SQL Injection Defense, and Type Mapping</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Transaction Boundaries in Application Code, Retries, Idempotency, and Lost Connections</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>ORM Query Generation, N+1 Problems, Pagination, Bulk Writes, and Plan Visibility</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Health Checks, Graceful Degradation, Read Replicas, Migrations, and Deployment Coordination</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>20</span>Schema Migration, Upgrades, Compatibility, and Zero/Low-Downtime Change</summary><div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Versioned Schema Migrations, Expand/Contract Patterns, and Backward Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Online Schema Change Strategies, Native DDL Capabilities, and External Tool Concepts</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Pre-Upgrade Checks, Deprecated Features, SQL Modes, Collations, and Authentication Changes</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Rolling Upgrade Considerations for Replication and High-Availability Topologies</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Rollback Planning, Data Validation, Canaries, and Post-Upgrade Performance Verification</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>21</span>Specialized MySQL Capabilities: NDB, Document Store, Spatial, and Search</summary><div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>NDB Cluster Architecture, Distribution, Availability, and When It Fits</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>X Protocol, MySQL Shell, Document Store Concepts, and CRUD APIs</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Spatial Types, SRIDs, Spatial Functions, R-Tree Indexing, and GIS Workloads</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>FULLTEXT Search, Tokenization, Relevance, Stopwords, and Search-System Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>Choosing Native Features vs Dedicated Systems for Search, Analytics, and Distributed Scale</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>22</span>Production Capstone: Design, Secure, Scale, Tune, and Recover MySQL</summary><div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Define SLOs, Workload, Data Model, Capacity Forecast, and Architecture Decision Record</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>Build the Production Schema, Index Portfolio, Security Model, and Migration Pipeline</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>Load Test, Capture Plans, Tune Queries/Server, and Establish Performance Baselines</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Implement Backups, PITR, Replication/HA, Monitoring, Alerts, and Incident Runbooks</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Execute Failure/Recovery Drills and Defend the Final MySQL Production Design</a>
+</div></details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar"><button data-sidebar-open="" type="button"><span>Course navigation</span><span>Chapter 02 · Lesson 05</span></button></div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs"><a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">MySQL</a><span>/</span><span>Chapter 08 · Lesson 01</span></nav>
+<header class="lesson-header"><p class="eyebrow">Chapter 08 · Index Engineering and Access Path Design</p><h1>B-Tree Index Structure, Selectivity, Cardinality, and Leftmost-Prefix Rules</h1><p>Design the first useful access paths from evidence: understand B-tree ordering, distinguish estimated cardinality from measured distinctness, and test exactly which parts of a composite index constrain a query.</p><div class="lesson-meta"><span>Beginner → Intermediate</span><span>120–150 min</span><span>B-tree + selectivity lab</span><span>MySQL Community Server 8.4.10 LTS · InnoDB · free local lab</span><span>leftmost prefixes</span><span>Last reviewed: August 2026</span></div></header>
+<nav aria-label="On this page" class="lesson-toc"><strong>On this page</strong><ol data-generated-toc=""></ol></nav>
+<div class="lesson-content">
+<section><h2>Learning outcomes</h2>
+<p>A production index is not a magic “speed switch.” It is an ordered access structure whose usefulness depends on the query shape, data distribution, and the optimizer’s estimate of how much work each access path will perform. Chapter 07 established that an InnoDB secondary index is itself a B-tree and that its leaf entries carry the clustered key. This lesson turns that storage fact into query-design judgment.</p>
+<div class="objectives"><div class="objective"><span>01</span><p>Explain how B-tree key ordering supports equality, range, and ordered access without claiming that every indexed query is faster.</p></div><div class="objective"><span>02</span><p>Distinguish true distinct-value counts, selectivity, SHOW INDEX cardinality estimates, and optimizer row estimates.</p></div><div class="objective"><span>03</span><p>Predict the ordinary leftmost prefixes available from a composite index and recognize where a gap or range changes later-key usefulness.</p></div><div class="objective"><span>04</span><p>Use SHOW INDEX, EXPLAIN, and EXPLAIN ANALYZE as evidence rather than relying on index naming or intuition.</p></div><div class="objective"><span>05</span><p>Diagnose a tempting low-selectivity single-column index and replace it only when a workload-shaped alternative demonstrates benefit.</p></div></div></section>
+<section><h2>Start with a realistic access-path problem</h2>
+<p>ServiceHub’s operations screen is slow when a dispatcher asks for one tenant’s open work orders from the last 30 days. A developer proposes three indexes—one on <code>tenant_id</code>, one on <code>status</code>, and one on <code>opened_at</code>—because all three columns appear in the <code>WHERE</code> clause. That advice ignores how B-tree keys are ordered and how MySQL normally selects one access path per table reference.</p>
+<div class="callout"><strong>Terms before tuning</strong><p>A B-tree index stores keys in sorted order. A composite index has more than one key part. Cardinality in SHOW INDEX is an estimate of the number of distinct values. Selectivity is a workload-design ratio—roughly distinct values divided by rows for a key or prefix. EXPLAIN shows optimizer estimates; EXPLAIN ANALYZE executes the statement and adds actual iterator timing and row counts.</p></div></section>
+<section><h2>Build the disposable index lab</h2>
+<p>Use a local MySQL Community Server 8.4.10 instance. The data is synthetic and the schema is disposable; later lessons add and remove indexes freely. The recursive CTE creates 20,000 rows—large enough to expose plan choices on many laptops without pretending it models your production hardware.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · create the ServiceHub index lab</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">DROP DATABASE IF EXISTS servicehub_index_lab;</span><span class="code-line">CREATE DATABASE servicehub_index_lab</span><span class="code-line">  CHARACTER SET utf8mb4</span><span class="code-line">  COLLATE utf8mb4_0900_ai_ci;</span><span class="code-line">USE servicehub_index_lab;</span><span class="code-line"></span><span class="code-line">CREATE TABLE technicians (</span><span class="code-line">  technician_id BIGINT UNSIGNED NOT NULL,</span><span class="code-line">  tenant_id INT UNSIGNED NOT NULL,</span><span class="code-line">  display_name VARCHAR(100) NOT NULL,</span><span class="code-line">  team_code VARCHAR(20) NOT NULL,</span><span class="code-line">  PRIMARY KEY (technician_id),</span><span class="code-line">  KEY ix_technicians_tenant_team (tenant_id, team_code, technician_id)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">CREATE TABLE work_orders (</span><span class="code-line">  work_order_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,</span><span class="code-line">  tenant_id INT UNSIGNED NOT NULL,</span><span class="code-line">  site_id INT UNSIGNED NOT NULL,</span><span class="code-line">  technician_id BIGINT UNSIGNED NULL,</span><span class="code-line">  status VARCHAR(16) NOT NULL,</span><span class="code-line">  priority TINYINT UNSIGNED NOT NULL,</span><span class="code-line">  opened_at DATETIME(6) NOT NULL,</span><span class="code-line">  closed_at DATETIME(6) NULL,</span><span class="code-line">  customer_name VARCHAR(120) NOT NULL,</span><span class="code-line">  summary VARCHAR(255) NOT NULL,</span><span class="code-line">  details TEXT NOT NULL,</span><span class="code-line">  metadata JSON NOT NULL,</span><span class="code-line">  PRIMARY KEY (work_order_id),</span><span class="code-line">  KEY ix_work_orders_technician (technician_id),</span><span class="code-line">  CONSTRAINT fk_work_orders_technician</span><span class="code-line">    FOREIGN KEY (technician_id) REFERENCES technicians(technician_id)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">INSERT INTO technicians VALUES</span><span class="code-line">  (101,1,'Ana Ruiz','north'),(102,1,'Mina Park','north'),</span><span class="code-line">  (201,2,'Omar Haddad','central'),(301,3,'Noah Chen','south');</span><span class="code-line"></span><span class="code-line">SET SESSION cte_max_recursion_depth = 25000;</span><span class="code-line">INSERT INTO work_orders</span><span class="code-line">  (tenant_id,site_id,technician_id,status,priority,opened_at,closed_at,</span><span class="code-line">   customer_name,summary,details,metadata)</span><span class="code-line">WITH RECURSIVE seq AS (</span><span class="code-line">  SELECT 1 AS n</span><span class="code-line">  UNION ALL SELECT n+1 FROM seq WHERE n &lt; 20000</span><span class="code-line">)</span><span class="code-line">SELECT</span><span class="code-line">  1 + MOD(n,40),</span><span class="code-line">  1 + MOD(n,500),</span><span class="code-line">  CASE WHEN MOD(n,11)=0 THEN NULL ELSE 100 + MOD(n,220) END,</span><span class="code-line">  ELT(1+MOD(n,5),'open','assigned','waiting','closed','cancelled'),</span><span class="code-line">  1 + MOD(n,4),</span><span class="code-line">  TIMESTAMP('2026-01-01 00:00:00') + INTERVAL MOD(n,180) DAY + INTERVAL MOD(n,86400) SECOND,</span><span class="code-line">  CASE WHEN MOD(n,5)=3 THEN TIMESTAMP('2026-01-01 00:00:00') + INTERVAL MOD(n,180) DAY + INTERVAL (MOD(n,86400)+7200) SECOND ELSE NULL END,</span><span class="code-line">  CONCAT('Customer ',LPAD(MOD(n,900),3,'0')),</span><span class="code-line">  CONCAT(ELT(1+MOD(n,6),'Network','Power','Cooling','Sensor','Access','Pump'),' incident ',n),</span><span class="code-line">  CONCAT('ServiceHub diagnostic narrative for work order ',n,' at site ',MOD(n,500),'.'),</span><span class="code-line">  JSON_OBJECT(</span><span class="code-line">    'sla_minutes', ELT(1+MOD(n,4),30,60,120,240),</span><span class="code-line">    'skill_codes', JSON_ARRAY(10+MOD(n,7),20+MOD(n,5)),</span><span class="code-line">    'source', ELT(1+MOD(n,3),'portal','phone','monitor'))</span><span class="code-line">FROM seq;</span><span class="code-line"></span><span class="code-line">ANALYZE TABLE work_orders;</span></code></pre></div>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · prove the lab shape before indexing</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">USE servicehub_index_lab;</span><span class="code-line">SELECT COUNT(*) AS rows_total, COUNT(DISTINCT tenant_id) AS tenants,</span><span class="code-line">       COUNT(DISTINCT status) AS statuses,</span><span class="code-line">       MIN(opened_at) AS first_opened, MAX(opened_at) AS last_opened</span><span class="code-line">FROM work_orders;</span><span class="code-line"></span><span class="code-line">SHOW INDEX FROM work_orders;</span></code></pre></div>
+<p>The deterministic generator yields 20,000 rows, 40 tenant values, and 5 status values. Those counts are facts about this lab. The <code>Cardinality</code> values shown by <code>SHOW INDEX</code>, by contrast, are optimizer statistics and can be approximate.</p></section>
+<section><h2>Why ordered composite keys matter</h2>
+<p>Create one index whose key order matches the dispatcher query:</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · add one workload-shaped composite index</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">CREATE INDEX ix_wo_tenant_status_opened</span><span class="code-line">  ON work_orders (tenant_id, status, opened_at, work_order_id);</span><span class="code-line">ANALYZE TABLE work_orders;</span><span class="code-line">SHOW INDEX FROM work_orders WHERE Key_name='ix_wo_tenant_status_opened';</span></code></pre></div>
+<p>Conceptually, the B-tree is ordered first by <code>tenant_id</code>. Within each tenant value it is ordered by <code>status</code>; within that pair it is ordered by <code>opened_at</code>; ties finally include <code>work_order_id</code>. That nested ordering is the reason the ordinary leftmost prefixes are <code>(tenant_id)</code>, <code>(tenant_id,status)</code>, <code>(tenant_id,status,opened_at)</code>, and the full key.</p>
+<div class="table-wrap"><table class="data-table"><thead><tr><th>Predicate shape</th><th>Ordinary B-tree access expectation</th><th>Reason</th></tr></thead><tbody><tr><td><code>tenant_id=7</code></td><td>Can seek on the first key part.</td><td>The search begins at a leftmost prefix.</td></tr><tr><td><code>tenant_id=7 AND status='open'</code></td><td>Can narrow the contiguous key interval further.</td><td>Both leading parts are fixed.</td></tr><tr><td><code>tenant_id=7 AND status='open' AND opened_at&gt;=...</code></td><td>Can form a range inside the tenant/status slice.</td><td>Equalities lead into a range.</td></tr><tr><td><code>status='open'</code></td><td>Cannot use <code>status</code> as an ordinary leftmost range by itself.</td><td>The first key part is unconstrained; skip scan is a separate cost-based optimization discussed in Lesson 4.</td></tr><tr><td><code>tenant_id=7 AND opened_at&gt;=...</code></td><td>The tenant prefix is useful, but the gap at <code>status</code> prevents the later date from behaving like the contiguous three-part range above.</td><td>Composite ordering has a missing key part.</td></tr></tbody></table></div></section>
+<section><h2>Observe estimates, then observe execution</h2>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · compare three query shapes</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">EXPLAIN FORMAT=TREE</span><span class="code-line">SELECT work_order_id, opened_at</span><span class="code-line">FROM work_orders</span><span class="code-line">WHERE tenant_id=7 AND status='open'</span><span class="code-line">  AND opened_at &gt;= '2026-05-01'</span><span class="code-line">ORDER BY opened_at, work_order_id</span><span class="code-line">LIMIT 25;</span><span class="code-line"></span><span class="code-line">EXPLAIN ANALYZE</span><span class="code-line">SELECT work_order_id, opened_at</span><span class="code-line">FROM work_orders</span><span class="code-line">WHERE tenant_id=7 AND status='open'</span><span class="code-line">  AND opened_at &gt;= '2026-05-01'</span><span class="code-line">ORDER BY opened_at, work_order_id</span><span class="code-line">LIMIT 25;</span><span class="code-line"></span><span class="code-line">EXPLAIN FORMAT=TREE</span><span class="code-line">SELECT work_order_id, opened_at</span><span class="code-line">FROM work_orders</span><span class="code-line">WHERE status='open' AND opened_at &gt;= '2026-05-01'</span><span class="code-line">LIMIT 25;</span></code></pre></div>
+<p>Record the chosen key, access type, estimated rows, actual rows, loops, and whether a separate sort appears. Do not copy an exact timing from this lesson: cache warmth, CPU, filesystem, and optimizer statistics differ. The evidence to carry forward is structural—what interval MySQL can search and how many rows it actually visits on your instance.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · compare estimate cardinality with measured distinctness</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT COUNT(*) AS n,</span><span class="code-line">       COUNT(DISTINCT tenant_id) AS tenant_distinct,</span><span class="code-line">       COUNT(DISTINCT tenant_id,status) AS tenant_status_distinct,</span><span class="code-line">       COUNT(DISTINCT tenant_id,status,DATE(opened_at)) AS prefix_distinct</span><span class="code-line">FROM work_orders;</span><span class="code-line"></span><span class="code-line">SELECT INDEX_NAME, SEQ_IN_INDEX, COLUMN_NAME, CARDINALITY</span><span class="code-line">FROM information_schema.STATISTICS</span><span class="code-line">WHERE TABLE_SCHEMA='servicehub_index_lab'</span><span class="code-line">  AND TABLE_NAME='work_orders'</span><span class="code-line">  AND INDEX_NAME='ix_wo_tenant_status_opened'</span><span class="code-line">ORDER BY SEQ_IN_INDEX;</span></code></pre></div>
+<p><code>INFORMATION_SCHEMA.STATISTICS.CARDINALITY</code> is not a contractual exact count. It is statistics used for planning. If estimates look implausible after substantial data change, <code>ANALYZE TABLE</code> is evidence-oriented maintenance—not a guarantee that a specific plan must follow.</p></section>
+<section><h2>Tempting but ineffective: index the low-selectivity status alone</h2>
+<p>Because there are only five status values, a status-only index may match thousands of rows. Create it as an experiment rather than assuming it helps:</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · test the tempting status-only index</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">CREATE INDEX ix_wo_status_only ON work_orders(status);</span><span class="code-line">ANALYZE TABLE work_orders;</span><span class="code-line"></span><span class="code-line">EXPLAIN ANALYZE</span><span class="code-line">SELECT work_order_id, customer_name, details</span><span class="code-line">FROM work_orders</span><span class="code-line">WHERE status='open';</span><span class="code-line"></span><span class="code-line">SHOW INDEX FROM work_orders WHERE Key_name='ix_wo_status_only';</span></code></pre></div>
+<p>The optimizer may use the index, may prefer another index, or may decide that scanning a large fraction of the table is cheaper. Any of those choices can be rational for this small lab. The failure is the slogan “indexed means fast,” not a specific expected plan. For the dispatcher screen, the corrected comparison is the composite index that isolates one tenant and status before applying the date range.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · remove the experiment after recording evidence</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">DROP INDEX ix_wo_status_only ON work_orders;</span><span class="code-line">SHOW INDEX FROM work_orders;</span></code></pre></div></section>
+<section><h2>Hands-on investigation</h2>
+<p>Run each query twice—once to inspect the plan and once with <code>EXPLAIN ANALYZE</code>. Predict the usable ordinary key prefix before executing it. Then explain any difference between your prediction and the optimizer’s chosen plan.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · leftmost-prefix investigation set</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">EXPLAIN ANALYZE SELECT work_order_id FROM work_orders WHERE tenant_id=12;</span><span class="code-line">EXPLAIN ANALYZE SELECT work_order_id FROM work_orders WHERE tenant_id=12 AND status='waiting';</span><span class="code-line">EXPLAIN ANALYZE SELECT work_order_id FROM work_orders WHERE tenant_id=12 AND status='waiting' AND opened_at BETWEEN '2026-02-01' AND '2026-03-01';</span><span class="code-line">EXPLAIN ANALYZE SELECT work_order_id FROM work_orders WHERE tenant_id=12 AND opened_at BETWEEN '2026-02-01' AND '2026-03-01';</span><span class="code-line">EXPLAIN ANALYZE SELECT work_order_id FROM work_orders WHERE status='waiting';</span></code></pre></div>
+<div class="checkpoint"><h3>Knowledge check</h3><ol><li>What does the leftmost-prefix rule describe?</li><li>Why is SHOW INDEX Cardinality not the same thing as COUNT(DISTINCT ...)?</li><li>What usually happens after equality conditions followed by a range condition in a composite key?</li><li>Why can a status-only index be a poor tradeoff even though status is queried often?</li><li>What does EXPLAIN ANALYZE add beyond EXPLAIN?</li></ol><details class="answer-toggle"><summary>Reveal answers</summary><div><ol><li>Which leading key parts of an ordered composite index can form ordinary index search intervals. It does not say later columns are never useful for filtering, covering, sorting, ICP, or skip scan.</li><li>Cardinality is an optimizer statistics estimate; COUNT(DISTINCT ...) computes the result for the data read by that statement.</li><li>The equalities can narrow the prefix, then the range defines an interval; later key parts generally no longer extend that same contiguous range in the simple way equalities do.</li><li>If each status matches a large share of rows, it may filter weakly while still adding storage and write-maintenance cost.</li><li>It executes the statement and reports actual iterator timing/row activity in addition to planning information; those timings are local observations, not portable guarantees.</li></ol></div></details></div></section>
+<section><h2>Production judgment and bridge</h2>
+<p>Do not optimize a schema by counting indexes. Start from query shapes, row counts, distribution, sort requirements, and write rates. A composite index is justified when its ordered prefix cuts meaningful work for important queries—or when it supplies required ordering/coverage at acceptable write cost. Chapter 09 will go deeper into statistics and plan engineering; this chapter stays focused on index design.</p>
+<p>Lesson 2 asks the next design question: when several predicates and output columns matter, what key order gives the most reusable access path, when is an index covering, and how do you detect that multiple indexes are merely overlapping each other?</p>
+<h3>Authoritative references</h3><ul><li><a href="https://dev.mysql.com/doc/refman/8.4/en/mysql-indexes.html" rel="noopener" target="_blank">MySQL 8.4 Reference Manual — How MySQL Uses Indexes</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/multiple-column-indexes.html" rel="noopener" target="_blank">MySQL 8.4 Reference Manual — Multiple-Column Indexes</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/range-optimization.html" rel="noopener" target="_blank">MySQL 8.4 Reference Manual — Range Optimization</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/show-index.html" rel="noopener" target="_blank">MySQL 8.4 Reference Manual — SHOW INDEX</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/explain.html" rel="noopener" target="_blank">MySQL 8.4 Reference Manual — EXPLAIN</a></li></ul></section></div>
+<nav aria-label="Lesson navigation" class="lesson-nav"><a class="prev" href="../Chapter07/Lesson5.html"><small>Previous lesson</small><strong>Purge, History List, Long Transactions, MVCC Cleanup, and Storage Health</strong></a><a class="next" href="Lesson2.html"><small>Next lesson</small><strong>Composite Index Ordering, Covering Indexes, Prefix Indexes, and Redundant Indexes</strong></a></nav>
+</article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>If these tutorials save you time, a small donation supports new lessons, technical review, diagrams, examples, and long-term maintenance.</p>
+<div aria-label="Author links" class="social-row">
+<a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head"><span>ETH</span><small>Ethereum / ERC-20 only</small></div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
+<button class="button secondary compact" data-copy-donation="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy address</button>
+<p>Send only assets compatible with the Ethereum/ERC-20 network. Do not send TRC-20/TRON assets.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div><strong>Big Data Academy</strong><p>A free, prerequisite-aware path from SQL foundations to distributed data systems.</p></div>
+<div><a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a></div>
+<small>Created and maintained by <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> · © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>

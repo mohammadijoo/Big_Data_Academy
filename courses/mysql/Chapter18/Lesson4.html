@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Turn retention policy into verified archive and bounded purge workflows, measuring transaction and storage consequences instead of running unbounded historical DELETE statements." name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>Archiving, Purging, Retention Jobs, and Avoiding Massive Delete Pathologies | MySQL | Big Data Academy</title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+<script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+        chtml: { scale: 1, matchFontHeight: false },
+      };
+    </script>
+<script defer="" id="MathJax-script" onerror="this.onerror=null;this.src='https://unpkg.com/mathjax@3.2.2/es5/tex-chtml.js';" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
+<span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
+<span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
+</a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a>
+<a class="is-active" href="../../../index.html#courses">Courses</a>
+<a href="../../../index.html#method">Method</a>
+<a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg></button>
+<button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu=""><a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a></nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">MYSQL</span><div><small>Course 04</small><strong>MySQL</strong></div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">×</button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 110 lessons..." type="search"/></label>
+<nav aria-label="MySQL curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter"><summary><span>01</span>MySQL Platform Foundations, Editions, Releases, and Lab Setup</summary><div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What MySQL Is: Server Architecture, Client/Server Boundaries, and Common Workloads</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Community vs Enterprise Capabilities, Licensing Awareness, and Deployment Choices</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>LTS vs Innovation Releases: Version Selection, Support Windows, and Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Install MySQL on Windows, Linux, Containers, and Verify the Toolchain</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build a Reproducible Course Lab with Sample Data, Accounts, and Safety Conventions</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>02</span>Server Architecture, Processes, Files, Connections, and Configuration</summary><div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>mysqld Startup, Data Directory, Configuration Files, and Option Precedence</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Connection Lifecycle, Threads, Sessions, Timeouts, and Resource Consumption</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>System Variables, Status Variables, Dynamic Configuration, and SET PERSIST</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Character Sets, Collations, Time Zones, Locales, and Server Defaults</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Configuration Validation, Startup Failures, Error Logs, and a Baseline Server Profile</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>03</span>Schemas, Tables, Data Types, Keys, Constraints, and SQL Modes</summary><div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>Databases and Schemas in MySQL: Namespaces, Metadata, and Object Ownership</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Numeric, String, Temporal, JSON, Spatial, and Binary Data Types</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK, DEFAULT, and Generated Columns</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>AUTO_INCREMENT, Surrogate vs Natural Keys, and Identifier Design</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>SQL Modes, Strictness, Implicit Conversion, Truncation, and Data-Quality Boundaries</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>04</span>Core SQL Querying: Filtering, Joins, Subqueries, CTEs, and Set Operations</summary><div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>SELECT Execution Basics, Projection, Predicates, NULL Semantics, and Ordering</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>INNER, OUTER, CROSS, and Self Joins with Cardinality Reasoning</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>Scalar, Correlated, EXISTS, IN, and Derived-Table Subqueries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Common Table Expressions, Recursive CTEs, and Hierarchical Queries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>UNION, INTERSECT, EXCEPT, Query Composition, and Readability Patterns</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>05</span>Advanced SQL: Aggregation, Window Functions, JSON, and Analytical Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>GROUP BY, HAVING, Functional Dependence, ROLLUP, and Aggregation Design</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Window Frames, Ranking, Running Totals, Gaps-and-Islands, and Top-N per Group</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>JSON Documents, Paths, JSON_TABLE, Indexable JSON Patterns, and Validation</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Date/Time, String, Regular Expression, Numeric, and Conditional Functions</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Reporting Queries, Cohort-Style Analysis, Pivots by Conditional Aggregation, and Reusable Views</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>06</span>Data Modification, Transactions, Locking, and Concurrency Semantics</summary><div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>INSERT, Multi-Row Writes, INSERT ... SELECT, and Generated Values</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>UPDATE, DELETE, Multi-Table DML, and Guardrails Against Wide Changes</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Transactions, Autocommit, COMMIT, ROLLBACK, SAVEPOINT, and Error Handling</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Isolation Levels, Consistent Reads, Locking Reads, MVCC, and Anomalies</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Deadlocks, Lock Waits, Retry Design, Idempotency, and Concurrency Testing</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>07</span>InnoDB Storage Architecture and Transaction Internals</summary><div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>InnoDB Tablespaces, Pages, Extents, Segments, and Row Formats</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Clustered Indexes, Secondary Indexes, Hidden Columns, and Record Layout</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Buffer Pool Architecture, Change Buffer, Adaptive Hashing, and Caching Behavior</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Redo Logs, Undo Logs, Doublewrite, Checkpoints, and Crash Recovery</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Purge, History List, Long Transactions, MVCC Cleanup, and Storage Health</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>08</span>Index Engineering and Access Path Design</summary><div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>B-Tree Index Structure, Selectivity, Cardinality, and Leftmost-Prefix Rules</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>Composite Index Ordering, Covering Indexes, Prefix Indexes, and Redundant Indexes</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Functional, Multi-Valued, FULLTEXT, and Spatial Index Use Cases</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>Index Condition Pushdown, Loose/Tight Index Scans, and Skip-Scan Concepts</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Designing an Index Portfolio from Workload Evidence and Write-Cost Constraints</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>09</span>Optimizer, EXPLAIN, Statistics, and Query Plan Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>How the MySQL Optimizer Builds Access Paths, Join Orders, and Cost Estimates</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>EXPLAIN, EXPLAIN ANALYZE, FORMAT=TREE/JSON, and Iterator Timing</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Histograms, Persistent Statistics, Cardinality Errors, and ANALYZE TABLE</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Join Algorithms, Semijoin/Antijoin Transformations, Derived Tables, and Materialization</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Plan Regressions, Optimizer Hints, Invisible Indexes, and Evidence-Driven Tuning</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>10</span>Stored Programs, Views, Triggers, Events, and Server-Side Logic</summary><div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Views, Updatability, SQL SECURITY, Definer Context, and Dependency Management</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Stored Procedures, Functions, Parameters, Condition Handlers, and Diagnostics</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Triggers, OLD/NEW Rows, Ordering, Auditing Uses, and Hidden Coupling Risks</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Event Scheduler, Recurring Maintenance Jobs, Failure Handling, and Observability</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>When Server-Side Logic Helps—and When Application Logic Is the Better Boundary</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>11</span>Users, Roles, Authentication, Authorization, and Least Privilege</summary><div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Accounts, Host Matching, Authentication Plugins, Password Policy, and Account Lifecycle</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Privileges, Roles, DEFAULT ROLE, Dynamic Privileges, and Delegated Administration</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Object-Level vs Administrative Privilege Design and Separation of Duties</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>PROXY, DEFINER, SQL SECURITY, Stored Objects, and Privilege-Escalation Risks</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Design and Audit a Least-Privilege Access Model for Applications and Operators</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>12</span>Encryption, TLS, Secrets, Auditing, and Security Hardening</summary><div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>TLS for Client Connections, Certificate Validation, and Secure Transport Enforcement</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Data-at-Rest Encryption Concepts, Key Management Boundaries, and Backup Encryption</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Secrets Handling for Applications, Option Files, Environment Variables, and Rotation</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>Audit Logging Options, General/Slow Logs, Privacy, and Forensic Considerations</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Hardening Checklist: Network Exposure, Local Files, Plugins, Accounts, and Patch Discipline</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>13</span>Backup, Restore, Binary Logs, and Point-in-Time Recovery</summary><div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>Logical vs Physical Backup: mysqldump, MySQL Shell, Snapshots, and Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>Consistent Backups with Transactions, Locks, Replication Coordinates, and Large Datasets</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>Binary Log Formats, GTIDs, Retention, and Recovery Prerequisites</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Point-in-Time Recovery from Full Backup plus Binary Logs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Restore Testing, RPO/RTO Measurement, Corruption Drills, and Backup Automation</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>14</span>Asynchronous Replication, GTIDs, Topologies, and Operational Safety</summary><div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Source/Replica Architecture, Binary Log Flow, Relay Logs, and Replication Threads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>GTID-Based Replication, Auto-Positioning, Failover Readiness, and Errant Transactions</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Statement, Row, and Mixed Logging Semantics with Determinism Risks</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Replication Filters, Delayed Replicas, Read Scaling, and Reporting Workloads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Lag Diagnosis, Broken Replication, Data Drift, Re-Synchronization, and Promotion Runbooks</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>15</span>Group Replication, InnoDB Cluster, Router, and High Availability</summary><div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Consensus-Oriented Group Replication Concepts, Membership, Quorum, and Failure Modes</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Single-Primary vs Multi-Primary Modes, Conflict Detection, and Workload Constraints</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>MySQL Shell AdminAPI, InnoDB Cluster Lifecycle, Recovery, and Rejoin Operations</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>MySQL Router, Connection Routing, Read/Write Splitting, and Application Failover</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Failure Injection, Split-Brain Avoidance, Maintenance, Upgrades, and HA Acceptance Tests</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>16</span>Performance Schema, sys Schema, Logs, Metrics, and Observability</summary><div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Performance Schema Instruments, Consumers, Events, and Measurement Overhead</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>sys Schema Views for Sessions, Statements, Waits, I/O, Memory, and Index Usage</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>Slow Query Log, Error Log, General Log, and Structured Diagnostic Workflows</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>Key OS and MySQL Metrics: CPU, I/O, Buffer Pool, Connections, Temp Tables, and Redo</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Build a Production Dashboard, Alert Thresholds, Baselines, and Incident Timelines</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>17</span>Memory, I/O, Temporary Work, and Server Performance Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Buffer Pool Sizing, Working Sets, Dirty Pages, Flushing, and Memory Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Per-Connection Buffers, Sort/Join Buffers, Memory Multipliers, and OOM Risk</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Temporary Tables, Spill to Disk, tmpdir, Internal Temp Engines, and Query Rewrite</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Redo Capacity, I/O Capacity, Flush Methods, Storage Latency, and Checkpoint Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Benchmarking Methodology, Warm vs Cold Cache, Concurrency, Percentiles, and Repeatability</a>
+</div></details>
+<details class="sidebar-chapter" open=""><summary><span>18</span>Partitioning, Large Tables, Archiving, and Data Lifecycle</summary><div>
+<a class="sidebar-lesson" href="Lesson1.html"><span>01</span>Partitioning Concepts, Supported Strategies, Partition Pruning, and Design Constraints</a>
+<a class="sidebar-lesson" href="Lesson2.html"><span>02</span>Partition Keys, Unique-Key Rules, Hot/Cold Data, and Operational Tradeoffs</a>
+<a class="sidebar-lesson" href="Lesson3.html"><span>03</span>Online DDL, Instant/In-Place/Copy Algorithms, Locks, and Schema Change Planning</a>
+<a class="sidebar-lesson is-current" href="Lesson4.html"><span>04</span>Archiving, Purging, Retention Jobs, and Avoiding Massive Delete Pathologies<i>Current</i></a>
+<a class="sidebar-lesson" href="Lesson5.html"><span>05</span>Managing Multi-Terabyte Tables: Capacity, Maintenance Windows, and Growth Forecasts</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>19</span>Application Integration, Connectors, Pools, ORMs, and Reliability Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>Connection Strings, TLS, Timeouts, Pools, and Session Initialization Contracts</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Prepared Statements, Parameter Binding, SQL Injection Defense, and Type Mapping</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Transaction Boundaries in Application Code, Retries, Idempotency, and Lost Connections</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>ORM Query Generation, N+1 Problems, Pagination, Bulk Writes, and Plan Visibility</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Health Checks, Graceful Degradation, Read Replicas, Migrations, and Deployment Coordination</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>20</span>Schema Migration, Upgrades, Compatibility, and Zero/Low-Downtime Change</summary><div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Versioned Schema Migrations, Expand/Contract Patterns, and Backward Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Online Schema Change Strategies, Native DDL Capabilities, and External Tool Concepts</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Pre-Upgrade Checks, Deprecated Features, SQL Modes, Collations, and Authentication Changes</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Rolling Upgrade Considerations for Replication and High-Availability Topologies</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Rollback Planning, Data Validation, Canaries, and Post-Upgrade Performance Verification</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>21</span>Specialized MySQL Capabilities: NDB, Document Store, Spatial, and Search</summary><div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>NDB Cluster Architecture, Distribution, Availability, and When It Fits</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>X Protocol, MySQL Shell, Document Store Concepts, and CRUD APIs</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Spatial Types, SRIDs, Spatial Functions, R-Tree Indexing, and GIS Workloads</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>FULLTEXT Search, Tokenization, Relevance, Stopwords, and Search-System Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>Choosing Native Features vs Dedicated Systems for Search, Analytics, and Distributed Scale</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>22</span>Production Capstone: Design, Secure, Scale, Tune, and Recover MySQL</summary><div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Define SLOs, Workload, Data Model, Capacity Forecast, and Architecture Decision Record</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>Build the Production Schema, Index Portfolio, Security Model, and Migration Pipeline</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>Load Test, Capture Plans, Tune Queries/Server, and Establish Performance Baselines</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Implement Backups, PITR, Replication/HA, Monitoring, Alerts, and Incident Runbooks</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Execute Failure/Recovery Drills and Defend the Final MySQL Production Design</a>
+</div></details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar"><button data-sidebar-open="" type="button"><span>Course navigation</span><span>Chapter 16 · Lesson 05</span></button></div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs"><a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">MySQL</a><span>/</span><span>Chapter 18 · Lesson 04</span></nav>
+<header class="lesson-header"><p class="eyebrow">Chapter 18 · Partitioning, Large Tables, Archiving, and Data Lifecycle</p><h1>Archiving, Purging, Retention Jobs, and Avoiding Massive Delete Pathologies</h1><p>Turn retention policy into verified archive and bounded purge workflows, measuring transaction and storage consequences instead of running unbounded historical DELETE statements.</p><div class="lesson-meta"><span>Advanced</span><span>180–240 min</span><span>archive + bounded purge + partition-drop lab</span><span>MySQL Community Server 8.4.10 LTS</span><span>InnoDB retention operations</span><span>Last reviewed: August 2026</span></div></header>
+<nav aria-label="On this page" class="lesson-toc"><strong>On this page</strong><ol data-generated-toc=""></ol></nav>
+<div class="lesson-content"><section><h2>Learning outcomes</h2><p>ServiceHub policy says detailed operational events are retained online for six months and older events must be archived in a verifiable form before deletion. A single <code>DELETE ... WHERE occurred_on &lt; cutoff</code> looks convenient, but on a very large InnoDB table it can create a huge transaction with long undo history, redo and binary-log volume, lock duration, replica apply pressure, buffer-pool churn, and a painful rollback. Retention needs an engineered workflow.</p><div class="objectives"><div class="objective"><span>01</span><p>Translate legal/business retention rules into archive, verification, purge, and recovery steps.</p></div><div class="objective"><span>02</span><p>Explain why one massive DELETE is operationally different from bounded transactions or partition removal.</p></div><div class="objective"><span>03</span><p>Build an archive manifest/checkpoint and verify archived data before destructive work.</p></div><div class="objective"><span>04</span><p>Implement bounded purge batches and a safe partition-drop workflow on disposable data.</p></div><div class="objective"><span>05</span><p>Prove archived data remains searchable/restorable according to the stated requirement.</p></div></div><div class="callout danger"><strong>Archive is not “copy somewhere and hope”</strong><p>Destructive purge is allowed only after the archive has a defined format/location, row-count and integrity checks, access controls, retention rules, and a tested restore/search path. The lab uses database tables for simplicity; production archives may use other storage but require the same verification discipline.</p></div></section><section><h2>Retention design starts with the requirement</h2><div class="table-wrap"><table class="data-table"><thead><tr><th>Question</th><th>Why it matters</th></tr></thead><tbody><tr><td>What must remain online?</td><td>defines the active cutoff and application query expectations</td></tr><tr><td>What must be retained offline and for how long?</td><td>defines archive retention and deletion eligibility</td></tr><tr><td>How quickly must archived data be searchable/restorable?</td><td>determines archive format, indexing, catalog, and restore process</td></tr><tr><td>What constitutes proof before purge?</td><td>row counts, time bounds, checksums/business aggregates, manifest identity</td></tr><tr><td>Who can purge?</td><td>least privilege and two-person/change-control boundaries for destructive operations</td></tr></tbody></table></div><p>For the lab, treat dates before 2026-01-01 as expired from the online event table after archive verification. Never apply this cutoff to a real system without the actual policy owner and legal/business approval.</p></section><section><h2>Build an archive and manifest before deletion</h2><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · create archive tables and capture the old period</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">USE servicehub_lifecycle_lab;</span><span class="code-line"></span><span class="code-line">DROP TABLE IF EXISTS work_order_events_archive;</span><span class="code-line">CREATE TABLE work_order_events_archive LIKE work_order_events_plain;</span><span class="code-line"></span><span class="code-line">INSERT INTO work_order_events_archive</span><span class="code-line">SELECT *</span><span class="code-line">FROM work_order_events_plain</span><span class="code-line">WHERE occurred_on &lt; '2026-01-01';</span><span class="code-line"></span><span class="code-line">DROP TABLE IF EXISTS archive_manifest;</span><span class="code-line">CREATE TABLE archive_manifest (</span><span class="code-line">  archive_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,</span><span class="code-line">  archive_name VARCHAR(80) NOT NULL,</span><span class="code-line">  cutoff_date DATE NOT NULL,</span><span class="code-line">  row_count BIGINT UNSIGNED NOT NULL,</span><span class="code-line">  min_event_id BIGINT UNSIGNED NULL,</span><span class="code-line">  max_event_id BIGINT UNSIGNED NULL,</span><span class="code-line">  event_id_sum DECIMAL(30,0) NOT NULL,</span><span class="code-line">  verified_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">INSERT INTO archive_manifest</span><span class="code-line">(archive_name, cutoff_date, row_count, min_event_id, max_event_id, event_id_sum)</span><span class="code-line">SELECT 'servicehub-events-before-2026-01-01', '2026-01-01',</span><span class="code-line">       COUNT(*), MIN(event_id), MAX(event_id), SUM(event_id)</span><span class="code-line">FROM work_order_events_archive;</span><span class="code-line"></span><span class="code-line">SELECT * FROM archive_manifest;</span></code></pre></div><p>The simple aggregate manifest is not a cryptographic archive format, but it provides deterministic business invariants for the lab. Production systems should add artifact hashes, object/version identity, encryption/key metadata, retention/legal-hold state, and restore-test history as appropriate.</p></section><section><h2>Prove the archive is exact before purge</h2><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · compare source and archive invariants</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT 'source' AS side, COUNT(*) AS rows_n,</span><span class="code-line">       MIN(event_id) AS min_id, MAX(event_id) AS max_id,</span><span class="code-line">       SUM(event_id) AS id_sum</span><span class="code-line">FROM work_order_events_plain</span><span class="code-line">WHERE occurred_on &lt; '2026-01-01'</span><span class="code-line">UNION ALL</span><span class="code-line">SELECT 'archive', COUNT(*), MIN(event_id), MAX(event_id), SUM(event_id)</span><span class="code-line">FROM work_order_events_archive;</span><span class="code-line"></span><span class="code-line">SELECT event_id, occurred_on, work_order_id, event_type</span><span class="code-line">FROM work_order_events_archive</span><span class="code-line">ORDER BY event_id</span><span class="code-line">LIMIT 5;</span></code></pre></div><p>Counts and aggregates must match before destructive work. These checks still do not prove every payload byte is identical, so a production archive should use stronger artifact/checksum validation. The sample query proves that archived records remain searchable in the lab.</p></section><section><h2>Failure drill: see why one giant DELETE is dangerous without committing it</h2><p>Create a disposable copy and perform the historical deletion inside a transaction that you roll back. This demonstrates transaction/lock/undo/redo work at safe scale without permanently deleting the lab source. Global counters can be affected by other sessions, so compare deltas only on an otherwise quiet disposable server.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · controlled large-delete probe on a copy</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">DROP TABLE IF EXISTS purge_bad_demo;</span><span class="code-line">CREATE TABLE purge_bad_demo LIKE work_order_events_plain;</span><span class="code-line">INSERT INTO purge_bad_demo SELECT * FROM work_order_events_plain;</span><span class="code-line"></span><span class="code-line">SHOW GLOBAL STATUS WHERE Variable_name IN (</span><span class="code-line">  'Innodb_os_log_written','Innodb_buffer_pool_pages_dirty'</span><span class="code-line">);</span><span class="code-line">SELECT NAME, COUNT AS history_length</span><span class="code-line">FROM information_schema.INNODB_METRICS</span><span class="code-line">WHERE NAME='trx_rseg_history_len';</span><span class="code-line"></span><span class="code-line">START TRANSACTION;</span><span class="code-line">DELETE FROM purge_bad_demo</span><span class="code-line">WHERE occurred_on &lt; '2026-01-01';</span><span class="code-line">SELECT ROW_COUNT() AS rows_marked_deleted;</span><span class="code-line">-- Inspect transaction/locks in another session if desired, then:</span><span class="code-line">ROLLBACK;</span><span class="code-line"></span><span class="code-line">SELECT COUNT(*) AS rows_after_rollback FROM purge_bad_demo;</span><span class="code-line">SHOW GLOBAL STATUS WHERE Variable_name IN (</span><span class="code-line">  'Innodb_os_log_written','Innodb_buffer_pool_pages_dirty'</span><span class="code-line">);</span><span class="code-line">SELECT NAME, COUNT AS history_length</span><span class="code-line">FROM information_schema.INNODB_METRICS</span><span class="code-line">WHERE NAME='trx_rseg_history_len';</span></code></pre></div><p>Even rolled back work can generate substantial undo/redo and dirty-page activity. A committed massive delete can additionally generate large binary-log transactions, replication apply work, and long purge cleanup. Do not extrapolate exact bytes from this small lab; use it to understand the causal path.</p></section><section><h2>Bound the purge: short transactions with checkpointed progress</h2><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · create a disposable bounded-purge target and progress table</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">DROP TABLE IF EXISTS purge_batch_demo;</span><span class="code-line">CREATE TABLE purge_batch_demo LIKE work_order_events_plain;</span><span class="code-line">INSERT INTO purge_batch_demo SELECT * FROM work_order_events_plain;</span><span class="code-line"></span><span class="code-line">DROP TABLE IF EXISTS purge_progress;</span><span class="code-line">CREATE TABLE purge_progress (</span><span class="code-line">  job_name VARCHAR(80) PRIMARY KEY,</span><span class="code-line">  cutoff_date DATE NOT NULL,</span><span class="code-line">  deleted_rows BIGINT UNSIGNED NOT NULL DEFAULT 0,</span><span class="code-line">  last_batch_rows INT UNSIGNED NOT NULL DEFAULT 0,</span><span class="code-line">  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP</span><span class="code-line">             ON UPDATE CURRENT_TIMESTAMP</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line">INSERT INTO purge_progress(job_name, cutoff_date)</span><span class="code-line">VALUES ('events-before-2026-01-01','2026-01-01');</span></code></pre></div><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · run one bounded batch, commit, verify, and repeat deliberately</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">START TRANSACTION;</span><span class="code-line">DELETE FROM purge_batch_demo</span><span class="code-line">WHERE occurred_on &lt; '2026-01-01'</span><span class="code-line">ORDER BY occurred_on, event_id</span><span class="code-line">LIMIT 500;</span><span class="code-line">SET @batch_rows := ROW_COUNT();</span><span class="code-line">UPDATE purge_progress</span><span class="code-line">SET deleted_rows = deleted_rows + @batch_rows,</span><span class="code-line">    last_batch_rows = @batch_rows</span><span class="code-line">WHERE job_name='events-before-2026-01-01';</span><span class="code-line">COMMIT;</span><span class="code-line"></span><span class="code-line">SELECT @batch_rows AS this_batch, p.* FROM purge_progress AS p;</span><span class="code-line">SELECT COUNT(*) AS remaining_expired</span><span class="code-line">FROM purge_batch_demo</span><span class="code-line">WHERE occurred_on &lt; '2026-01-01';</span></code></pre></div><p>Repeat only while server/replica/application health remains inside the written gates, and stop when <code>@batch_rows=0</code>. Batching caps transaction size and creates pause points; it does not make deletion free. The retention predicate needs an index that makes each batch find old rows efficiently.</p></section><section><h2>Partition retention: archive, verify, then remove a whole old partition</h2><p>A major lifecycle advantage of RANGE partitioning is that an expired partition can be removed as a partition operation rather than row-by-row DML. But <code>DROP PARTITION</code> deletes the data in that partition. Treat it as destructive and use a disposable clone for the lab.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · clone the partitioned table and prove the target partition</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">DROP TABLE IF EXISTS partition_purge_demo;</span><span class="code-line">CREATE TABLE partition_purge_demo LIKE work_order_events_part;</span><span class="code-line">INSERT INTO partition_purge_demo SELECT * FROM work_order_events_part;</span><span class="code-line"></span><span class="code-line">SELECT PARTITION_NAME, TABLE_ROWS</span><span class="code-line">FROM information_schema.PARTITIONS</span><span class="code-line">WHERE TABLE_SCHEMA='servicehub_lifecycle_lab'</span><span class="code-line">  AND TABLE_NAME='partition_purge_demo'</span><span class="code-line">ORDER BY PARTITION_ORDINAL_POSITION;</span><span class="code-line"></span><span class="code-line">SELECT COUNT(*) AS exact_old_rows</span><span class="code-line">FROM partition_purge_demo</span><span class="code-line">WHERE occurred_on &lt; '2026-01-01';</span></code></pre></div><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · drop only the verified expired partition</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">ALTER TABLE partition_purge_demo</span><span class="code-line">  DROP PARTITION p2025q4,</span><span class="code-line">  ALGORITHM=INPLACE;</span><span class="code-line"></span><span class="code-line">SELECT COUNT(*) AS remaining_old_rows</span><span class="code-line">FROM partition_purge_demo</span><span class="code-line">WHERE occurred_on &lt; '2026-01-01';</span><span class="code-line"></span><span class="code-line">SELECT PARTITION_NAME, TABLE_ROWS</span><span class="code-line">FROM information_schema.PARTITIONS</span><span class="code-line">WHERE TABLE_SCHEMA='servicehub_lifecycle_lab'</span><span class="code-line">  AND TABLE_NAME='partition_purge_demo'</span><span class="code-line">ORDER BY PARTITION_ORDINAL_POSITION;</span></code></pre></div><p>Expected business state: <code>remaining_old_rows=0</code> and <code>p2025q4</code> is absent. The original partitioned lab table remains intact. In production, preserve proof that the archive corresponds to that exact period before dropping it.</p></section><section><h2>Prove restore/searchability after online data is gone</h2><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · restore archived rows into an isolated probe table</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">DROP TABLE IF EXISTS archive_restore_probe;</span><span class="code-line">CREATE TABLE archive_restore_probe LIKE work_order_events_plain;</span><span class="code-line">INSERT INTO archive_restore_probe</span><span class="code-line">SELECT * FROM work_order_events_archive;</span><span class="code-line"></span><span class="code-line">SELECT COUNT(*) AS restored_rows,</span><span class="code-line">       MIN(occurred_on) AS first_day,</span><span class="code-line">       MAX(occurred_on) AS last_day,</span><span class="code-line">       SUM(event_id) AS restored_id_sum</span><span class="code-line">FROM archive_restore_probe;</span><span class="code-line"></span><span class="code-line">SELECT row_count, min_event_id, max_event_id, event_id_sum</span><span class="code-line">FROM archive_manifest</span><span class="code-line">WHERE archive_name='servicehub-events-before-2026-01-01';</span></code></pre></div><p>The restored count/time bounds/aggregate should agree with the manifest. This is the minimum acceptance test for the lab. A production archive should be restored into a clean target on a schedule, not only during an incident.</p></section><section><h2>Production judgment and bridge to capacity planning</h2><p>Choose bounded row deletion when retention boundaries do not align with partitions or when only a subset of rows expires. Choose partition removal when the table was deliberately designed around immutable time boundaries and the entire partition is eligible. In both cases, archive/verify first, monitor redo/undo, lock waits, binary-log volume, replica lag, disk, and application latency, and retain restartable progress.</p><p>Lesson 5 expands from one retention job to multi-terabyte economics: storage growth, secondary-index multiplication, binary logs, backups, replicas, temporary DDL space, and maintenance windows must all fit before the table reaches its next growth milestone.</p></section><section><h2>Optional cleanup for Lesson 4 probe tables</h2><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · remove disposable purge/restore probes only</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">DROP TABLE IF EXISTS archive_restore_probe;</span><span class="code-line">DROP TABLE IF EXISTS partition_purge_demo;</span><span class="code-line">DROP TABLE IF EXISTS purge_batch_demo;</span><span class="code-line">DROP TABLE IF EXISTS purge_bad_demo;</span><span class="code-line">-- Keep work_order_events_archive and archive_manifest for Lesson 5 capacity examples.</span></code></pre></div></section><div class="checkpoint"><h3>Knowledge check</h3><ol><li>Why is one massive DELETE risky on a large InnoDB table?</li><li>What must happen before destructive purge?</li><li>What does batching improve?</li><li>Why can DROP PARTITION be attractive for retention?</li><li>Why use a restore probe?</li></ol><details class="answer-toggle"><summary>Reveal answers</summary><div><ol><li>It can create a huge transaction with long undo history, redo/binlog volume, locks, buffer/I/O pressure, replica apply cost, and expensive rollback/purge cleanup.</li><li>Archive according to policy, verify deterministic integrity/business invariants, and prove the archive is searchable/restorable.</li><li>It bounds transaction size and creates checkpoints/pause points; it does not eliminate total work.</li><li>When an entire time partition is expired, MySQL can remove that partition as a partition operation instead of deleting rows individually.</li><li>A backup/archive is not operationally trustworthy until a clean target can reconstruct the required data and pass invariants.</li></ol></div></details></div><section><h3>Authoritative references</h3><ul><li><a href="https://dev.mysql.com/doc/refman/8.4/en/" rel="noreferrer" target="_blank">MySQL 8.4 Reference Manual</a></li><li><a href="https://dev.mysql.com/downloads/mysql/8.4.html" rel="noreferrer" target="_blank">MySQL Community Server 8.4 downloads</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/partitioning-management-range-list.html" rel="noreferrer" target="_blank">Management of RANGE and LIST Partitions</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/innodb-information-schema-transactions.html" rel="noreferrer" target="_blank">InnoDB Transaction and Locking Information</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/innodb-redo-log.html" rel="noreferrer" target="_blank">InnoDB Redo Log</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/optimizing-innodb-ddl-operations.html" rel="noreferrer" target="_blank">Optimizing InnoDB DDL Operations</a></li></ul></section></div>
+<nav aria-label="Lesson navigation" class="lesson-nav"><a class="prev" href="Lesson3.html"><small>Previous lesson</small><strong>Online DDL, Instant/In-Place/Copy Algorithms, Locks, and Schema Change Planning</strong></a><a class="next" href="Lesson5.html"><small>Next lesson</small><strong>Managing Multi-Terabyte Tables: Capacity, Maintenance Windows, and Growth Forecasts</strong></a></nav>
+</article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>If these tutorials save you time, a small donation supports new lessons, technical review, diagrams, examples, and long-term maintenance.</p>
+<div aria-label="Author links" class="social-row">
+<a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head"><span>ETH</span><small>Ethereum / ERC-20 only</small></div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
+<button class="button secondary compact" data-copy-donation="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy address</button>
+<p>Send only assets compatible with the Ethereum/ERC-20 network. Do not send TRC-20/TRON assets.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div><strong>Big Data Academy</strong><p>A free, prerequisite-aware path from SQL foundations to distributed data systems.</p></div>
+<div><a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a></div>
+<small>Created and maintained by <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> · © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>

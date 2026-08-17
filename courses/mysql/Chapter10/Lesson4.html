@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Operate MySQL scheduled events as server-side jobs: verify scheduler state, privileges and time-zone semantics, create a safe short-lived event, prove execution from metadata and side effects, diagnose failure, and cleanly disable/drop it." name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>Event Scheduler, Recurring Maintenance Jobs, Failure Handling, and Observability | Big Data Academy</title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+<script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+        chtml: { scale: 1, matchFontHeight: false },
+      };
+    </script>
+<script defer="" id="MathJax-script" onerror="this.onerror=null;this.src='https://unpkg.com/mathjax@3.2.2/es5/tex-chtml.js';" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
+<span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
+<span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
+</a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a>
+<a class="is-active" href="../../../index.html#courses">Courses</a>
+<a href="../../../index.html#method">Method</a>
+<a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg></button>
+<button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu=""><a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a></nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">MYSQL</span><div><small>Course 04</small><strong>MySQL</strong></div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">×</button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 110 lessons..." type="search"/></label>
+<nav aria-label="MySQL curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter"><summary><span>01</span>MySQL Platform Foundations, Editions, Releases, and Lab Setup</summary><div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What MySQL Is: Server Architecture, Client/Server Boundaries, and Common Workloads</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Community vs Enterprise Capabilities, Licensing Awareness, and Deployment Choices</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>LTS vs Innovation Releases: Version Selection, Support Windows, and Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Install MySQL on Windows, Linux, Containers, and Verify the Toolchain</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build a Reproducible Course Lab with Sample Data, Accounts, and Safety Conventions</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>02</span>Server Architecture, Processes, Files, Connections, and Configuration</summary><div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>mysqld Startup, Data Directory, Configuration Files, and Option Precedence</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Connection Lifecycle, Threads, Sessions, Timeouts, and Resource Consumption</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>System Variables, Status Variables, Dynamic Configuration, and SET PERSIST</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Character Sets, Collations, Time Zones, Locales, and Server Defaults</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Configuration Validation, Startup Failures, Error Logs, and a Baseline Server Profile</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>03</span>Schemas, Tables, Data Types, Keys, Constraints, and SQL Modes</summary><div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>Databases and Schemas in MySQL: Namespaces, Metadata, and Object Ownership</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Numeric, String, Temporal, JSON, Spatial, and Binary Data Types</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK, DEFAULT, and Generated Columns</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>AUTO_INCREMENT, Surrogate vs Natural Keys, and Identifier Design</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>SQL Modes, Strictness, Implicit Conversion, Truncation, and Data-Quality Boundaries</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>04</span>Core SQL Querying: Filtering, Joins, Subqueries, CTEs, and Set Operations</summary><div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>SELECT Execution Basics, Projection, Predicates, NULL Semantics, and Ordering</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>INNER, OUTER, CROSS, and Self Joins with Cardinality Reasoning</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>Scalar, Correlated, EXISTS, IN, and Derived-Table Subqueries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Common Table Expressions, Recursive CTEs, and Hierarchical Queries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>UNION, INTERSECT, EXCEPT, Query Composition, and Readability Patterns</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>05</span>Advanced SQL: Aggregation, Window Functions, JSON, and Analytical Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>GROUP BY, HAVING, Functional Dependence, ROLLUP, and Aggregation Design</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Window Frames, Ranking, Running Totals, Gaps-and-Islands, and Top-N per Group</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>JSON Documents, Paths, JSON_TABLE, Indexable JSON Patterns, and Validation</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Date/Time, String, Regular Expression, Numeric, and Conditional Functions</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Reporting Queries, Cohort-Style Analysis, Pivots by Conditional Aggregation, and Reusable Views</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>06</span>Data Modification, Transactions, Locking, and Concurrency Semantics</summary><div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>INSERT, Multi-Row Writes, INSERT ... SELECT, and Generated Values</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>UPDATE, DELETE, Multi-Table DML, and Guardrails Against Wide Changes</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Transactions, Autocommit, COMMIT, ROLLBACK, SAVEPOINT, and Error Handling</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Isolation Levels, Consistent Reads, Locking Reads, MVCC, and Anomalies</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Deadlocks, Lock Waits, Retry Design, Idempotency, and Concurrency Testing</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>07</span>InnoDB Storage Architecture and Transaction Internals</summary><div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>InnoDB Tablespaces, Pages, Extents, Segments, and Row Formats</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Clustered Indexes, Secondary Indexes, Hidden Columns, and Record Layout</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Buffer Pool Architecture, Change Buffer, Adaptive Hashing, and Caching Behavior</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Redo Logs, Undo Logs, Doublewrite, Checkpoints, and Crash Recovery</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Purge, History List, Long Transactions, MVCC Cleanup, and Storage Health</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>08</span>Index Engineering and Access Path Design</summary><div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>B-Tree Index Structure, Selectivity, Cardinality, and Leftmost-Prefix Rules</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>Composite Index Ordering, Covering Indexes, Prefix Indexes, and Redundant Indexes</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Functional, Multi-Valued, FULLTEXT, and Spatial Index Use Cases</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>Index Condition Pushdown, Loose/Tight Index Scans, and Skip-Scan Concepts</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Designing an Index Portfolio from Workload Evidence and Write-Cost Constraints</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>09</span>Optimizer, EXPLAIN, Statistics, and Query Plan Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>How the MySQL Optimizer Builds Access Paths, Join Orders, and Cost Estimates</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>EXPLAIN, EXPLAIN ANALYZE, FORMAT=TREE/JSON, and Iterator Timing</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Histograms, Persistent Statistics, Cardinality Errors, and ANALYZE TABLE</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Join Algorithms, Semijoin/Antijoin Transformations, Derived Tables, and Materialization</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Plan Regressions, Optimizer Hints, Invisible Indexes, and Evidence-Driven Tuning</a>
+</div></details>
+<details class="sidebar-chapter" open=""><summary><span>10</span>Stored Programs, Views, Triggers, Events, and Server-Side Logic</summary><div>
+<a class="sidebar-lesson" href="Lesson1.html"><span>01</span>Views, Updatability, SQL SECURITY, Definer Context, and Dependency Management</a>
+<a class="sidebar-lesson" href="Lesson2.html"><span>02</span>Stored Procedures, Functions, Parameters, Condition Handlers, and Diagnostics</a>
+<a class="sidebar-lesson" href="Lesson3.html"><span>03</span>Triggers, OLD/NEW Rows, Ordering, Auditing Uses, and Hidden Coupling Risks</a>
+<a class="sidebar-lesson is-current" href="Lesson4.html"><span>04</span>Event Scheduler, Recurring Maintenance Jobs, Failure Handling, and Observability<i>Current</i></a>
+<a class="sidebar-lesson" href="Lesson5.html"><span>05</span>When Server-Side Logic Helps—and When Application Logic Is the Better Boundary</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>11</span>Users, Roles, Authentication, Authorization, and Least Privilege</summary><div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Accounts, Host Matching, Authentication Plugins, Password Policy, and Account Lifecycle</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Privileges, Roles, DEFAULT ROLE, Dynamic Privileges, and Delegated Administration</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Object-Level vs Administrative Privilege Design and Separation of Duties</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>PROXY, DEFINER, SQL SECURITY, Stored Objects, and Privilege-Escalation Risks</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Design and Audit a Least-Privilege Access Model for Applications and Operators</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>12</span>Encryption, TLS, Secrets, Auditing, and Security Hardening</summary><div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>TLS for Client Connections, Certificate Validation, and Secure Transport Enforcement</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Data-at-Rest Encryption Concepts, Key Management Boundaries, and Backup Encryption</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Secrets Handling for Applications, Option Files, Environment Variables, and Rotation</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>Audit Logging Options, General/Slow Logs, Privacy, and Forensic Considerations</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Hardening Checklist: Network Exposure, Local Files, Plugins, Accounts, and Patch Discipline</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>13</span>Backup, Restore, Binary Logs, and Point-in-Time Recovery</summary><div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>Logical vs Physical Backup: mysqldump, MySQL Shell, Snapshots, and Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>Consistent Backups with Transactions, Locks, Replication Coordinates, and Large Datasets</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>Binary Log Formats, GTIDs, Retention, and Recovery Prerequisites</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Point-in-Time Recovery from Full Backup plus Binary Logs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Restore Testing, RPO/RTO Measurement, Corruption Drills, and Backup Automation</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>14</span>Asynchronous Replication, GTIDs, Topologies, and Operational Safety</summary><div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Source/Replica Architecture, Binary Log Flow, Relay Logs, and Replication Threads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>GTID-Based Replication, Auto-Positioning, Failover Readiness, and Errant Transactions</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Statement, Row, and Mixed Logging Semantics with Determinism Risks</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Replication Filters, Delayed Replicas, Read Scaling, and Reporting Workloads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Lag Diagnosis, Broken Replication, Data Drift, Re-Synchronization, and Promotion Runbooks</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>15</span>Group Replication, InnoDB Cluster, Router, and High Availability</summary><div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Consensus-Oriented Group Replication Concepts, Membership, Quorum, and Failure Modes</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Single-Primary vs Multi-Primary Modes, Conflict Detection, and Workload Constraints</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>MySQL Shell AdminAPI, InnoDB Cluster Lifecycle, Recovery, and Rejoin Operations</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>MySQL Router, Connection Routing, Read/Write Splitting, and Application Failover</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Failure Injection, Split-Brain Avoidance, Maintenance, Upgrades, and HA Acceptance Tests</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>16</span>Performance Schema, sys Schema, Logs, Metrics, and Observability</summary><div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Performance Schema Instruments, Consumers, Events, and Measurement Overhead</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>sys Schema Views for Sessions, Statements, Waits, I/O, Memory, and Index Usage</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>Slow Query Log, Error Log, General Log, and Structured Diagnostic Workflows</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>Key OS and MySQL Metrics: CPU, I/O, Buffer Pool, Connections, Temp Tables, and Redo</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Build a Production Dashboard, Alert Thresholds, Baselines, and Incident Timelines</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>17</span>Memory, I/O, Temporary Work, and Server Performance Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Buffer Pool Sizing, Working Sets, Dirty Pages, Flushing, and Memory Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Per-Connection Buffers, Sort/Join Buffers, Memory Multipliers, and OOM Risk</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Temporary Tables, Spill to Disk, tmpdir, Internal Temp Engines, and Query Rewrite</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Redo Capacity, I/O Capacity, Flush Methods, Storage Latency, and Checkpoint Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Benchmarking Methodology, Warm vs Cold Cache, Concurrency, Percentiles, and Repeatability</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>18</span>Partitioning, Large Tables, Archiving, and Data Lifecycle</summary><div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Partitioning Concepts, Supported Strategies, Partition Pruning, and Design Constraints</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Partition Keys, Unique-Key Rules, Hot/Cold Data, and Operational Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Online DDL, Instant/In-Place/Copy Algorithms, Locks, and Schema Change Planning</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Archiving, Purging, Retention Jobs, and Avoiding Massive Delete Pathologies</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Managing Multi-Terabyte Tables: Capacity, Maintenance Windows, and Growth Forecasts</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>19</span>Application Integration, Connectors, Pools, ORMs, and Reliability Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>Connection Strings, TLS, Timeouts, Pools, and Session Initialization Contracts</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Prepared Statements, Parameter Binding, SQL Injection Defense, and Type Mapping</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Transaction Boundaries in Application Code, Retries, Idempotency, and Lost Connections</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>ORM Query Generation, N+1 Problems, Pagination, Bulk Writes, and Plan Visibility</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Health Checks, Graceful Degradation, Read Replicas, Migrations, and Deployment Coordination</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>20</span>Schema Migration, Upgrades, Compatibility, and Zero/Low-Downtime Change</summary><div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Versioned Schema Migrations, Expand/Contract Patterns, and Backward Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Online Schema Change Strategies, Native DDL Capabilities, and External Tool Concepts</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Pre-Upgrade Checks, Deprecated Features, SQL Modes, Collations, and Authentication Changes</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Rolling Upgrade Considerations for Replication and High-Availability Topologies</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Rollback Planning, Data Validation, Canaries, and Post-Upgrade Performance Verification</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>21</span>Specialized MySQL Capabilities: NDB, Document Store, Spatial, and Search</summary><div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>NDB Cluster Architecture, Distribution, Availability, and When It Fits</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>X Protocol, MySQL Shell, Document Store Concepts, and CRUD APIs</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Spatial Types, SRIDs, Spatial Functions, R-Tree Indexing, and GIS Workloads</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>FULLTEXT Search, Tokenization, Relevance, Stopwords, and Search-System Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>Choosing Native Features vs Dedicated Systems for Search, Analytics, and Distributed Scale</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>22</span>Production Capstone: Design, Secure, Scale, Tune, and Recover MySQL</summary><div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Define SLOs, Workload, Data Model, Capacity Forecast, and Architecture Decision Record</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>Build the Production Schema, Index Portfolio, Security Model, and Migration Pipeline</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>Load Test, Capture Plans, Tune Queries/Server, and Establish Performance Baselines</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Implement Backups, PITR, Replication/HA, Monitoring, Alerts, and Incident Runbooks</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Execute Failure/Recovery Drills and Defend the Final MySQL Production Design</a>
+</div></details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar"><button data-sidebar-open="" type="button"><span>Course navigation</span><span>Chapter 02 · Lesson 05</span></button></div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs"><a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">MySQL</a><span>/</span><span>Chapter 10 · Lesson 04</span></nav>
+<header class="lesson-header"><p class="eyebrow">Chapter 10 · Stored Programs, Views, Triggers, Events, and Server-Side Logic</p><h1>Event Scheduler, Recurring Maintenance Jobs, Failure Handling, and Observability</h1><p>Operate MySQL scheduled events as server-side jobs: verify scheduler state, privileges and time-zone semantics, create a safe short-lived event, prove execution from metadata and side effects, diagnose failure, and cleanly disable/drop it.</p><div class="lesson-meta"><span>Beginner → Intermediate</span><span>125–165 min</span><span>event-scheduler lab</span><span>MySQL Community Server 8.4.10 LTS · InnoDB · free local lab</span><span>events + scheduling</span><span>Last reviewed: August 2026</span></div></header>
+<nav aria-label="On this page" class="lesson-toc"><strong>On this page</strong><ol data-generated-toc=""></ol></nav>
+<div class="lesson-content">
+<section><h2>Learning outcomes</h2>
+<p>The Event Scheduler is MySQL's in-server clock-driven job runner. It can be convenient for small database-local tasks, but a job that runs “somewhere inside MySQL” can be difficult to own unless scheduling, time zone, definer privileges, execution evidence, failure logging, and cleanup are all explicit.</p>
+<div class="objectives"><div class="objective"><span>01</span><p>Inspect event_scheduler state and distinguish ON, OFF, and startup-disabled DISABLED behavior.</p></div><div class="objective"><span>02</span><p>Create one-time and recurring events with an explicit definer, session time-zone awareness, and appropriate EVENT privilege.</p></div><div class="objective"><span>03</span><p>Prove event execution using side-effect rows, INFORMATION_SCHEMA.EVENTS/SHOW EVENTS metadata, and error-log expectations.</p></div><div class="objective"><span>04</span><p>Diagnose an event that exists but does not successfully perform its body because of scheduler or privilege state.</p></div><div class="objective"><span>05</span><p>Compare in-server events with external schedulers and choose an ownership/observability boundary deliberately.</p></div></div></section>
+<section><h2>A realistic problem: a cleanup job that “sometimes did not run”</h2>
+<p>ServiceHub wants to record a lightweight maintenance heartbeat every few seconds in a disposable lab. In production the real job might prune a staging table or roll up small metadata. A developer creates an event and assumes that seeing it in <code>SHOW EVENTS</code> proves the task is running. It does not.</p>
+<p>An <strong>event</strong> is a schema object with a schedule and SQL body. The <strong>Event Scheduler</strong> is the server thread that executes enabled events. An event can exist while the scheduler is off. Event execution uses its definer privileges, and scheduled time expressions are interpreted using the session <code>time_zone</code> when the event is created.</p></section>
+<section><h2>Inspect scheduler state before creating anything</h2>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · scheduler, timezone, and process evidence</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT @@GLOBAL.event_scheduler AS event_scheduler,</span><span class="code-line">       @@GLOBAL.time_zone AS global_time_zone,</span><span class="code-line">       @@SESSION.time_zone AS session_time_zone,</span><span class="code-line">       @@system_time_zone AS system_time_zone;</span><span class="code-line"></span><span class="code-line">SHOW VARIABLES LIKE 'event_scheduler';</span><span class="code-line">SHOW PROCESSLIST;</span></code></pre></div>
+<p>Current MySQL 8.4 documentation lists <code>ON</code> as the default, but never assume the actual server uses the default. <code>OFF</code> means events are not executed until an authorized administrator turns the scheduler on. <code>DISABLED</code> means it was disabled at startup and cannot simply be switched on dynamically; change the startup configuration and restart the disposable server if you need the feature.</p>
+<div class="callout"><strong>Privilege boundary</strong><p>Changing the global scheduler variable is an administrative operation requiring sufficient system-variable privilege. Creating or altering an event is governed by the EVENT privilege at global or schema scope. Application accounts should not receive either simply because one maintenance event exists.</p></div></section>
+<section><h2>Use an explicit session time zone for reproducible scheduling</h2>
+<p>Set the owner session to UTC before creating the lab event. MySQL records the event's time-zone context so future server time-zone changes do not silently reinterpret the schedule.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · create a short-lived recurring event</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">USE servicehub_logic_lab;</span><span class="code-line">SET SESSION time_zone = '+00:00';</span><span class="code-line"></span><span class="code-line">DROP EVENT IF EXISTS e_ch10_heartbeat;</span><span class="code-line">CREATE EVENT e_ch10_heartbeat</span><span class="code-line">ON SCHEDULE EVERY 10 SECOND</span><span class="code-line">  STARTS CURRENT_TIMESTAMP + INTERVAL 5 SECOND</span><span class="code-line">  ENDS CURRENT_TIMESTAMP + INTERVAL 45 SECOND</span><span class="code-line">ON COMPLETION PRESERVE</span><span class="code-line">ENABLE</span><span class="code-line">COMMENT 'Chapter 10 disposable heartbeat'</span><span class="code-line">DO</span><span class="code-line">  INSERT INTO maintenance_runs(job_name,executed_at,execution_user,note)</span><span class="code-line">  VALUES('ch10_heartbeat',CURRENT_TIMESTAMP(6),CURRENT_USER(),'event fired');</span><span class="code-line"></span><span class="code-line">SHOW CREATE EVENT e_ch10_heartbeat\G</span><span class="code-line">SHOW EVENTS FROM servicehub_logic_lab LIKE 'e_ch10_heartbeat';</span></code></pre></div>
+<p>The event is preserved after its end time so you can inspect final metadata. Without <code>ON COMPLETION PRESERVE</code>, an expired one-time/default nonpreserved event can disappear, which makes postmortem diagnosis confusing for beginners.</p></section>
+<section><h2>Prove execution with three kinds of evidence</h2>
+<p>Wait long enough for at least one scheduled time, then inspect both metadata and side effects:</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · event metadata and side-effect evidence</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT EVENT_NAME,DEFINER,TIME_ZONE,EVENT_TYPE,INTERVAL_VALUE,INTERVAL_FIELD,</span><span class="code-line">       STARTS,ENDS,STATUS,LAST_EXECUTED</span><span class="code-line">FROM INFORMATION_SCHEMA.EVENTS</span><span class="code-line">WHERE EVENT_SCHEMA='servicehub_logic_lab'</span><span class="code-line">  AND EVENT_NAME='e_ch10_heartbeat';</span><span class="code-line"></span><span class="code-line">SELECT run_id,job_name,executed_at,execution_user,note</span><span class="code-line">FROM maintenance_runs</span><span class="code-line">WHERE job_name='ch10_heartbeat'</span><span class="code-line">ORDER BY run_id;</span><span class="code-line"></span><span class="code-line">SHOW EVENTS FROM servicehub_logic_lab;</span></code></pre></div>
+<p>A non-NULL <code>LAST_EXECUTED</code> and inserted rows are stronger evidence than <code>STATUS='ENABLED'</code> alone. Even then, the rows prove only that this body reached its insert statement; a complex event needs job-specific success/failure evidence.</p></section>
+<section><h2>Failure case 1: scheduler OFF</h2>
+<p>If your local scheduler is currently ON, you may demonstrate this only if you have administrative privilege and first record the original value. Do not do this on a shared server.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · optional local-only scheduler-off experiment</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">-- ADMIN-ONLY, DISPOSABLE INSTANCE ONLY.</span><span class="code-line">SELECT @@GLOBAL.event_scheduler AS original_scheduler_state;</span><span class="code-line">SET GLOBAL event_scheduler = OFF;</span><span class="code-line"></span><span class="code-line">-- The event metadata still exists, but scheduled executions stop.</span><span class="code-line">SELECT EVENT_NAME,STATUS,LAST_EXECUTED</span><span class="code-line">FROM INFORMATION_SCHEMA.EVENTS</span><span class="code-line">WHERE EVENT_SCHEMA='servicehub_logic_lab'</span><span class="code-line">  AND EVENT_NAME='e_ch10_heartbeat';</span><span class="code-line"></span><span class="code-line">-- Restore the original operational policy when finished.</span><span class="code-line">SET GLOBAL event_scheduler = ON;</span></code></pre></div>
+<p>This experiment separates object existence from scheduler execution. If your original value was OFF, restore OFF rather than blindly leaving it ON. If the server reports DISABLED, do not attempt the runtime SET.</p></section>
+<section><h2>Failure case 2: the event definer lacks privileges</h2>
+<p>MySQL allows an event definition to exist even when its body later requires privileges the definer does not possess. The execution fails at runtime, and errors/warnings from event execution are written to the server error log. Use a disposable account to demonstrate the principle without weakening your real owner account.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · create a deliberately underprivileged event owner</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">-- Admin session.</span><span class="code-line">DROP USER IF EXISTS 'event_limited'@'127.0.0.1';</span><span class="code-line">CREATE USER 'event_limited'@'127.0.0.1'</span><span class="code-line">  IDENTIFIED BY '&lt;Disposable-Lab-Event-2026!&gt;';</span><span class="code-line">GRANT EVENT ON servicehub_logic_lab.*</span><span class="code-line">TO 'event_limited'@'127.0.0.1';</span><span class="code-line"></span><span class="code-line">-- Connect as event_limited using -h 127.0.0.1, then:</span><span class="code-line">USE servicehub_logic_lab;</span><span class="code-line">SET SESSION time_zone='+00:00';</span><span class="code-line">CREATE EVENT e_ch10_expected_failure</span><span class="code-line">ON SCHEDULE AT CURRENT_TIMESTAMP + INTERVAL 10 SECOND</span><span class="code-line">ON COMPLETION PRESERVE</span><span class="code-line">DO</span><span class="code-line">  INSERT INTO maintenance_runs(job_name,executed_at,execution_user,note)</span><span class="code-line">  VALUES('expected_failure',CURRENT_TIMESTAMP(6),CURRENT_USER(),'should lack INSERT');</span></code></pre></div>
+<p>The account has <code>EVENT</code> but no <code>INSERT</code> on <code>maintenance_runs</code>. Creation can succeed, while execution later fails under the event's definer privileges. Inspect <code>INFORMATION_SCHEMA.EVENTS</code> and your local MySQL error log. The exact log path depends on Chapter 02 configuration, so discover it rather than guessing.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · discover error-log configuration and verify no side effect</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SHOW VARIABLES LIKE 'log_error';</span><span class="code-line">SELECT EVENT_NAME,DEFINER,STATUS,LAST_EXECUTED</span><span class="code-line">FROM INFORMATION_SCHEMA.EVENTS</span><span class="code-line">WHERE EVENT_SCHEMA='servicehub_logic_lab'</span><span class="code-line">  AND EVENT_NAME='e_ch10_expected_failure';</span><span class="code-line"></span><span class="code-line">SELECT COUNT(*) AS unexpected_rows</span><span class="code-line">FROM maintenance_runs</span><span class="code-line">WHERE job_name='expected_failure';</span></code></pre></div>
+<p>The repair is not “grant ALL.” Either give the dedicated event definer the one permission its job requires or redesign the task under an external scheduler/service identity. For this demonstration, clean the failing object up instead of broadening privileges.</p></section>
+<section><h2>Recurring-job overlap is a real design problem</h2>
+<p>If an event takes longer than its recurrence interval, multiple instances can overlap. MySQL's event documentation explicitly warns about this. A safe recurring maintenance design therefore needs idempotency or a serialization mechanism such as advisory locking (<code>GET_LOCK()</code>) or a row/table coordination strategy, plus bounded work per run.</p>
+<div class="callout warning"><strong>Do not build a hidden queue</strong><p>The Event Scheduler is not a distributed workflow orchestrator. It has no rich DAG ownership model, cross-service retry policy, deployment UI, or external alerting semantics. Once the job needs those capabilities, an external scheduler is usually the clearer boundary.</p></div></section>
+<section><h2>Disable and drop cleanly</h2>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · cleanup the Chapter 10 events</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">ALTER EVENT e_ch10_heartbeat DISABLE;</span><span class="code-line">SHOW EVENTS FROM servicehub_logic_lab LIKE 'e_ch10_heartbeat';</span><span class="code-line">DROP EVENT e_ch10_heartbeat;</span><span class="code-line"></span><span class="code-line">DROP EVENT IF EXISTS e_ch10_expected_failure;</span><span class="code-line">-- Admin cleanup after disconnecting event_limited:</span><span class="code-line">DROP USER IF EXISTS 'event_limited'@'127.0.0.1';</span><span class="code-line"></span><span class="code-line">SELECT COUNT(*) AS heartbeat_rows</span><span class="code-line">FROM maintenance_runs WHERE job_name='ch10_heartbeat';</span></code></pre></div>
+<p>Keep the heartbeat rows as evidence for Lesson 5, or delete them only after you have recorded the lab result.</p></section>
+<section><h2>Event Scheduler versus external scheduler</h2>
+<div class="table-wrap"><table class="data-table"><thead><tr><th>Criterion</th><th>MySQL Event Scheduler</th><th>External scheduler / service</th></tr></thead><tbody><tr><td>Data locality</td><td>Excellent for small SQL-local work</td><td>Requires a database connection but can coordinate multiple systems</td></tr><tr><td>Atomic SQL work</td><td>Can execute database statements directly</td><td>Can still use explicit transactions through a driver</td></tr><tr><td>Deployment ownership</td><td>Database schema/DBA workflow</td><td>Application/platform workflow</td></tr><tr><td>Observability</td><td>Metadata + server error log + custom job tables</td><td>Usually richer logs, metrics, alerts, retries, dashboards</td></tr><tr><td>Cross-service orchestration</td><td>Poor fit</td><td>Usually the correct boundary</td></tr><tr><td>Failover/topology awareness</td><td>Must be designed with MySQL topology semantics</td><td>Can coordinate with service discovery/orchestration but adds external dependencies</td></tr></tbody></table></div></section>
+<section><h2>Hands-on lab acceptance checklist</h2>
+<ul><li>You recorded the actual <code>event_scheduler</code> state instead of assuming the default.</li><li>The successful event records UTC schedule metadata and produces observable heartbeat rows.</li><li>You can explain why <code>STATUS='ENABLED'</code> does not prove successful execution.</li><li>The underprivileged definer case creates no maintenance row and points you to error-log evidence.</li><li>All disposable events and the limited account are disabled/dropped at the end.</li></ul>
+<div class="checkpoint"><h3>Knowledge check</h3><ol><li>What three values can event_scheduler have?</li><li>What privilege creates/alters/drops events in a schema?</li><li>Whose privileges execute an event body?</li><li>Which time zone interprets CREATE EVENT schedule times?</li><li>Where does MySQL report event executions that terminate with errors or warnings?</li></ol><details class="answer-toggle"><summary>Reveal answers</summary><div><ol><li>ON, OFF, and DISABLED. DISABLED is a startup-level disabled state, not equivalent to simply setting OFF.</li><li>EVENT at schema or global scope.</li><li>The event definer account.</li><li>The current session time_zone at creation; MySQL records that event time-zone context.</li><li>The MySQL server error log, in addition to event metadata and any custom job evidence you design.</li></ol></div></details></div></section>
+<section><h2>Production judgment and next step</h2>
+<p>Use events for small, database-local recurring work with a dedicated definer, explicit schedule/time zone, bounded runtime, idempotency, and observable success/failure. Prefer an external scheduler when jobs need cross-system coordination, sophisticated retry/alerting, independent scaling, or application-team ownership.</p>
+<p>Lesson 5 brings the chapter together by deciding which logic belongs in views, routines, triggers, events, or application code.</p>
+<h3>Authoritative references</h3><ul><li><a href="https://dev.mysql.com/doc/refman/8.4/en/event-scheduler.html" rel="noopener" target="_blank">MySQL 8.4 — Using the Event Scheduler</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/create-event.html" rel="noopener" target="_blank">MySQL 8.4 — CREATE EVENT</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/events-configuration.html" rel="noopener" target="_blank">MySQL 8.4 — Event Scheduler Configuration</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/events-status-info.html" rel="noopener" target="_blank">MySQL 8.4 — Event Scheduler Status</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/events-privileges.html" rel="noopener" target="_blank">MySQL 8.4 — Event Scheduler and Privileges</a></li></ul></section>
+</div>
+<nav aria-label="Lesson navigation" class="lesson-nav"><a class="prev" href="Lesson3.html"><small>Previous lesson</small><strong>Triggers, OLD/NEW Rows, Ordering, Auditing Uses, and Hidden Coupling Risks</strong></a><a class="next" href="Lesson5.html"><small>Next lesson</small><strong>When Server-Side Logic Helps—and When Application Logic Is the Better Boundary</strong></a></nav>
+</article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>If these tutorials save you time, a small donation supports new lessons, technical review, diagrams, examples, and long-term maintenance.</p>
+<div aria-label="Author links" class="social-row">
+<a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head"><span>ETH</span><small>Ethereum / ERC-20 only</small></div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
+<button class="button secondary compact" data-copy-donation="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy address</button>
+<p>Send only assets compatible with the Ethereum/ERC-20 network. Do not send TRC-20/TRON assets.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div><strong>Big Data Academy</strong><p>A free, prerequisite-aware path from SQL foundations to distributed data systems.</p></div>
+<div><a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a></div>
+<small>Created and maintained by <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> · © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>

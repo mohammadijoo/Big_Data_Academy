@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Perform a controlled point-in-time recovery by restoring a full backup, locating an unwanted binary-log event, replaying only the valid prefix by exact positions, and validating business invariants before cutover." name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>Point-in-Time Recovery from Full Backup plus Binary Logs | Big Data Academy</title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+<script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+        chtml: { scale: 1, matchFontHeight: false },
+      };
+    </script>
+<script defer="" id="MathJax-script" onerror="this.onerror=null;this.src='https://unpkg.com/mathjax@3.2.2/es5/tex-chtml.js';" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
+<span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
+<span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
+</a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a>
+<a class="is-active" href="../../../index.html#courses">Courses</a>
+<a href="../../../index.html#method">Method</a>
+<a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg></button>
+<button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu=""><a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a></nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">MYSQL</span><div><small>Course 04</small><strong>MySQL</strong></div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">×</button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 110 lessons..." type="search"/></label>
+<nav aria-label="MySQL curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter"><summary><span>01</span>MySQL Platform Foundations, Editions, Releases, and Lab Setup</summary><div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What MySQL Is: Server Architecture, Client/Server Boundaries, and Common Workloads</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Community vs Enterprise Capabilities, Licensing Awareness, and Deployment Choices</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>LTS vs Innovation Releases: Version Selection, Support Windows, and Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Install MySQL on Windows, Linux, Containers, and Verify the Toolchain</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build a Reproducible Course Lab with Sample Data, Accounts, and Safety Conventions</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>02</span>Server Architecture, Processes, Files, Connections, and Configuration</summary><div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>mysqld Startup, Data Directory, Configuration Files, and Option Precedence</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Connection Lifecycle, Threads, Sessions, Timeouts, and Resource Consumption</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>System Variables, Status Variables, Dynamic Configuration, and SET PERSIST</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Character Sets, Collations, Time Zones, Locales, and Server Defaults</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Configuration Validation, Startup Failures, Error Logs, and a Baseline Server Profile</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>03</span>Schemas, Tables, Data Types, Keys, Constraints, and SQL Modes</summary><div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>Databases and Schemas in MySQL: Namespaces, Metadata, and Object Ownership</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Numeric, String, Temporal, JSON, Spatial, and Binary Data Types</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK, DEFAULT, and Generated Columns</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>AUTO_INCREMENT, Surrogate vs Natural Keys, and Identifier Design</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>SQL Modes, Strictness, Implicit Conversion, Truncation, and Data-Quality Boundaries</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>04</span>Core SQL Querying: Filtering, Joins, Subqueries, CTEs, and Set Operations</summary><div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>SELECT Execution Basics, Projection, Predicates, NULL Semantics, and Ordering</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>INNER, OUTER, CROSS, and Self Joins with Cardinality Reasoning</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>Scalar, Correlated, EXISTS, IN, and Derived-Table Subqueries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Common Table Expressions, Recursive CTEs, and Hierarchical Queries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>UNION, INTERSECT, EXCEPT, Query Composition, and Readability Patterns</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>05</span>Advanced SQL: Aggregation, Window Functions, JSON, and Analytical Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>GROUP BY, HAVING, Functional Dependence, ROLLUP, and Aggregation Design</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Window Frames, Ranking, Running Totals, Gaps-and-Islands, and Top-N per Group</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>JSON Documents, Paths, JSON_TABLE, Indexable JSON Patterns, and Validation</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Date/Time, String, Regular Expression, Numeric, and Conditional Functions</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Reporting Queries, Cohort-Style Analysis, Pivots by Conditional Aggregation, and Reusable Views</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>06</span>Data Modification, Transactions, Locking, and Concurrency Semantics</summary><div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>INSERT, Multi-Row Writes, INSERT ... SELECT, and Generated Values</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>UPDATE, DELETE, Multi-Table DML, and Guardrails Against Wide Changes</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Transactions, Autocommit, COMMIT, ROLLBACK, SAVEPOINT, and Error Handling</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Isolation Levels, Consistent Reads, Locking Reads, MVCC, and Anomalies</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Deadlocks, Lock Waits, Retry Design, Idempotency, and Concurrency Testing</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>07</span>InnoDB Storage Architecture and Transaction Internals</summary><div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>InnoDB Tablespaces, Pages, Extents, Segments, and Row Formats</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Clustered Indexes, Secondary Indexes, Hidden Columns, and Record Layout</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Buffer Pool Architecture, Change Buffer, Adaptive Hashing, and Caching Behavior</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Redo Logs, Undo Logs, Doublewrite, Checkpoints, and Crash Recovery</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Purge, History List, Long Transactions, MVCC Cleanup, and Storage Health</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>08</span>Index Engineering and Access Path Design</summary><div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>B-Tree Index Structure, Selectivity, Cardinality, and Leftmost-Prefix Rules</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>Composite Index Ordering, Covering Indexes, Prefix Indexes, and Redundant Indexes</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Functional, Multi-Valued, FULLTEXT, and Spatial Index Use Cases</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>Index Condition Pushdown, Loose/Tight Index Scans, and Skip-Scan Concepts</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Designing an Index Portfolio from Workload Evidence and Write-Cost Constraints</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>09</span>Optimizer, EXPLAIN, Statistics, and Query Plan Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>How the MySQL Optimizer Builds Access Paths, Join Orders, and Cost Estimates</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>EXPLAIN, EXPLAIN ANALYZE, FORMAT=TREE/JSON, and Iterator Timing</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Histograms, Persistent Statistics, Cardinality Errors, and ANALYZE TABLE</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Join Algorithms, Semijoin/Antijoin Transformations, Derived Tables, and Materialization</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Plan Regressions, Optimizer Hints, Invisible Indexes, and Evidence-Driven Tuning</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>10</span>Stored Programs, Views, Triggers, Events, and Server-Side Logic</summary><div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Views, Updatability, SQL SECURITY, Definer Context, and Dependency Management</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Stored Procedures, Functions, Parameters, Condition Handlers, and Diagnostics</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Triggers, OLD/NEW Rows, Ordering, Auditing Uses, and Hidden Coupling Risks</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Event Scheduler, Recurring Maintenance Jobs, Failure Handling, and Observability</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>When Server-Side Logic Helps—and When Application Logic Is the Better Boundary</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>11</span>Users, Roles, Authentication, Authorization, and Least Privilege</summary><div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Accounts, Host Matching, Authentication Plugins, Password Policy, and Account Lifecycle</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Privileges, Roles, DEFAULT ROLE, Dynamic Privileges, and Delegated Administration</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Object-Level vs Administrative Privilege Design and Separation of Duties</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>PROXY, DEFINER, SQL SECURITY, Stored Objects, and Privilege-Escalation Risks</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Design and Audit a Least-Privilege Access Model for Applications and Operators</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>12</span>Encryption, TLS, Secrets, Auditing, and Security Hardening</summary><div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>TLS for Client Connections, Certificate Validation, and Secure Transport Enforcement</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Data-at-Rest Encryption Concepts, Key Management Boundaries, and Backup Encryption</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Secrets Handling for Applications, Option Files, Environment Variables, and Rotation</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>Audit Logging Options, General/Slow Logs, Privacy, and Forensic Considerations</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Hardening Checklist: Network Exposure, Local Files, Plugins, Accounts, and Patch Discipline</a>
+</div></details>
+<details class="sidebar-chapter" open=""><summary><span>13</span>Backup, Restore, Binary Logs, and Point-in-Time Recovery</summary><div>
+<a class="sidebar-lesson" href="Lesson1.html"><span>01</span>Logical vs Physical Backup: mysqldump, MySQL Shell, Snapshots, and Tradeoffs</a>
+<a class="sidebar-lesson" href="Lesson2.html"><span>02</span>Consistent Backups with Transactions, Locks, Replication Coordinates, and Large Datasets</a>
+<a class="sidebar-lesson" href="Lesson3.html"><span>03</span>Binary Log Formats, GTIDs, Retention, and Recovery Prerequisites</a>
+<a class="sidebar-lesson is-current" href="Lesson4.html"><span>04</span>Point-in-Time Recovery from Full Backup plus Binary Logs<i>Current</i></a>
+<a class="sidebar-lesson" href="Lesson5.html"><span>05</span>Restore Testing, RPO/RTO Measurement, Corruption Drills, and Backup Automation</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>14</span>Asynchronous Replication, GTIDs, Topologies, and Operational Safety</summary><div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Source/Replica Architecture, Binary Log Flow, Relay Logs, and Replication Threads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>GTID-Based Replication, Auto-Positioning, Failover Readiness, and Errant Transactions</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Statement, Row, and Mixed Logging Semantics with Determinism Risks</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Replication Filters, Delayed Replicas, Read Scaling, and Reporting Workloads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Lag Diagnosis, Broken Replication, Data Drift, Re-Synchronization, and Promotion Runbooks</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>15</span>Group Replication, InnoDB Cluster, Router, and High Availability</summary><div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Consensus-Oriented Group Replication Concepts, Membership, Quorum, and Failure Modes</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Single-Primary vs Multi-Primary Modes, Conflict Detection, and Workload Constraints</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>MySQL Shell AdminAPI, InnoDB Cluster Lifecycle, Recovery, and Rejoin Operations</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>MySQL Router, Connection Routing, Read/Write Splitting, and Application Failover</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Failure Injection, Split-Brain Avoidance, Maintenance, Upgrades, and HA Acceptance Tests</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>16</span>Performance Schema, sys Schema, Logs, Metrics, and Observability</summary><div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Performance Schema Instruments, Consumers, Events, and Measurement Overhead</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>sys Schema Views for Sessions, Statements, Waits, I/O, Memory, and Index Usage</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>Slow Query Log, Error Log, General Log, and Structured Diagnostic Workflows</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>Key OS and MySQL Metrics: CPU, I/O, Buffer Pool, Connections, Temp Tables, and Redo</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Build a Production Dashboard, Alert Thresholds, Baselines, and Incident Timelines</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>17</span>Memory, I/O, Temporary Work, and Server Performance Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Buffer Pool Sizing, Working Sets, Dirty Pages, Flushing, and Memory Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Per-Connection Buffers, Sort/Join Buffers, Memory Multipliers, and OOM Risk</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Temporary Tables, Spill to Disk, tmpdir, Internal Temp Engines, and Query Rewrite</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Redo Capacity, I/O Capacity, Flush Methods, Storage Latency, and Checkpoint Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Benchmarking Methodology, Warm vs Cold Cache, Concurrency, Percentiles, and Repeatability</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>18</span>Partitioning, Large Tables, Archiving, and Data Lifecycle</summary><div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Partitioning Concepts, Supported Strategies, Partition Pruning, and Design Constraints</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Partition Keys, Unique-Key Rules, Hot/Cold Data, and Operational Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Online DDL, Instant/In-Place/Copy Algorithms, Locks, and Schema Change Planning</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Archiving, Purging, Retention Jobs, and Avoiding Massive Delete Pathologies</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Managing Multi-Terabyte Tables: Capacity, Maintenance Windows, and Growth Forecasts</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>19</span>Application Integration, Connectors, Pools, ORMs, and Reliability Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>Connection Strings, TLS, Timeouts, Pools, and Session Initialization Contracts</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Prepared Statements, Parameter Binding, SQL Injection Defense, and Type Mapping</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Transaction Boundaries in Application Code, Retries, Idempotency, and Lost Connections</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>ORM Query Generation, N+1 Problems, Pagination, Bulk Writes, and Plan Visibility</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Health Checks, Graceful Degradation, Read Replicas, Migrations, and Deployment Coordination</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>20</span>Schema Migration, Upgrades, Compatibility, and Zero/Low-Downtime Change</summary><div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Versioned Schema Migrations, Expand/Contract Patterns, and Backward Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Online Schema Change Strategies, Native DDL Capabilities, and External Tool Concepts</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Pre-Upgrade Checks, Deprecated Features, SQL Modes, Collations, and Authentication Changes</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Rolling Upgrade Considerations for Replication and High-Availability Topologies</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Rollback Planning, Data Validation, Canaries, and Post-Upgrade Performance Verification</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>21</span>Specialized MySQL Capabilities: NDB, Document Store, Spatial, and Search</summary><div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>NDB Cluster Architecture, Distribution, Availability, and When It Fits</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>X Protocol, MySQL Shell, Document Store Concepts, and CRUD APIs</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Spatial Types, SRIDs, Spatial Functions, R-Tree Indexing, and GIS Workloads</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>FULLTEXT Search, Tokenization, Relevance, Stopwords, and Search-System Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>Choosing Native Features vs Dedicated Systems for Search, Analytics, and Distributed Scale</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>22</span>Production Capstone: Design, Secure, Scale, Tune, and Recover MySQL</summary><div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Define SLOs, Workload, Data Model, Capacity Forecast, and Architecture Decision Record</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>Build the Production Schema, Index Portfolio, Security Model, and Migration Pipeline</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>Load Test, Capture Plans, Tune Queries/Server, and Establish Performance Baselines</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Implement Backups, PITR, Replication/HA, Monitoring, Alerts, and Incident Runbooks</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Execute Failure/Recovery Drills and Defend the Final MySQL Production Design</a>
+</div></details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar"><button data-sidebar-open="" type="button"><span>Course navigation</span><span>Chapter 13 · Lesson 04</span></button></div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs"><a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">MySQL</a><span>/</span><span>Chapter 13 · Lesson 04</span></nav>
+<header class="lesson-header"><p class="eyebrow">Chapter 13 · Backup, Restore, Binary Logs, and Point-in-Time Recovery</p><h1>Point-in-Time Recovery from Full Backup plus Binary Logs</h1><p>Perform a controlled point-in-time recovery by restoring a full backup, locating an unwanted binary-log event, replaying only the valid prefix by exact positions, and validating business invariants before cutover.</p><div class="lesson-meta"><span>Intermediate → Advanced</span><span>160–220 min</span><span>disposable PITR drill</span><span>MySQL Community Server 8.4.10 LTS · binary logging + mysqlbinlog</span><span>recovery / PITR</span><span>Last reviewed: August 2026</span></div></header>
+<nav aria-label="On this page" class="lesson-toc"><strong>On this page</strong><ol data-generated-toc=""></ol></nav>
+<div class="lesson-content">
+<section><h2>Learning outcomes</h2><p>A ServiceHub operator runs an accidental broad update at 14:31. The 02:00 full backup is healthy, and the binary logs are intact. Restoring only the full backup loses twelve hours of valid work; replaying every log event repeats the bad update. Point-in-time recovery (PITR) solves this by restoring the full backup and replaying only the valid prefix of the change stream.</p><div class="objectives"><div class="objective"><span>01</span><p>Build a disposable PITR drill with a known full-backup boundary, valid post-backup changes, and one identifiable bad transaction.</p></div><div class="objective"><span>02</span><p>Use mysqlbinlog datetime filters only to locate the region of interest, then identify exact event positions for replay.</p></div><div class="objective"><span>03</span><p>Restore a baseline into a disposable target and replay binary logs in one ordered stream up to the chosen stop position.</p></div><div class="objective"><span>04</span><p>Explain why PITR is safer on a separate target than destructive experimentation on the damaged production source.</p></div><div class="objective"><span>05</span><p>Validate the recovered state with business markers, counts, constraints, and a written cutover decision.</p></div></div></section>
+<section><h2>The recovery timeline</h2><div class="table-wrap"><table class="data-table"><thead><tr><th>Time</th><th>Event</th><th>Recovery meaning</th></tr></thead><tbody><tr><td>02:00</td><td>Full backup completes at coordinate B</td><td>Restore base</td></tr><tr><td>09:10</td><td>Valid work order A committed</td><td>Must replay</td></tr><tr><td>11:42</td><td>Valid work order B completed</td><td>Must replay</td></tr><tr><td>14:31</td><td>Accidental broad UPDATE/DELETE</td><td>Must stop before this event</td></tr><tr><td>14:45</td><td>More valid activity occurs</td><td>Requires a deliberate business decision: skip bad event then selectively recover later work, or accept larger RPO</td></tr></tbody></table></div><p>For the core lab, we recover to the instant immediately before the bad event. A more advanced “skip one event, then replay later events” workflow is possible but riskier because later transactions may depend on the unwanted change. That should be an incident-specific data-reconciliation decision, not a copy-paste recipe.</p></section>
+<section><h2>Preflight: use only a disposable binary-logging instance</h2><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · create the disposable ServiceHub recovery lab</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">-- Run on a disposable local MySQL 8.4 LTS instance.</span><span class="code-line">CREATE DATABASE IF NOT EXISTS servicehub_recovery_lab</span><span class="code-line">  CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;</span><span class="code-line"></span><span class="code-line">CREATE TABLE IF NOT EXISTS servicehub_recovery_lab.sites (</span><span class="code-line">  site_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,</span><span class="code-line">  site_code VARCHAR(20) NOT NULL UNIQUE,</span><span class="code-line">  site_name VARCHAR(120) NOT NULL</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">CREATE TABLE IF NOT EXISTS servicehub_recovery_lab.work_orders (</span><span class="code-line">  work_order_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,</span><span class="code-line">  site_id BIGINT UNSIGNED NOT NULL,</span><span class="code-line">  status ENUM('OPEN','IN_PROGRESS','DONE','CANCELLED') NOT NULL DEFAULT 'OPEN',</span><span class="code-line">  summary VARCHAR(180) NOT NULL,</span><span class="code-line">  opened_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),</span><span class="code-line">  closed_at TIMESTAMP(6) NULL,</span><span class="code-line">  CONSTRAINT fk_recovery_work_order_site</span><span class="code-line">    FOREIGN KEY (site_id) REFERENCES servicehub_recovery_lab.sites(site_id)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">CREATE TABLE IF NOT EXISTS servicehub_recovery_lab.recovery_markers (</span><span class="code-line">  marker_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,</span><span class="code-line">  marker_name VARCHAR(80) NOT NULL UNIQUE,</span><span class="code-line">  marker_time TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),</span><span class="code-line">  note VARCHAR(255) NOT NULL</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">INSERT IGNORE INTO servicehub_recovery_lab.sites(site_code,site_name)</span><span class="code-line">VALUES ('BAKU-01','Baku Central Service Site'),</span><span class="code-line">       ('BAKU-02','Baku East Service Site');</span><span class="code-line"></span><span class="code-line">INSERT IGNORE INTO servicehub_recovery_lab.recovery_markers(marker_name,note)</span><span class="code-line">VALUES ('CH13_BASELINE','Known recovery invariant before Chapter 13 drills');</span><span class="code-line"></span><span class="code-line">SELECT COUNT(*) AS sites FROM servicehub_recovery_lab.sites;</span><span class="code-line">SELECT COUNT(*) AS markers FROM servicehub_recovery_lab.recovery_markers;</span></code></pre></div><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · prove the PITR prerequisites</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SHOW GLOBAL VARIABLES WHERE Variable_name IN</span><span class="code-line">  ('log_bin','binlog_format','gtid_mode');</span><span class="code-line">SHOW BINARY LOG STATUS;</span><span class="code-line">SHOW BINARY LOGS;</span></code></pre></div><p>If <code>log_bin=OFF</code>, stop the PITR lab here. You can still practice full-backup restore, but there is no post-backup change stream to replay. Do not restart or reconfigure a valuable database just to make a tutorial command run.</p></section>
+<section><h2>Step 1 — create the full restore point and record coordinates</h2><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · create a stable baseline marker</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">INSERT IGNORE INTO servicehub_recovery_lab.recovery_markers(marker_name,note)</span><span class="code-line">VALUES ('PITR_FULL_BACKUP_POINT','Must exist after full restore');</span><span class="code-line"></span><span class="code-line">SELECT COUNT(*) AS before_backup_work_orders</span><span class="code-line">FROM servicehub_recovery_lab.work_orders;</span><span class="code-line">SHOW BINARY LOG STATUS;</span></code></pre></div><div class="code-window" data-code-block="" data-language="text"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>text · dump baseline with source position recorded as a comment</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">mysqldump -h 127.0.0.1 -P 3306 -u root -p \</span><span class="code-line">  --single-transaction \</span><span class="code-line">  --source-data=2 \</span><span class="code-line">  --set-gtid-purged=OFF \</span><span class="code-line">  --databases servicehub_recovery_lab \</span><span class="code-line">  &gt; servicehub_pitr_base.sql</span><span class="code-line"></span><span class="code-line"># Record a SHA-256 hash immediately after creation.</span></code></pre></div><p>Copy the commented <code>CHANGE REPLICATION SOURCE TO SOURCE_LOG_FILE=..., SOURCE_LOG_POS=...</code> values into the recovery worksheet. That is the replay start boundary for the lab. Keep the backup file immutable.</p></section>
+<section><h2>Step 2 — create valid changes, then one bad change</h2><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · valid transaction A</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">START TRANSACTION;</span><span class="code-line">INSERT INTO servicehub_recovery_lab.work_orders(site_id,status,summary)</span><span class="code-line">SELECT site_id,'OPEN','PITR valid event A - cooling fan inspection'</span><span class="code-line">FROM servicehub_recovery_lab.sites WHERE site_code='BAKU-01';</span><span class="code-line"></span><span class="code-line">INSERT INTO servicehub_recovery_lab.recovery_markers(marker_name,note)</span><span class="code-line">VALUES ('PITR_VALID_A','This marker must survive PITR');</span><span class="code-line">COMMIT;</span><span class="code-line">SHOW BINARY LOG STATUS;</span></code></pre></div><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · valid transaction B</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">START TRANSACTION;</span><span class="code-line">UPDATE servicehub_recovery_lab.work_orders</span><span class="code-line">SET status='DONE', closed_at=NOW(6)</span><span class="code-line">WHERE summary='PITR valid event A - cooling fan inspection';</span><span class="code-line"></span><span class="code-line">INSERT INTO servicehub_recovery_lab.recovery_markers(marker_name,note)</span><span class="code-line">VALUES ('PITR_VALID_B','Second valid post-backup transaction');</span><span class="code-line">COMMIT;</span><span class="code-line">SHOW BINARY LOG STATUS;</span></code></pre></div><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · bad transaction — safe only because this is the disposable lab</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">-- Record the time and SHOW BINARY LOG STATUS immediately before executing.</span><span class="code-line">SELECT NOW(6) AS just_before_bad_event;</span><span class="code-line">SHOW BINARY LOG STATUS;</span><span class="code-line"></span><span class="code-line">START TRANSACTION;</span><span class="code-line">UPDATE servicehub_recovery_lab.work_orders</span><span class="code-line">SET status='CANCELLED', summary=CONCAT('[BAD] ',summary);</span><span class="code-line"></span><span class="code-line">INSERT INTO servicehub_recovery_lab.recovery_markers(marker_name,note)</span><span class="code-line">VALUES ('PITR_BAD_EVENT','This marker must NOT exist in the recovered target');</span><span class="code-line">COMMIT;</span><span class="code-line"></span><span class="code-line">SELECT NOW(6) AS just_after_bad_event;</span><span class="code-line">SHOW BINARY LOG STATUS;</span></code></pre></div><p>The broad update is intentionally harmful only to the disposable lab. Its marker makes validation deterministic. In a real incident, the bad event is discovered from application evidence, audit/log evidence, or data symptoms rather than because somebody conveniently labeled it “BAD.”</p></section>
+<section><h2>Step 3 — locate the event, then choose exact positions</h2><p>Oracle recommends datetime filters as a discovery aid, not as the final replay boundary, because time-based filtering carries a greater risk of missing events. First narrow the window around the bad transaction, inspect the output, then record the exact event start position to use as the <code>--stop-position</code>.</p><div class="code-window" data-code-block="" data-language="text"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>text · use time only to find the relevant binary-log region</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line"># Substitute the actual copied binary-log file and a narrow time window.</span><span class="code-line">mysqlbinlog --start-datetime="2026-08-16 14:25:00" \</span><span class="code-line">            --stop-datetime="2026-08-16 14:35:00" \</span><span class="code-line">            --base64-output=DECODE-ROWS -vv \</span><span class="code-line">            binlog.000123 &gt; pitr_window.txt</span><span class="code-line"></span><span class="code-line"># Inspect pitr_window.txt and identify the event/transaction positions</span><span class="code-line"># immediately before the unwanted transaction.</span></code></pre></div><p>In row format, the human-readable output may show row images rather than the original SQL text. The business marker and timing/position evidence are therefore useful in this lab. The actual stop position must be copied from your own binary log; this lesson never invents a universal numeric position.</p></section>
+<section><h2>Step 4 — restore the full backup into a clean target</h2><p>Before restoring, verify the target is disposable and empty of unrelated data. If <code>@@GLOBAL.gtid_mode</code> is ON on the source, record that fact and use a target whose GTID configuration is compatible; do not reset or rewrite GTID history on a production server for this exercise.</p><p>Recover into a separate disposable MySQL instance so the damaged source remains available for evidence and comparison. In the local course lab, keep the source on port 3306 and use a second disposable target on port 3307 (another local service/container/instance). Configure the target compatibly with the source's character-set and, when GTIDs are enabled, GTID expectations. This positional PITR lab is about data recovery; it is not a recipe for rejoining a replication topology.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · reset only the disposable recovery schema</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">DROP DATABASE IF EXISTS servicehub_recovery_lab;</span></code></pre></div><div class="code-window" data-code-block="" data-language="text"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>text · restore the full backup</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line"># Bash / cmd.exe</span><span class="code-line">mysql -h 127.0.0.1 -P 3307 -u root -p &lt; servicehub_pitr_base.sql</span><span class="code-line"></span><span class="code-line"># PowerShell:</span><span class="code-line">cmd.exe /c "mysql -h 127.0.0.1 -P 3307 -u root -p &lt; servicehub_pitr_base.sql"</span></code></pre></div><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · verify the restore base before replay</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT marker_name</span><span class="code-line">FROM servicehub_recovery_lab.recovery_markers</span><span class="code-line">WHERE marker_name IN ('PITR_FULL_BACKUP_POINT','PITR_VALID_A','PITR_VALID_B','PITR_BAD_EVENT')</span><span class="code-line">ORDER BY marker_name;</span></code></pre></div><p>At this moment only the full-backup marker should exist from those four names. If the valid post-backup markers are already present, you restored the wrong artifact or the baseline was taken later than documented; stop instead of continuing.</p></section>
+<section><h2>Step 5 — replay from the backup boundary to just before the bad transaction</h2><p>Use the exact source log file/position recorded in the backup plus the exact stop position identified from the unwanted transaction. If replay spans multiple binary-log files, process all required files in a <strong>single mysqlbinlog invocation piped to a single mysql connection</strong>. Oracle documents this as the safe method because state such as temporary tables can otherwise be lost between separate client connections.</p><div class="code-window" data-code-block="" data-language="text"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>text · position-based replay pattern</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line"># Replace placeholders with YOUR recorded coordinates.</span><span class="code-line">mysqlbinlog \</span><span class="code-line">  --start-position=&lt;BACKUP_START_POSITION&gt; \</span><span class="code-line">  --stop-position=&lt;BAD_TRANSACTION_START_POSITION&gt; \</span><span class="code-line">  binlog.000123 \</span><span class="code-line">  | mysql -h 127.0.0.1 -P 3307 -u root -p</span><span class="code-line"></span><span class="code-line"># If the interval spans files, list them in order in the same mysqlbinlog command.</span></code></pre></div><p>The stop position is exclusive for events beginning at or after that position, which is why the start position of the bad transaction is a useful boundary when identified correctly. Always inspect transaction boundaries rather than cutting through an event or transaction blindly.</p></section>
+<section><h2>Step 6 — verify before any cutover</h2><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · business-level PITR acceptance checks</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT marker_name,note</span><span class="code-line">FROM servicehub_recovery_lab.recovery_markers</span><span class="code-line">WHERE marker_name LIKE 'PITR_%'</span><span class="code-line">ORDER BY marker_name;</span><span class="code-line"></span><span class="code-line">SELECT COUNT(*) AS bad_rows</span><span class="code-line">FROM servicehub_recovery_lab.work_orders</span><span class="code-line">WHERE summary LIKE '[BAD] %';</span><span class="code-line"></span><span class="code-line">SELECT status,COUNT(*) AS n</span><span class="code-line">FROM servicehub_recovery_lab.work_orders</span><span class="code-line">GROUP BY status ORDER BY status;</span><span class="code-line"></span><span class="code-line">SELECT COUNT(*) AS orphan_work_orders</span><span class="code-line">FROM servicehub_recovery_lab.work_orders w</span><span class="code-line">LEFT JOIN servicehub_recovery_lab.sites s ON s.site_id=w.site_id</span><span class="code-line">WHERE s.site_id IS NULL;</span></code></pre></div><p>The intended result is that <code>PITR_VALID_A</code> and <code>PITR_VALID_B</code> exist, <code>PITR_BAD_EVENT</code> does not, <code>bad_rows=0</code>, and referential invariants remain valid. A production recovery also needs application smoke tests, account/role checks, routines/events/triggers verification, and backup/recovery metadata review.</p></section>
+<section><h2>Failure case: missing binary-log file</h2><p>Remove one <em>copied</em> log file from a disposable recovery directory and attempt to construct the full replay sequence. The correct diagnosis is “recovery chain incomplete.” The correct repair is to retrieve the missing verified log copy from backup/archive/another protected source—not to guess changes or skip the gap silently.</p><div class="callout warning"><strong>Availability is not correctness</strong><p>A server that starts after replaying an incomplete sequence is not necessarily a correct recovered system. Promotion/cutover requires proving the recovery boundary and business invariants.</p></div><div class="checkpoint"><h3>Knowledge check</h3><ol><li>Why restore to a separate target when practical?</li><li>Why use datetime filters only to locate the bad event, then positions for replay?</li><li>What must exist after restoring the full backup but before binary-log replay?</li><li>Why should multiple binary-log files be replayed through one mysql connection?</li><li>What does PITR_VALID_B present plus PITR_BAD_EVENT absent prove?</li></ol><details class="answer-toggle"><summary>Reveal answers</summary><div><ol><li>It preserves the damaged source for evidence/comparison and makes recovery experiments reversible before cutover.</li><li>Oracle warns that time filters have a higher risk of missing events; exact event positions make the applied range precise.</li><li>The full-backup marker and baseline state, but not the post-backup valid or bad markers.</li><li>Server session state such as temporary tables can span log files; separate mysql connections can break that continuity.</li><li>That the replay included the second known-good transaction and stopped before the known-bad transaction in this controlled lab.</li></ol></div></details></div></section>
+<section><h2>Summary and bridge to Lesson 5</h2><p>PITR is no longer abstract: it is full backup + verified binary-log continuity + a precise stop boundary + validation. The final lesson operationalizes that workflow so recovery is rehearsed, measured, automated, and monitored rather than rediscovered during an incident.</p></section>
+<section><h3>Authoritative references</h3><ul><li><a href="https://dev.mysql.com/doc/refman/8.4/en/point-in-time-recovery.html" rel="noreferrer" target="_blank">MySQL 8.4 — Point-in-Time Recovery Using Binary Log</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/point-in-time-recovery-positions.html" rel="noreferrer" target="_blank">MySQL 8.4 — Point-in-Time Recovery Using Event Positions</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/mysqlbinlog.html" rel="noreferrer" target="_blank">MySQL 8.4 — mysqlbinlog</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/show-binary-log-status.html" rel="noreferrer" target="_blank">MySQL 8.4 — SHOW BINARY LOG STATUS</a></li></ul></section>
+</div>
+<nav aria-label="Lesson navigation" class="lesson-nav"><a class="prev" href="Lesson3.html"><small>Previous lesson</small><strong>Binary Log Formats, GTIDs, Retention, and Recovery Prerequisites</strong></a><a class="next" href="Lesson5.html"><small>Next lesson</small><strong>Restore Testing, RPO/RTO Measurement, Corruption Drills, and Backup Automation</strong></a></nav>
+</article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>If these tutorials save you time, a small donation supports new lessons, technical review, diagrams, examples, and long-term maintenance.</p>
+<div aria-label="Author links" class="social-row">
+<a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head"><span>ETH</span><small>Ethereum / ERC-20 only</small></div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
+<button class="button secondary compact" data-copy-donation="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy address</button>
+<p>Send only assets compatible with the Ethereum/ERC-20 network. Do not send TRC-20/TRON assets.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div><strong>Big Data Academy</strong><p>A free, prerequisite-aware path from SQL foundations to distributed data systems.</p></div>
+<div><a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a></div>
+<small>Created and maintained by <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> · © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>

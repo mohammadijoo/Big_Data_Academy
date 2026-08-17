@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Choose a MySQL backup method from recovery requirements rather than habit: compare logical dumps, MySQL Shell dumps, snapshots, and physical backups, then prove recoverability with a disposable restore." name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>Logical vs Physical Backup: mysqldump, MySQL Shell, Snapshots, and Tradeoffs | Big Data Academy</title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+<script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+        chtml: { scale: 1, matchFontHeight: false },
+      };
+    </script>
+<script defer="" id="MathJax-script" onerror="this.onerror=null;this.src='https://unpkg.com/mathjax@3.2.2/es5/tex-chtml.js';" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
+<span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
+<span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
+</a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a>
+<a class="is-active" href="../../../index.html#courses">Courses</a>
+<a href="../../../index.html#method">Method</a>
+<a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg></button>
+<button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu=""><a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a></nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">MYSQL</span><div><small>Course 04</small><strong>MySQL</strong></div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">×</button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 110 lessons..." type="search"/></label>
+<nav aria-label="MySQL curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter"><summary><span>01</span>MySQL Platform Foundations, Editions, Releases, and Lab Setup</summary><div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What MySQL Is: Server Architecture, Client/Server Boundaries, and Common Workloads</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Community vs Enterprise Capabilities, Licensing Awareness, and Deployment Choices</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>LTS vs Innovation Releases: Version Selection, Support Windows, and Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Install MySQL on Windows, Linux, Containers, and Verify the Toolchain</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build a Reproducible Course Lab with Sample Data, Accounts, and Safety Conventions</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>02</span>Server Architecture, Processes, Files, Connections, and Configuration</summary><div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>mysqld Startup, Data Directory, Configuration Files, and Option Precedence</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Connection Lifecycle, Threads, Sessions, Timeouts, and Resource Consumption</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>System Variables, Status Variables, Dynamic Configuration, and SET PERSIST</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Character Sets, Collations, Time Zones, Locales, and Server Defaults</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Configuration Validation, Startup Failures, Error Logs, and a Baseline Server Profile</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>03</span>Schemas, Tables, Data Types, Keys, Constraints, and SQL Modes</summary><div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>Databases and Schemas in MySQL: Namespaces, Metadata, and Object Ownership</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Numeric, String, Temporal, JSON, Spatial, and Binary Data Types</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK, DEFAULT, and Generated Columns</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>AUTO_INCREMENT, Surrogate vs Natural Keys, and Identifier Design</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>SQL Modes, Strictness, Implicit Conversion, Truncation, and Data-Quality Boundaries</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>04</span>Core SQL Querying: Filtering, Joins, Subqueries, CTEs, and Set Operations</summary><div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>SELECT Execution Basics, Projection, Predicates, NULL Semantics, and Ordering</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>INNER, OUTER, CROSS, and Self Joins with Cardinality Reasoning</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>Scalar, Correlated, EXISTS, IN, and Derived-Table Subqueries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Common Table Expressions, Recursive CTEs, and Hierarchical Queries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>UNION, INTERSECT, EXCEPT, Query Composition, and Readability Patterns</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>05</span>Advanced SQL: Aggregation, Window Functions, JSON, and Analytical Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>GROUP BY, HAVING, Functional Dependence, ROLLUP, and Aggregation Design</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Window Frames, Ranking, Running Totals, Gaps-and-Islands, and Top-N per Group</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>JSON Documents, Paths, JSON_TABLE, Indexable JSON Patterns, and Validation</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Date/Time, String, Regular Expression, Numeric, and Conditional Functions</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Reporting Queries, Cohort-Style Analysis, Pivots by Conditional Aggregation, and Reusable Views</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>06</span>Data Modification, Transactions, Locking, and Concurrency Semantics</summary><div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>INSERT, Multi-Row Writes, INSERT ... SELECT, and Generated Values</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>UPDATE, DELETE, Multi-Table DML, and Guardrails Against Wide Changes</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Transactions, Autocommit, COMMIT, ROLLBACK, SAVEPOINT, and Error Handling</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Isolation Levels, Consistent Reads, Locking Reads, MVCC, and Anomalies</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Deadlocks, Lock Waits, Retry Design, Idempotency, and Concurrency Testing</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>07</span>InnoDB Storage Architecture and Transaction Internals</summary><div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>InnoDB Tablespaces, Pages, Extents, Segments, and Row Formats</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Clustered Indexes, Secondary Indexes, Hidden Columns, and Record Layout</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Buffer Pool Architecture, Change Buffer, Adaptive Hashing, and Caching Behavior</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Redo Logs, Undo Logs, Doublewrite, Checkpoints, and Crash Recovery</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Purge, History List, Long Transactions, MVCC Cleanup, and Storage Health</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>08</span>Index Engineering and Access Path Design</summary><div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>B-Tree Index Structure, Selectivity, Cardinality, and Leftmost-Prefix Rules</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>Composite Index Ordering, Covering Indexes, Prefix Indexes, and Redundant Indexes</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Functional, Multi-Valued, FULLTEXT, and Spatial Index Use Cases</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>Index Condition Pushdown, Loose/Tight Index Scans, and Skip-Scan Concepts</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Designing an Index Portfolio from Workload Evidence and Write-Cost Constraints</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>09</span>Optimizer, EXPLAIN, Statistics, and Query Plan Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>How the MySQL Optimizer Builds Access Paths, Join Orders, and Cost Estimates</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>EXPLAIN, EXPLAIN ANALYZE, FORMAT=TREE/JSON, and Iterator Timing</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Histograms, Persistent Statistics, Cardinality Errors, and ANALYZE TABLE</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Join Algorithms, Semijoin/Antijoin Transformations, Derived Tables, and Materialization</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Plan Regressions, Optimizer Hints, Invisible Indexes, and Evidence-Driven Tuning</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>10</span>Stored Programs, Views, Triggers, Events, and Server-Side Logic</summary><div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Views, Updatability, SQL SECURITY, Definer Context, and Dependency Management</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Stored Procedures, Functions, Parameters, Condition Handlers, and Diagnostics</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Triggers, OLD/NEW Rows, Ordering, Auditing Uses, and Hidden Coupling Risks</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Event Scheduler, Recurring Maintenance Jobs, Failure Handling, and Observability</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>When Server-Side Logic Helps—and When Application Logic Is the Better Boundary</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>11</span>Users, Roles, Authentication, Authorization, and Least Privilege</summary><div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Accounts, Host Matching, Authentication Plugins, Password Policy, and Account Lifecycle</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Privileges, Roles, DEFAULT ROLE, Dynamic Privileges, and Delegated Administration</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Object-Level vs Administrative Privilege Design and Separation of Duties</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>PROXY, DEFINER, SQL SECURITY, Stored Objects, and Privilege-Escalation Risks</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Design and Audit a Least-Privilege Access Model for Applications and Operators</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>12</span>Encryption, TLS, Secrets, Auditing, and Security Hardening</summary><div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>TLS for Client Connections, Certificate Validation, and Secure Transport Enforcement</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Data-at-Rest Encryption Concepts, Key Management Boundaries, and Backup Encryption</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Secrets Handling for Applications, Option Files, Environment Variables, and Rotation</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>Audit Logging Options, General/Slow Logs, Privacy, and Forensic Considerations</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Hardening Checklist: Network Exposure, Local Files, Plugins, Accounts, and Patch Discipline</a>
+</div></details>
+<details class="sidebar-chapter" open=""><summary><span>13</span>Backup, Restore, Binary Logs, and Point-in-Time Recovery</summary><div>
+<a class="sidebar-lesson is-current" href="Lesson1.html"><span>01</span>Logical vs Physical Backup: mysqldump, MySQL Shell, Snapshots, and Tradeoffs<i>Current</i></a>
+<a class="sidebar-lesson" href="Lesson2.html"><span>02</span>Consistent Backups with Transactions, Locks, Replication Coordinates, and Large Datasets</a>
+<a class="sidebar-lesson" href="Lesson3.html"><span>03</span>Binary Log Formats, GTIDs, Retention, and Recovery Prerequisites</a>
+<a class="sidebar-lesson" href="Lesson4.html"><span>04</span>Point-in-Time Recovery from Full Backup plus Binary Logs</a>
+<a class="sidebar-lesson" href="Lesson5.html"><span>05</span>Restore Testing, RPO/RTO Measurement, Corruption Drills, and Backup Automation</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>14</span>Asynchronous Replication, GTIDs, Topologies, and Operational Safety</summary><div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Source/Replica Architecture, Binary Log Flow, Relay Logs, and Replication Threads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>GTID-Based Replication, Auto-Positioning, Failover Readiness, and Errant Transactions</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Statement, Row, and Mixed Logging Semantics with Determinism Risks</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Replication Filters, Delayed Replicas, Read Scaling, and Reporting Workloads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Lag Diagnosis, Broken Replication, Data Drift, Re-Synchronization, and Promotion Runbooks</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>15</span>Group Replication, InnoDB Cluster, Router, and High Availability</summary><div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Consensus-Oriented Group Replication Concepts, Membership, Quorum, and Failure Modes</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Single-Primary vs Multi-Primary Modes, Conflict Detection, and Workload Constraints</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>MySQL Shell AdminAPI, InnoDB Cluster Lifecycle, Recovery, and Rejoin Operations</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>MySQL Router, Connection Routing, Read/Write Splitting, and Application Failover</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Failure Injection, Split-Brain Avoidance, Maintenance, Upgrades, and HA Acceptance Tests</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>16</span>Performance Schema, sys Schema, Logs, Metrics, and Observability</summary><div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Performance Schema Instruments, Consumers, Events, and Measurement Overhead</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>sys Schema Views for Sessions, Statements, Waits, I/O, Memory, and Index Usage</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>Slow Query Log, Error Log, General Log, and Structured Diagnostic Workflows</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>Key OS and MySQL Metrics: CPU, I/O, Buffer Pool, Connections, Temp Tables, and Redo</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Build a Production Dashboard, Alert Thresholds, Baselines, and Incident Timelines</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>17</span>Memory, I/O, Temporary Work, and Server Performance Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Buffer Pool Sizing, Working Sets, Dirty Pages, Flushing, and Memory Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Per-Connection Buffers, Sort/Join Buffers, Memory Multipliers, and OOM Risk</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Temporary Tables, Spill to Disk, tmpdir, Internal Temp Engines, and Query Rewrite</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Redo Capacity, I/O Capacity, Flush Methods, Storage Latency, and Checkpoint Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Benchmarking Methodology, Warm vs Cold Cache, Concurrency, Percentiles, and Repeatability</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>18</span>Partitioning, Large Tables, Archiving, and Data Lifecycle</summary><div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Partitioning Concepts, Supported Strategies, Partition Pruning, and Design Constraints</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Partition Keys, Unique-Key Rules, Hot/Cold Data, and Operational Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Online DDL, Instant/In-Place/Copy Algorithms, Locks, and Schema Change Planning</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Archiving, Purging, Retention Jobs, and Avoiding Massive Delete Pathologies</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Managing Multi-Terabyte Tables: Capacity, Maintenance Windows, and Growth Forecasts</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>19</span>Application Integration, Connectors, Pools, ORMs, and Reliability Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>Connection Strings, TLS, Timeouts, Pools, and Session Initialization Contracts</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Prepared Statements, Parameter Binding, SQL Injection Defense, and Type Mapping</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Transaction Boundaries in Application Code, Retries, Idempotency, and Lost Connections</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>ORM Query Generation, N+1 Problems, Pagination, Bulk Writes, and Plan Visibility</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Health Checks, Graceful Degradation, Read Replicas, Migrations, and Deployment Coordination</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>20</span>Schema Migration, Upgrades, Compatibility, and Zero/Low-Downtime Change</summary><div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Versioned Schema Migrations, Expand/Contract Patterns, and Backward Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Online Schema Change Strategies, Native DDL Capabilities, and External Tool Concepts</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Pre-Upgrade Checks, Deprecated Features, SQL Modes, Collations, and Authentication Changes</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Rolling Upgrade Considerations for Replication and High-Availability Topologies</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Rollback Planning, Data Validation, Canaries, and Post-Upgrade Performance Verification</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>21</span>Specialized MySQL Capabilities: NDB, Document Store, Spatial, and Search</summary><div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>NDB Cluster Architecture, Distribution, Availability, and When It Fits</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>X Protocol, MySQL Shell, Document Store Concepts, and CRUD APIs</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Spatial Types, SRIDs, Spatial Functions, R-Tree Indexing, and GIS Workloads</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>FULLTEXT Search, Tokenization, Relevance, Stopwords, and Search-System Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>Choosing Native Features vs Dedicated Systems for Search, Analytics, and Distributed Scale</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>22</span>Production Capstone: Design, Secure, Scale, Tune, and Recover MySQL</summary><div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Define SLOs, Workload, Data Model, Capacity Forecast, and Architecture Decision Record</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>Build the Production Schema, Index Portfolio, Security Model, and Migration Pipeline</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>Load Test, Capture Plans, Tune Queries/Server, and Establish Performance Baselines</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Implement Backups, PITR, Replication/HA, Monitoring, Alerts, and Incident Runbooks</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Execute Failure/Recovery Drills and Defend the Final MySQL Production Design</a>
+</div></details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar"><button data-sidebar-open="" type="button"><span>Course navigation</span><span>Chapter 13 · Lesson 01</span></button></div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs"><a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">MySQL</a><span>/</span><span>Chapter 13 · Lesson 01</span></nav>
+<header class="lesson-header"><p class="eyebrow">Chapter 13 · Backup, Restore, Binary Logs, and Point-in-Time Recovery</p><h1>Logical vs Physical Backup: mysqldump, MySQL Shell, Snapshots, and Tradeoffs</h1><p>Choose a MySQL backup method from recovery requirements rather than habit: compare logical dumps, MySQL Shell dumps, snapshots, and physical backups, then prove recoverability with a disposable restore.</p><div class="lesson-meta"><span>Beginner → Intermediate</span><span>130–180 min</span><span>backup-method + restore lab</span><span>MySQL Community Server 8.4.10 LTS · local disposable schema</span><span>recovery / backup design</span><span>Last reviewed: August 2026</span></div></header>
+<nav aria-label="On this page" class="lesson-toc"><strong>On this page</strong><ol data-generated-toc=""></ol></nav>
+<div class="lesson-content">
+<section><h2>Learning outcomes</h2><p>ServiceHub has reached the point where “we copy the database sometimes” is no longer an acceptable recovery strategy. A backup is useful only if it matches a recovery objective, captures a consistent state, carries enough metadata to restore correctly, and has been restored successfully somewhere other than the source. This lesson starts by choosing the right backup family before touching a command.</p><div class="objectives"><div class="objective"><span>01</span><p>Distinguish logical backups, MySQL Shell dumps, storage snapshots, and physical backup products by what they capture and how they restore.</p></div><div class="objective"><span>02</span><p>Explain why a copied data directory from a running InnoDB server is not automatically a valid backup.</p></div><div class="objective"><span>03</span><p>Create and inspect a portable mysqldump backup of the ServiceHub lab without exposing a password on the command line.</p></div><div class="objective"><span>04</span><p>Use MySQL Shell dump utilities as an optional free parallel/chunked alternative and understand their consistency prerequisites.</p></div><div class="objective"><span>05</span><p>Prove recoverability by restoring into a disposable schema and checking row counts, keys, and a known business marker.</p></div></div></section>
+<section><h2>Start from the recovery question, not the backup tool</h2><p>Different failures demand different recovery artifacts. If one table was deleted accidentally, a portable logical dump may be enough. If a multi-terabyte server must return quickly after host loss, replaying SQL row by row may be too slow. If the requirement is “return to 14:31:07 just before an accidental update,” a full backup alone is insufficient; the binary-log chain after that backup must also survive.</p><div class="table-wrap"><table class="data-table"><thead><tr><th>Method</th><th>What is captured</th><th>Strengths</th><th>Important constraints</th></tr></thead><tbody><tr><td>mysqldump</td><td>DDL and logical row data as SQL</td><td>Portable, inspectable, selective, free</td><td>Restore can be slow; consistency options matter; large text artifact</td></tr><tr><td>MySQL Shell dump utilities</td><td>DDL + chunked/tabular data + metadata</td><td>Parallel dump/load, checksums, chunking, free</td><td>Requires MySQL Shell and documented privileges; consistent guarantee is for InnoDB</td></tr><tr><td>Filesystem/storage snapshot</td><td>Blocks/files at a storage instant</td><td>Fast at volume scale; storage-system integration</td><td>Must coordinate MySQL consistency; snapshot semantics are platform-specific</td></tr><tr><td>Commercial physical backup</td><td>Physical database pages/log-aware backup</td><td>Fast physical recovery and operational tooling</td><td>Product/edition dependency; restore procedure and key dependencies must be tested</td></tr></tbody></table></div><p>No row in this table is “best.” Backup engineering is an optimization against <strong>Recovery Point Objective (RPO)</strong>, the maximum tolerable data loss measured in time, and <strong>Recovery Time Objective (RTO)</strong>, the target time to restore useful service. Chapter 13 measures both instead of treating them as slogans.</p></section>
+<section><h2>Why copying a live InnoDB directory is unsafe</h2><p>InnoDB is not a collection of independent table files that can be copied arbitrarily while the server is writing. Data pages, redo state, undo history, dictionary metadata, and file-system write ordering participate in a crash-consistent database state. A naive copy that starts with one file and finishes minutes later may combine blocks from different moments. Storage snapshots can be valid building blocks, but only when the snapshot technology and MySQL consistency procedure are understood.</p><div class="callout warning"><strong>Tempting but incomplete</strong><p>Do not teach “copy the datadir” as an online backup method. A recoverable physical copy requires a documented quiesce/lock/snapshot or backup-tool procedure appropriate to the topology and storage system.</p></div></section>
+<section><h2>Mandatory free lab: build a logical baseline with mysqldump</h2><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · create the disposable ServiceHub recovery lab</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">-- Run on a disposable local MySQL 8.4 LTS instance.</span><span class="code-line">CREATE DATABASE IF NOT EXISTS servicehub_recovery_lab</span><span class="code-line">  CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;</span><span class="code-line"></span><span class="code-line">CREATE TABLE IF NOT EXISTS servicehub_recovery_lab.sites (</span><span class="code-line">  site_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,</span><span class="code-line">  site_code VARCHAR(20) NOT NULL UNIQUE,</span><span class="code-line">  site_name VARCHAR(120) NOT NULL</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">CREATE TABLE IF NOT EXISTS servicehub_recovery_lab.work_orders (</span><span class="code-line">  work_order_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,</span><span class="code-line">  site_id BIGINT UNSIGNED NOT NULL,</span><span class="code-line">  status ENUM('OPEN','IN_PROGRESS','DONE','CANCELLED') NOT NULL DEFAULT 'OPEN',</span><span class="code-line">  summary VARCHAR(180) NOT NULL,</span><span class="code-line">  opened_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),</span><span class="code-line">  closed_at TIMESTAMP(6) NULL,</span><span class="code-line">  CONSTRAINT fk_recovery_work_order_site</span><span class="code-line">    FOREIGN KEY (site_id) REFERENCES servicehub_recovery_lab.sites(site_id)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">CREATE TABLE IF NOT EXISTS servicehub_recovery_lab.recovery_markers (</span><span class="code-line">  marker_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,</span><span class="code-line">  marker_name VARCHAR(80) NOT NULL UNIQUE,</span><span class="code-line">  marker_time TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),</span><span class="code-line">  note VARCHAR(255) NOT NULL</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">INSERT IGNORE INTO servicehub_recovery_lab.sites(site_code,site_name)</span><span class="code-line">VALUES ('BAKU-01','Baku Central Service Site'),</span><span class="code-line">       ('BAKU-02','Baku East Service Site');</span><span class="code-line"></span><span class="code-line">INSERT IGNORE INTO servicehub_recovery_lab.recovery_markers(marker_name,note)</span><span class="code-line">VALUES ('CH13_BASELINE','Known recovery invariant before Chapter 13 drills');</span><span class="code-line"></span><span class="code-line">SELECT COUNT(*) AS sites FROM servicehub_recovery_lab.sites;</span><span class="code-line">SELECT COUNT(*) AS markers FROM servicehub_recovery_lab.recovery_markers;</span></code></pre></div><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · seed a few recoverable business rows</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">INSERT INTO servicehub_recovery_lab.work_orders(site_id,status,summary)</span><span class="code-line">SELECT site_id,'OPEN','Inspect pump vibration'</span><span class="code-line">FROM servicehub_recovery_lab.sites WHERE site_code='BAKU-01';</span><span class="code-line"></span><span class="code-line">INSERT INTO servicehub_recovery_lab.work_orders(site_id,status,summary)</span><span class="code-line">SELECT site_id,'IN_PROGRESS','Replace pressure sensor'</span><span class="code-line">FROM servicehub_recovery_lab.sites WHERE site_code='BAKU-02';</span><span class="code-line"></span><span class="code-line">SELECT work_order_id, site_id, status, summary</span><span class="code-line">FROM servicehub_recovery_lab.work_orders</span><span class="code-line">ORDER BY work_order_id;</span></code></pre></div><div class="code-window" data-code-block="" data-language="text"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>text · create an InnoDB-consistent logical dump</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line"># Bash / Command Prompt. -p prompts; do not put the password after -p.</span><span class="code-line">mysqldump -h 127.0.0.1 -P 3306 -u root -p \</span><span class="code-line">  --single-transaction --routines --triggers --events \</span><span class="code-line">  --databases servicehub_recovery_lab \</span><span class="code-line">  &gt; servicehub_ch13_baseline.sql</span><span class="code-line"></span><span class="code-line"># Record an artifact checksum.</span><span class="code-line"># Linux/macOS:</span><span class="code-line">sha256sum servicehub_ch13_baseline.sql</span><span class="code-line"># PowerShell:</span><span class="code-line">Get-FileHash .\servicehub_ch13_baseline.sql -Algorithm SHA256</span></code></pre></div><p><code>--single-transaction</code> starts a consistent transaction snapshot and is appropriate for transactional tables such as InnoDB. It does not make concurrent DDL harmless and does not give nontransactional engines the same snapshot guarantee. The lab schema is intentionally all InnoDB so the mechanism is visible without mixing engines.</p></section>
+<section><h2>Optional free path: MySQL Shell dump and load utilities</h2><p>MySQL Shell provides <code>util.dumpSchemas()</code>, <code>util.dumpInstance()</code>, and <code>util.loadDump()</code>. The dump utilities are multithreaded, chunk table data by default, can compress output, and can create checksum metadata. Their default <code>consistent:true</code> procedure coordinates short locks and consistent snapshots across worker threads. This makes them useful for larger data sets, but they are not permission-free magic: the dump account still needs the privileges documented for the selected objects and consistency method.</p><div class="code-window" data-code-block="" data-language="javascript"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>javascript · optional MySQL Shell JavaScript-mode dump</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">// mysqlsh --js -u root -p -h 127.0.0.1</span><span class="code-line">util.dumpSchemas(</span><span class="code-line">  ["servicehub_recovery_lab"],</span><span class="code-line">  "servicehub_shell_dump",</span><span class="code-line">  {threads: 4, checksum: true, showProgress: true}</span><span class="code-line">);</span></code></pre></div><p>Do not memorize <code>threads:4</code> as a tuning recommendation; it is simply a reproducible starting value. Measure source I/O, CPU, network, and foreground application latency before increasing parallelism.</p></section>
+<section><h2>Failure case: a file exists, but the restore contract is incomplete</h2><p>Create a damaged copy of the dump instead of damaging the good artifact. The goal is to show that backup presence and backup integrity are different facts.</p><div class="code-window" data-code-block="" data-language="text"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>text · damage only a disposable copy and compare hashes</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line"># Cross-platform Python one-liner; keep the original dump untouched.</span><span class="code-line">python -c "p='servicehub_ch13_baseline.sql'; d=open(p,'rb').read(); open('servicehub_ch13_truncated.sql','wb').write(d[:max(1,len(d)//3)])"</span><span class="code-line"></span><span class="code-line"># Linux/macOS</span><span class="code-line">sha256sum servicehub_ch13_baseline.sql servicehub_ch13_truncated.sql</span><span class="code-line"># PowerShell</span><span class="code-line">Get-FileHash .\servicehub_ch13_baseline.sql,.\servicehub_ch13_truncated.sql -Algorithm SHA256</span></code></pre></div><p>A different hash is enough to reject the damaged artifact before attempting production recovery. Hash equality does not prove logical correctness; it only proves the bytes match the expected artifact. Recovery testing must continue through a real restore.</p></section>
+<section><h2>Restore into a disposable target and verify business invariants</h2><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · create a clean target and restore the intact dump</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">-- Remove only the disposable lab database if it already exists.</span><span class="code-line">DROP DATABASE IF EXISTS servicehub_recovery_lab;</span></code></pre></div><div class="code-window" data-code-block="" data-language="text"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>text · reload the baseline dump</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line"># Bash / Command Prompt</span><span class="code-line">mysql -h 127.0.0.1 -P 3306 -u root -p &lt; servicehub_ch13_baseline.sql</span><span class="code-line"></span><span class="code-line"># Windows PowerShell can delegate redirection to cmd.exe:</span><span class="code-line">cmd.exe /c "mysql -h 127.0.0.1 -P 3306 -u root -p &lt; servicehub_ch13_baseline.sql"</span></code></pre></div><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · verify the restored contract</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT COUNT(*) AS site_count FROM servicehub_recovery_lab.sites;</span><span class="code-line">SELECT COUNT(*) AS work_order_count FROM servicehub_recovery_lab.work_orders;</span><span class="code-line">SELECT marker_name,note</span><span class="code-line">FROM servicehub_recovery_lab.recovery_markers</span><span class="code-line">WHERE marker_name='CH13_BASELINE';</span><span class="code-line"></span><span class="code-line">SELECT COUNT(*) AS orphan_work_orders</span><span class="code-line">FROM servicehub_recovery_lab.work_orders w</span><span class="code-line">LEFT JOIN servicehub_recovery_lab.sites s ON s.site_id=w.site_id</span><span class="code-line">WHERE s.site_id IS NULL;</span></code></pre></div><p>Expected evidence is not a magic row count copied from this page, because a learner may rerun inserts. The stable invariants are: the baseline marker exists, the schema and foreign key exist, and the orphan query returns zero. Recovery acceptance criteria should be business-aware, not only “mysql exited with code 0.”</p></section>
+<section><h2>Production judgment</h2><p>Logical backups are strong when portability, selective restore, schema visibility, or smaller databases matter. MySQL Shell dumps add parallelism and metadata for larger logical workflows. Storage snapshots can reduce capture time but move critical correctness into the snapshot coordination and restore procedure. Commercial physical backup tooling may be appropriate when recovery time at large scale justifies it, but no paid product is required for this course.</p><p>Whichever method you choose, protect backup confidentiality, keep the backup identity/privilege model separate from the application, record version/tool assumptions, and test restore on a clean target. The next lesson focuses on one subtle requirement that decides whether a backup is even internally consistent while the application stays online.</p><div class="checkpoint"><h3>Knowledge check</h3><ol><li>Why is “the backup file exists” not a recovery test?</li><li>What guarantee does mysqldump --single-transaction primarily provide for this lab?</li><li>Why is an online copy of the MySQL data directory not automatically a safe physical backup?</li><li>What is one reason to prefer MySQL Shell dump utilities over a single SQL dump for larger data sets?</li><li>What does a matching SHA-256 hash prove—and what does it not prove?</li></ol><details class="answer-toggle"><summary>Reveal answers</summary><div><ol><li>It does not prove the artifact is complete, readable, logically consistent, or restorable into a working database.</li><li>It gives transactional tables such as InnoDB a consistent snapshot from the transaction boundary used by the dump.</li><li>Files can be copied from different moments while InnoDB is modifying data, redo, undo, and metadata, producing an incoherent physical image.</li><li>Parallel chunked dump/load, compression, progress, and optional checksum metadata can improve operational workflows.</li><li>It proves the bytes match the recorded artifact. It does not prove the database content is semantically correct or that the restore procedure works.</li></ol></div></details></div></section>
+<section><h3>Authoritative references</h3><ul><li><a href="https://dev.mysql.com/doc/refman/8.4/en/backup-methods.html" rel="noreferrer" target="_blank">MySQL 8.4 — Database Backup Methods</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/mysqldump-sql-format.html" rel="noreferrer" target="_blank">MySQL 8.4 — Dumping Data in SQL Format with mysqldump</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/reloading-sql-format-dumps.html" rel="noreferrer" target="_blank">MySQL 8.4 — Reloading SQL-Format Backups</a></li><li><a href="https://dev.mysql.com/doc/mysql-shell/8.4/en/mysql-shell-utilities-dump-instance-schema.html" rel="noreferrer" target="_blank">MySQL Shell 8.4 — Instance/Schema/Table Dump Utilities</a></li><li><a href="https://dev.mysql.com/doc/mysql-shell/8.4/en/mysql-shell-utilities-load-dump.html" rel="noreferrer" target="_blank">MySQL Shell 8.4 — Dump Loading Utility</a></li></ul></section>
+</div>
+<nav aria-label="Lesson navigation" class="lesson-nav"><a class="prev" href="../Chapter12/Lesson5.html"><small>Previous lesson</small><strong>Hardening Checklist: Network Exposure, Local Files, Plugins, Accounts, and Patch Discipline</strong></a><a class="next" href="Lesson2.html"><small>Next lesson</small><strong>Consistent Backups with Transactions, Locks, Replication Coordinates, and Large Datasets</strong></a></nav>
+</article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>If these tutorials save you time, a small donation supports new lessons, technical review, diagrams, examples, and long-term maintenance.</p>
+<div aria-label="Author links" class="social-row">
+<a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head"><span>ETH</span><small>Ethereum / ERC-20 only</small></div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
+<button class="button secondary compact" data-copy-donation="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy address</button>
+<p>Send only assets compatible with the Ethereum/ERC-20 network. Do not send TRC-20/TRON assets.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div><strong>Big Data Academy</strong><p>A free, prerequisite-aware path from SQL foundations to distributed data systems.</p></div>
+<div><a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a></div>
+<small>Created and maintained by <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> · © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>

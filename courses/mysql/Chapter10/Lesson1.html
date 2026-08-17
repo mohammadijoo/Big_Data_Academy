@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Use MySQL views as deliberate read/write contracts: understand updatability, processing algorithms, DEFINER versus INVOKER security, metadata, privileges, and how schema evolution can invalidate hidden dependencies." name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>Views, Updatability, SQL SECURITY, Definer Context, and Dependency Management | Big Data Academy</title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+<script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+        chtml: { scale: 1, matchFontHeight: false },
+      };
+    </script>
+<script defer="" id="MathJax-script" onerror="this.onerror=null;this.src='https://unpkg.com/mathjax@3.2.2/es5/tex-chtml.js';" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
+<span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
+<span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
+</a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a>
+<a class="is-active" href="../../../index.html#courses">Courses</a>
+<a href="../../../index.html#method">Method</a>
+<a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg></button>
+<button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu=""><a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a></nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">MYSQL</span><div><small>Course 04</small><strong>MySQL</strong></div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">×</button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 110 lessons..." type="search"/></label>
+<nav aria-label="MySQL curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter"><summary><span>01</span>MySQL Platform Foundations, Editions, Releases, and Lab Setup</summary><div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What MySQL Is: Server Architecture, Client/Server Boundaries, and Common Workloads</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Community vs Enterprise Capabilities, Licensing Awareness, and Deployment Choices</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>LTS vs Innovation Releases: Version Selection, Support Windows, and Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Install MySQL on Windows, Linux, Containers, and Verify the Toolchain</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build a Reproducible Course Lab with Sample Data, Accounts, and Safety Conventions</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>02</span>Server Architecture, Processes, Files, Connections, and Configuration</summary><div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>mysqld Startup, Data Directory, Configuration Files, and Option Precedence</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Connection Lifecycle, Threads, Sessions, Timeouts, and Resource Consumption</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>System Variables, Status Variables, Dynamic Configuration, and SET PERSIST</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Character Sets, Collations, Time Zones, Locales, and Server Defaults</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Configuration Validation, Startup Failures, Error Logs, and a Baseline Server Profile</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>03</span>Schemas, Tables, Data Types, Keys, Constraints, and SQL Modes</summary><div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>Databases and Schemas in MySQL: Namespaces, Metadata, and Object Ownership</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Numeric, String, Temporal, JSON, Spatial, and Binary Data Types</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK, DEFAULT, and Generated Columns</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>AUTO_INCREMENT, Surrogate vs Natural Keys, and Identifier Design</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>SQL Modes, Strictness, Implicit Conversion, Truncation, and Data-Quality Boundaries</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>04</span>Core SQL Querying: Filtering, Joins, Subqueries, CTEs, and Set Operations</summary><div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>SELECT Execution Basics, Projection, Predicates, NULL Semantics, and Ordering</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>INNER, OUTER, CROSS, and Self Joins with Cardinality Reasoning</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>Scalar, Correlated, EXISTS, IN, and Derived-Table Subqueries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Common Table Expressions, Recursive CTEs, and Hierarchical Queries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>UNION, INTERSECT, EXCEPT, Query Composition, and Readability Patterns</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>05</span>Advanced SQL: Aggregation, Window Functions, JSON, and Analytical Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>GROUP BY, HAVING, Functional Dependence, ROLLUP, and Aggregation Design</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Window Frames, Ranking, Running Totals, Gaps-and-Islands, and Top-N per Group</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>JSON Documents, Paths, JSON_TABLE, Indexable JSON Patterns, and Validation</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Date/Time, String, Regular Expression, Numeric, and Conditional Functions</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Reporting Queries, Cohort-Style Analysis, Pivots by Conditional Aggregation, and Reusable Views</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>06</span>Data Modification, Transactions, Locking, and Concurrency Semantics</summary><div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>INSERT, Multi-Row Writes, INSERT ... SELECT, and Generated Values</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>UPDATE, DELETE, Multi-Table DML, and Guardrails Against Wide Changes</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Transactions, Autocommit, COMMIT, ROLLBACK, SAVEPOINT, and Error Handling</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Isolation Levels, Consistent Reads, Locking Reads, MVCC, and Anomalies</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Deadlocks, Lock Waits, Retry Design, Idempotency, and Concurrency Testing</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>07</span>InnoDB Storage Architecture and Transaction Internals</summary><div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>InnoDB Tablespaces, Pages, Extents, Segments, and Row Formats</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Clustered Indexes, Secondary Indexes, Hidden Columns, and Record Layout</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Buffer Pool Architecture, Change Buffer, Adaptive Hashing, and Caching Behavior</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Redo Logs, Undo Logs, Doublewrite, Checkpoints, and Crash Recovery</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Purge, History List, Long Transactions, MVCC Cleanup, and Storage Health</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>08</span>Index Engineering and Access Path Design</summary><div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>B-Tree Index Structure, Selectivity, Cardinality, and Leftmost-Prefix Rules</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>Composite Index Ordering, Covering Indexes, Prefix Indexes, and Redundant Indexes</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Functional, Multi-Valued, FULLTEXT, and Spatial Index Use Cases</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>Index Condition Pushdown, Loose/Tight Index Scans, and Skip-Scan Concepts</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Designing an Index Portfolio from Workload Evidence and Write-Cost Constraints</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>09</span>Optimizer, EXPLAIN, Statistics, and Query Plan Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>How the MySQL Optimizer Builds Access Paths, Join Orders, and Cost Estimates</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>EXPLAIN, EXPLAIN ANALYZE, FORMAT=TREE/JSON, and Iterator Timing</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Histograms, Persistent Statistics, Cardinality Errors, and ANALYZE TABLE</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Join Algorithms, Semijoin/Antijoin Transformations, Derived Tables, and Materialization</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Plan Regressions, Optimizer Hints, Invisible Indexes, and Evidence-Driven Tuning</a>
+</div></details>
+<details class="sidebar-chapter" open=""><summary><span>10</span>Stored Programs, Views, Triggers, Events, and Server-Side Logic</summary><div>
+<a class="sidebar-lesson is-current" href="Lesson1.html"><span>01</span>Views, Updatability, SQL SECURITY, Definer Context, and Dependency Management<i>Current</i></a>
+<a class="sidebar-lesson" href="Lesson2.html"><span>02</span>Stored Procedures, Functions, Parameters, Condition Handlers, and Diagnostics</a>
+<a class="sidebar-lesson" href="Lesson3.html"><span>03</span>Triggers, OLD/NEW Rows, Ordering, Auditing Uses, and Hidden Coupling Risks</a>
+<a class="sidebar-lesson" href="Lesson4.html"><span>04</span>Event Scheduler, Recurring Maintenance Jobs, Failure Handling, and Observability</a>
+<a class="sidebar-lesson" href="Lesson5.html"><span>05</span>When Server-Side Logic Helps—and When Application Logic Is the Better Boundary</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>11</span>Users, Roles, Authentication, Authorization, and Least Privilege</summary><div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Accounts, Host Matching, Authentication Plugins, Password Policy, and Account Lifecycle</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Privileges, Roles, DEFAULT ROLE, Dynamic Privileges, and Delegated Administration</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Object-Level vs Administrative Privilege Design and Separation of Duties</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>PROXY, DEFINER, SQL SECURITY, Stored Objects, and Privilege-Escalation Risks</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Design and Audit a Least-Privilege Access Model for Applications and Operators</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>12</span>Encryption, TLS, Secrets, Auditing, and Security Hardening</summary><div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>TLS for Client Connections, Certificate Validation, and Secure Transport Enforcement</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Data-at-Rest Encryption Concepts, Key Management Boundaries, and Backup Encryption</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Secrets Handling for Applications, Option Files, Environment Variables, and Rotation</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>Audit Logging Options, General/Slow Logs, Privacy, and Forensic Considerations</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Hardening Checklist: Network Exposure, Local Files, Plugins, Accounts, and Patch Discipline</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>13</span>Backup, Restore, Binary Logs, and Point-in-Time Recovery</summary><div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>Logical vs Physical Backup: mysqldump, MySQL Shell, Snapshots, and Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>Consistent Backups with Transactions, Locks, Replication Coordinates, and Large Datasets</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>Binary Log Formats, GTIDs, Retention, and Recovery Prerequisites</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Point-in-Time Recovery from Full Backup plus Binary Logs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Restore Testing, RPO/RTO Measurement, Corruption Drills, and Backup Automation</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>14</span>Asynchronous Replication, GTIDs, Topologies, and Operational Safety</summary><div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Source/Replica Architecture, Binary Log Flow, Relay Logs, and Replication Threads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>GTID-Based Replication, Auto-Positioning, Failover Readiness, and Errant Transactions</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Statement, Row, and Mixed Logging Semantics with Determinism Risks</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Replication Filters, Delayed Replicas, Read Scaling, and Reporting Workloads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Lag Diagnosis, Broken Replication, Data Drift, Re-Synchronization, and Promotion Runbooks</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>15</span>Group Replication, InnoDB Cluster, Router, and High Availability</summary><div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Consensus-Oriented Group Replication Concepts, Membership, Quorum, and Failure Modes</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Single-Primary vs Multi-Primary Modes, Conflict Detection, and Workload Constraints</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>MySQL Shell AdminAPI, InnoDB Cluster Lifecycle, Recovery, and Rejoin Operations</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>MySQL Router, Connection Routing, Read/Write Splitting, and Application Failover</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Failure Injection, Split-Brain Avoidance, Maintenance, Upgrades, and HA Acceptance Tests</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>16</span>Performance Schema, sys Schema, Logs, Metrics, and Observability</summary><div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Performance Schema Instruments, Consumers, Events, and Measurement Overhead</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>sys Schema Views for Sessions, Statements, Waits, I/O, Memory, and Index Usage</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>Slow Query Log, Error Log, General Log, and Structured Diagnostic Workflows</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>Key OS and MySQL Metrics: CPU, I/O, Buffer Pool, Connections, Temp Tables, and Redo</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Build a Production Dashboard, Alert Thresholds, Baselines, and Incident Timelines</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>17</span>Memory, I/O, Temporary Work, and Server Performance Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Buffer Pool Sizing, Working Sets, Dirty Pages, Flushing, and Memory Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Per-Connection Buffers, Sort/Join Buffers, Memory Multipliers, and OOM Risk</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Temporary Tables, Spill to Disk, tmpdir, Internal Temp Engines, and Query Rewrite</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Redo Capacity, I/O Capacity, Flush Methods, Storage Latency, and Checkpoint Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Benchmarking Methodology, Warm vs Cold Cache, Concurrency, Percentiles, and Repeatability</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>18</span>Partitioning, Large Tables, Archiving, and Data Lifecycle</summary><div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Partitioning Concepts, Supported Strategies, Partition Pruning, and Design Constraints</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Partition Keys, Unique-Key Rules, Hot/Cold Data, and Operational Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Online DDL, Instant/In-Place/Copy Algorithms, Locks, and Schema Change Planning</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Archiving, Purging, Retention Jobs, and Avoiding Massive Delete Pathologies</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Managing Multi-Terabyte Tables: Capacity, Maintenance Windows, and Growth Forecasts</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>19</span>Application Integration, Connectors, Pools, ORMs, and Reliability Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>Connection Strings, TLS, Timeouts, Pools, and Session Initialization Contracts</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Prepared Statements, Parameter Binding, SQL Injection Defense, and Type Mapping</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Transaction Boundaries in Application Code, Retries, Idempotency, and Lost Connections</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>ORM Query Generation, N+1 Problems, Pagination, Bulk Writes, and Plan Visibility</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Health Checks, Graceful Degradation, Read Replicas, Migrations, and Deployment Coordination</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>20</span>Schema Migration, Upgrades, Compatibility, and Zero/Low-Downtime Change</summary><div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Versioned Schema Migrations, Expand/Contract Patterns, and Backward Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Online Schema Change Strategies, Native DDL Capabilities, and External Tool Concepts</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Pre-Upgrade Checks, Deprecated Features, SQL Modes, Collations, and Authentication Changes</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Rolling Upgrade Considerations for Replication and High-Availability Topologies</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Rollback Planning, Data Validation, Canaries, and Post-Upgrade Performance Verification</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>21</span>Specialized MySQL Capabilities: NDB, Document Store, Spatial, and Search</summary><div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>NDB Cluster Architecture, Distribution, Availability, and When It Fits</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>X Protocol, MySQL Shell, Document Store Concepts, and CRUD APIs</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Spatial Types, SRIDs, Spatial Functions, R-Tree Indexing, and GIS Workloads</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>FULLTEXT Search, Tokenization, Relevance, Stopwords, and Search-System Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>Choosing Native Features vs Dedicated Systems for Search, Analytics, and Distributed Scale</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>22</span>Production Capstone: Design, Secure, Scale, Tune, and Recover MySQL</summary><div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Define SLOs, Workload, Data Model, Capacity Forecast, and Architecture Decision Record</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>Build the Production Schema, Index Portfolio, Security Model, and Migration Pipeline</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>Load Test, Capture Plans, Tune Queries/Server, and Establish Performance Baselines</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Implement Backups, PITR, Replication/HA, Monitoring, Alerts, and Incident Runbooks</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Execute Failure/Recovery Drills and Defend the Final MySQL Production Design</a>
+</div></details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar"><button data-sidebar-open="" type="button"><span>Course navigation</span><span>Chapter 02 · Lesson 05</span></button></div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs"><a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">MySQL</a><span>/</span><span>Chapter 10 · Lesson 01</span></nav>
+<header class="lesson-header"><p class="eyebrow">Chapter 10 · Stored Programs, Views, Triggers, Events, and Server-Side Logic</p><h1>Views, Updatability, SQL SECURITY, Definer Context, and Dependency Management</h1><p>Use MySQL views as deliberate read/write contracts: understand updatability, processing algorithms, DEFINER versus INVOKER security, metadata, privileges, and how schema evolution can invalidate hidden dependencies.</p><div class="lesson-meta"><span>Beginner → Intermediate</span><span>130–170 min</span><span>view security lab</span><span>MySQL Community Server 8.4.10 LTS · InnoDB · free local lab</span><span>views + execution context</span><span>Last reviewed: August 2026</span></div></header>
+<nav aria-label="On this page" class="lesson-toc"><strong>On this page</strong><ol data-generated-toc=""></ol></nav>
+<div class="lesson-content">
+<section><h2>Learning outcomes</h2>
+<p>Chapter 09 treated query plans as observable engineering evidence. Chapter 10 changes the kind of object you are reasoning about: logic can now live <em>inside the server</em>. A view looks like a table to its consumer, but its query text, processing algorithm, definer, security mode, and dependencies can change who is allowed to see what and whether writes are even legal. The first lesson makes those hidden properties visible.</p>
+<div class="objectives"><div class="objective"><span>01</span><p>Define a MySQL view, distinguish its stored definition from materialized data, and inspect its metadata with SHOW CREATE VIEW and INFORMATION_SCHEMA.VIEWS.</p></div><div class="objective"><span>02</span><p>Predict when a simple view is updatable and recognize common constructs that make a view non-updatable.</p></div><div class="objective"><span>03</span><p>Explain ALGORITHM=MERGE, TEMPTABLE, and UNDEFINED only as documented processing choices rather than performance slogans.</p></div><div class="objective"><span>04</span><p>Demonstrate SQL SECURITY DEFINER versus INVOKER with explicit positive and negative authorization tests.</p></div><div class="objective"><span>05</span><p>Identify dependency and definer-lifecycle risks, then deploy and clean up view objects without granting application accounts unnecessary base-table access.</p></div></div></section>
+<section><h2>A realistic problem: “the app can read data it cannot select directly”</h2>
+<p>ServiceHub wants a small read contract for dispatchers: open work orders with the site code and summary. The application account must not receive unrestricted <code>SELECT</code> on the underlying tables. A developer proposes a view and says, “a view is just a saved SELECT, so security is the same either way.” That sentence is incomplete in MySQL.</p>
+<p>A <strong>view</strong> is a named database object whose definition is a query. MySQL stores the definition and exposes the view as a virtual table. It does not automatically store a second copy of the result rows. A <strong>definer</strong> is the account recorded on a stored object. <strong>SQL SECURITY</strong> determines whether object access to underlying data is checked using the definer's privileges or the invoker's privileges. In MySQL, <code>DEFINER</code> is the default for views.</p>
+<div class="callout"><strong>Why this matters</strong><p>A view can be an intentional least-privilege boundary, but only if its security context, selected columns, predicates, definer account, and grants are reviewed together. Hiding a table name is not the same as enforcing an authorization policy.</p></div></section>
+<section><h2>Build the disposable ServiceHub logic lab</h2>
+<p>Run the following as a local MySQL administrator. The chapter intentionally creates and later drops a dedicated schema and two disposable accounts. Do not run these cleanup statements on a shared production instance.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · create the Chapter 10 schema</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">-- CHAPTER 10 USES A DISPOSABLE SCHEMA. Run only on your local lab instance.</span><span class="code-line">DROP DATABASE IF EXISTS servicehub_logic_lab;</span><span class="code-line">CREATE DATABASE servicehub_logic_lab</span><span class="code-line">  CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;</span><span class="code-line">USE servicehub_logic_lab;</span><span class="code-line"></span><span class="code-line">CREATE TABLE sites (</span><span class="code-line">  site_id INT UNSIGNED NOT NULL AUTO_INCREMENT,</span><span class="code-line">  site_code VARCHAR(20) NOT NULL,</span><span class="code-line">  site_name VARCHAR(100) NOT NULL,</span><span class="code-line">  region_code VARCHAR(20) NOT NULL,</span><span class="code-line">  active BOOLEAN NOT NULL DEFAULT TRUE,</span><span class="code-line">  PRIMARY KEY (site_id),</span><span class="code-line">  UNIQUE KEY uq_sites_code (site_code)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">CREATE TABLE work_orders (</span><span class="code-line">  work_order_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,</span><span class="code-line">  site_id INT UNSIGNED NOT NULL,</span><span class="code-line">  status VARCHAR(20) NOT NULL,</span><span class="code-line">  priority TINYINT UNSIGNED NOT NULL DEFAULT 2,</span><span class="code-line">  summary VARCHAR(180) NOT NULL,</span><span class="code-line">  opened_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),</span><span class="code-line">  closed_at DATETIME(6) NULL,</span><span class="code-line">  updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)</span><span class="code-line">    ON UPDATE CURRENT_TIMESTAMP(6),</span><span class="code-line">  PRIMARY KEY (work_order_id),</span><span class="code-line">  KEY ix_wo_site_status (site_id,status,work_order_id),</span><span class="code-line">  CONSTRAINT fk_wo_site FOREIGN KEY (site_id) REFERENCES sites(site_id),</span><span class="code-line">  CONSTRAINT ck_wo_priority CHECK (priority BETWEEN 1 AND 4)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">CREATE TABLE work_order_audit (</span><span class="code-line">  audit_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,</span><span class="code-line">  work_order_id BIGINT UNSIGNED NOT NULL,</span><span class="code-line">  old_status VARCHAR(20) NULL,</span><span class="code-line">  new_status VARCHAR(20) NULL,</span><span class="code-line">  change_source VARCHAR(30) NOT NULL,</span><span class="code-line">  changed_by VARCHAR(288) NOT NULL,</span><span class="code-line">  changed_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),</span><span class="code-line">  PRIMARY KEY (audit_id),</span><span class="code-line">  KEY ix_audit_work_order (work_order_id,changed_at)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">CREATE TABLE maintenance_runs (</span><span class="code-line">  run_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,</span><span class="code-line">  job_name VARCHAR(64) NOT NULL,</span><span class="code-line">  executed_at DATETIME(6) NOT NULL,</span><span class="code-line">  execution_user VARCHAR(288) NOT NULL,</span><span class="code-line">  note VARCHAR(255) NOT NULL,</span><span class="code-line">  PRIMARY KEY (run_id)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">INSERT INTO sites(site_code,site_name,region_code) VALUES</span><span class="code-line"> ('BAKU-N','Baku North Plant','AZ-BAKU'),</span><span class="code-line"> ('BAKU-H','Baku Harbor Workshop','AZ-BAKU'),</span><span class="code-line"> ('GANJA-1','Ganja Service Center','AZ-GANJA');</span><span class="code-line"></span><span class="code-line">INSERT INTO work_orders(site_id,status,priority,summary,opened_at) VALUES</span><span class="code-line"> (1,'open',1,'Pump P-101 vibration investigation','2026-08-14 08:30:00'),</span><span class="code-line"> (1,'waiting',2,'Motor M-014 bearing replacement','2026-08-14 10:15:00'),</span><span class="code-line"> (2,'open',3,'Crane C-003 inspection','2026-08-15 09:00:00'),</span><span class="code-line"> (3,'closed',2,'Compressor filter replacement','2026-08-12 07:45:00');</span><span class="code-line"></span><span class="code-line">SELECT VERSION() AS server_version,</span><span class="code-line">       @@version_comment AS version_comment,</span><span class="code-line">       DATABASE() AS current_schema,</span><span class="code-line">       @@session.sql_mode AS session_sql_mode,</span><span class="code-line">       @@session.time_zone AS session_time_zone;</span></code></pre></div>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · create disposable owner and application accounts</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">-- Run as a disposable local administrator account.</span><span class="code-line">DROP USER IF EXISTS 'logic_owner'@'127.0.0.1';</span><span class="code-line">DROP USER IF EXISTS 'logic_app'@'127.0.0.1';</span><span class="code-line">CREATE USER 'logic_owner'@'127.0.0.1'</span><span class="code-line">  IDENTIFIED BY '&lt;Disposable-Lab-Owner-2026!&gt;';</span><span class="code-line">CREATE USER 'logic_app'@'127.0.0.1'</span><span class="code-line">  IDENTIFIED BY '&lt;Disposable-Lab-App-2026!&gt;';</span><span class="code-line"></span><span class="code-line">GRANT SELECT, INSERT, UPDATE, DELETE,</span><span class="code-line">      CREATE VIEW, SHOW VIEW,</span><span class="code-line">      CREATE ROUTINE, ALTER ROUTINE, EXECUTE,</span><span class="code-line">      TRIGGER, EVENT</span><span class="code-line">ON servicehub_logic_lab.* TO 'logic_owner'@'127.0.0.1';</span><span class="code-line"></span><span class="code-line">-- logic_app intentionally starts with no base-table privileges.</span><span class="code-line">SHOW GRANTS FOR 'logic_owner'@'127.0.0.1';</span><span class="code-line">SHOW GRANTS FOR 'logic_app'@'127.0.0.1';</span></code></pre></div>
+<p>The lab separates <code>logic_owner</code>, which creates stored objects and has the required schema privileges, from <code>logic_app</code>, which begins with no direct table privileges. Connect with TCP to make host matching predictable:</p>
+<div class="code-window" data-code-block="" data-language="shell"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>shell · connect as the object owner</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">mysql -h 127.0.0.1 -u logic_owner -p</span></code></pre></div>
+<p>Enter the disposable password interactively. Do not put real passwords on a shell command line.</p></section>
+<section><h2>Create and inspect a simple updatable view</h2>
+<p>First create a one-table view that preserves a one-to-one mapping between view rows and base-table rows. Use <code>WITH CHECK OPTION</code> so writes performed through the view cannot move a row outside the view predicate.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · create a simple security-definer view</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">USE servicehub_logic_lab;</span><span class="code-line">CREATE SQL SECURITY DEFINER VIEW v_open_work_orders AS</span><span class="code-line">SELECT work_order_id,site_id,status,priority,summary,opened_at,closed_at</span><span class="code-line">FROM work_orders</span><span class="code-line">WHERE status IN ('open','waiting')</span><span class="code-line">WITH CASCADED CHECK OPTION;</span><span class="code-line"></span><span class="code-line">SHOW CREATE VIEW v_open_work_orders\G</span><span class="code-line">SELECT TABLE_SCHEMA,TABLE_NAME,CHECK_OPTION,IS_UPDATABLE,DEFINER,SECURITY_TYPE</span><span class="code-line">FROM INFORMATION_SCHEMA.VIEWS</span><span class="code-line">WHERE TABLE_SCHEMA='servicehub_logic_lab'</span><span class="code-line">  AND TABLE_NAME='v_open_work_orders';</span></code></pre></div>
+<p>Expected evidence: <code>IS_UPDATABLE</code> should be <code>YES</code> for this simple view, and <code>SECURITY_TYPE</code> should be <code>DEFINER</code>. The metadata proves how MySQL recorded the object; it does not by itself prove that a particular application account can use it.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · prove CHECK OPTION protects the view predicate</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">UPDATE v_open_work_orders</span><span class="code-line">SET priority=4</span><span class="code-line">WHERE work_order_id=1;</span><span class="code-line"></span><span class="code-line">-- This attempts to move a visible row outside the view predicate.</span><span class="code-line">UPDATE v_open_work_orders</span><span class="code-line">SET status='closed'</span><span class="code-line">WHERE work_order_id=1;</span><span class="code-line"></span><span class="code-line">SHOW WARNINGS;</span><span class="code-line">SELECT work_order_id,status,priority</span><span class="code-line">FROM v_open_work_orders</span><span class="code-line">ORDER BY work_order_id;</span></code></pre></div>
+<p>The first update is valid. The second should be rejected by the view check option because the changed row would no longer satisfy <code>status IN ('open','waiting')</code>. This is a view-level write constraint, not a replacement for base-table constraints or application authorization.</p></section>
+<section><h2>Updatable versus non-updatable views</h2>
+<p>MySQL can update a view only when it can map each changed view row back to one underlying row under the documented rules. Aggregation and grouping are a common boundary because a result row such as “site 1 has two open orders” is not one base row that can simply be updated.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · create and inspect a non-updatable aggregate view</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">CREATE VIEW v_status_counts AS</span><span class="code-line">SELECT site_id,status,COUNT(*) AS order_count</span><span class="code-line">FROM work_orders</span><span class="code-line">GROUP BY site_id,status;</span><span class="code-line"></span><span class="code-line">SELECT TABLE_NAME,IS_UPDATABLE,DEFINER,SECURITY_TYPE</span><span class="code-line">FROM INFORMATION_SCHEMA.VIEWS</span><span class="code-line">WHERE TABLE_SCHEMA='servicehub_logic_lab'</span><span class="code-line">ORDER BY TABLE_NAME;</span><span class="code-line"></span><span class="code-line">UPDATE v_status_counts</span><span class="code-line">SET order_count=99</span><span class="code-line">WHERE site_id=1 AND status='open';</span></code></pre></div>
+<p>Expected result: metadata reports the aggregate view as non-updatable, and the <code>UPDATE</code> fails. The failure is desirable: MySQL refuses to invent a meaning for writing an aggregate result back into multiple underlying rows.</p>
+<div class="table-wrap"><table class="data-table"><thead><tr><th>View property</th><th>What it means</th><th>What it does not mean</th></tr></thead><tbody><tr><td>IS_UPDATABLE=YES</td><td>The view definition passes MySQL updatability rules</td><td>Every INSERT/UPDATE is guaranteed to succeed; constraints and privileges can still reject it</td></tr><tr><td>SQL SECURITY DEFINER</td><td>Underlying privilege checks use the recorded definer context</td><td>The caller gains the definer account or can access arbitrary tables</td></tr><tr><td>SQL SECURITY INVOKER</td><td>Underlying privilege checks use the invoking account</td><td>The view becomes automatically safer; the invoker may now need direct underlying privileges</td></tr><tr><td>ALGORITHM=MERGE</td><td>MySQL attempts to merge eligible view text into the outer statement</td><td>The view is physically materialized or guaranteed faster</td></tr><tr><td>ALGORITHM=TEMPTABLE</td><td>The view result is processed through a temporary-table approach</td><td>The result is a persistent materialized view</td></tr><tr><td>ALGORITHM=UNDEFINED</td><td>MySQL chooses an applicable processing algorithm</td><td>The optimizer ignores the view definition</td></tr></tbody></table></div></section>
+<section><h2>Positive and negative authorization tests</h2>
+<p>Return to the administrator session and grant only <code>SELECT</code> on the definer-security view to the application account.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · grant the view, not the base table</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">GRANT SELECT ON servicehub_logic_lab.v_open_work_orders</span><span class="code-line">TO 'logic_app'@'127.0.0.1';</span><span class="code-line">SHOW GRANTS FOR 'logic_app'@'127.0.0.1';</span></code></pre></div>
+<p>Now connect as the application account and run both tests:</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · application authorization tests</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT USER() AS authenticated_identity,</span><span class="code-line">       CURRENT_USER() AS privilege_identity,</span><span class="code-line">       CONNECTION_ID() AS connection_id;</span><span class="code-line">SHOW SESSION STATUS LIKE 'Ssl_cipher';</span><span class="code-line"></span><span class="code-line">SELECT work_order_id,status,summary</span><span class="code-line">FROM servicehub_logic_lab.v_open_work_orders</span><span class="code-line">ORDER BY work_order_id;</span><span class="code-line"></span><span class="code-line">-- Negative test: no direct base-table SELECT was granted.</span><span class="code-line">SELECT work_order_id,status</span><span class="code-line">FROM servicehub_logic_lab.work_orders;</span></code></pre></div>
+<p>The view query should succeed while direct table access should be denied. An empty <code>Ssl_cipher</code> on a loopback-only lab means the session is not using TLS; it does not invalidate the privilege test. Production transport policy is a separate security requirement covered later in the course.</p>
+<p>Next create an invoker-security twin as <code>logic_owner</code>, then let the administrator grant it to the app:</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · compare INVOKER semantics</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">-- Run as logic_owner.</span><span class="code-line">CREATE SQL SECURITY INVOKER VIEW v_open_work_orders_invoker AS</span><span class="code-line">SELECT work_order_id,site_id,status,priority,summary</span><span class="code-line">FROM work_orders</span><span class="code-line">WHERE status IN ('open','waiting');</span><span class="code-line"></span><span class="code-line">-- Run as admin.</span><span class="code-line">GRANT SELECT ON servicehub_logic_lab.v_open_work_orders_invoker</span><span class="code-line">TO 'logic_app'@'127.0.0.1';</span><span class="code-line"></span><span class="code-line">-- Run as logic_app. This should fail because the app still lacks base-table SELECT.</span><span class="code-line">SELECT * FROM servicehub_logic_lab.v_open_work_orders_invoker;</span></code></pre></div>
+<p>This comparison demonstrates the security boundary directly. Do not “fix” the failure by granting <code>SELECT ON servicehub_logic_lab.*</code>; that would erase the least-privilege design being tested.</p></section>
+<section><h2>The wrong deployment pattern: orphaned or accidental definers</h2>
+<p>A common deployment mistake is exporting a view from one environment with a human administrator as its definer and restoring it elsewhere. Modern MySQL tightens definer handling, but the core operational lesson remains: definers are part of the object contract. Deleting or renaming the account, or restoring an object with an inappropriate definer, can break execution or create a privilege boundary nobody intended.</p>
+<div class="callout warning"><strong>Safer deployment pattern</strong><p>Use a dedicated, non-human object-owner account; create objects through a controlled deployment identity; review SQL SECURITY explicitly; grant callers only the view/routine privileges they need; and include DEFINER/SECURITY_TYPE in schema-drift review. Do not treat definers as harmless dump-file decoration.</p></div></section>
+<section><h2>Dependency management: views can become invalid</h2>
+<p>MySQL freezes a view definition at creation. Adding a new base-table column does not silently expand a <code>SELECT *</code> view definition, and removing a referenced column can invalidate dependent views. Demonstrate this only on a disposable copy:</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · break and repair a disposable dependency</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">CREATE TABLE wo_dependency_demo LIKE work_orders;</span><span class="code-line">INSERT INTO wo_dependency_demo SELECT * FROM work_orders;</span><span class="code-line">CREATE VIEW v_dependency_demo AS</span><span class="code-line">SELECT work_order_id,summary,status FROM wo_dependency_demo;</span><span class="code-line"></span><span class="code-line">-- Migrate the base table in two explicit steps. The stored view definition</span><span class="code-line">-- still references the old column name and therefore becomes invalid.</span><span class="code-line">ALTER TABLE wo_dependency_demo ADD COLUMN description VARCHAR(180) NULL;</span><span class="code-line">UPDATE wo_dependency_demo SET description=summary;</span><span class="code-line">ALTER TABLE wo_dependency_demo DROP COLUMN summary;</span><span class="code-line"></span><span class="code-line">-- Expected to fail because the stored view definition references summary.</span><span class="code-line">SELECT * FROM v_dependency_demo;</span><span class="code-line">CHECK TABLE v_dependency_demo;</span><span class="code-line"></span><span class="code-line">CREATE OR REPLACE VIEW v_dependency_demo AS</span><span class="code-line">SELECT work_order_id,description AS summary,status</span><span class="code-line">FROM wo_dependency_demo;</span><span class="code-line">SELECT * FROM v_dependency_demo ORDER BY work_order_id;</span><span class="code-line"></span><span class="code-line">DROP VIEW v_dependency_demo;</span><span class="code-line">DROP TABLE wo_dependency_demo;</span></code></pre></div>
+<p>The repair is not “restart MySQL.” The dependency contract changed, so the view definition must change in the same versioned migration. This is why view definitions belong in source control next to schema changes.</p></section>
+<section><h2>Hands-on lab acceptance checklist</h2>
+<ul><li><code>SHOW CREATE VIEW</code> and <code>INFORMATION_SCHEMA.VIEWS</code> agree on definer/security metadata.</li><li>The simple view is updatable; the grouped view is not.</li><li><code>WITH CHECK OPTION</code> rejects a write that would violate the view predicate.</li><li><code>logic_app</code> can read the definer-security view but cannot directly read <code>work_orders</code>.</li><li>The invoker-security view fails for <code>logic_app</code> until the underlying privilege is intentionally granted.</li><li>A disposable broken dependency is diagnosed and repaired by replacing the view definition.</li></ul>
+<div class="checkpoint"><h3>Knowledge check</h3><ol><li>Does a MySQL view store a permanent copy of its result rows?</li><li>What is the default SQL SECURITY mode for a MySQL view?</li><li>Why can a grouped COUNT view not normally be updated?</li><li>What does WITH CHECK OPTION protect?</li><li>Why record the DEFINER in schema review?</li></ol><details class="answer-toggle"><summary>Reveal answers</summary><div><ol><li>No. A normal view stores a query definition and presents a virtual table; TEMPTABLE processing is not a persistent materialized-view feature.</li><li>DEFINER.</li><li>A grouped result row does not have the required one-to-one mapping to one underlying base-table row.</li><li>It rejects writes through an updatable view that would produce rows outside the view predicate, subject to LOCAL/CASCADED scope.</li><li>The definer controls privilege context for definer-security objects and can become an availability or privilege-escalation risk if unmanaged.</li></ol></div></details></div></section>
+<section><h2>Production judgment and next step</h2>
+<p>Views are strongest when they expose a stable relational contract, centralize a safe projection/predicate, or create a deliberate privilege boundary. They are weaker when nested deeply, used to hide expensive queries, or left with unmanaged definers and undocumented dependencies. Monitor view query plans like ordinary SQL, test authorization with real low-privilege accounts, and migrate view definitions together with base tables.</p>
+<p>Lesson 2 moves from stored queries to stored <em>programs</em>: procedures and functions with parameters, control flow, error handlers, and diagnostics.</p>
+<h3>Authoritative references</h3><ul><li><a href="https://dev.mysql.com/doc/refman/8.4/en/create-view.html" rel="noopener" target="_blank">MySQL 8.4 — CREATE VIEW</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/view-algorithms.html" rel="noopener" target="_blank">MySQL 8.4 — View Processing Algorithms</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/view-updatability.html" rel="noopener" target="_blank">MySQL 8.4 — Updatable and Insertable Views</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/information-schema-views-table.html" rel="noopener" target="_blank">MySQL 8.4 — INFORMATION_SCHEMA VIEWS</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/stored-objects-security.html" rel="noopener" target="_blank">MySQL 8.4 — Stored Object Access Control</a></li></ul></section>
+</div>
+<nav aria-label="Lesson navigation" class="lesson-nav"><a class="prev" href="../Chapter09/Lesson5.html"><small>Previous lesson</small><strong>Plan Regressions, Optimizer Hints, Invisible Indexes, and Evidence-Driven Tuning</strong></a><a class="next" href="Lesson2.html"><small>Next lesson</small><strong>Stored Procedures, Functions, Parameters, Condition Handlers, and Diagnostics</strong></a></nav>
+</article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>If these tutorials save you time, a small donation supports new lessons, technical review, diagrams, examples, and long-term maintenance.</p>
+<div aria-label="Author links" class="social-row">
+<a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head"><span>ETH</span><small>Ethereum / ERC-20 only</small></div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
+<button class="button secondary compact" data-copy-donation="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy address</button>
+<p>Send only assets compatible with the Ethereum/ERC-20 network. Do not send TRC-20/TRON assets.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div><strong>Big Data Academy</strong><p>A free, prerequisite-aware path from SQL foundations to distributed data systems.</p></div>
+<div><a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a></div>
+<small>Created and maintained by <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> · © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Use MySQL GTIDs as transaction identity rather than file-position bookkeeping, configure auto-positioning, compare executed sets, detect an errant transaction, and choose safe reprovisioning over history-reset shortcuts." name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>GTID-Based Replication, Auto-Positioning, Failover Readiness, and Errant Transactions | Big Data Academy</title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+<script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+        chtml: { scale: 1, matchFontHeight: false },
+      };
+    </script>
+<script defer="" id="MathJax-script" onerror="this.onerror=null;this.src='https://unpkg.com/mathjax@3.2.2/es5/tex-chtml.js';" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
+<span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
+<span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
+</a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a>
+<a class="is-active" href="../../../index.html#courses">Courses</a>
+<a href="../../../index.html#method">Method</a>
+<a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg></button>
+<button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu=""><a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a></nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">MYSQL</span><div><small>Course 04</small><strong>MySQL</strong></div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">×</button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 110 lessons..." type="search"/></label>
+<nav aria-label="MySQL curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter"><summary><span>01</span>MySQL Platform Foundations, Editions, Releases, and Lab Setup</summary><div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What MySQL Is: Server Architecture, Client/Server Boundaries, and Common Workloads</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Community vs Enterprise Capabilities, Licensing Awareness, and Deployment Choices</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>LTS vs Innovation Releases: Version Selection, Support Windows, and Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Install MySQL on Windows, Linux, Containers, and Verify the Toolchain</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build a Reproducible Course Lab with Sample Data, Accounts, and Safety Conventions</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>02</span>Server Architecture, Processes, Files, Connections, and Configuration</summary><div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>mysqld Startup, Data Directory, Configuration Files, and Option Precedence</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Connection Lifecycle, Threads, Sessions, Timeouts, and Resource Consumption</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>System Variables, Status Variables, Dynamic Configuration, and SET PERSIST</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Character Sets, Collations, Time Zones, Locales, and Server Defaults</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Configuration Validation, Startup Failures, Error Logs, and a Baseline Server Profile</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>03</span>Schemas, Tables, Data Types, Keys, Constraints, and SQL Modes</summary><div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>Databases and Schemas in MySQL: Namespaces, Metadata, and Object Ownership</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Numeric, String, Temporal, JSON, Spatial, and Binary Data Types</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK, DEFAULT, and Generated Columns</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>AUTO_INCREMENT, Surrogate vs Natural Keys, and Identifier Design</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>SQL Modes, Strictness, Implicit Conversion, Truncation, and Data-Quality Boundaries</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>04</span>Core SQL Querying: Filtering, Joins, Subqueries, CTEs, and Set Operations</summary><div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>SELECT Execution Basics, Projection, Predicates, NULL Semantics, and Ordering</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>INNER, OUTER, CROSS, and Self Joins with Cardinality Reasoning</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>Scalar, Correlated, EXISTS, IN, and Derived-Table Subqueries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Common Table Expressions, Recursive CTEs, and Hierarchical Queries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>UNION, INTERSECT, EXCEPT, Query Composition, and Readability Patterns</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>05</span>Advanced SQL: Aggregation, Window Functions, JSON, and Analytical Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>GROUP BY, HAVING, Functional Dependence, ROLLUP, and Aggregation Design</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Window Frames, Ranking, Running Totals, Gaps-and-Islands, and Top-N per Group</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>JSON Documents, Paths, JSON_TABLE, Indexable JSON Patterns, and Validation</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Date/Time, String, Regular Expression, Numeric, and Conditional Functions</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Reporting Queries, Cohort-Style Analysis, Pivots by Conditional Aggregation, and Reusable Views</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>06</span>Data Modification, Transactions, Locking, and Concurrency Semantics</summary><div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>INSERT, Multi-Row Writes, INSERT ... SELECT, and Generated Values</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>UPDATE, DELETE, Multi-Table DML, and Guardrails Against Wide Changes</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Transactions, Autocommit, COMMIT, ROLLBACK, SAVEPOINT, and Error Handling</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Isolation Levels, Consistent Reads, Locking Reads, MVCC, and Anomalies</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Deadlocks, Lock Waits, Retry Design, Idempotency, and Concurrency Testing</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>07</span>InnoDB Storage Architecture and Transaction Internals</summary><div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>InnoDB Tablespaces, Pages, Extents, Segments, and Row Formats</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Clustered Indexes, Secondary Indexes, Hidden Columns, and Record Layout</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Buffer Pool Architecture, Change Buffer, Adaptive Hashing, and Caching Behavior</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Redo Logs, Undo Logs, Doublewrite, Checkpoints, and Crash Recovery</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Purge, History List, Long Transactions, MVCC Cleanup, and Storage Health</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>08</span>Index Engineering and Access Path Design</summary><div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>B-Tree Index Structure, Selectivity, Cardinality, and Leftmost-Prefix Rules</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>Composite Index Ordering, Covering Indexes, Prefix Indexes, and Redundant Indexes</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Functional, Multi-Valued, FULLTEXT, and Spatial Index Use Cases</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>Index Condition Pushdown, Loose/Tight Index Scans, and Skip-Scan Concepts</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Designing an Index Portfolio from Workload Evidence and Write-Cost Constraints</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>09</span>Optimizer, EXPLAIN, Statistics, and Query Plan Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>How the MySQL Optimizer Builds Access Paths, Join Orders, and Cost Estimates</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>EXPLAIN, EXPLAIN ANALYZE, FORMAT=TREE/JSON, and Iterator Timing</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Histograms, Persistent Statistics, Cardinality Errors, and ANALYZE TABLE</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Join Algorithms, Semijoin/Antijoin Transformations, Derived Tables, and Materialization</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Plan Regressions, Optimizer Hints, Invisible Indexes, and Evidence-Driven Tuning</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>10</span>Stored Programs, Views, Triggers, Events, and Server-Side Logic</summary><div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Views, Updatability, SQL SECURITY, Definer Context, and Dependency Management</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Stored Procedures, Functions, Parameters, Condition Handlers, and Diagnostics</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Triggers, OLD/NEW Rows, Ordering, Auditing Uses, and Hidden Coupling Risks</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Event Scheduler, Recurring Maintenance Jobs, Failure Handling, and Observability</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>When Server-Side Logic Helps—and When Application Logic Is the Better Boundary</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>11</span>Users, Roles, Authentication, Authorization, and Least Privilege</summary><div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Accounts, Host Matching, Authentication Plugins, Password Policy, and Account Lifecycle</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Privileges, Roles, DEFAULT ROLE, Dynamic Privileges, and Delegated Administration</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Object-Level vs Administrative Privilege Design and Separation of Duties</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>PROXY, DEFINER, SQL SECURITY, Stored Objects, and Privilege-Escalation Risks</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Design and Audit a Least-Privilege Access Model for Applications and Operators</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>12</span>Encryption, TLS, Secrets, Auditing, and Security Hardening</summary><div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>TLS for Client Connections, Certificate Validation, and Secure Transport Enforcement</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Data-at-Rest Encryption Concepts, Key Management Boundaries, and Backup Encryption</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Secrets Handling for Applications, Option Files, Environment Variables, and Rotation</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>Audit Logging Options, General/Slow Logs, Privacy, and Forensic Considerations</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Hardening Checklist: Network Exposure, Local Files, Plugins, Accounts, and Patch Discipline</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>13</span>Backup, Restore, Binary Logs, and Point-in-Time Recovery</summary><div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>Logical vs Physical Backup: mysqldump, MySQL Shell, Snapshots, and Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>Consistent Backups with Transactions, Locks, Replication Coordinates, and Large Datasets</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>Binary Log Formats, GTIDs, Retention, and Recovery Prerequisites</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Point-in-Time Recovery from Full Backup plus Binary Logs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Restore Testing, RPO/RTO Measurement, Corruption Drills, and Backup Automation</a>
+</div></details>
+<details class="sidebar-chapter" open=""><summary><span>14</span>Asynchronous Replication, GTIDs, Topologies, and Operational Safety</summary><div>
+<a class="sidebar-lesson" href="Lesson1.html"><span>01</span>Source/Replica Architecture, Binary Log Flow, Relay Logs, and Replication Threads</a>
+<a class="sidebar-lesson is-current" href="Lesson2.html"><span>02</span>GTID-Based Replication, Auto-Positioning, Failover Readiness, and Errant Transactions<i>Current</i></a>
+<a class="sidebar-lesson" href="Lesson3.html"><span>03</span>Statement, Row, and Mixed Logging Semantics with Determinism Risks</a>
+<a class="sidebar-lesson" href="Lesson4.html"><span>04</span>Replication Filters, Delayed Replicas, Read Scaling, and Reporting Workloads</a>
+<a class="sidebar-lesson" href="Lesson5.html"><span>05</span>Lag Diagnosis, Broken Replication, Data Drift, Re-Synchronization, and Promotion Runbooks</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>15</span>Group Replication, InnoDB Cluster, Router, and High Availability</summary><div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Consensus-Oriented Group Replication Concepts, Membership, Quorum, and Failure Modes</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Single-Primary vs Multi-Primary Modes, Conflict Detection, and Workload Constraints</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>MySQL Shell AdminAPI, InnoDB Cluster Lifecycle, Recovery, and Rejoin Operations</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>MySQL Router, Connection Routing, Read/Write Splitting, and Application Failover</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Failure Injection, Split-Brain Avoidance, Maintenance, Upgrades, and HA Acceptance Tests</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>16</span>Performance Schema, sys Schema, Logs, Metrics, and Observability</summary><div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Performance Schema Instruments, Consumers, Events, and Measurement Overhead</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>sys Schema Views for Sessions, Statements, Waits, I/O, Memory, and Index Usage</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>Slow Query Log, Error Log, General Log, and Structured Diagnostic Workflows</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>Key OS and MySQL Metrics: CPU, I/O, Buffer Pool, Connections, Temp Tables, and Redo</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Build a Production Dashboard, Alert Thresholds, Baselines, and Incident Timelines</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>17</span>Memory, I/O, Temporary Work, and Server Performance Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Buffer Pool Sizing, Working Sets, Dirty Pages, Flushing, and Memory Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Per-Connection Buffers, Sort/Join Buffers, Memory Multipliers, and OOM Risk</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Temporary Tables, Spill to Disk, tmpdir, Internal Temp Engines, and Query Rewrite</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Redo Capacity, I/O Capacity, Flush Methods, Storage Latency, and Checkpoint Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Benchmarking Methodology, Warm vs Cold Cache, Concurrency, Percentiles, and Repeatability</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>18</span>Partitioning, Large Tables, Archiving, and Data Lifecycle</summary><div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Partitioning Concepts, Supported Strategies, Partition Pruning, and Design Constraints</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Partition Keys, Unique-Key Rules, Hot/Cold Data, and Operational Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Online DDL, Instant/In-Place/Copy Algorithms, Locks, and Schema Change Planning</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Archiving, Purging, Retention Jobs, and Avoiding Massive Delete Pathologies</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Managing Multi-Terabyte Tables: Capacity, Maintenance Windows, and Growth Forecasts</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>19</span>Application Integration, Connectors, Pools, ORMs, and Reliability Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>Connection Strings, TLS, Timeouts, Pools, and Session Initialization Contracts</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Prepared Statements, Parameter Binding, SQL Injection Defense, and Type Mapping</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Transaction Boundaries in Application Code, Retries, Idempotency, and Lost Connections</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>ORM Query Generation, N+1 Problems, Pagination, Bulk Writes, and Plan Visibility</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Health Checks, Graceful Degradation, Read Replicas, Migrations, and Deployment Coordination</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>20</span>Schema Migration, Upgrades, Compatibility, and Zero/Low-Downtime Change</summary><div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Versioned Schema Migrations, Expand/Contract Patterns, and Backward Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Online Schema Change Strategies, Native DDL Capabilities, and External Tool Concepts</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Pre-Upgrade Checks, Deprecated Features, SQL Modes, Collations, and Authentication Changes</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Rolling Upgrade Considerations for Replication and High-Availability Topologies</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Rollback Planning, Data Validation, Canaries, and Post-Upgrade Performance Verification</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>21</span>Specialized MySQL Capabilities: NDB, Document Store, Spatial, and Search</summary><div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>NDB Cluster Architecture, Distribution, Availability, and When It Fits</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>X Protocol, MySQL Shell, Document Store Concepts, and CRUD APIs</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Spatial Types, SRIDs, Spatial Functions, R-Tree Indexing, and GIS Workloads</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>FULLTEXT Search, Tokenization, Relevance, Stopwords, and Search-System Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>Choosing Native Features vs Dedicated Systems for Search, Analytics, and Distributed Scale</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>22</span>Production Capstone: Design, Secure, Scale, Tune, and Recover MySQL</summary><div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Define SLOs, Workload, Data Model, Capacity Forecast, and Architecture Decision Record</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>Build the Production Schema, Index Portfolio, Security Model, and Migration Pipeline</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>Load Test, Capture Plans, Tune Queries/Server, and Establish Performance Baselines</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Implement Backups, PITR, Replication/HA, Monitoring, Alerts, and Incident Runbooks</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Execute Failure/Recovery Drills and Defend the Final MySQL Production Design</a>
+</div></details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar"><button data-sidebar-open="" type="button"><span>Course navigation</span><span>Chapter 14 · Lesson 02</span></button></div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs"><a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">MySQL</a><span>/</span><span>Chapter 14 · Lesson 02</span></nav>
+<header class="lesson-header"><p class="eyebrow">Chapter 14 · Asynchronous Replication, GTIDs, Topologies, and Operational Safety</p><h1>GTID-Based Replication, Auto-Positioning, Failover Readiness, and Errant Transactions</h1><p>Use MySQL GTIDs as transaction identity rather than file-position bookkeeping, configure auto-positioning, compare executed sets, detect an errant transaction, and choose safe reprovisioning over history-reset shortcuts.</p><div class="lesson-meta"><span>Intermediate → Advanced</span><span>150–210 min</span><span>GTID + errant transaction lab</span><span>MySQL Community Server 8.4.10 LTS · GTID mode ON</span><span>replication / GTID</span><span>Last reviewed: August 2026</span></div></header>
+<nav aria-label="On this page" class="lesson-toc"><strong>On this page</strong><ol data-generated-toc=""></ol></nav>
+<div class="lesson-content">
+<section><h2>Learning outcomes</h2><p>File names such as <code>mysql-bin.000123</code> and byte positions are useful, but they describe storage locations rather than transaction identity. A <strong>Global Transaction Identifier (GTID)</strong> gives each binary-logged transaction a topology-wide identity. That lets a replica tell a candidate source “these are the transactions I already executed” and request what it is missing. This lesson turns that idea into failover reasoning.</p><div class="objectives"><div class="objective"><span>01</span><p>Explain a GTID as source UUID plus transaction sequence number and distinguish individual GTIDs from GTID sets.</p></div><div class="objective"><span>02</span><p>Use gtid_executed, gtid_purged, GTID_SUBSET(), and GTID_SUBTRACT() to compare topology histories.</p></div><div class="objective"><span>03</span><p>Explain SOURCE_AUTO_POSITION without treating it as automatic data provisioning.</p></div><div class="objective"><span>04</span><p>Create and detect a disposable errant transaction on a replica.</p></div><div class="objective"><span>05</span><p>Choose rebuild/reprovision when history is unsafe instead of resetting or forging GTID history casually.</p></div></div></section>
+<section><h2>GTID identity versus binary-log location</h2><p>A GTID looks conceptually like <code>source_uuid:transaction_number</code>. The UUID identifies the server on which the transaction originally committed; the sequence number identifies that transaction within the source's generated sequence. A <strong>GTID set</strong> compactly represents many such identifiers and ranges. <code>@@GLOBAL.gtid_executed</code> records transactions this server has executed; <code>@@GLOBAL.gtid_purged</code> records executed GTIDs whose binary-log events are no longer present locally.</p><div class="table-wrap"><table class="data-table"><thead><tr><th>Question</th><th>File/position answer</th><th>GTID answer</th></tr></thead><tbody><tr><td>Where did I read from?</td><td>mysql-bin.000042:981233</td><td>not the primary purpose</td></tr><tr><td>Which transaction is this?</td><td>not globally stable identity</td><td>UUID:sequence</td></tr><tr><td>What has this replica executed?</td><td>track positions/channel metadata</td><td>gtid_executed set</td></tr><tr><td>What should a new source send?</td><td>calculate from saved positions</td><td>set difference during auto-positioning</td></tr></tbody></table></div></section>
+<section><h2>Observe the current GTID state</h2><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · SOURCE and REPLICA — inspect the GTID contract</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SHOW GLOBAL VARIABLES WHERE Variable_name IN</span><span class="code-line">  ('gtid_mode','enforce_gtid_consistency','server_uuid','server_id');</span><span class="code-line"></span><span class="code-line">SELECT @@GLOBAL.gtid_executed AS executed,</span><span class="code-line">       @@GLOBAL.gtid_purged   AS purged;</span><span class="code-line"></span><span class="code-line">SHOW REPLICA STATUS\G</span></code></pre></div><p>With <code>SOURCE_AUTO_POSITION=1</code>, the replica reconnects using GTID history instead of a manually supplied source log file/position. The source determines which transactions the replica lacks. This is powerful during source changes, but it cannot manufacture missing history: if the replica needs a GTID whose event has already been purged from the candidate source, you need another source or a new provisioning operation.</p></section>
+<section><h2>Use set arithmetic for failover readiness</h2><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · compare two captured GTID sets safely</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">-- On the replica, compare source-originated transactions received</span><span class="code-line">-- with transactions this server has actually executed.</span><span class="code-line">SET @received = (</span><span class="code-line">  SELECT RECEIVED_TRANSACTION_SET</span><span class="code-line">  FROM performance_schema.replication_connection_status</span><span class="code-line">  WHERE CHANNEL_NAME=''</span><span class="code-line">);</span><span class="code-line"></span><span class="code-line">SELECT GTID_SUBTRACT(@received, @@GLOBAL.gtid_executed) AS received_not_yet_executed,</span><span class="code-line">       GTID_SUBTRACT(@@GLOBAL.gtid_executed, @received) AS executed_not_received;</span><span class="code-line"></span><span class="code-line">-- Also capture @@GLOBAL.gtid_executed on the source in a second session</span><span class="code-line">-- when making an actual promotion decision.</span></code></pre></div><p>For a simple one-source topology with a read-only replica, a normal caught-up replica should contain the source's required executed history and should not carry unexplained local transactions. In richer topologies, sets can legitimately include transactions from multiple origins, so compare against the intended topology—not a simplistic string-equality rule.</p></section>
+<section><h2>Errant transactions: a replica can have history the source never had</h2><p>An <strong>errant transaction</strong> is a locally executed GTID on a server that should have been receiving that history from elsewhere. It may be a harmless administrator test, or it may represent real data divergence. Either way, it complicates promotion and rejoin decisions because GTID auto-positioning assumes transaction identities describe meaningful shared history.</p><div class="callout warning"><strong>Disposable topology only</strong><p>The next commands intentionally create divergence. Never perform this on a production replica merely to “see what happens.”</p></div><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · REPLICA — create one controlled local GTID</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">STOP REPLICA SQL_THREAD;</span><span class="code-line">SET GLOBAL super_read_only = OFF;</span><span class="code-line"></span><span class="code-line">CREATE DATABASE IF NOT EXISTS servicehub_errant_lab;</span><span class="code-line">CREATE TABLE IF NOT EXISTS servicehub_errant_lab.note (</span><span class="code-line">  id INT PRIMARY KEY,</span><span class="code-line">  note VARCHAR(100) NOT NULL</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line">INSERT INTO servicehub_errant_lab.note VALUES (1,'intentional replica-only transaction');</span><span class="code-line"></span><span class="code-line">SET GLOBAL super_read_only = ON;</span><span class="code-line">START REPLICA SQL_THREAD;</span><span class="code-line"></span><span class="code-line">SELECT @@GLOBAL.gtid_executed AS replica_gtids;</span></code></pre></div><p>Because this lab replica began empty and has received the source history through one channel, its <code>RECEIVED_TRANSACTION_SET</code> is a useful local baseline for detecting the intentionally local transaction:</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · REPLICA — detect executed GTIDs that were not received from the source</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SET @received = (</span><span class="code-line">  SELECT RECEIVED_TRANSACTION_SET</span><span class="code-line">  FROM performance_schema.replication_connection_status</span><span class="code-line">  WHERE CHANNEL_NAME=''</span><span class="code-line">);</span><span class="code-line">SELECT GTID_SUBTRACT(@@GLOBAL.gtid_executed, @received)</span><span class="code-line">       AS executed_not_received_from_source;</span></code></pre></div><p>A nonempty result is evidence that the replica has executed GTIDs outside the source set. The corresponding data might or might not overlap ServiceHub data. The operator must investigate both transaction identity and data effects.</p></section>
+<section><h2>The tempting but unsafe “fixes”</h2><div class="callout danger"><strong>Do not reset history to make the screen look clean</strong><p>Commands that reset binary-log/GTID state, manually inject empty GTIDs, skip transactions, or edit replication metadata can hide evidence while leaving data divergent. They are recovery tools for carefully analyzed cases, not routine cleanup.</p></div>
+<p>For this disposable lab, the safest repair is to destroy and reprovision the replica from a known source state. Because the source still retains the complete small lab history, an empty replacement replica can use GTID auto-positioning. In production, a new backup, MySQL Clone, or another known-good provisioning source may be required if necessary binary logs have expired.</p><div class="code-window" data-code-block="" data-language="text"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>text · shell — rebuild only the disposable replica</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line"># The simplest safe reset for this fully disposable two-node lab</span><span class="code-line"># is to destroy BOTH lab volumes and rebuild from the documented setup.</span><span class="code-line">docker compose down -v</span><span class="code-line">docker compose up -d</span><span class="code-line"></span><span class="code-line"># Re-run the Lesson 1 source schema/account setup, then configure</span><span class="code-line"># the replica with SOURCE_AUTO_POSITION=1 and verify GTID/data invariants.</span></code></pre></div></section>
+<section><h2>GTID auto-positioning is not provisioning</h2><p>Auto-positioning chooses which logged transactions to transmit; it does not copy an arbitrary current database image. A brand-new empty replica can catch up only when the source still retains all required transactions and the topology is small enough for that replay to be practical. Real systems commonly provision a baseline with a consistent backup or clone, then use GTIDs for incremental catch-up and future source changes.</p></section>
+<section><h2>What auto-positioning actually negotiates</h2><p>When a GTID replica connects with <code>SOURCE_AUTO_POSITION=1</code>, it does not ask for “the newest binary log.” It tells the source which GTIDs it already has. The source compares that history with transactions it can still provide and streams the missing ones. This changes failover from location bookkeeping to set reconciliation: the important question becomes which transactions exist on each server, not whether both happen to name a file <code>mysql-bin.000007</code>.</p><p>There are two separate failure classes. If the candidate replica is merely behind and the source still retains every missing GTID, auto-positioning can catch it up. If the source has already purged binary-log events for a GTID the replica needs, there is no magic network retry that reconstructs those row changes. The correct response is to find another source that still has the history or provision a new baseline from backup/clone and then resume GTID catch-up.</p><p>This is why binary-log retention is a topology parameter as well as a PITR parameter. A seven-day log window may be generous for a replica that is normally seconds behind, but maintenance, network isolation, or a failed disk can leave a node offline longer than expected. The retention policy must match the longest credible outage you want a replica to catch up from without reprovisioning.</p><div class="table-wrap"><table class="data-table"><thead><tr><th>Condition</th><th>Meaning</th><th>Safe next step</th></tr></thead><tbody><tr><td>Replica lacks GTIDs; source still has events</td><td>ordinary lag/catch-up</td><td>keep source fenced appropriately and let auto-position stream missing history</td></tr><tr><td>Replica lacks GTIDs; source purged them</td><td>history gap</td><td>provision from backup/clone or another complete source</td></tr><tr><td>Replica has extra unexplained GTIDs</td><td>possible errant history</td><td>investigate data effects; do not promote/rejoin blindly</td></tr><tr><td>Sets match but business data differs</td><td>historical drift or non-replicated change</td><td>treat as data-integrity incident; GTID equality alone is insufficient</td></tr></tbody></table></div></section><section><h2>Provisioning and replication are different operations</h2><p>A replica needs both a <strong>baseline image</strong> and a <strong>change stream</strong>. In this tiny lab, an empty replica can replay the source's complete retained history because only a small number of transactions exist. Production systems usually provision the current database state first, using a consistent backup or MySQL Clone where appropriate, and only then use replication to transfer changes after that point.</p><p>A common operational mistake is to configure <code>SOURCE_AUTO_POSITION=1</code> on a server whose data was copied from an unknown time and assume GTID negotiation will repair arbitrary differences. It cannot infer which rows were copied incorrectly or whether local writes occurred with binary logging disabled. Provisioning needs its own provenance: backup boundary, GTID metadata, checksums/business validation, tool versions, and a documented restore/clone procedure.</p><p>After provisioning, wait for the replica to execute everything it has received before evaluating it as a failover candidate. On the default channel, the following creates a local catch-up barrier without inventing file positions.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title">sql · REPLICA — wait for all currently received GTIDs to execute</div><button class="copy-code" data-copy-code="" type="button">Copy</button></div><pre><code><span class="code-line">SET @received = (</span><span class="code-line">  SELECT RECEIVED_TRANSACTION_SET</span><span class="code-line">  FROM performance_schema.replication_connection_status</span><span class="code-line">  WHERE CHANNEL_NAME=''</span><span class="code-line">);</span><span class="code-line">SELECT WAIT_FOR_EXECUTED_GTID_SET(@received, 10) AS caught_up_to_received;</span><span class="code-line"></span><span class="code-line">SELECT GTID_SUBTRACT(@received, @@GLOBAL.gtid_executed)</span><span class="code-line">       AS still_received_but_not_executed;</span></code></pre></div></section><section><h2>Source switch rehearsal: identity does not remove fencing</h2><p>GTIDs simplify choosing a start point when a replica changes sources, but they do not make failover coordination automatic. Imagine source A is unhealthy and replica B will become the writer. If A can still accept writes while applications are redirected to B, the topology can create two independent transaction histories. GTID uniqueness helps you detect those histories later; it does not prevent the split.</p><p>A controlled switch therefore begins with fencing or quiescing the old source, records its final reachable GTID state, confirms B has executed the accepted history, validates business invariants, and only then changes B's write policy. Any remaining replicas can be repointed with auto-positioning after their data/GTID relationship to the new source is understood.</p><p>The phrase <em>failover ready</em> should therefore mean more than <code>SOURCE_AUTO_POSITION=1</code>. It includes compatible data, known filter/delay policy, sufficient retained history, working credentials/TLS, no unexplained errant transactions, and a tested procedure for stopping the old writer.</p><div class="callout warning"><strong>GTIDs expose history; they do not choose authority</strong><p>When two writable servers diverge, the hard question is which business history is authoritative. Do not answer that by whichever GTID set is numerically larger.</p></div></section><section><h2>Production judgment</h2><p>Before failover, capture candidate GTID sets, source/replica worker state, lag evidence, and application invariants. After promotion, preserve the old source until you understand whether it contains transactions absent from the promoted candidate. Rejoining an old primary as a replica without this analysis can overwrite assumptions about which history is authoritative.</p><div class="checkpoint"><h3>Knowledge check</h3><ol><li>What does SOURCE_AUTO_POSITION=1 replace?</li><li>What does gtid_purged tell you?</li><li>How can GTID_SUBTRACT(replica, source) help?</li><li>Why is an errant GTID more than a cosmetic metadata difference?</li><li>What is the preferred lab repair after intentionally creating an errant transaction?</li></ol><details class="answer-toggle"><summary>Reveal answers</summary><div><ol><li>It replaces manual source binary-log file/position selection for GTID-based replication channels; it does not replace initial data provisioning.</li><li>It identifies executed GTIDs whose local binary-log events have already been purged, which matters when another server asks this server for missing history.</li><li>It can reveal GTIDs executed on the replica that are absent from the captured source set, a signal of possible local/errant history.</li><li>It represents a transaction identity that may correspond to replica-only data changes and can block safe rejoin/failover assumptions.</li><li>Rebuild/reprovision the disposable replica from known-good source history and verify GTID/data invariants rather than resetting or forging history.</li></ol></div></details></div></section>
+<section><h3>Authoritative references</h3><ul><li><a href="https://dev.mysql.com/doc/refman/8.4/en/replication-gtids.html" rel="noreferrer" target="_blank">MySQL 8.4 — Replication with GTIDs</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/replication-gtids-concepts.html" rel="noreferrer" target="_blank">MySQL 8.4 — GTID Format and Storage</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/replication-gtids-auto-positioning.html" rel="noreferrer" target="_blank">MySQL 8.4 — GTID Auto-Positioning</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/gtid-functions.html" rel="noreferrer" target="_blank">MySQL 8.4 — GTID Functions</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/clone-plugin-replication.html" rel="noreferrer" target="_blank">MySQL 8.4 — Cloning for Replication</a></li></ul></section>
+</div>
+<nav aria-label="Lesson navigation" class="lesson-nav"><a class="prev" href="Lesson1.html"><small>Previous lesson</small><strong>Source/Replica Architecture, Binary Log Flow, Relay Logs, and Replication Threads</strong></a><a class="next" href="Lesson3.html"><small>Next lesson</small><strong>Statement, Row, and Mixed Logging Semantics with Determinism Risks</strong></a></nav>
+</article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>If these tutorials save you time, a small donation supports new lessons, technical review, diagrams, examples, and long-term maintenance.</p>
+<div aria-label="Author links" class="social-row">
+<a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head"><span>ETH</span><small>Ethereum / ERC-20 only</small></div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
+<button class="button secondary compact" data-copy-donation="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy address</button>
+<p>Send only assets compatible with the Ethereum/ERC-20 network. Do not send TRC-20/TRON assets.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div><strong>Big Data Academy</strong><p>A free, prerequisite-aware path from SQL foundations to distributed data systems.</p></div>
+<div><a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a></div>
+<small>Created and maintained by <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> · © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>

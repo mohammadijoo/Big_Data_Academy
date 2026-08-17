@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Write rows predictably in MySQL: understand statement atomicity, generated identifiers, duplicate failures, warning handling, and why bounded batches beat folklore about “one huge INSERT.”" name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>INSERT, Multi-Row Writes, INSERT ... SELECT, and Generated Values | Big Data Academy</title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+<script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+        chtml: { scale: 1, matchFontHeight: false },
+      };
+    </script>
+<script defer="" id="MathJax-script" onerror="this.onerror=null;this.src='https://unpkg.com/mathjax@3.2.2/es5/tex-chtml.js';" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
+<span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
+<span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
+</a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a>
+<a class="is-active" href="../../../index.html#courses">Courses</a>
+<a href="../../../index.html#method">Method</a>
+<a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg></button>
+<button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu=""><a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a></nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">MYSQL</span><div><small>Course 04</small><strong>MySQL</strong></div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">×</button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 110 lessons..." type="search"/></label>
+<nav aria-label="MySQL curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter"><summary><span>01</span>MySQL Platform Foundations, Editions, Releases, and Lab Setup</summary><div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What MySQL Is: Server Architecture, Client/Server Boundaries, and Common Workloads</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Community vs Enterprise Capabilities, Licensing Awareness, and Deployment Choices</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>LTS vs Innovation Releases: Version Selection, Support Windows, and Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Install MySQL on Windows, Linux, Containers, and Verify the Toolchain</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build a Reproducible Course Lab with Sample Data, Accounts, and Safety Conventions</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>02</span>Server Architecture, Processes, Files, Connections, and Configuration</summary><div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>mysqld Startup, Data Directory, Configuration Files, and Option Precedence</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Connection Lifecycle, Threads, Sessions, Timeouts, and Resource Consumption</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>System Variables, Status Variables, Dynamic Configuration, and SET PERSIST</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Character Sets, Collations, Time Zones, Locales, and Server Defaults</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Configuration Validation, Startup Failures, Error Logs, and a Baseline Server Profile</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>03</span>Schemas, Tables, Data Types, Keys, Constraints, and SQL Modes</summary><div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>Databases and Schemas in MySQL: Namespaces, Metadata, and Object Ownership</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Numeric, String, Temporal, JSON, Spatial, and Binary Data Types</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK, DEFAULT, and Generated Columns</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>AUTO_INCREMENT, Surrogate vs Natural Keys, and Identifier Design</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>SQL Modes, Strictness, Implicit Conversion, Truncation, and Data-Quality Boundaries</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>04</span>Core SQL Querying: Filtering, Joins, Subqueries, CTEs, and Set Operations</summary><div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>SELECT Execution Basics, Projection, Predicates, NULL Semantics, and Ordering</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>INNER, OUTER, CROSS, and Self Joins with Cardinality Reasoning</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>Scalar, Correlated, EXISTS, IN, and Derived-Table Subqueries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Common Table Expressions, Recursive CTEs, and Hierarchical Queries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>UNION, INTERSECT, EXCEPT, Query Composition, and Readability Patterns</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>05</span>Advanced SQL: Aggregation, Window Functions, JSON, and Analytical Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>GROUP BY, HAVING, Functional Dependence, ROLLUP, and Aggregation Design</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Window Frames, Ranking, Running Totals, Gaps-and-Islands, and Top-N per Group</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>JSON Documents, Paths, JSON_TABLE, Indexable JSON Patterns, and Validation</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Date/Time, String, Regular Expression, Numeric, and Conditional Functions</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Reporting Queries, Cohort-Style Analysis, Pivots by Conditional Aggregation, and Reusable Views</a>
+</div></details>
+<details class="sidebar-chapter" open=""><summary><span>06</span>Data Modification, Transactions, Locking, and Concurrency Semantics</summary><div>
+<a class="sidebar-lesson is-current" href="Lesson1.html"><span>01</span>INSERT, Multi-Row Writes, INSERT ... SELECT, and Generated Values<i>Current</i></a>
+<a class="sidebar-lesson" href="Lesson2.html"><span>02</span>UPDATE, DELETE, Multi-Table DML, and Guardrails Against Wide Changes</a>
+<a class="sidebar-lesson" href="Lesson3.html"><span>03</span>Transactions, Autocommit, COMMIT, ROLLBACK, SAVEPOINT, and Error Handling</a>
+<a class="sidebar-lesson" href="Lesson4.html"><span>04</span>Isolation Levels, Consistent Reads, Locking Reads, MVCC, and Anomalies</a>
+<a class="sidebar-lesson" href="Lesson5.html"><span>05</span>Deadlocks, Lock Waits, Retry Design, Idempotency, and Concurrency Testing</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>07</span>InnoDB Storage Architecture and Transaction Internals</summary><div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>InnoDB Tablespaces, Pages, Extents, Segments, and Row Formats</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Clustered Indexes, Secondary Indexes, Hidden Columns, and Record Layout</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Buffer Pool Architecture, Change Buffer, Adaptive Hashing, and Caching Behavior</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Redo Logs, Undo Logs, Doublewrite, Checkpoints, and Crash Recovery</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Purge, History List, Long Transactions, MVCC Cleanup, and Storage Health</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>08</span>Index Engineering and Access Path Design</summary><div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>B-Tree Index Structure, Selectivity, Cardinality, and Leftmost-Prefix Rules</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>Composite Index Ordering, Covering Indexes, Prefix Indexes, and Redundant Indexes</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Functional, Multi-Valued, FULLTEXT, and Spatial Index Use Cases</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>Index Condition Pushdown, Loose/Tight Index Scans, and Skip-Scan Concepts</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Designing an Index Portfolio from Workload Evidence and Write-Cost Constraints</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>09</span>Optimizer, EXPLAIN, Statistics, and Query Plan Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>How the MySQL Optimizer Builds Access Paths, Join Orders, and Cost Estimates</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>EXPLAIN, EXPLAIN ANALYZE, FORMAT=TREE/JSON, and Iterator Timing</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Histograms, Persistent Statistics, Cardinality Errors, and ANALYZE TABLE</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Join Algorithms, Semijoin/Antijoin Transformations, Derived Tables, and Materialization</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Plan Regressions, Optimizer Hints, Invisible Indexes, and Evidence-Driven Tuning</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>10</span>Stored Programs, Views, Triggers, Events, and Server-Side Logic</summary><div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Views, Updatability, SQL SECURITY, Definer Context, and Dependency Management</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Stored Procedures, Functions, Parameters, Condition Handlers, and Diagnostics</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Triggers, OLD/NEW Rows, Ordering, Auditing Uses, and Hidden Coupling Risks</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Event Scheduler, Recurring Maintenance Jobs, Failure Handling, and Observability</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>When Server-Side Logic Helps—and When Application Logic Is the Better Boundary</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>11</span>Users, Roles, Authentication, Authorization, and Least Privilege</summary><div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Accounts, Host Matching, Authentication Plugins, Password Policy, and Account Lifecycle</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Privileges, Roles, DEFAULT ROLE, Dynamic Privileges, and Delegated Administration</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Object-Level vs Administrative Privilege Design and Separation of Duties</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>PROXY, DEFINER, SQL SECURITY, Stored Objects, and Privilege-Escalation Risks</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Design and Audit a Least-Privilege Access Model for Applications and Operators</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>12</span>Encryption, TLS, Secrets, Auditing, and Security Hardening</summary><div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>TLS for Client Connections, Certificate Validation, and Secure Transport Enforcement</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Data-at-Rest Encryption Concepts, Key Management Boundaries, and Backup Encryption</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Secrets Handling for Applications, Option Files, Environment Variables, and Rotation</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>Audit Logging Options, General/Slow Logs, Privacy, and Forensic Considerations</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Hardening Checklist: Network Exposure, Local Files, Plugins, Accounts, and Patch Discipline</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>13</span>Backup, Restore, Binary Logs, and Point-in-Time Recovery</summary><div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>Logical vs Physical Backup: mysqldump, MySQL Shell, Snapshots, and Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>Consistent Backups with Transactions, Locks, Replication Coordinates, and Large Datasets</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>Binary Log Formats, GTIDs, Retention, and Recovery Prerequisites</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Point-in-Time Recovery from Full Backup plus Binary Logs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Restore Testing, RPO/RTO Measurement, Corruption Drills, and Backup Automation</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>14</span>Asynchronous Replication, GTIDs, Topologies, and Operational Safety</summary><div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Source/Replica Architecture, Binary Log Flow, Relay Logs, and Replication Threads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>GTID-Based Replication, Auto-Positioning, Failover Readiness, and Errant Transactions</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Statement, Row, and Mixed Logging Semantics with Determinism Risks</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Replication Filters, Delayed Replicas, Read Scaling, and Reporting Workloads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Lag Diagnosis, Broken Replication, Data Drift, Re-Synchronization, and Promotion Runbooks</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>15</span>Group Replication, InnoDB Cluster, Router, and High Availability</summary><div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Consensus-Oriented Group Replication Concepts, Membership, Quorum, and Failure Modes</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Single-Primary vs Multi-Primary Modes, Conflict Detection, and Workload Constraints</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>MySQL Shell AdminAPI, InnoDB Cluster Lifecycle, Recovery, and Rejoin Operations</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>MySQL Router, Connection Routing, Read/Write Splitting, and Application Failover</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Failure Injection, Split-Brain Avoidance, Maintenance, Upgrades, and HA Acceptance Tests</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>16</span>Performance Schema, sys Schema, Logs, Metrics, and Observability</summary><div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Performance Schema Instruments, Consumers, Events, and Measurement Overhead</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>sys Schema Views for Sessions, Statements, Waits, I/O, Memory, and Index Usage</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>Slow Query Log, Error Log, General Log, and Structured Diagnostic Workflows</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>Key OS and MySQL Metrics: CPU, I/O, Buffer Pool, Connections, Temp Tables, and Redo</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Build a Production Dashboard, Alert Thresholds, Baselines, and Incident Timelines</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>17</span>Memory, I/O, Temporary Work, and Server Performance Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Buffer Pool Sizing, Working Sets, Dirty Pages, Flushing, and Memory Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Per-Connection Buffers, Sort/Join Buffers, Memory Multipliers, and OOM Risk</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Temporary Tables, Spill to Disk, tmpdir, Internal Temp Engines, and Query Rewrite</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Redo Capacity, I/O Capacity, Flush Methods, Storage Latency, and Checkpoint Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Benchmarking Methodology, Warm vs Cold Cache, Concurrency, Percentiles, and Repeatability</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>18</span>Partitioning, Large Tables, Archiving, and Data Lifecycle</summary><div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Partitioning Concepts, Supported Strategies, Partition Pruning, and Design Constraints</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Partition Keys, Unique-Key Rules, Hot/Cold Data, and Operational Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Online DDL, Instant/In-Place/Copy Algorithms, Locks, and Schema Change Planning</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Archiving, Purging, Retention Jobs, and Avoiding Massive Delete Pathologies</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Managing Multi-Terabyte Tables: Capacity, Maintenance Windows, and Growth Forecasts</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>19</span>Application Integration, Connectors, Pools, ORMs, and Reliability Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>Connection Strings, TLS, Timeouts, Pools, and Session Initialization Contracts</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Prepared Statements, Parameter Binding, SQL Injection Defense, and Type Mapping</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Transaction Boundaries in Application Code, Retries, Idempotency, and Lost Connections</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>ORM Query Generation, N+1 Problems, Pagination, Bulk Writes, and Plan Visibility</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Health Checks, Graceful Degradation, Read Replicas, Migrations, and Deployment Coordination</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>20</span>Schema Migration, Upgrades, Compatibility, and Zero/Low-Downtime Change</summary><div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Versioned Schema Migrations, Expand/Contract Patterns, and Backward Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Online Schema Change Strategies, Native DDL Capabilities, and External Tool Concepts</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Pre-Upgrade Checks, Deprecated Features, SQL Modes, Collations, and Authentication Changes</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Rolling Upgrade Considerations for Replication and High-Availability Topologies</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Rollback Planning, Data Validation, Canaries, and Post-Upgrade Performance Verification</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>21</span>Specialized MySQL Capabilities: NDB, Document Store, Spatial, and Search</summary><div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>NDB Cluster Architecture, Distribution, Availability, and When It Fits</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>X Protocol, MySQL Shell, Document Store Concepts, and CRUD APIs</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Spatial Types, SRIDs, Spatial Functions, R-Tree Indexing, and GIS Workloads</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>FULLTEXT Search, Tokenization, Relevance, Stopwords, and Search-System Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>Choosing Native Features vs Dedicated Systems for Search, Analytics, and Distributed Scale</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>22</span>Production Capstone: Design, Secure, Scale, Tune, and Recover MySQL</summary><div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Define SLOs, Workload, Data Model, Capacity Forecast, and Architecture Decision Record</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>Build the Production Schema, Index Portfolio, Security Model, and Migration Pipeline</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>Load Test, Capture Plans, Tune Queries/Server, and Establish Performance Baselines</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Implement Backups, PITR, Replication/HA, Monitoring, Alerts, and Incident Runbooks</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Execute Failure/Recovery Drills and Defend the Final MySQL Production Design</a>
+</div></details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar"><button data-sidebar-open="" type="button"><span>Course navigation</span><span>Chapter 02 · Lesson 05</span></button></div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs"><a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">MySQL</a><span>/</span><span>Chapter 06 · Lesson 01</span></nav>
+<header class="lesson-header"><p class="eyebrow">Chapter 06 · Data Modification, Transactions, Locking, and Concurrency Semantics</p><h1>INSERT, Multi-Row Writes, INSERT ... SELECT, and Generated Values</h1><p>Write rows predictably in MySQL: understand statement atomicity, generated identifiers, duplicate failures, warning handling, and why bounded batches beat folklore about “one huge INSERT.”</p><div class="lesson-meta"><span>Beginner</span><span>100–125 min</span><span>write ingestion lab</span><span>MySQL 8.4 LTS · current downloadable baseline 8.4.10</span><span>INSERT + generated values</span><span>Last reviewed: August 2026</span></div></header>
+<nav aria-label="On this page" class="lesson-toc"><strong>On this page</strong><ol data-generated-toc=""></ol></nav>
+<div class="lesson-content">
+<section><h2>Learning outcomes</h2>
+<p>Chapter 06 turns the course from mostly reading data into changing shared state safely. A write is not merely a command that “adds a row.” MySQL must validate the statement, acquire the necessary InnoDB locks, create undo and redo information, maintain indexes and constraints, allocate generated values, and either commit or roll back according to the transaction boundary.</p>
+<p>We use a disposable <code>servicehub_write_lab</code> database throughout the chapter. The domain is the same field-service setting used earlier: customers open work orders, technicians handle them, and parts inventory is shared by concurrent sessions. Lesson 1 establishes the write schema and concentrates on inserts before later lessons deliberately create contention.</p>
+<div class="objectives"><div class="objective"><span>01</span><p>Use single-row, multi-row, and INSERT ... SELECT forms while keeping the row contract explicit.</p></div><div class="objective"><span>02</span><p>Explain defaults, generated columns, AUTO_INCREMENT allocation, and connection-specific LAST_INSERT_ID().</p></div><div class="objective"><span>03</span><p>Distinguish statement atomicity from transaction atomicity and interpret duplicate/constraint errors correctly.</p></div><div class="objective"><span>04</span><p>Use SHOW WARNINGS, ROW_COUNT(), and metadata queries to verify what MySQL accepted and stored.</p></div><div class="objective"><span>05</span><p>Choose bounded ingestion batches from measured workload behavior rather than assuming “bigger is always faster.”</p></div></div>
+<div class="callout"><strong>Write-safety rule</strong><p>Before optimizing ingestion, establish correctness: declare the target columns, know the transaction boundary, make duplicate semantics intentional, and verify stored rows. Throughput is useful only after the data contract is reliable.</p></div>
+</section>
+<section><h2>Build the disposable write lab</h2>
+<p>The setup below is intentionally explicit. <strong>InnoDB</strong> is MySQL’s default transactional storage engine and is the engine assumed by every transaction and locking example in this chapter. A <strong>generated column</strong> derives its value from other columns. An <strong>AUTO_INCREMENT</strong> column asks MySQL to allocate identifiers; it is an identifier mechanism, not a promise that IDs will be gapless.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · reset and seed the Chapter 06 lab</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">DROP DATABASE IF EXISTS servicehub_write_lab;</span><span class="code-line">CREATE DATABASE servicehub_write_lab</span><span class="code-line">  CHARACTER SET utf8mb4</span><span class="code-line">  COLLATE utf8mb4_0900_ai_ci;</span><span class="code-line">USE servicehub_write_lab;</span><span class="code-line"></span><span class="code-line">CREATE TABLE customers (</span><span class="code-line">  customer_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,</span><span class="code-line">  customer_name VARCHAR(100) NOT NULL,</span><span class="code-line">  region VARCHAR(20) NOT NULL,</span><span class="code-line">  PRIMARY KEY (customer_id)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">CREATE TABLE technicians (</span><span class="code-line">  technician_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,</span><span class="code-line">  technician_name VARCHAR(100) NOT NULL,</span><span class="code-line">  active BOOLEAN NOT NULL DEFAULT TRUE,</span><span class="code-line">  PRIMARY KEY (technician_id)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">CREATE TABLE work_orders (</span><span class="code-line">  work_order_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,</span><span class="code-line">  request_key VARCHAR(64) NOT NULL,</span><span class="code-line">  customer_id BIGINT UNSIGNED NOT NULL,</span><span class="code-line">  technician_id BIGINT UNSIGNED NULL,</span><span class="code-line">  status VARCHAR(16) NOT NULL DEFAULT 'open',</span><span class="code-line">  priority TINYINT UNSIGNED NOT NULL DEFAULT 2,</span><span class="code-line">  labor_minutes INT UNSIGNED NOT NULL DEFAULT 0,</span><span class="code-line">  parts_cost DECIMAL(12,2) NOT NULL DEFAULT 0.00,</span><span class="code-line">  estimated_total DECIMAL(12,2)</span><span class="code-line">    GENERATED ALWAYS AS (parts_cost + labor_minutes * 1.25) STORED,</span><span class="code-line">  opened_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,</span><span class="code-line">  closed_at TIMESTAMP NULL,</span><span class="code-line">  PRIMARY KEY (work_order_id),</span><span class="code-line">  UNIQUE KEY uq_work_orders_request_key (request_key),</span><span class="code-line">  KEY ix_work_orders_status_priority (status, priority, work_order_id),</span><span class="code-line">  KEY ix_work_orders_customer (customer_id),</span><span class="code-line">  CONSTRAINT ck_work_orders_status CHECK (status IN ('open','assigned','closed','cancelled')),</span><span class="code-line">  CONSTRAINT ck_work_orders_priority CHECK (priority BETWEEN 1 AND 3),</span><span class="code-line">  CONSTRAINT fk_work_orders_customer FOREIGN KEY (customer_id)</span><span class="code-line">    REFERENCES customers(customer_id),</span><span class="code-line">  CONSTRAINT fk_work_orders_technician FOREIGN KEY (technician_id)</span><span class="code-line">    REFERENCES technicians(technician_id)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">CREATE TABLE work_order_staging (</span><span class="code-line">  request_key VARCHAR(64) NOT NULL,</span><span class="code-line">  customer_id BIGINT UNSIGNED NOT NULL,</span><span class="code-line">  priority TINYINT UNSIGNED NOT NULL,</span><span class="code-line">  labor_minutes INT UNSIGNED NOT NULL DEFAULT 0,</span><span class="code-line">  parts_cost DECIMAL(12,2) NOT NULL DEFAULT 0.00</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">CREATE TABLE parts_inventory (</span><span class="code-line">  part_id INT UNSIGNED NOT NULL,</span><span class="code-line">  part_name VARCHAR(80) NOT NULL,</span><span class="code-line">  on_hand INT NOT NULL,</span><span class="code-line">  PRIMARY KEY (part_id),</span><span class="code-line">  CONSTRAINT ck_parts_on_hand CHECK (on_hand &gt;= 0)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">INSERT INTO customers(customer_name,region) VALUES</span><span class="code-line"> ('Northwind Clinic','north'),</span><span class="code-line"> ('City Library','central'),</span><span class="code-line"> ('Harbor Foods','south');</span><span class="code-line">INSERT INTO technicians(technician_name) VALUES ('Ava'),('Omar');</span><span class="code-line">INSERT INTO parts_inventory(part_id,part_name,on_hand) VALUES</span><span class="code-line"> (1,'Filter cartridge',20),(2,'Valve kit',15);</span></code></pre></div>
+<p>After setup, verify the engine and generated expression rather than trusting the script visually:</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · inspect the effective table definition</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SHOW CREATE TABLE work_orders\G</span><span class="code-line">SELECT TABLE_NAME, ENGINE</span><span class="code-line">FROM information_schema.tables</span><span class="code-line">WHERE table_schema='servicehub_write_lab'</span><span class="code-line">  AND table_name IN ('work_orders','parts_inventory');</span></code></pre></div>
+<p><code>SHOW CREATE TABLE</code> is the authoritative server-rendered definition. It should show the unique request key, checks, foreign keys, secondary indexes, the generated <code>estimated_total</code> column, and <code>ENGINE=InnoDB</code>.</p></section>
+<section><h2>Single-row INSERT: name target columns and observe generated state</h2>
+<p>The safest beginner habit is to name the target columns. It makes the mapping between values and schema visible and survives many additive schema changes better than relying on physical column order.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · insert one work order and inspect generated values</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">INSERT INTO work_orders</span><span class="code-line">  (request_key, customer_id, priority, labor_minutes, parts_cost)</span><span class="code-line">VALUES</span><span class="code-line">  ('REQ-1001', 1, 1, 40, 12.50);</span><span class="code-line"></span><span class="code-line">SELECT LAST_INSERT_ID() AS allocated_id, ROW_COUNT() AS rows_changed;</span><span class="code-line">SELECT work_order_id, request_key, status, priority,</span><span class="code-line">       labor_minutes, parts_cost, estimated_total</span><span class="code-line">FROM work_orders</span><span class="code-line">WHERE request_key='REQ-1001';</span></code></pre></div>
+<p>With a freshly reset lab, the ID is normally 1 and <code>estimated_total</code> is 62.50. The important lesson is not the literal number 1. <code>LAST_INSERT_ID()</code> is connection-specific state that reports the generated value associated with that session’s insert. Another connection performing inserts does not replace your session’s value. Failed statements, concurrent allocation, rollbacks, and engine behavior can create gaps, so never use an AUTO_INCREMENT sequence as a row-count or “no records were deleted” proof.</p>
+<p>The generated column is omitted from the INSERT because MySQL computes it. The default <code>status='open'</code> and current timestamp are also server-side parts of the row contract.</p></section>
+<section><h2>Multi-row VALUES: one statement, multiple candidate rows</h2>
+<p>A multi-row INSERT reduces client/server round trips and lets MySQL process several rows in one statement. It is not automatically optimal at every size. Extremely large statements can consume memory, enlarge transactions, hold locks longer, stress logs, or exceed packet/configuration limits. Treat batch size as a measured operational parameter.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · insert a bounded batch</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">INSERT INTO work_orders</span><span class="code-line">  (request_key, customer_id, technician_id, status, priority, labor_minutes, parts_cost)</span><span class="code-line">VALUES</span><span class="code-line">  ('REQ-1002', 2, 1, 'assigned', 2, 25, 8.00),</span><span class="code-line">  ('REQ-1003', 3, 2, 'assigned', 3, 55, 30.00),</span><span class="code-line">  ('REQ-1004', 1, NULL, 'open', 2, 0, 0.00);</span><span class="code-line"></span><span class="code-line">SELECT ROW_COUNT() AS rows_changed;</span><span class="code-line">SELECT work_order_id, request_key, status, estimated_total</span><span class="code-line">FROM work_orders</span><span class="code-line">ORDER BY work_order_id;</span></code></pre></div>
+<p><code>ROW_COUNT()</code> should report 3 for the INSERT. The generated totals are computed per row. In production, use a batch size that meets latency, replication, redo, lock-duration, and application-memory goals under your own workload; do not copy an arbitrary “best” batch size.</p></section>
+<section><h2>INSERT ... SELECT: move validated relational rows, not strings</h2>
+<p><code>INSERT ... SELECT</code> lets a query produce the rows inserted into a target table. A common use is validate-and-promote: load input into a staging table, validate it, then insert the acceptable subset into the final relational schema.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · stage then promote valid work orders</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">INSERT INTO work_order_staging</span><span class="code-line">  (request_key, customer_id, priority, labor_minutes, parts_cost)</span><span class="code-line">VALUES</span><span class="code-line">  ('REQ-2001',1,1,35,10.00),</span><span class="code-line">  ('REQ-2002',2,2,20,5.00),</span><span class="code-line">  ('REQ-2003',999,1,15,1.00);</span><span class="code-line"></span><span class="code-line">SELECT s.*</span><span class="code-line">FROM work_order_staging AS s</span><span class="code-line">LEFT JOIN customers AS c ON c.customer_id=s.customer_id</span><span class="code-line">WHERE c.customer_id IS NULL;</span><span class="code-line"></span><span class="code-line">INSERT INTO work_orders</span><span class="code-line">  (request_key, customer_id, priority, labor_minutes, parts_cost)</span><span class="code-line">SELECT s.request_key, s.customer_id, s.priority, s.labor_minutes, s.parts_cost</span><span class="code-line">FROM work_order_staging AS s</span><span class="code-line">JOIN customers AS c ON c.customer_id=s.customer_id</span><span class="code-line">WHERE s.priority BETWEEN 1 AND 3;</span><span class="code-line"></span><span class="code-line">SELECT ROW_COUNT() AS promoted_rows;</span></code></pre></div>
+<p>The orphan staging row with customer 999 is visible before promotion and excluded by the inner join. This is stronger than “try the insert and hope a foreign-key error tells us which row was bad”: the validation query is an explicit data-quality step.</p></section>
+<section><h2>Failure case: a duplicate inside a multi-row INSERT</h2>
+<p>Suppose a batch accidentally repeats the already-used <code>REQ-1001</code> request key. With normal strict semantics, the unique constraint rejects the statement. For transactional InnoDB tables, the failed statement does not leave the successful-looking rows from that same statement partially inserted.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · deliberately fail a multi-row INSERT</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT COUNT(*) AS before_count FROM work_orders;</span><span class="code-line"></span><span class="code-line">INSERT INTO work_orders(request_key,customer_id,priority) VALUES</span><span class="code-line"> ('REQ-3001',1,1),</span><span class="code-line"> ('REQ-1001',2,2),  -- duplicate unique request key</span><span class="code-line"> ('REQ-3002',3,3);</span><span class="code-line"></span><span class="code-line">-- After the error, run this as a separate statement:</span><span class="code-line">SELECT COUNT(*) AS after_count FROM work_orders;</span><span class="code-line">SELECT request_key FROM work_orders</span><span class="code-line">WHERE request_key IN ('REQ-3001','REQ-3002');</span></code></pre></div>
+<p>You should receive a duplicate-key error, and neither <code>REQ-3001</code> nor <code>REQ-3002</code> should exist. This demonstrates <em>statement atomicity</em>. It does not prove that a surrounding multi-statement transaction was rolled back; Lesson 3 separates those scopes carefully.</p>
+<div class="callout"><strong>Do not reach for INSERT IGNORE automatically</strong><p>IGNORE can convert some errors into warnings and continue. That can be useful when the data contract explicitly allows it, but it can also hide rejected/coerced input. If you use a warning-producing form, immediately inspect <code>SHOW WARNINGS</code> and define which warning classes are acceptable.</p></div>
+</section>
+<section><h2>Observability: prove what was stored</h2>
+<p>For data modifications, “Query OK” is only one signal. Use result-state verification plus server metadata. <code>ROW_COUNT()</code> describes the immediately preceding DML statement for the current session. <code>SHOW WARNINGS</code> shows warnings from the prior statement. Information Schema exposes constraints and indexes but does not replace querying the business rows.</p>
+<div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · verify constraints, indexes, and stored state</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SHOW WARNINGS;</span><span class="code-line"></span><span class="code-line">SELECT CONSTRAINT_NAME, CONSTRAINT_TYPE</span><span class="code-line">FROM information_schema.table_constraints</span><span class="code-line">WHERE table_schema='servicehub_write_lab'</span><span class="code-line">  AND table_name='work_orders'</span><span class="code-line">ORDER BY CONSTRAINT_TYPE, CONSTRAINT_NAME;</span><span class="code-line"></span><span class="code-line">SHOW INDEX FROM work_orders;</span><span class="code-line"></span><span class="code-line">SELECT COUNT(*) AS total_work_orders,</span><span class="code-line">       MIN(work_order_id) AS min_id,</span><span class="code-line">       MAX(work_order_id) AS max_id</span><span class="code-line">FROM work_orders;</span></code></pre></div>
+<p>Do not infer “no gaps” from the MIN/MAX relationship. AUTO_INCREMENT values can be consumed without corresponding committed rows. Verify business invariants directly—for example, unique request keys and valid foreign-key references.</p></section>
+<section><h2>Hands-on lab: design a bounded ingestion unit</h2>
+<ol><li>Reset and seed <code>servicehub_write_lab</code>.</li><li>Insert one work order and record <code>LAST_INSERT_ID()</code>.</li><li>Insert a three-row batch and verify generated totals.</li><li>Stage three rows, intentionally include one invalid customer, identify it with a validation query, then promote only valid rows.</li><li>Run the duplicate-key batch and prove the entire failed statement inserted none of its candidate rows.</li><li>Repeat with batches of 10 and 100 locally if you want to measure behavior, but record your own timing and environment rather than treating the result as universal.</li></ol>
+<div class="checkpoint"><h3>Knowledge check</h3><ol><li>Why should an INSERT normally name its target columns?</li><li>Does AUTO_INCREMENT guarantee gapless committed IDs?</li><li>What does LAST_INSERT_ID() protect you from in concurrent applications?</li><li>If one row in a normal InnoDB multi-row INSERT violates a unique constraint, are earlier rows in that same statement committed?</li><li>Why is INSERT ... SELECT useful with a staging table?</li></ol><details class="answer-toggle"><summary>Reveal answers</summary><div><ol><li>It makes the value-to-column contract explicit and avoids depending on physical column order.</li><li>No. Allocation, failed statements, rollbacks, concurrency, and engine behavior can create gaps.</li><li>It is connection-specific state, so another session’s generated ID does not replace the current session’s value.</li><li>No; the failing statement is rolled back as a statement. That is different from rolling back an enclosing multi-statement transaction.</li><li>It lets validation/filtering be expressed relationally before data is promoted into the constrained target schema.</li></ol></div></details></div>
+</section>
+<section><h2>What InnoDB is doing during an INSERT</h2><p>An INSERT touches more than the clustered row. InnoDB must find the target location in the clustered primary-key B-tree, maintain every affected secondary index, check unique keys and foreign keys, evaluate CHECK constraints, and record enough transactional information to undo uncommitted work and recover committed work after a crash. Generated-column expressions and defaults are evaluated as part of producing the row that reaches the storage engine.</p><p>That helps explain why “one row” can create contention in places the application did not explicitly name. A unique secondary index such as <code>uq_work_orders_request_key</code> must be checked before the row can be accepted. A foreign key can require a lookup and relevant locking in the referenced table. AUTO_INCREMENT allocation has its own concurrency behavior. More indexes improve some reads but increase the work performed by every insert.</p><p>Statement atomicity also has an engine cost. If a multi-row statement inserts several candidate records and a later candidate fails, InnoDB must undo effects belonging to that failed statement. This is one reason giant statements are not automatically superior to reasonable bounded batches: a larger failure unit can mean more rollback work, a bigger payload to retransmit, and a longer period before the client can react.</p><p>Later chapters examine redo, undo, pages, and buffer-pool behavior in depth. For now, use the mental model that a successful INSERT is a transactional update to a set of related index structures, not merely an append to a text-like table file.</p></section><section><h2>Production judgment and next step</h2>
+<p>Use multi-row writes to reduce round trips when the business unit allows batching, but bound transaction size and measure the effects on latency, redo volume, lock duration, replicas, memory, and failure recovery. Keep duplicate behavior explicit—reject, upsert, or deduplicate by a business key—and make application-generated idempotency keys separate from AUTO_INCREMENT identity.</p>
+<p>Lesson 2 moves from creating rows to changing and deleting them, where an incomplete predicate can be more dangerous than a failed insert.</p>
+<h3>Authoritative references</h3><ul><li><a href="https://dev.mysql.com/doc/refman/8.4/en/insert.html" rel="noopener" target="_blank">MySQL 8.4 Reference Manual — INSERT Statement</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/innodb-error-handling.html" rel="noopener" target="_blank">MySQL 8.4 Reference Manual — InnoDB Error Handling</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/innodb-auto-increment-handling.html" rel="noopener" target="_blank">MySQL 8.4 Reference Manual — AUTO_INCREMENT Handling in InnoDB</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/information-functions.html#function_last-insert-id" rel="noopener" target="_blank">MySQL 8.4 Reference Manual — LAST_INSERT_ID()</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/show-warnings.html" rel="noopener" target="_blank">MySQL 8.4 Reference Manual — SHOW WARNINGS</a></li></ul>
+</section></div>
+<nav aria-label="Lesson navigation" class="lesson-nav"><a class="prev" href="../Chapter05/Lesson5.html"><small>Previous lesson</small><strong>Reporting Queries, Cohort-Style Analysis, Pivots by Conditional Aggregation, and Reusable Views</strong></a><a class="next" href="Lesson2.html"><small>Next lesson</small><strong>UPDATE, DELETE, Multi-Table DML, and Guardrails Against Wide Changes</strong></a></nav>
+</article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>If these tutorials save you time, a small donation supports new lessons, technical review, diagrams, examples, and long-term maintenance.</p>
+<div aria-label="Author links" class="social-row">
+<a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head"><span>ETH</span><small>Ethereum / ERC-20 only</small></div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
+<button class="button secondary compact" data-copy-donation="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy address</button>
+<p>Send only assets compatible with the Ethereum/ERC-20 network. Do not send TRC-20/TRON assets.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div><strong>Big Data Academy</strong><p>A free, prerequisite-aware path from SQL foundations to distributed data systems.</p></div>
+<div><a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a></div>
+<small>Created and maintained by <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> · © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>

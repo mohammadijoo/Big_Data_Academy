@@ -1,0 +1,301 @@
+<!doctype html>
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta content="Follow a MySQL client connection through authentication, session state, execution, idling, timeouts, thread handling, and disconnect while measuring connection pressure with Performance Schema and status counters." name="description" />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>Connection Lifecycle, Threads, Sessions, Timeouts, and Resource Consumption | Big Data Academy</title>
+    <link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml" />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+    <script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+        chtml: { scale: 1, matchFontHeight: false },
+      };
+    </script>
+    <script defer id="MathJax-script"
+      src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"
+      onerror="this.onerror=null;this.src='https://unpkg.com/mathjax@3.2.2/es5/tex-chtml.js';"></script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
+          <span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
+          <span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
+        </a>
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a>
+          <a class="is-active" href="../../../index.html#courses">Courses</a>
+          <a href="../../../index.html#method">Method</a>
+          <a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+        </nav>
+        <div class="header-actions">
+          <button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg></button>
+          <button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+        </div>
+      </div>
+      <nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu=""><a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a></nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"><span class="course-glyph">MYSQL</span><div><small>Course 04</small><strong>MySQL</strong></div></a>
+          <button aria-label="Close course navigation" data-sidebar-close="" type="button">×</button>
+        </div>
+        <label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 110 lessons..." type="search" /></label>
+        <nav class="sidebar-curriculum" aria-label="MySQL curriculum">
+<details class="sidebar-chapter"><summary><span>01</span>MySQL Platform Foundations, Editions, Releases, and Lab Setup</summary><div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What MySQL Is: Server Architecture, Client/Server Boundaries, and Common Workloads</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Community vs Enterprise Capabilities, Licensing Awareness, and Deployment Choices</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>LTS vs Innovation Releases: Version Selection, Support Windows, and Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Install MySQL on Windows, Linux, Containers, and Verify the Toolchain</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build a Reproducible Course Lab with Sample Data, Accounts, and Safety Conventions</a>
+</div></details>
+<details class="sidebar-chapter" open><summary><span>02</span>Server Architecture, Processes, Files, Connections, and Configuration</summary><div>
+<a class="sidebar-lesson" href="Lesson1.html"><span>01</span>mysqld Startup, Data Directory, Configuration Files, and Option Precedence</a>
+<a class="sidebar-lesson is-current" href="Lesson2.html"><span>02</span>Connection Lifecycle, Threads, Sessions, Timeouts, and Resource Consumption<i>Current</i></a>
+<a class="sidebar-lesson" href="Lesson3.html"><span>03</span>System Variables, Status Variables, Dynamic Configuration, and SET PERSIST</a>
+<a class="sidebar-lesson" href="Lesson4.html"><span>04</span>Character Sets, Collations, Time Zones, Locales, and Server Defaults</a>
+<a class="sidebar-lesson" href="Lesson5.html"><span>05</span>Configuration Validation, Startup Failures, Error Logs, and a Baseline Server Profile</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>03</span>Schemas, Tables, Data Types, Keys, Constraints, and SQL Modes</summary><div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>Databases and Schemas in MySQL: Namespaces, Metadata, and Object Ownership</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Numeric, String, Temporal, JSON, Spatial, and Binary Data Types</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK, DEFAULT, and Generated Columns</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>AUTO_INCREMENT, Surrogate vs Natural Keys, and Identifier Design</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>SQL Modes, Strictness, Implicit Conversion, Truncation, and Data-Quality Boundaries</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>04</span>Core SQL Querying: Filtering, Joins, Subqueries, CTEs, and Set Operations</summary><div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>SELECT Execution Basics, Projection, Predicates, NULL Semantics, and Ordering</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>INNER, OUTER, CROSS, and Self Joins with Cardinality Reasoning</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>Scalar, Correlated, EXISTS, IN, and Derived-Table Subqueries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Common Table Expressions, Recursive CTEs, and Hierarchical Queries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>UNION, INTERSECT, EXCEPT, Query Composition, and Readability Patterns</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>05</span>Advanced SQL: Aggregation, Window Functions, JSON, and Analytical Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>GROUP BY, HAVING, Functional Dependence, ROLLUP, and Aggregation Design</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Window Frames, Ranking, Running Totals, Gaps-and-Islands, and Top-N per Group</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>JSON Documents, Paths, JSON_TABLE, Indexable JSON Patterns, and Validation</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Date/Time, String, Regular Expression, Numeric, and Conditional Functions</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Reporting Queries, Cohort-Style Analysis, Pivots by Conditional Aggregation, and Reusable Views</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>06</span>Data Modification, Transactions, Locking, and Concurrency Semantics</summary><div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>INSERT, Multi-Row Writes, INSERT ... SELECT, and Generated Values</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>UPDATE, DELETE, Multi-Table DML, and Guardrails Against Wide Changes</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Transactions, Autocommit, COMMIT, ROLLBACK, SAVEPOINT, and Error Handling</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Isolation Levels, Consistent Reads, Locking Reads, MVCC, and Anomalies</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Deadlocks, Lock Waits, Retry Design, Idempotency, and Concurrency Testing</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>07</span>InnoDB Storage Architecture and Transaction Internals</summary><div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>InnoDB Tablespaces, Pages, Extents, Segments, and Row Formats</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Clustered Indexes, Secondary Indexes, Hidden Columns, and Record Layout</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Buffer Pool Architecture, Change Buffer, Adaptive Hashing, and Caching Behavior</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Redo Logs, Undo Logs, Doublewrite, Checkpoints, and Crash Recovery</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Purge, History List, Long Transactions, MVCC Cleanup, and Storage Health</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>08</span>Index Engineering and Access Path Design</summary><div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>B-Tree Index Structure, Selectivity, Cardinality, and Leftmost-Prefix Rules</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>Composite Index Ordering, Covering Indexes, Prefix Indexes, and Redundant Indexes</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Functional, Multi-Valued, FULLTEXT, and Spatial Index Use Cases</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>Index Condition Pushdown, Loose/Tight Index Scans, and Skip-Scan Concepts</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Designing an Index Portfolio from Workload Evidence and Write-Cost Constraints</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>09</span>Optimizer, EXPLAIN, Statistics, and Query Plan Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>How the MySQL Optimizer Builds Access Paths, Join Orders, and Cost Estimates</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>EXPLAIN, EXPLAIN ANALYZE, FORMAT=TREE/JSON, and Iterator Timing</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Histograms, Persistent Statistics, Cardinality Errors, and ANALYZE TABLE</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Join Algorithms, Semijoin/Antijoin Transformations, Derived Tables, and Materialization</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Plan Regressions, Optimizer Hints, Invisible Indexes, and Evidence-Driven Tuning</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>10</span>Stored Programs, Views, Triggers, Events, and Server-Side Logic</summary><div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Views, Updatability, SQL SECURITY, Definer Context, and Dependency Management</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Stored Procedures, Functions, Parameters, Condition Handlers, and Diagnostics</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Triggers, OLD/NEW Rows, Ordering, Auditing Uses, and Hidden Coupling Risks</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Event Scheduler, Recurring Maintenance Jobs, Failure Handling, and Observability</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>When Server-Side Logic Helps—and When Application Logic Is the Better Boundary</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>11</span>Users, Roles, Authentication, Authorization, and Least Privilege</summary><div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Accounts, Host Matching, Authentication Plugins, Password Policy, and Account Lifecycle</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Privileges, Roles, DEFAULT ROLE, Dynamic Privileges, and Delegated Administration</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Object-Level vs Administrative Privilege Design and Separation of Duties</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>PROXY, DEFINER, SQL SECURITY, Stored Objects, and Privilege-Escalation Risks</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Design and Audit a Least-Privilege Access Model for Applications and Operators</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>12</span>Encryption, TLS, Secrets, Auditing, and Security Hardening</summary><div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>TLS for Client Connections, Certificate Validation, and Secure Transport Enforcement</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Data-at-Rest Encryption Concepts, Key Management Boundaries, and Backup Encryption</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Secrets Handling for Applications, Option Files, Environment Variables, and Rotation</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>Audit Logging Options, General/Slow Logs, Privacy, and Forensic Considerations</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Hardening Checklist: Network Exposure, Local Files, Plugins, Accounts, and Patch Discipline</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>13</span>Backup, Restore, Binary Logs, and Point-in-Time Recovery</summary><div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>Logical vs Physical Backup: mysqldump, MySQL Shell, Snapshots, and Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>Consistent Backups with Transactions, Locks, Replication Coordinates, and Large Datasets</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>Binary Log Formats, GTIDs, Retention, and Recovery Prerequisites</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Point-in-Time Recovery from Full Backup plus Binary Logs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Restore Testing, RPO/RTO Measurement, Corruption Drills, and Backup Automation</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>14</span>Asynchronous Replication, GTIDs, Topologies, and Operational Safety</summary><div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Source/Replica Architecture, Binary Log Flow, Relay Logs, and Replication Threads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>GTID-Based Replication, Auto-Positioning, Failover Readiness, and Errant Transactions</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Statement, Row, and Mixed Logging Semantics with Determinism Risks</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Replication Filters, Delayed Replicas, Read Scaling, and Reporting Workloads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Lag Diagnosis, Broken Replication, Data Drift, Re-Synchronization, and Promotion Runbooks</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>15</span>Group Replication, InnoDB Cluster, Router, and High Availability</summary><div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Consensus-Oriented Group Replication Concepts, Membership, Quorum, and Failure Modes</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Single-Primary vs Multi-Primary Modes, Conflict Detection, and Workload Constraints</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>MySQL Shell AdminAPI, InnoDB Cluster Lifecycle, Recovery, and Rejoin Operations</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>MySQL Router, Connection Routing, Read/Write Splitting, and Application Failover</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Failure Injection, Split-Brain Avoidance, Maintenance, Upgrades, and HA Acceptance Tests</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>16</span>Performance Schema, sys Schema, Logs, Metrics, and Observability</summary><div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Performance Schema Instruments, Consumers, Events, and Measurement Overhead</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>sys Schema Views for Sessions, Statements, Waits, I/O, Memory, and Index Usage</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>Slow Query Log, Error Log, General Log, and Structured Diagnostic Workflows</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>Key OS and MySQL Metrics: CPU, I/O, Buffer Pool, Connections, Temp Tables, and Redo</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Build a Production Dashboard, Alert Thresholds, Baselines, and Incident Timelines</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>17</span>Memory, I/O, Temporary Work, and Server Performance Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Buffer Pool Sizing, Working Sets, Dirty Pages, Flushing, and Memory Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Per-Connection Buffers, Sort/Join Buffers, Memory Multipliers, and OOM Risk</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Temporary Tables, Spill to Disk, tmpdir, Internal Temp Engines, and Query Rewrite</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Redo Capacity, I/O Capacity, Flush Methods, Storage Latency, and Checkpoint Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Benchmarking Methodology, Warm vs Cold Cache, Concurrency, Percentiles, and Repeatability</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>18</span>Partitioning, Large Tables, Archiving, and Data Lifecycle</summary><div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Partitioning Concepts, Supported Strategies, Partition Pruning, and Design Constraints</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Partition Keys, Unique-Key Rules, Hot/Cold Data, and Operational Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Online DDL, Instant/In-Place/Copy Algorithms, Locks, and Schema Change Planning</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Archiving, Purging, Retention Jobs, and Avoiding Massive Delete Pathologies</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Managing Multi-Terabyte Tables: Capacity, Maintenance Windows, and Growth Forecasts</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>19</span>Application Integration, Connectors, Pools, ORMs, and Reliability Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>Connection Strings, TLS, Timeouts, Pools, and Session Initialization Contracts</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Prepared Statements, Parameter Binding, SQL Injection Defense, and Type Mapping</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Transaction Boundaries in Application Code, Retries, Idempotency, and Lost Connections</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>ORM Query Generation, N+1 Problems, Pagination, Bulk Writes, and Plan Visibility</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Health Checks, Graceful Degradation, Read Replicas, Migrations, and Deployment Coordination</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>20</span>Schema Migration, Upgrades, Compatibility, and Zero/Low-Downtime Change</summary><div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Versioned Schema Migrations, Expand/Contract Patterns, and Backward Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Online Schema Change Strategies, Native DDL Capabilities, and External Tool Concepts</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Pre-Upgrade Checks, Deprecated Features, SQL Modes, Collations, and Authentication Changes</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Rolling Upgrade Considerations for Replication and High-Availability Topologies</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Rollback Planning, Data Validation, Canaries, and Post-Upgrade Performance Verification</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>21</span>Specialized MySQL Capabilities: NDB, Document Store, Spatial, and Search</summary><div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>NDB Cluster Architecture, Distribution, Availability, and When It Fits</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>X Protocol, MySQL Shell, Document Store Concepts, and CRUD APIs</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Spatial Types, SRIDs, Spatial Functions, R-Tree Indexing, and GIS Workloads</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>FULLTEXT Search, Tokenization, Relevance, Stopwords, and Search-System Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>Choosing Native Features vs Dedicated Systems for Search, Analytics, and Distributed Scale</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>22</span>Production Capstone: Design, Secure, Scale, Tune, and Recover MySQL</summary><div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Define SLOs, Workload, Data Model, Capacity Forecast, and Architecture Decision Record</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>Build the Production Schema, Index Portfolio, Security Model, and Migration Pipeline</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>Load Test, Capture Plans, Tune Queries/Server, and Establish Performance Baselines</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Implement Backups, PITR, Replication/HA, Monitoring, Alerts, and Incident Runbooks</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Execute Failure/Recovery Drills and Defend the Final MySQL Production Design</a>
+</div></details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar"><button data-sidebar-open="" type="button"><span>Course navigation</span><span>Chapter 02 · Lesson 02</span></button></div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs"><a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">MySQL</a><span>/</span><span>Chapter 02 · Lesson 02</span></nav>
+          <header class="lesson-header">
+            <p class="eyebrow">Chapter 02 · Server Architecture, Processes, Files, Connections, and Configuration</p>
+            <h1>Connection Lifecycle, Threads, Sessions, Timeouts, and Resource Consumption</h1>
+            <p>Follow a MySQL client connection through authentication, session state, execution, idling, timeouts, thread handling, and disconnect while measuring connection pressure with Performance Schema and status counters.</p>
+            <div class="lesson-meta"><span>Beginner</span><span>45–60 min</span><span>Two-session lifecycle lab</span><span>MySQL 8.4 LTS · current released baseline 8.4.10</span><span>Performance Schema</span><span>Last reviewed: August 2026</span></div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc"><strong>On this page</strong><ol data-generated-toc=""></ol></nav>
+          <div class="lesson-content">
+<section><h2>Learning outcomes</h2>
+<p>ServiceHub now has a dispatcher dashboard, a technician API, and a reporting script. All three can connect to the same MySQL server, but each connection becomes a server-side session with its own identity, transaction state, variables, temporary objects, and resource footprint. A server that accepts “only a few queries” can still fail if an application opens hundreds of idle sessions or leaks connections.</p>
+<p>This lesson follows one client from connect to disconnect. The goal is not to memorize every thread counter; it is to understand which state belongs to a session, which state belongs to the server, and which measurements reveal connection pressure.</p><div class="objectives"><div class="objective"><span>01</span><p>Trace authentication, session creation, statement execution, transaction state, idle waiting, disconnect, and resource release.</p></div><div class="objective"><span>02</span><p>Distinguish connection identifiers, foreground threads, background threads, session variables, global variables, and server status counters.</p></div><div class="objective"><span>03</span><p>Use Performance Schema and sys views to inspect active sessions without relying only on deprecated INFORMATION_SCHEMA process-list paths.</p></div><div class="objective"><span>04</span><p>Explain how wait_timeout, max_connections, thread caching, and per-connection memory can affect capacity.</p></div><div class="objective"><span>05</span><p>Design connection-pool behavior around bounded concurrency, short transactions, cleanup, and measurement rather than “more connections is faster.”</p></div></div><div class="callout"><strong>Key distinction</strong><p>A client process can create zero, one, or many MySQL sessions. Conversely, one MySQL server process manages many foreground sessions plus background server threads. Do not equate operating-system processes with database sessions.</p></div></section>
+<section><h2>The lifecycle of one connection</h2>
+<p>A classic-protocol client targets an endpoint, establishes transport, performs the MySQL handshake, authenticates as an account, and receives a server-side session. From that point until disconnect, session-scoped state can accumulate: current database, character-set settings, SQL mode, transaction state, user variables, temporary tables, prepared statements, and more.</p><div class="code-window" data-code-block="" data-language="text"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>text · connection lifecycle</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">client opens transport</span><span class="code-line">      |</span><span class="code-line">      v</span><span class="code-line">server handshake + authentication</span><span class="code-line">      |</span><span class="code-line">      v</span><span class="code-line">foreground session / connection id created</span><span class="code-line">      |</span><span class="code-line">      +--&gt; statements, transactions, session variables</span><span class="code-line">      |</span><span class="code-line">      +--&gt; idle wait between requests</span><span class="code-line">      |</span><span class="code-line">      v</span><span class="code-line">disconnect / timeout / kill / network loss</span><span class="code-line">      |</span><span class="code-line">      v</span><span class="code-line">session resources released; worker thread may be cached/reused</span></code></pre></div><p>The connection identifier is not a permanent user ID. It identifies a particular server session. When that session ends, a future connection receives its own identifier and fresh session state.</p></section>
+<section><h2>Observe your own session first</h2>
+<p>Use a normal lab account, not a superuser, for the first observations. This demonstrates what an application can learn about itself without broad process privileges.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · identify current session</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT CONNECTION_ID() AS connection_id,</span><span class="code-line">       USER() AS client_identity,</span><span class="code-line">       CURRENT_USER() AS authenticated_account,</span><span class="code-line">       DATABASE() AS current_schema,</span><span class="code-line">       @@SESSION.autocommit AS autocommit,</span><span class="code-line">       @@SESSION.transaction_isolation AS isolation_level,</span><span class="code-line">       @@SESSION.wait_timeout AS wait_timeout_seconds;</span><span class="code-line"></span><span class="code-line">SELECT THREAD_ID, PROCESSLIST_ID, PROCESSLIST_USER,</span><span class="code-line">       PROCESSLIST_HOST, PROCESSLIST_DB, PROCESSLIST_COMMAND,</span><span class="code-line">       PROCESSLIST_TIME, PROCESSLIST_STATE</span><span class="code-line">FROM performance_schema.threads</span><span class="code-line">WHERE PROCESSLIST_ID = CONNECTION_ID();</span></code></pre></div><p><code>USER()</code> reports the client user/host information used for the connection, while <code>CURRENT_USER()</code> reports the account MySQL actually used for privilege checking. Later security chapters explore why those can differ. For now, the important lesson is that session identity is server-side state you can inspect.</p>
+<p>The Performance Schema <code>threads</code> table includes both foreground and background threads. A client session normally appears as a foreground thread with a <code>PROCESSLIST_ID</code> matching <code>CONNECTION_ID()</code>. Background server work has no client connection ID in the same sense.</p></section>
+<section><h2>Session state versus global server state</h2>
+<p>Many variables have both global and session values. The global value usually acts as the default for new sessions; changing it does not retroactively rewrite every existing session. This explains a common operational puzzle: two clients connected at different times can report different settings even though they use the same server.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · compare global and session state</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT @@GLOBAL.sql_mode AS global_sql_mode,</span><span class="code-line">       @@SESSION.sql_mode AS session_sql_mode,</span><span class="code-line">       @@GLOBAL.wait_timeout AS global_wait_timeout,</span><span class="code-line">       @@SESSION.wait_timeout AS session_wait_timeout;</span><span class="code-line"></span><span class="code-line">SET SESSION sql_mode = CONCAT(@@SESSION.sql_mode, &#x27;,NO_ENGINE_SUBSTITUTION&#x27;);</span><span class="code-line">SELECT @@SESSION.sql_mode;</span><span class="code-line"></span><span class="code-line">-- Open a second connection and compare its session value.</span><span class="code-line">-- Then disconnect this session; its session-only change disappears.</span></code></pre></div><div class="callout"><strong>Session state is disposable</strong><p>A session-level SET changes only the current connection unless the variable has some different documented semantics. After disconnect, that session state is gone. This makes session variables useful for controlled experiments and dangerous as undocumented application assumptions.</p></div></section>
+<section><h2>See active connections without confusing them with every server thread</h2>
+<p>MySQL offers several process-list interfaces. Current documentation recommends Performance Schema-backed sources for scalable observation. The <code>threads</code> table exposes foreground and background activity, while the <code>sys.session</code> view presents user-session information in a friendlier form and filters background threads.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · session and thread views</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT PROCESSLIST_ID, PROCESSLIST_USER, PROCESSLIST_HOST,</span><span class="code-line">       PROCESSLIST_DB, PROCESSLIST_COMMAND, PROCESSLIST_TIME,</span><span class="code-line">       PROCESSLIST_STATE, TYPE</span><span class="code-line">FROM performance_schema.threads</span><span class="code-line">WHERE TYPE = &#x27;FOREGROUND&#x27;</span><span class="code-line">ORDER BY PROCESSLIST_TIME DESC;</span><span class="code-line"></span><span class="code-line">SELECT conn_id, user, db, command, time, state, current_statement</span><span class="code-line">FROM sys.session</span><span class="code-line">ORDER BY time DESC;</span></code></pre></div><p>Privileges affect visibility. A normal user generally sees less information about other accounts than an administrator. That is desirable: monitoring access is itself a security boundary. Do not grant broad process privileges merely to make a tutorial query convenient.</p>
+<p><code>SHOW PROCESSLIST</code> remains useful interactively, but do not build long-term monitoring around the deprecated INFORMATION_SCHEMA implementation. Prefer Performance Schema and sys views where practical.</p></section>
+<section><h2>Idle sessions, timeouts, and why “sleeping” is not free</h2>
+<p>After a statement finishes, a client can remain connected and wait for the next request. In a process list this often appears as <code>Sleep</code>. An idle session may hold comparatively little CPU, but it still represents server state and can retain transaction context, temporary objects, prepared statements, memory allocations, or locks if the application left a transaction open.</p>
+<p><code>wait_timeout</code> controls how long the server waits before closing many noninteractive idle connections. Do not lower it aggressively in production without understanding pool behavior: a pool that assumes connections remain valid longer than the server timeout can hand dead connections to requests.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · safe session timeout experiment</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT @@SESSION.wait_timeout AS original_wait_timeout;</span><span class="code-line">SET SESSION wait_timeout = 60;</span><span class="code-line">SELECT @@SESSION.wait_timeout AS lab_wait_timeout;</span><span class="code-line"></span><span class="code-line">-- Leave this connection idle for more than the configured interval only</span><span class="code-line">-- in a disposable lab. The next client operation should discover that</span><span class="code-line">-- the server closed the idle session. Reconnect afterward.</span></code></pre></div><div class="callout warning"><strong>Failure case: long idle transaction</strong><p>An idle connection is much more dangerous if it is “idle in transaction.” A transaction can retain locks or an old MVCC read view even while no query is running. Connection-pool return paths must commit or roll back work before a connection is reused.</p></div></section>
+<section><h2>Capacity evidence: connections, threads, and thread reuse</h2>
+<p>MySQL Community Server normally uses the <code>one-thread-per-connection</code> handling model. That does not mean every connection causes a brand-new operating-system thread forever: the server can cache connection threads for reuse. Enterprise Thread Pool is a separate edition-dependent capability and should not be assumed in Community labs.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · connection pressure counters</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SHOW GLOBAL STATUS WHERE Variable_name IN (</span><span class="code-line">  &#x27;Connections&#x27;,&#x27;Threads_connected&#x27;,&#x27;Threads_running&#x27;,&#x27;Threads_created&#x27;,</span><span class="code-line">  &#x27;Aborted_connects&#x27;,&#x27;Max_used_connections&#x27;</span><span class="code-line">);</span><span class="code-line"></span><span class="code-line">SHOW GLOBAL VARIABLES WHERE Variable_name IN (</span><span class="code-line">  &#x27;max_connections&#x27;,&#x27;thread_cache_size&#x27;,&#x27;thread_handling&#x27;</span><span class="code-line">);</span></code></pre></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Signal</th><th>Interpretation</th><th>What it does not prove</th></tr></thead><tbody><tr><td>Connections</td><td>Cumulative connection attempts accepted since server start.</td><td>Not current concurrency.</td></tr><tr><td>Threads_connected</td><td>Current open connections.</td><td>Not how many are actively executing.</td></tr><tr><td>Threads_running</td><td>Threads that are not sleeping.</td><td>Not database throughput by itself.</td></tr><tr><td>Threads_created</td><td>Connection threads created over server lifetime.</td><td>A high absolute number alone is meaningless without Connections and time.</td></tr><tr><td>Max_used_connections</td><td>High-water mark of simultaneous connections.</td><td>Does not say whether those sessions were healthy or useful.</td></tr><tr><td>Aborted_connects</td><td>Failed connection attempts.</td><td>Does not identify root cause without logs/client evidence.</td></tr></tbody></table></div><p>Compare deltas over a time window, not isolated snapshots. For example, <code>Connections - Threads_created</code> can help reason about thread-cache reuse, but performance tuning should follow observed churn and latency rather than a universal cache-size recipe.</p></section>
+<section><h2>Hands-on lab: two sessions, two realities</h2>
+<p>Open two terminal windows and connect both to the same ServiceHub lab server. Call them Session A and Session B.</p>
+<ol>
+<li>In both sessions, record <code>CONNECTION_ID()</code>, <code>@@SESSION.sql_mode</code>, and <code>@@SESSION.time_zone</code>.</li>
+<li>In Session A, run <code>SET SESSION time_zone = '+00:00';</code>. Confirm Session B did not change.</li>
+<li>In Session A, create a <code>TEMPORARY TABLE session_probe(id INT);</code> and insert a row. Attempt to query that temporary table from Session B; it should not exist there.</li>
+<li>As an account with sufficient monitoring visibility, inspect both sessions through <code>performance_schema.threads</code> or <code>sys.session</code>.</li>
+<li>Begin a transaction in Session A, make a harmless update to a dedicated lab row, then intentionally leave it open. Observe transaction/session state; roll it back before continuing.</li>
+<li>Close Session A and verify its temporary table and session variables disappear with the session.</li>
+</ol><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · temporary session-local state</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">CREATE TEMPORARY TABLE session_probe (</span><span class="code-line">  id INT PRIMARY KEY,</span><span class="code-line">  note VARCHAR(100) NOT NULL</span><span class="code-line">);</span><span class="code-line">INSERT INTO session_probe VALUES (1, &#x27;belongs only to this session&#x27;);</span><span class="code-line">SELECT * FROM session_probe;</span><span class="code-line"></span><span class="code-line">-- Before disconnecting:</span><span class="code-line">DROP TEMPORARY TABLE session_probe;</span></code></pre></div><div class="checkpoint"><h3>Knowledge check</h3><ol><li>What is the difference between Connections and Threads_connected?</li><li>Why can two sessions report different @@SESSION values on the same server?</li><li>Why is an idle open transaction more dangerous than an idle autocommit connection?</li><li>What does CONNECTION_ID() identify?</li><li>Why should a connection pool use a bounded size instead of opening unlimited connections?</li></ol><details class="answer-toggle"><summary>Reveal answers</summary><div><ol><li><code>Connections</code> is cumulative since startup; <code>Threads_connected</code> is current open connections.</li><li>Session values are per connection and can be initialized at different times or changed independently.</li><li>It can retain locks/read views and delay cleanup even while executing nothing.</li><li>The current server session's connection identifier, not a permanent account identity.</li><li>Each session consumes server resources; unbounded concurrency can increase memory use, contention, and failure probability rather than throughput.</li></ol></div></details></div></section>
+<section><h2>Production judgment and references</h2>
+<p>Healthy connection design is a queueing and resource problem, not a race to maximize <code>max_connections</code>. Applications should bound pools, set sensible connect/read timeouts, return connections with clean transaction state, detect broken connections, and expose pool metrics alongside MySQL metrics. Operators should watch connection churn, active versus sleeping sessions, aborted connects, high-water marks, transaction age, and memory pressure.</p>
+<p>When investigating load, correlate MySQL session evidence with application request rates and operating-system resources. A server with 500 sleeping sessions and low memory pressure is a different problem from a server with 80 sessions all running expensive sorts and scans.</p>
+<h3>Authoritative references</h3><ul><li><a href="https://dev.mysql.com/doc/refman/8.4/en/processlist-access.html" target="_blank" rel="noopener">MySQL 8.4 Reference Manual — Accessing the Process List</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/performance-schema-threads-table.html" target="_blank" rel="noopener">MySQL 8.4 Reference Manual — Performance Schema threads Table</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html" target="_blank" rel="noopener">MySQL 8.4 Reference Manual — Server System Variables</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/server-status-variables.html" target="_blank" rel="noopener">MySQL 8.4 Reference Manual — Server Status Variables</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/sys-session.html" target="_blank" rel="noopener">MySQL 8.4 Reference Manual — sys session View</a></li></ul><p><strong>Next:</strong> distinguish configuration variables from status measurements, then make a controlled dynamic change and decide whether it should survive restart.</p></section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav"><a class="prev" href="Lesson1.html"><small>Previous lesson</small><strong>mysqld Startup, Data Directory, Configuration Files, and Option Precedence</strong></a><a class="next" href="Lesson3.html"><small>Next lesson</small><strong>System Variables, Status Variables, Dynamic Configuration, and SET PERSIST</strong></a></nav>
+        </article>
+<div class="lesson-support">
+  <section aria-labelledby="support-title" class="support-section section-shell">
+    <div class="support-grid reveal">
+      <div>
+        <p class="eyebrow">Keep knowledge open</p>
+        <h2 id="support-title">Help the academy stay free and grow.</h2>
+        <p>If these tutorials save you time, a small donation supports new lessons, technical review, diagrams, examples, and long-term maintenance.</p>
+        <div aria-label="Author links" class="social-row">
+          <a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+          <a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+          <a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+          <a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+        </div>
+      </div>
+      <div class="donation-card">
+        <div class="donation-head"><span>ETH</span><small>Ethereum / ERC-20 only</small></div>
+        <code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
+        <button class="button secondary compact" data-copy-donation="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy address</button>
+        <p>Send only assets compatible with the Ethereum/ERC-20 network. Do not send TRC-20/TRON assets.</p>
+      </div>
+    </div>
+  </section>
+</div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div><strong>Big Data Academy</strong><p>A free, prerequisite-aware path from SQL foundations to distributed data systems.</p></div>
+        <div><a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a></div>
+        <small>Created and maintained by <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> · © 2026</small>
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Compare single-primary and multi-primary Group Replication by write ownership, certification conflicts, transaction restrictions, AUTO_INCREMENT behavior, and operational complexity instead of assuming more writable members means more throughput." name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>Single-Primary vs Multi-Primary Modes, Conflict Detection, and Workload Constraints | MySQL | Big Data Academy</title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+<script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+        chtml: { scale: 1, matchFontHeight: false },
+      };
+    </script>
+<script defer="" id="MathJax-script" onerror="this.onerror=null;this.src='https://unpkg.com/mathjax@3.2.2/es5/tex-chtml.js';" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
+<span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
+<span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
+</a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a>
+<a class="is-active" href="../../../index.html#courses">Courses</a>
+<a href="../../../index.html#method">Method</a>
+<a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg></button>
+<button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu=""><a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a></nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">MYSQL</span><div><small>Course 04</small><strong>MySQL</strong></div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">×</button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 110 lessons..." type="search"/></label>
+<nav aria-label="MySQL curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter"><summary><span>01</span>MySQL Platform Foundations, Editions, Releases, and Lab Setup</summary><div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What MySQL Is: Server Architecture, Client/Server Boundaries, and Common Workloads</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Community vs Enterprise Capabilities, Licensing Awareness, and Deployment Choices</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>LTS vs Innovation Releases: Version Selection, Support Windows, and Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Install MySQL on Windows, Linux, Containers, and Verify the Toolchain</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build a Reproducible Course Lab with Sample Data, Accounts, and Safety Conventions</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>02</span>Server Architecture, Processes, Files, Connections, and Configuration</summary><div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>mysqld Startup, Data Directory, Configuration Files, and Option Precedence</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Connection Lifecycle, Threads, Sessions, Timeouts, and Resource Consumption</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>System Variables, Status Variables, Dynamic Configuration, and SET PERSIST</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Character Sets, Collations, Time Zones, Locales, and Server Defaults</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Configuration Validation, Startup Failures, Error Logs, and a Baseline Server Profile</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>03</span>Schemas, Tables, Data Types, Keys, Constraints, and SQL Modes</summary><div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>Databases and Schemas in MySQL: Namespaces, Metadata, and Object Ownership</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Numeric, String, Temporal, JSON, Spatial, and Binary Data Types</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK, DEFAULT, and Generated Columns</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>AUTO_INCREMENT, Surrogate vs Natural Keys, and Identifier Design</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>SQL Modes, Strictness, Implicit Conversion, Truncation, and Data-Quality Boundaries</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>04</span>Core SQL Querying: Filtering, Joins, Subqueries, CTEs, and Set Operations</summary><div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>SELECT Execution Basics, Projection, Predicates, NULL Semantics, and Ordering</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>INNER, OUTER, CROSS, and Self Joins with Cardinality Reasoning</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>Scalar, Correlated, EXISTS, IN, and Derived-Table Subqueries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Common Table Expressions, Recursive CTEs, and Hierarchical Queries</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>UNION, INTERSECT, EXCEPT, Query Composition, and Readability Patterns</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>05</span>Advanced SQL: Aggregation, Window Functions, JSON, and Analytical Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>GROUP BY, HAVING, Functional Dependence, ROLLUP, and Aggregation Design</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Window Frames, Ranking, Running Totals, Gaps-and-Islands, and Top-N per Group</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>JSON Documents, Paths, JSON_TABLE, Indexable JSON Patterns, and Validation</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Date/Time, String, Regular Expression, Numeric, and Conditional Functions</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Reporting Queries, Cohort-Style Analysis, Pivots by Conditional Aggregation, and Reusable Views</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>06</span>Data Modification, Transactions, Locking, and Concurrency Semantics</summary><div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>INSERT, Multi-Row Writes, INSERT ... SELECT, and Generated Values</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>UPDATE, DELETE, Multi-Table DML, and Guardrails Against Wide Changes</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Transactions, Autocommit, COMMIT, ROLLBACK, SAVEPOINT, and Error Handling</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Isolation Levels, Consistent Reads, Locking Reads, MVCC, and Anomalies</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Deadlocks, Lock Waits, Retry Design, Idempotency, and Concurrency Testing</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>07</span>InnoDB Storage Architecture and Transaction Internals</summary><div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>InnoDB Tablespaces, Pages, Extents, Segments, and Row Formats</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Clustered Indexes, Secondary Indexes, Hidden Columns, and Record Layout</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Buffer Pool Architecture, Change Buffer, Adaptive Hashing, and Caching Behavior</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Redo Logs, Undo Logs, Doublewrite, Checkpoints, and Crash Recovery</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Purge, History List, Long Transactions, MVCC Cleanup, and Storage Health</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>08</span>Index Engineering and Access Path Design</summary><div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>B-Tree Index Structure, Selectivity, Cardinality, and Leftmost-Prefix Rules</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>Composite Index Ordering, Covering Indexes, Prefix Indexes, and Redundant Indexes</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Functional, Multi-Valued, FULLTEXT, and Spatial Index Use Cases</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>Index Condition Pushdown, Loose/Tight Index Scans, and Skip-Scan Concepts</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Designing an Index Portfolio from Workload Evidence and Write-Cost Constraints</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>09</span>Optimizer, EXPLAIN, Statistics, and Query Plan Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>How the MySQL Optimizer Builds Access Paths, Join Orders, and Cost Estimates</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>EXPLAIN, EXPLAIN ANALYZE, FORMAT=TREE/JSON, and Iterator Timing</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Histograms, Persistent Statistics, Cardinality Errors, and ANALYZE TABLE</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Join Algorithms, Semijoin/Antijoin Transformations, Derived Tables, and Materialization</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Plan Regressions, Optimizer Hints, Invisible Indexes, and Evidence-Driven Tuning</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>10</span>Stored Programs, Views, Triggers, Events, and Server-Side Logic</summary><div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Views, Updatability, SQL SECURITY, Definer Context, and Dependency Management</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Stored Procedures, Functions, Parameters, Condition Handlers, and Diagnostics</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Triggers, OLD/NEW Rows, Ordering, Auditing Uses, and Hidden Coupling Risks</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Event Scheduler, Recurring Maintenance Jobs, Failure Handling, and Observability</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>When Server-Side Logic Helps—and When Application Logic Is the Better Boundary</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>11</span>Users, Roles, Authentication, Authorization, and Least Privilege</summary><div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Accounts, Host Matching, Authentication Plugins, Password Policy, and Account Lifecycle</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Privileges, Roles, DEFAULT ROLE, Dynamic Privileges, and Delegated Administration</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Object-Level vs Administrative Privilege Design and Separation of Duties</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>PROXY, DEFINER, SQL SECURITY, Stored Objects, and Privilege-Escalation Risks</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Design and Audit a Least-Privilege Access Model for Applications and Operators</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>12</span>Encryption, TLS, Secrets, Auditing, and Security Hardening</summary><div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>TLS for Client Connections, Certificate Validation, and Secure Transport Enforcement</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Data-at-Rest Encryption Concepts, Key Management Boundaries, and Backup Encryption</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Secrets Handling for Applications, Option Files, Environment Variables, and Rotation</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>Audit Logging Options, General/Slow Logs, Privacy, and Forensic Considerations</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Hardening Checklist: Network Exposure, Local Files, Plugins, Accounts, and Patch Discipline</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>13</span>Backup, Restore, Binary Logs, and Point-in-Time Recovery</summary><div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>Logical vs Physical Backup: mysqldump, MySQL Shell, Snapshots, and Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>Consistent Backups with Transactions, Locks, Replication Coordinates, and Large Datasets</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>Binary Log Formats, GTIDs, Retention, and Recovery Prerequisites</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Point-in-Time Recovery from Full Backup plus Binary Logs</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Restore Testing, RPO/RTO Measurement, Corruption Drills, and Backup Automation</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>14</span>Asynchronous Replication, GTIDs, Topologies, and Operational Safety</summary><div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Source/Replica Architecture, Binary Log Flow, Relay Logs, and Replication Threads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>GTID-Based Replication, Auto-Positioning, Failover Readiness, and Errant Transactions</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Statement, Row, and Mixed Logging Semantics with Determinism Risks</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Replication Filters, Delayed Replicas, Read Scaling, and Reporting Workloads</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Lag Diagnosis, Broken Replication, Data Drift, Re-Synchronization, and Promotion Runbooks</a>
+</div></details>
+<details class="sidebar-chapter" open=""><summary><span>15</span>Group Replication, InnoDB Cluster, Router, and High Availability</summary><div>
+<a class="sidebar-lesson" href="Lesson1.html"><span>01</span>Consensus-Oriented Group Replication Concepts, Membership, Quorum, and Failure Modes</a>
+<a class="sidebar-lesson is-current" href="Lesson2.html"><span>02</span>Single-Primary vs Multi-Primary Modes, Conflict Detection, and Workload Constraints<i>Current</i></a>
+<a class="sidebar-lesson" href="Lesson3.html"><span>03</span>MySQL Shell AdminAPI, InnoDB Cluster Lifecycle, Recovery, and Rejoin Operations</a>
+<a class="sidebar-lesson" href="Lesson4.html"><span>04</span>MySQL Router, Connection Routing, Read/Write Splitting, and Application Failover</a>
+<a class="sidebar-lesson" href="Lesson5.html"><span>05</span>Failure Injection, Split-Brain Avoidance, Maintenance, Upgrades, and HA Acceptance Tests</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>16</span>Performance Schema, sys Schema, Logs, Metrics, and Observability</summary><div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Performance Schema Instruments, Consumers, Events, and Measurement Overhead</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>sys Schema Views for Sessions, Statements, Waits, I/O, Memory, and Index Usage</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>Slow Query Log, Error Log, General Log, and Structured Diagnostic Workflows</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>Key OS and MySQL Metrics: CPU, I/O, Buffer Pool, Connections, Temp Tables, and Redo</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Build a Production Dashboard, Alert Thresholds, Baselines, and Incident Timelines</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>17</span>Memory, I/O, Temporary Work, and Server Performance Engineering</summary><div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Buffer Pool Sizing, Working Sets, Dirty Pages, Flushing, and Memory Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Per-Connection Buffers, Sort/Join Buffers, Memory Multipliers, and OOM Risk</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Temporary Tables, Spill to Disk, tmpdir, Internal Temp Engines, and Query Rewrite</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Redo Capacity, I/O Capacity, Flush Methods, Storage Latency, and Checkpoint Pressure</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Benchmarking Methodology, Warm vs Cold Cache, Concurrency, Percentiles, and Repeatability</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>18</span>Partitioning, Large Tables, Archiving, and Data Lifecycle</summary><div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Partitioning Concepts, Supported Strategies, Partition Pruning, and Design Constraints</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Partition Keys, Unique-Key Rules, Hot/Cold Data, and Operational Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Online DDL, Instant/In-Place/Copy Algorithms, Locks, and Schema Change Planning</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Archiving, Purging, Retention Jobs, and Avoiding Massive Delete Pathologies</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Managing Multi-Terabyte Tables: Capacity, Maintenance Windows, and Growth Forecasts</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>19</span>Application Integration, Connectors, Pools, ORMs, and Reliability Patterns</summary><div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>Connection Strings, TLS, Timeouts, Pools, and Session Initialization Contracts</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Prepared Statements, Parameter Binding, SQL Injection Defense, and Type Mapping</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Transaction Boundaries in Application Code, Retries, Idempotency, and Lost Connections</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>ORM Query Generation, N+1 Problems, Pagination, Bulk Writes, and Plan Visibility</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Health Checks, Graceful Degradation, Read Replicas, Migrations, and Deployment Coordination</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>20</span>Schema Migration, Upgrades, Compatibility, and Zero/Low-Downtime Change</summary><div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Versioned Schema Migrations, Expand/Contract Patterns, and Backward Compatibility</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Online Schema Change Strategies, Native DDL Capabilities, and External Tool Concepts</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Pre-Upgrade Checks, Deprecated Features, SQL Modes, Collations, and Authentication Changes</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Rolling Upgrade Considerations for Replication and High-Availability Topologies</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Rollback Planning, Data Validation, Canaries, and Post-Upgrade Performance Verification</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>21</span>Specialized MySQL Capabilities: NDB, Document Store, Spatial, and Search</summary><div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>NDB Cluster Architecture, Distribution, Availability, and When It Fits</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>X Protocol, MySQL Shell, Document Store Concepts, and CRUD APIs</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Spatial Types, SRIDs, Spatial Functions, R-Tree Indexing, and GIS Workloads</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>FULLTEXT Search, Tokenization, Relevance, Stopwords, and Search-System Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>Choosing Native Features vs Dedicated Systems for Search, Analytics, and Distributed Scale</a>
+</div></details>
+<details class="sidebar-chapter"><summary><span>22</span>Production Capstone: Design, Secure, Scale, Tune, and Recover MySQL</summary><div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Define SLOs, Workload, Data Model, Capacity Forecast, and Architecture Decision Record</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>Build the Production Schema, Index Portfolio, Security Model, and Migration Pipeline</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>Load Test, Capture Plans, Tune Queries/Server, and Establish Performance Baselines</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Implement Backups, PITR, Replication/HA, Monitoring, Alerts, and Incident Runbooks</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Execute Failure/Recovery Drills and Defend the Final MySQL Production Design</a>
+</div></details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar"><button data-sidebar-open="" type="button"><span>Course navigation</span><span>Chapter 15 · Lesson 02</span></button></div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs"><a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">MySQL</a><span>/</span><span>Chapter 14 · Lesson 01</span></nav>
+<header class="lesson-header"><p class="eyebrow">Chapter 15 · Group Replication, InnoDB Cluster, Router, and High Availability</p><h1>Single-Primary vs Multi-Primary Modes, Conflict Detection, and Workload Constraints</h1><p>Compare single-primary and multi-primary Group Replication by write ownership, certification conflicts, transaction restrictions, AUTO_INCREMENT behavior, and operational complexity instead of assuming more writable members means more throughput.</p><div class="lesson-meta"><span>Advanced</span><span>150–210 min</span><span>mode switch + certification-conflict lab</span><span>MySQL Server/Shell 8.4.10 LTS · Community</span><span>Group Replication / write topology</span><span>Last reviewed: August 2026</span></div></header>
+<nav aria-label="On this page" class="lesson-toc"><strong>On this page</strong><ol data-generated-toc=""></ol></nav>
+<div class="lesson-content">
+<section><h2>Learning outcomes</h2><p>The ServiceHub cluster is healthy in single-primary mode. A common next thought is: “If three servers are online, why not write to all three and triple throughput?” That conclusion skips the expensive part of distributed writing: transactions issued on different members can touch the same rows or related constraints before either member has observed the other's commit. Group Replication must certify those transactions and reject conflicts to preserve one history.</p><div class="objectives"><div class="objective"><span>01</span><p>Contrast single-primary and multi-primary modes by write routing, secondary read-only state, certification behavior, and operational complexity.</p></div><div class="objective"><span>02</span><p>Observe the mode and member roles before changing them, then switch modes with AdminAPI rather than raw variable drift.</p></div><div class="objective"><span>03</span><p>Create a controlled same-row write conflict on two primaries and interpret certification rollback as a correctness mechanism.</p></div><div class="objective"><span>04</span><p>Explain AUTO_INCREMENT handling, transaction/isolation restrictions, and foreign-key considerations that matter more in multi-primary mode.</p></div><div class="objective"><span>05</span><p>Decide when single-primary is the better production boundary even when multi-primary syntax is available.</p></div></div></section>
+<section><h2>Single-primary: one write owner, several synchronized members</h2><p>In single-primary mode—Group Replication's default—one member is read/write and the other group members are made read-only with <code>super_read_only=ON</code>. If the primary leaves unexpectedly and quorum remains, the group elects a new primary. This removes an entire class of concurrent cross-member write conflicts because normal application writes have one entry point.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · SQL — prove mode and roles before changing anything</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT @@global.group_replication_single_primary_mode,</span><span class="code-line">       @@global.group_replication_enforce_update_everywhere_checks;</span><span class="code-line"></span><span class="code-line">SELECT MEMBER_HOST, MEMBER_PORT, MEMBER_STATE, MEMBER_ROLE</span><span class="code-line">FROM performance_schema.replication_group_members</span><span class="code-line">ORDER BY MEMBER_ROLE, MEMBER_HOST, MEMBER_PORT;</span></code></pre></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Question</th><th>Single-primary</th><th>Multi-primary</th></tr></thead><tbody><tr><td>Writable members</td><td>one primary</td><td>all members can accept writes</td></tr><tr><td>Routing model</td><td>send writes to current primary</td><td>clients may write to multiple members</td></tr><tr><td>Certification conflicts</td><td>still possible in internal/failover situations but normal writers converge at one member</td><td>normal operating concern for concurrent writes</td></tr><tr><td>AUTO_INCREMENT</td><td>normal single-writer behavior</td><td>Group Replication coordinates increment/offset behavior when defaults permit</td></tr><tr><td>Operational complexity</td><td>lower</td><td>higher: conflict rates, routing, DDL, isolation, workload partitioning</td></tr><tr><td>Default in MySQL 8.4</td><td>yes</td><td>no</td></tr></tbody></table></div></section>
+<section><h2>Switch modes through AdminAPI</h2><p>For an InnoDB Cluster, the supported control plane is MySQL Shell AdminAPI. Do not manually change <code>group_replication_single_primary_mode</code> on members behind AdminAPI's back. The cluster metadata and Group Replication configuration must remain coherent.</p><div class="code-window" data-code-block="" data-language="javascript"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>javascript · MySQL Shell JavaScript — switch to multi-primary and verify</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">var cluster = dba.getCluster('ServiceHubHA')</span><span class="code-line">cluster.status({extended:1})</span><span class="code-line">cluster.switchToMultiPrimaryMode()</span><span class="code-line">cluster.status({extended:1})</span></code></pre></div><p>All ONLINE members should now report a primary role in Group Replication terms and be writable. That does not mean every workload benefits. The group still certifies distributed transactions, and conflicting concurrent writes can be rolled back.</p></section>
+<section><h2>The certification mental model</h2><p>Each transaction executes locally and builds the information Group Replication needs to identify the rows it modified. At commit, concurrent transactions are certified against transactions accepted by the group. If two transactions conflict, the group chooses a consistent outcome and one transaction can be rolled back. The losing application request must not assume “COMMIT always succeeds because UPDATE succeeded locally.”</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · SQL — create a tiny conflict target on the current cluster</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">CREATE DATABASE IF NOT EXISTS servicehub_ha_lab;</span><span class="code-line">CREATE TABLE IF NOT EXISTS servicehub_ha_lab.inventory_state (</span><span class="code-line">  asset_id BIGINT PRIMARY KEY,</span><span class="code-line">  available_parts INT NOT NULL,</span><span class="code-line">  version_no BIGINT NOT NULL DEFAULT 0</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line">INSERT INTO servicehub_ha_lab.inventory_state(asset_id,available_parts,version_no)</span><span class="code-line">VALUES (1,10,0)</span><span class="code-line">ON DUPLICATE KEY UPDATE available_parts=10, version_no=0;</span></code></pre></div></section>
+<section><h2>Conflict lab: two primaries update the same row</h2><p>Open two clients against different writable members. The exact losing session is timing-dependent, which is itself part of the lesson: distributed certification is not a scriptable promise that “session B always loses.” The expected invariant is that both conflicting versions do not commit as independent truths.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · Session A — member 1</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SET autocommit=0;</span><span class="code-line">START TRANSACTION;</span><span class="code-line">UPDATE servicehub_ha_lab.inventory_state</span><span class="code-line">SET available_parts=available_parts-1,</span><span class="code-line">    version_no=version_no+1</span><span class="code-line">WHERE asset_id=1;</span><span class="code-line">-- Keep the transaction open for the moment.</span></code></pre></div><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · Session B — another primary member</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SET autocommit=0;</span><span class="code-line">START TRANSACTION;</span><span class="code-line">UPDATE servicehub_ha_lab.inventory_state</span><span class="code-line">SET available_parts=available_parts-2,</span><span class="code-line">    version_no=version_no+1</span><span class="code-line">WHERE asset_id=1;</span><span class="code-line">-- Now COMMIT A and B close together from the two terminals.</span><span class="code-line">COMMIT;</span></code></pre></div><p>One transaction may receive a certification/conflict rollback when the competing write is accepted. If your local timing makes both commits serialize cleanly, repeat with the transactions held open before nearly simultaneous commits. Do not invent a fake error number; record the exact server/client message your build returns.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · SQL — verify one coherent group state afterwards</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT * FROM servicehub_ha_lab.inventory_state WHERE asset_id=1;</span><span class="code-line">SELECT MEMBER_HOST, MEMBER_PORT, COUNT_TRANSACTIONS_IN_QUEUE,</span><span class="code-line">       COUNT_TRANSACTIONS_CHECKED, COUNT_CONFLICTS_DETECTED</span><span class="code-line">FROM performance_schema.replication_group_member_stats;</span></code></pre></div></section>
+<section><h2>AUTO_INCREMENT does not remove logical conflicts</h2><p>In multi-primary mode, Group Replication can adjust <code>auto_increment_increment</code> and <code>auto_increment_offset</code> when those variables still have their normal defaults, using <code>group_replication_auto_increment_increment</code> to reduce duplicate generated identifiers. This helps with identifier allocation. It does not make two transactions that update the same business entity conflict-free.</p><div class="code-window" data-code-block="" data-language="sql"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>sql · SQL — inspect generated-key coordination</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">SELECT @@global.group_replication_single_primary_mode,</span><span class="code-line">       @@global.group_replication_auto_increment_increment,</span><span class="code-line">       @@global.auto_increment_increment,</span><span class="code-line">       @@global.auto_increment_offset;</span></code></pre></div></section>
+<section><h2>Isolation and constraint caveats</h2><p>Group Replication's distributed certification cannot see every local lock concept that InnoDB uses. Gap locks are one example. For multi-primary groups, Oracle recommends <code>READ COMMITTED</code> unless the application depends on <code>REPEATABLE READ</code> semantics, because the reduced use of gap locking better aligns local behavior with distributed conflict detection. Strict “update everywhere” checks also reject some transaction classes such as <code>SERIALIZABLE</code> transactions and transactions involving cascading foreign-key constraints when those checks are enabled.</p><div class="callout warning"><strong>Do not change isolation globally to satisfy a lab</strong><p>Isolation is an application correctness contract. Evaluate transaction semantics, phantom/nonrepeatable-read expectations, and concurrency behavior before changing it. The lesson explains the Group Replication tradeoff; it does not prescribe one universal setting.</p></div></section>
+<section><h2>Tempting but wrong: route random writes to all members for “load balancing”</h2><p>Random distribution ignores business contention. A workload with hot accounts, inventory rows, counters, or parent/child changes can spend more time certifying and retrying conflicts than a single-primary workload spends executing useful work. Multi-primary can be appropriate when write sets are naturally partitioned and conflict rates are demonstrably low, but that conclusion comes from workload evidence.</p><div class="table-wrap"><table class="data-table"><thead><tr><th>Evidence before adopting multi-primary</th><th>Question</th></tr></thead><tbody><tr><td>Conflict counters/retries</td><td>How often are transactions rolled back by certification?</td></tr><tr><td>Business key distribution</td><td>Do different writers naturally touch disjoint data?</td></tr><tr><td>Latency under representative concurrency</td><td>Does extra write entry improve end-to-end latency/throughput after retries?</td></tr><tr><td>DDL/constraint behavior</td><td>Can schema changes and referential rules be operated safely?</td></tr><tr><td>Application retry/idempotency</td><td>Can the client safely retry failed transactions?</td></tr></tbody></table></div></section>
+<section><h2>Return to the simpler mode</h2><div class="code-window" data-code-block="" data-language="javascript"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>javascript · MySQL Shell — choose one primary and switch back</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">// Use an actual ONLINE member endpoint from cluster.status().</span><span class="code-line">cluster.switchToSinglePrimaryMode('icadmin@127.0.0.1:33151')</span><span class="code-line">cluster.status({extended:1})</span></code></pre></div><p>The named instance becomes primary if eligible; the others return to secondary/read-only mode. Production teams should normally prefer the simplest topology that satisfies the workload and availability objective. Multi-primary is an advanced choice, not an upgrade badge.</p></section>
+
+<section><h2>What actually changes when you add writable entry points</h2><p>In single-primary mode, the primary's InnoDB lock manager sees ordinary application write contention before commit. In multi-primary mode, two independent members can each execute a transaction locally because neither member owns the other member's local locks. Group Replication therefore needs a second, distributed conflict boundary at certification time. This is why a multi-primary application's error-handling contract is stricter: a transaction that reached the local COMMIT call can still lose certification against another transaction that the group accepted.</p><p>That distinction also explains why benchmark design matters. A test that inserts independent rows with random keys may show almost no conflicts, while the real ServiceHub workload may repeatedly update the same work-order, inventory, or scheduling records. The correct experiment therefore preserves business key skew, transaction size, think time, and retry behavior. “Transactions per second with unique synthetic keys” is not sufficient evidence for a multi-primary architecture.</p></section>
+<section><h2>Conflict classes: row overlap is only the easiest one to see</h2><p>The same-row exercise is intentionally simple, but production contention is broader. Two transactions can overlap because they update the same row, because a unique key admits only one value, because parent/child changes interact, or because application invariants span several rows. Group Replication's certification information is built from transaction write sets; it does not understand the business meaning of “these two otherwise different rows represent the same appointment slot.” Database constraints and application transaction design still matter.</p><div class="table-wrap"><table class="data-table"><thead><tr><th>Conflict shape</th><th>What protects you</th><th>What the application must still do</th></tr></thead><tbody><tr><td>same primary-key row</td><td>InnoDB locally plus Group Replication certification across members</td><td>retry or surface a concurrency failure safely</td></tr><tr><td>duplicate UNIQUE value</td><td>unique constraint/certification outcome</td><td>map the denial to business semantics</td></tr><tr><td>cross-row business invariant</td><td>only if encoded by transactions/constraints</td><td>design atomic checks; do not expect certification to infer intent</td></tr><tr><td>hot counter or inventory row</td><td>serialization/conflict rejection</td><td>measure retry amplification; consider single-writer ownership</td></tr></tbody></table></div></section>
+<section><h2>Retry design belongs in the mode decision</h2><p>A certification failure is not permission to rerun arbitrary application code. A safe retry repeats the complete database transaction from a clean session/transaction boundary, re-reads current state, and is idempotent at the business boundary. External side effects—sending email, charging a card, calling another service—must not be duplicated merely because the database transaction was retried. Chapter 6 introduced bounded deadlock retries; multi-primary certification failures extend the same engineering principle to a distributed conflict boundary.</p><p>Before production adoption, instrument retry counts and final failure rates by transaction type. If one ServiceHub workflow repeatedly conflicts, the better fix may be routing that workflow to one writer, redesigning the transaction grain, or returning to single-primary mode—not increasing retry loops until the symptoms disappear.</p></section>
+<section><h2>Production judgment</h2><p>Single-primary is a strong default for OLTP applications because write ownership is simple, failover behavior is easier to reason about, and ordinary application transactions do not arrive concurrently at independent primaries. Multi-primary is useful only when multiple writable entry points are a real requirement and conflict behavior, isolation, constraints, retries, and routing have been tested under realistic concurrency.</p><p>Next we move one level up: rather than manually manipulating Group Replication, we use AdminAPI to manage cluster lifecycle, recovery, rejoin, removal, and topology changes as one metadata-managed system.</p></section>
+<div class="checkpoint"><h3>Knowledge check</h3><ol><li>Why can an UPDATE succeed locally but COMMIT later fail in a multi-primary group?</li><li>Does multi-primary guarantee higher write throughput?</li><li>What does Group Replication AUTO_INCREMENT coordination solve—and what does it not solve?</li><li>Why is READ COMMITTED often recommended for multi-primary workloads?</li><li>Which control plane should change the mode of an InnoDB Cluster?</li></ol><details class="answer-toggle"><summary>Reveal answers</summary><div><ol><li>Certification occurs as the transaction is accepted by the distributed group; a conflicting transaction may be rejected even after local execution succeeded.</li><li>No. Certification conflicts, retries, network communication, and workload contention can outweigh any benefit.</li><li>It reduces collisions in generated AUTO_INCREMENT values; it does not remove business-row or logical write conflicts.</li><li>It avoids most gap locks, better aligning InnoDB local conflict behavior with Group Replication certification, provided the application semantics permit it.</li><li>MySQL Shell AdminAPI, for example <code>cluster.switchToMultiPrimaryMode()</code> or <code>switchToSinglePrimaryMode()</code>, rather than unmanaged variable drift.</li></ol></div></details></div>
+<section><h3>Authoritative references</h3><ul><li><a href="https://dev.mysql.com/doc/refman/8.4/en/group-replication-deploying-in-multi-primary-or-single-primary-mode.html" rel="noreferrer" target="_blank">Single-primary and multi-primary modes</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/group-replication-limitations.html" rel="noreferrer" target="_blank">Group Replication limitations</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/group-replication-system-variables.html" rel="noreferrer" target="_blank">Group Replication system variables</a></li><li><a href="https://dev.mysql.com/doc/dev/mysqlsh-api-javascript/8.4/classmysqlsh_1_1dba_1_1_cluster.html" rel="noreferrer" target="_blank">MySQL Shell Cluster API</a></li></ul></section>
+</div>
+<nav aria-label="Lesson navigation" class="lesson-nav"><a class="prev" href="Lesson1.html"><small>Previous lesson</small><strong>Consensus-Oriented Group Replication Concepts, Membership, Quorum, and Failure Modes</strong></a><a class="next" href="Lesson3.html"><small>Next lesson</small><strong>MySQL Shell AdminAPI, InnoDB Cluster Lifecycle, Recovery, and Rejoin Operations</strong></a></nav>
+</article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>If these tutorials save you time, a small donation supports new lessons, technical review, diagrams, examples, and long-term maintenance.</p>
+<div aria-label="Author links" class="social-row">
+<a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+<a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head"><span>ETH</span><small>Ethereum / ERC-20 only</small></div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
+<button class="button secondary compact" data-copy-donation="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy address</button>
+<p>Send only assets compatible with the Ethereum/ERC-20 network. Do not send TRC-20/TRON assets.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div><strong>Big Data Academy</strong><p>A free, prerequisite-aware path from SQL foundations to distributed data systems.</p></div>
+<div><a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a></div>
+<small>Created and maintained by <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> · © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>
