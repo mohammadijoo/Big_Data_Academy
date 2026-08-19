@@ -1,0 +1,1587 @@
+<!doctype html>
+
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Create and diagnose a safe deadlock, distinguish lock/deadlock/statement timeouts, use NOWAIT and SKIP LOCKED deliberately, and build a transaction-bound worker queue while reasoning about fairness and starvation."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Deadlocks, Lock Queues, Timeouts, SKIP LOCKED, NOWAIT, and Worker Queues |
+      PostgreSQL | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">PG</span>
+            <div><small>Course 05</small><strong>PostgreSQL</strong></div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 120 lessons..."
+            type="search"
+        /></label>
+        <nav aria-label="PostgreSQL curriculum" class="sidebar-curriculum">
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>PostgreSQL Foundations, Release Cadence,
+              Installation, and Lab Design
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>PostgreSQL Architecture and Philosophy: Process
+                Model, Catalogs, and Extensibility</a
+              >
+              <a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Major Releases, Minor Releases, Support Policy,
+                Compatibility, and Upgrade Planning</a
+              >
+              <a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>Install PostgreSQL on Windows, Linux,
+                Containers, and Initialize a Cluster</a
+              >
+              <a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>psql Fundamentals, Connection Parameters,
+                Service Files, and Safe CLI Workflows</a
+              >
+              <a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Repeatable Lab with Roles, Databases,
+                Schemas, Extensions, and Sample Workloads</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>Cluster Architecture, Processes, Memory, Files, and
+              Configuration
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>Postmaster, Backend Processes, Auxiliary
+                Processes, and Connection Lifecycle</a
+              >
+              <a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>Data Directory, Tablespaces, Configuration
+                Files, Include Hierarchy, and Reload vs Restart</a
+              >
+              <a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Shared Buffers, WAL Buffers, Work Memory,
+                Maintenance Memory, and Memory Budgeting</a
+              >
+              <a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>GUC Parameters, ALTER SYSTEM, Session Settings,
+                and Configuration Scope</a
+              >
+              <a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Logging Collector, Structured Logs, Startup
+                Diagnostics, and a Baseline Production Profile</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>Databases, Schemas, Roles, Catalogs, and Object
+              Namespaces
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>Cluster vs Database vs Schema Boundaries and
+                Search Path Semantics</a
+              >
+              <a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Roles, Membership, Ownership, SET ROLE, and
+                Privilege Inheritance</a
+              >
+              <a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>System Catalogs, information_schema, psql
+                Introspection, and Metadata Queries</a
+              >
+              <a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>Object Dependencies, DROP CASCADE Risks,
+                Extensions, and Namespace Hygiene</a
+              >
+              <a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Design Multi-Team Database and Schema Boundaries
+                with Least-Privilege Ownership</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Data Types, Domains, Constraints, Identity, and
+              Generated Data
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Numeric, Text, Boolean, Temporal, UUID, Network,
+                Range, Multirange, and Binary Types</a
+              >
+              <a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>Arrays, Composite Types, ENUMs, Domains, and
+                When Custom Types Improve Modeling</a
+              >
+              <a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK,
+                EXCLUDE, NOT NULL, and Constraint Timing</a
+              >
+              <a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>Identity Columns, Sequences, Sequence Caching,
+                Gaps, and Distributed-ID Considerations</a
+              >
+              <a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Generated Columns, Defaults, Collations,
+                Encoding, and Data-Integrity Design</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>SQL Querying: Joins, Subqueries, CTEs, Set
+              Operations, and LATERAL
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>SELECT Semantics, NULL, Three-Valued Logic,
+                Ordering, and Expression Evaluation</a
+              >
+              <a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>Join Types, Join Conditions, Cardinality
+                Reasoning, and Join Elimination Concepts</a
+              >
+              <a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>Subqueries, EXISTS, IN, Scalar Contexts,
+                Correlation, and LATERAL</a
+              >
+              <a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>CTEs, Recursive Queries, Materialization
+                Control, and Graph/Hierarchy Traversal</a
+              >
+              <a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>UNION/INTERSECT/EXCEPT, DISTINCT ON, Row
+                Constructors, and Query Composition</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Advanced SQL: Aggregates, Windows, GROUPING SETS,
+              and MERGE
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>Aggregate Functions, FILTER,
+                Ordered-Set/Hypothetical-Set Aggregates, and Custom
+                Aggregates</a
+              >
+              <a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>Window Partitions, Frames, Ranking, Running
+                Metrics, and Gaps-and-Islands</a
+              >
+              <a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>GROUPING SETS, CUBE, ROLLUP, and Multi-Level
+                Analytical Reports</a
+              >
+              <a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>INSERT ... ON CONFLICT, MERGE, RETURNING, and
+                Observable DML Workflows</a
+              >
+              <a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Advanced Reporting Patterns with CTEs, Windows,
+                JSON Construction, and Reusable Views</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>07</span>MVCC, Transactions, Isolation, Locks, and
+              Serialization
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="Lesson1.html"
+                ><span>01</span>Tuple Versions, xmin/xmax, Snapshots,
+                Visibility, and the MVCC Mental Model</a
+              >
+              <a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>READ COMMITTED, REPEATABLE READ, SERIALIZABLE,
+                and Anomaly Prevention</a
+              >
+              <a class="sidebar-lesson" href="Lesson3.html"
+                ><span>03</span>Table, Row, Page, Advisory, and Predicate Locks
+                with Lock Compatibility</a
+              >
+              <a class="sidebar-lesson is-current" href="Lesson4.html"
+                ><span>04</span>Deadlocks, Lock Queues, Timeouts, SKIP LOCKED,
+                NOWAIT, and Worker Queues<i>Current</i></a
+              >
+              <a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Designing Retryable Transactions, Idempotency,
+                and Serializable Workflows</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>Heap Storage, TOAST, HOT Updates, Bloat, and
+              Page-Level Internals
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>Heap Pages, Line Pointers, Tuple Headers, Free
+                Space, and Visibility Map</a
+              >
+              <a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>TOAST Storage, Compression, Out-of-Line Values,
+                and Large Attribute Tradeoffs</a
+              >
+              <a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>HOT Updates, Fillfactor, Index Churn, and
+                Update-Heavy Table Design</a
+              >
+              <a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>Dead Tuples, Bloat Formation, Measuring Bloat,
+                and Repack/Rewrite Tradeoffs</a
+              >
+              <a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Inspect Storage Internals with pageinspect and
+                Connect Physical Evidence to SQL Behavior</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>VACUUM, Autovacuum, ANALYZE, Freeze, and
+              Maintenance Engineering
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>Why VACUUM Exists: Dead Tuple Reclamation and
+                Visibility Maintenance</a
+              >
+              <a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>Autovacuum Thresholds, Scale Factors, Worker
+                Capacity, and Per-Table Tuning</a
+              >
+              <a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>Transaction ID Wraparound, Freezing,
+                relfrozenxid, and Emergency Prevention</a
+              >
+              <a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>ANALYZE, Statistics Targets, Extended
+                Statistics, and Planner Cardinality Quality</a
+              >
+              <a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>VACUUM FULL, CLUSTER, REINDEX, Concurrent
+                Maintenance, and Maintenance Windows</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>B-Tree and Specialized Indexes: Hash, GiST,
+              SP-GiST, GIN, and BRIN
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>B-Tree Structure, Operator Classes, Sort Order,
+                Multicolumn Rules, and Skip Scan</a
+              >
+              <a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>Partial, Expression, INCLUDE/Covering, Unique,
+                and Concurrent Indexes</a
+              >
+              <a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>GIN for Arrays/JSONB/Text Search and GiST for
+                Ranges/Geometry-Like Semantics</a
+              >
+              <a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>SP-GiST Partitioned Search Structures and BRIN
+                for Physically Correlated Huge Tables</a
+              >
+              <a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Index Selection, Write Amplification,
+                Deduplication, Reindexing, and Portfolio Audits</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>Planner and Executor Internals, EXPLAIN,
+              Statistics, and Cost Modeling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>Planner Search Space, Paths, Join Orders, Cost
+                Parameters, and Generic vs Custom Plans</a
+              >
+              <a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>EXPLAIN / EXPLAIN ANALYZE with BUFFERS, WAL,
+                TIMING, SETTINGS, and JIT</a
+              >
+              <a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>Sequential, Index, Bitmap, Index-Only, TID, and
+                Parallel Scan Behavior</a
+              >
+              <a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Nested Loop, Hash Join, Merge Join, Memoize,
+                Sort, Hash Aggregate, and Incremental Sort</a
+              >
+              <a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Cardinality Misestimates, Extended Statistics,
+                Planner Knobs, and Evidence-Driven Tuning</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>WAL, Checkpoints, Crash Recovery, and Durability
+              Engineering
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>Write-Ahead Logging, LSNs, WAL Records,
+                Segments, and Durability Guarantees</a
+              >
+              <a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>Checkpoints, Background Writer, WAL Writer,
+                Full-Page Writes, and I/O Spikes</a
+              >
+              <a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>synchronous_commit, fsync, wal_sync_method, and
+                Durability/Latency Tradeoffs</a
+              >
+              <a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>Crash Recovery Timeline, Recovery Consistency,
+                and Corruption Boundaries</a
+              >
+              <a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>WAL Sizing, Checkpoint Tuning, pg_wal Growth,
+                and Production Alerting</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Backup, Restore, PITR, Base Backups, and Archiving
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>Logical Backups with pg_dump/pg_restore and
+                Object-Level Recovery</a
+              >
+              <a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Physical Base Backups, pg_basebackup,
+                Tablespaces, and Backup Manifests</a
+              >
+              <a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>Continuous Archiving, archive_command, WAL
+                Retention, and Restore Commands</a
+              >
+              <a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Point-in-Time Recovery, Recovery Targets,
+                Timelines, and Promotion</a
+              >
+              <a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Backup Verification, Restore Drills, RPO/RTO
+                Testing, and Immutable Backup Design</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Physical Streaming Replication, Standbys, and High
+              Availability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Primary/Standby Architecture, WAL
+                Sender/Receiver, Replay, and Replication Slots</a
+              >
+              <a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Hot Standby Reads, Conflict Cancellation,
+                max_standby Delays, and Feedback</a
+              >
+              <a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Synchronous Replication, Quorum Commit, Latency,
+                and Failure Semantics</a
+              >
+              <a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Cascading Replication, Replication Slots, WAL
+                Retention, and Replica Lag Diagnosis</a
+              >
+              <a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Promotion, Rewind, Failover Orchestration
+                Concepts, Fencing, and Split-Brain Avoidance</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Logical Replication, Publications, Subscriptions,
+              and Data Movement
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>Logical Decoding Mental Model, Replication
+                Identity, Publications, and Subscriptions</a
+              >
+              <a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Initial Table Synchronization, Ongoing Apply,
+                Conflict Classes, and Monitoring</a
+              >
+              <a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Row Filters, Column Lists, Selective
+                Replication, and Multi-Database Integration Patterns</a
+              >
+              <a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Schema Evolution, DDL Coordination, Sequences,
+                Large Objects, and Operational Gaps</a
+              >
+              <a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Upgrade/Migration, CDC, Zero-Downtime Cutovers,
+                and Logical Replication Runbooks</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Partitioning, Pruning, Routing, and Large-Table
+              Operations
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>Range, List, Hash Partitioning, Partition
+                Bounds, and Data Modeling Decisions</a
+              >
+              <a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Partition Pruning at Plan/Execution Time and
+                Query Shape Requirements</a
+              >
+              <a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>Indexes, Constraints, Foreign Keys, Triggers,
+                and Uniqueness Across Partitions</a
+              >
+              <a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Attach/Detach, Rolling Windows, Retention, Bulk
+                Load, and Archiving Workflows</a
+              >
+              <a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Too Many Partitions, Planner Overhead, Skew, Hot
+                Partitions, and Maintenance Strategy</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>JSONB, Arrays, Full-Text Search, Range Types, and
+              Advanced Data Modeling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>JSON vs JSONB Storage, Operators, SQL/JSON,
+                Construction, and Extraction</a
+              >
+              <a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>GIN Indexing for JSONB, Containment Queries,
+                jsonpath, and Selectivity Tradeoffs</a
+              >
+              <a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>Arrays, ANY/ALL, Unnesting, Multidimensional
+                Semantics, and Modeling Boundaries</a
+              >
+              <a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>Built-In Full-Text Search: Dictionaries,
+                tsvector, tsquery, Ranking, and GIN</a
+              >
+              <a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Range/Multirange Types, Exclusion Constraints,
+                Temporal Scheduling, and Overlap Models</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Functions, Procedures, Triggers, PL/pgSQL, and
+              Server-Side Programming
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>SQL Functions, PL/pgSQL Functions, Procedures,
+                Volatility, Parallel Safety, and Cost</a
+              >
+              <a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>Control Flow, Exceptions, Diagnostics, Dynamic
+                SQL, and SECURITY DEFINER Safety</a
+              >
+              <a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Triggers, Transition Tables, Deferred Behavior,
+                Audit Patterns, and Recursion Risks</a
+              >
+              <a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Event Triggers, DDL Governance, Policy
+                Enforcement, and Deployment Concerns</a
+              >
+              <a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>When to Use Database Logic vs Application
+                Services—and How to Test Both</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>19</span>Extensions, Foreign Data Wrappers, Languages, and
+              PostgreSQL Extensibility
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Extension Packaging, CREATE EXTENSION,
+                Versioning, Dependencies, and Trust Boundaries</a
+              >
+              <a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Foreign Data Wrappers, Foreign Tables, Pushdown,
+                Transactions, and Federated Queries</a
+              >
+              <a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>Procedural Languages, Trusted vs Untrusted Code,
+                and Operational Risk</a
+              >
+              <a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>Custom Types, Operators, Operator Classes,
+                Aggregates, and Extension Architecture</a
+              >
+              <a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Extension Lifecycle: Security Review, Upgrade
+                Compatibility, Backup, and Disaster Recovery</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Authentication, Authorization, TLS, Row-Level
+              Security, and Hardening
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>pg_hba.conf Rule Matching, Authentication
+                Methods, SCRAM, Certificates, and OAuth Concepts</a
+              >
+              <a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>TLS Configuration, Certificate Verification,
+                Channel Security, and Rotation</a
+              >
+              <a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>Privileges, Default Privileges, Role Design, SET
+                ROLE, and Least-Privilege Administration</a
+              >
+              <a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>Row-Level Security Policies, FORCE RLS, Security
+                Barrier Views, and Tenant Isolation</a
+              >
+              <a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Hardening Network Access, Extensions, SECURITY
+                DEFINER, Search Path, Logging, and Patching</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Observability: Statistics Views,
+              pg_stat_statements, Logs, and Wait Events
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>pg_stat_activity, Sessions, Transactions,
+                Blocking, and Long-Running Work</a
+              >
+              <a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>pg_stat_database/table/index Views and
+                Interpreting Cache/Scan/Write Counters</a
+              >
+              <a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>pg_stat_statements, Query Fingerprints, Plan
+                Variance, and Workload Ranking</a
+              >
+              <a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Wait Events, Locks, I/O Visibility,
+                WAL/Replication Stats, and Incident Diagnosis</a
+              >
+              <a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>Logging Strategy, auto_explain, Sampling,
+                Dashboards, Baselines, and Alert Design</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Performance Engineering: Memory, I/O, Parallelism,
+              JIT, and Connection Scaling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>shared_buffers, work_mem, maintenance_work_mem,
+                huge pages, and Memory Budgeting</a
+              >
+              <a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>effective_cache_size, random_page_cost, I/O
+                Concurrency, AIO, and Storage Characteristics</a
+              >
+              <a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>Parallel Query, Parallel Workers, Gather/Gather
+                Merge, and Parallel Safety</a
+              >
+              <a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>JIT Compilation, Thresholds, Analytical
+                Workloads, and When JIT Hurts</a
+              >
+              <a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Connection Scaling, Poolers, max_connections,
+                Session State, and Transaction Pooling</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>23</span>Upgrades, pg_upgrade, Compatibility, Migrations,
+              and Production Change
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter23/Lesson1.html"
+                ><span>01</span>Major vs Minor Upgrades, Binary Compatibility,
+                Extension Readiness, and Release Notes</a
+              >
+              <a class="sidebar-lesson" href="../Chapter23/Lesson2.html"
+                ><span>02</span>pg_upgrade Workflows, Link/Clone Modes,
+                Statistics, Analyze, and Rollback Planning</a
+              >
+              <a class="sidebar-lesson" href="../Chapter23/Lesson3.html"
+                ><span>03</span>Logical Upgrade Paths, Cross-Platform Migration,
+                Downtime Minimization, and Validation</a
+              >
+              <a class="sidebar-lesson" href="../Chapter23/Lesson4.html"
+                ><span>04</span>Schema Migration Expand/Contract, Lock-Aware
+                DDL, CREATE INDEX CONCURRENTLY, and Backfills</a
+              >
+              <a class="sidebar-lesson" href="../Chapter23/Lesson5.html"
+                ><span>05</span>Canary Upgrades, Performance Comparison,
+                Regression Detection, and Post-Upgrade Runbooks</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>Production Capstone: Operate a Secure, Highly
+              Available PostgreSQL Platform
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter24/Lesson1.html"
+                ><span>01</span>Define SLOs, Workload Classes, Data Model,
+                Capacity Forecast, and Architecture Decisions</a
+              >
+              <a class="sidebar-lesson" href="../Chapter24/Lesson2.html"
+                ><span>02</span>Implement Schema, Indexes, Partitioning,
+                Security, RLS, and Migration Automation</a
+              >
+              <a class="sidebar-lesson" href="../Chapter24/Lesson3.html"
+                ><span>03</span>Tune Queries, Autovacuum, Memory, WAL, I/O, and
+                Connection Architecture from Evidence</a
+              >
+              <a class="sidebar-lesson" href="../Chapter24/Lesson4.html"
+                ><span>04</span>Implement PITR, Replication/Failover,
+                Monitoring, Alerts, Upgrades, and Incident Runbooks</a
+              >
+              <a class="sidebar-lesson" href="../Chapter24/Lesson5.html"
+                ><span>05</span>Run Failure, Corruption, Restore, Failover, and
+                Performance Drills—and Defend the Design</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 07 · Lesson 04</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">PostgreSQL</a><span>/</span
+            ><span>Chapter 07 · Lesson 04</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 07 · MVCC, Transactions, Isolation, Locks, and
+              Serialization
+            </p>
+            <h1>
+              Deadlocks, Lock Queues, Timeouts, SKIP LOCKED, NOWAIT, and Worker
+              Queues
+            </h1>
+            <p>
+              Create and diagnose a safe deadlock, distinguish
+              lock/deadlock/statement timeouts, use NOWAIT and SKIP LOCKED
+              deliberately, and build a transaction-bound worker queue while
+              reasoning about fairness and starvation.
+            </p>
+            <div class="lesson-meta">
+              <span>Intermediate → Advanced</span><span>155–195 minutes</span
+              ><span>Deadlock + worker queue lab</span
+              ><span>Current patched PostgreSQL 18.x</span
+              ><span>Core PostgreSQL; no third-party dependency</span
+              ><span>Two or more local psql sessions where indicated</span
+              ><span>Last reviewed: August 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                Locks become operational incidents when sessions wait, form
+                cycles, or hold resources longer than the business operation.
+                ServiceHub will create a safe deadlock, distinguish three
+                timeout mechanisms, observe blockers, and then use row-lock
+                skipping to coordinate multiple workers over a queue. The
+                objective is not to eliminate all waiting—it is to make waiting
+                bounded, observable, and semantically correct.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Create a two-row deadlock in disposable data and recognize
+                    SQLSTATE <code>40P01</code>.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Distinguish <code>deadlock_timeout</code>,
+                    <code>lock_timeout</code>, and
+                    <code>statement_timeout</code> by what each mechanism
+                    measures.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Use <code>NOWAIT</code> for fail-fast lock acquisition and
+                    understand its <code>55P03</code> error behavior.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Use <code>SKIP LOCKED</code> only for queue-like workflows
+                    where an intentionally inconsistent instantaneous view is
+                    acceptable.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Claim work and transition queue state in one transaction
+                    while discussing fairness, starvation, retries, and
+                    abandoned work.
+                  </p>
+                </div>
+              </div>
+            </section>
+            <section>
+              <h2>1. Prepare deadlock and queue tables</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    setup
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">DROP TABLE IF EXISTS app.ch07_deadlock_item;</span><span class="code-line">DROP TABLE IF EXISTS app.ch07_job;</span><span class="code-line"></span><span class="code-line">CREATE TABLE app.ch07_deadlock_item (</span><span class="code-line">    item_id integer PRIMARY KEY,</span><span class="code-line">    amount integer NOT NULL</span><span class="code-line">);</span><span class="code-line">INSERT INTO app.ch07_deadlock_item VALUES (1,100), (2,200);</span><span class="code-line"></span><span class="code-line">CREATE TABLE app.ch07_job (</span><span class="code-line">    job_id bigint GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,</span><span class="code-line">    job_key text NOT NULL UNIQUE,</span><span class="code-line">    payload text NOT NULL,</span><span class="code-line">    priority integer NOT NULL DEFAULT 100,</span><span class="code-line">    status text NOT NULL DEFAULT 'ready'</span><span class="code-line">        CHECK (status IN ('ready','running','done','failed')),</span><span class="code-line">    claimed_by text,</span><span class="code-line">    claimed_at timestamptz,</span><span class="code-line">    attempts integer NOT NULL DEFAULT 0 CHECK (attempts &gt;= 0),</span><span class="code-line">    created_at timestamptz NOT NULL DEFAULT clock_timestamp()</span><span class="code-line">);</span><span class="code-line">INSERT INTO app.ch07_job(job_key,payload,priority) VALUES</span><span class="code-line">('wo-101','dispatch north',10),</span><span class="code-line">('wo-102','dispatch south',10),</span><span class="code-line">('wo-103','replace seal',20),</span><span class="code-line">('wo-104','inspect pump',20),</span><span class="code-line">('wo-105','call customer',30);</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>2. A deadlock is a wait cycle, not merely a long wait</h2>
+              <p>
+                A lock wait has a holder and a waiter. A deadlock exists when a
+                cycle means nobody in that cycle can progress without aborting
+                one transaction. PostgreSQL detects such cycles and aborts one
+                participant. Which transaction becomes the victim is not
+                something application logic should depend on.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    two-terminal deadlock choreography
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">-- Session A</span><span class="code-line">BEGIN;</span><span class="code-line">UPDATE app.ch07_deadlock_item SET amount = amount + 1 WHERE item_id = 1;</span><span class="code-line"></span><span class="code-line">-- Session B</span><span class="code-line">BEGIN;</span><span class="code-line">UPDATE app.ch07_deadlock_item SET amount = amount + 1 WHERE item_id = 2;</span><span class="code-line"></span><span class="code-line">-- Session A: send this; it waits on B</span><span class="code-line">UPDATE app.ch07_deadlock_item SET amount = amount + 1 WHERE item_id = 2;</span><span class="code-line"></span><span class="code-line">-- While A is waiting, Session B sends this; now B waits on A</span><span class="code-line">UPDATE app.ch07_deadlock_item SET amount = amount + 1 WHERE item_id = 1;</span><span class="code-line"></span><span class="code-line">-- PostgreSQL detects the cycle after its deadlock detection interval.</span><span class="code-line">-- One transaction receives SQLSTATE 40P01 and is aborted.</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="text">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>text ·
+                    typical victim output
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">ERROR:  deadlock detected</span><span class="code-line">DETAIL:  Process ... waits for ...; blocked by process ...</span><span class="code-line">HINT:  See server log for query details.</span><span class="code-line">SQLSTATE: 40P01 (deadlock_detected)</span><span class="code-line"></span><span class="code-line">Exact PIDs, lock types, detail ordering, and victim vary.</span></code></pre>
+              </div>
+              <p>
+                The surviving transaction's blocked statement can then proceed
+                because the victim releases its locks. Explicitly
+                <code>ROLLBACK</code> the failed transaction and finish/rollback
+                the survivor so the lab does not leave locks open.
+              </p>
+              <div class="callout">
+                <strong>Primary prevention</strong>
+                <p>
+                  Acquire the same logical resources in the same order across
+                  transaction paths. Short transactions reduce exposure, but
+                  consistent ordering directly removes many cycle shapes.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>3. Observe a wait before it becomes an incident</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    third-session wait inspection
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT a.pid,</span><span class="code-line">       a.state,</span><span class="code-line">       a.xact_start,</span><span class="code-line">       a.wait_event_type,</span><span class="code-line">       a.wait_event,</span><span class="code-line">       pg_blocking_pids(a.pid) AS blockers,</span><span class="code-line">       left(a.query, 100) AS query</span><span class="code-line">FROM pg_stat_activity AS a</span><span class="code-line">WHERE a.datname = current_database()</span><span class="code-line">ORDER BY a.xact_start NULLS LAST;</span></code></pre>
+              </div>
+              <p>
+                During a plain lock wait, expect the waiting backend to show a
+                lock-related wait event and a blocker PID. During the brief
+                deadlock-resolution moment the graph can change quickly;
+                monitoring is a snapshot, not an immutable incident record.
+                Server logs are often the durable evidence for deadlocks.
+              </p>
+            </section>
+            <section>
+              <h2>4. Three timeout concepts answer different questions</h2>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Setting</th>
+                    <th>What it measures</th>
+                    <th>Typical failure</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>deadlock_timeout</code></td>
+                    <td>
+                      How long a backend waits on a lock before PostgreSQL
+                      checks for deadlock (and related lock-wait logging
+                      behavior).
+                    </td>
+                    <td>If a true cycle is found: 40P01 deadlock_detected.</td>
+                  </tr>
+                  <tr>
+                    <td><code>lock_timeout</code></td>
+                    <td>Time spent waiting to acquire each lock.</td>
+                    <td>
+                      55P03 lock_not_available when the lock wait times out.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>statement_timeout</code></td>
+                    <td>
+                      Overall statement execution time from server receipt to
+                      completion.
+                    </td>
+                    <td>
+                      57014 query_canceled when statement time limit is
+                      exceeded.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <p>
+                Do not set <code>lock_timeout</code> equal to or larger than a
+                nonzero <code>statement_timeout</code> and then expect it to
+                win; the statement timeout can fire first. Prefer
+                transaction/session-local settings for specific workflows
+                instead of blunt cluster-wide values.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    bounded lock wait
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">-- Session A</span><span class="code-line">BEGIN;</span><span class="code-line">UPDATE app.ch07_deadlock_item SET amount = amount + 1 WHERE item_id = 1;</span><span class="code-line"></span><span class="code-line">-- Session B</span><span class="code-line">BEGIN;</span><span class="code-line">SET LOCAL lock_timeout = '750ms';</span><span class="code-line">UPDATE app.ch07_deadlock_item SET amount = amount + 10 WHERE item_id = 1;</span><span class="code-line">\errverbose</span><span class="code-line">ROLLBACK;</span><span class="code-line"></span><span class="code-line">-- Session A</span><span class="code-line">ROLLBACK;</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    statement timeout is broader than locking
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">BEGIN;</span><span class="code-line">SET LOCAL statement_timeout = '500ms';</span><span class="code-line">SELECT pg_sleep(2);</span><span class="code-line">\errverbose</span><span class="code-line">ROLLBACK;</span><span class="code-line">-- Expected SQLSTATE: 57014 query_canceled.</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>5. NOWAIT is explicit fail-fast locking</h2>
+              <p>
+                When the business workflow prefers “someone else owns this
+                resource; return immediately” over waiting, use
+                <code>NOWAIT</code>. It applies to row locking; PostgreSQL still
+                takes the required table-level lock normally.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    NOWAIT
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">-- Session A</span><span class="code-line">BEGIN;</span><span class="code-line">SELECT * FROM app.ch07_deadlock_item WHERE item_id = 1 FOR UPDATE;</span><span class="code-line"></span><span class="code-line">-- Session B</span><span class="code-line">BEGIN;</span><span class="code-line">SELECT * FROM app.ch07_deadlock_item WHERE item_id = 1 FOR UPDATE NOWAIT;</span><span class="code-line">\errverbose</span><span class="code-line">ROLLBACK;</span><span class="code-line">-- Expect 55P03 lock_not_available.</span><span class="code-line"></span><span class="code-line">-- Session A</span><span class="code-line">ROLLBACK;</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>6. SKIP LOCKED is for queue semantics, not general queries</h2>
+              <p>
+                <code>SKIP LOCKED</code> omits rows that cannot be locked
+                immediately. PostgreSQL explicitly warns that this yields an
+                inconsistent view of the table. That is usually unacceptable for
+                reports, balances, or “show all matching orders.” It is useful
+                for multiple consumers taking different jobs from a queue.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    Worker A — claim one job and keep transaction open
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">BEGIN;</span><span class="code-line">WITH picked AS (</span><span class="code-line">    SELECT job_id</span><span class="code-line">    FROM app.ch07_job</span><span class="code-line">    WHERE status = 'ready'</span><span class="code-line">    ORDER BY priority, created_at, job_id</span><span class="code-line">    FOR UPDATE SKIP LOCKED</span><span class="code-line">    LIMIT 1</span><span class="code-line">)</span><span class="code-line">UPDATE app.ch07_job AS j</span><span class="code-line">SET status = 'running',</span><span class="code-line">    claimed_by = 'worker-A',</span><span class="code-line">    claimed_at = clock_timestamp(),</span><span class="code-line">    attempts = attempts + 1</span><span class="code-line">FROM picked</span><span class="code-line">WHERE j.job_id = picked.job_id</span><span class="code-line">RETURNING j.job_id, j.job_key, j.status, j.claimed_by, j.attempts;</span><span class="code-line">-- Keep transaction open briefly.</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    Worker B — claims a different row
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">BEGIN;</span><span class="code-line">WITH picked AS (</span><span class="code-line">    SELECT job_id</span><span class="code-line">    FROM app.ch07_job</span><span class="code-line">    WHERE status = 'ready'</span><span class="code-line">    ORDER BY priority, created_at, job_id</span><span class="code-line">    FOR UPDATE SKIP LOCKED</span><span class="code-line">    LIMIT 1</span><span class="code-line">)</span><span class="code-line">UPDATE app.ch07_job AS j</span><span class="code-line">SET status = 'running',</span><span class="code-line">    claimed_by = 'worker-B',</span><span class="code-line">    claimed_at = clock_timestamp(),</span><span class="code-line">    attempts = attempts + 1</span><span class="code-line">FROM picked</span><span class="code-line">WHERE j.job_id = picked.job_id</span><span class="code-line">RETURNING j.job_id, j.job_key, j.status, j.claimed_by, j.attempts;</span><span class="code-line">COMMIT;</span></code></pre>
+              </div>
+              <p>
+                Because A holds a row lock, B skips that candidate and claims
+                the next ready row according to the ordering among rows it can
+                lock. The <code>WITH ... UPDATE ... RETURNING</code> keeps
+                selection and state transition inside one transaction. If A
+                rolls back, A's state transition also rolls back and its job
+                becomes ready again.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    Worker A — complete atomically
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">UPDATE app.ch07_job</span><span class="code-line">SET status = 'done'</span><span class="code-line">WHERE status = 'running' AND claimed_by = 'worker-A'</span><span class="code-line">RETURNING job_id, job_key, status, claimed_by;</span><span class="code-line">COMMIT;</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>7. Fairness and abandoned-work policy are application concerns</h2>
+              <p>
+                <code>SKIP LOCKED</code> avoids waiting; it does not guarantee
+                strict global fairness. A frequently locked high-priority row
+                can be skipped repeatedly while other work proceeds. A worker
+                that commits <code>running</code> and then crashes also needs a
+                recovery protocol. Common designs record claim time, worker
+                identity, attempt count, lease expiry, or heartbeat state, then
+                safely requeue stale claims. The correct policy depends on
+                whether work is idempotent and whether external side effects can
+                be repeated.
+              </p>
+              <div class="callout">
+                <strong>Wrong approach</strong>
+                <p>
+                  Do not hold an open database transaction while a worker
+                  performs minutes of network calls or external device
+                  operations just to “keep the row locked.” That prolongs
+                  locks/snapshots and makes failure recovery fragile. Claim
+                  durable work quickly, commit, then coordinate external
+                  execution with explicit state/idempotency rules.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>8. A queue protocol is more than SKIP LOCKED syntax</h2>
+              <p>
+                The SQL claim query is only one state transition in a production
+                worker protocol. Before deployment, define the lifecycle for
+                every failure point: worker crashes before COMMIT, worker
+                crashes after COMMIT but before starting external work, external
+                work succeeds but the worker dies before marking the job done,
+                and repeated failures exhaust the attempt budget. These cases
+                determine whether jobs need leases, heartbeats, deduplication
+                keys, an outbox/inbox protocol, or a dead-letter state.
+              </p>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Failure point</th>
+                    <th>Database state</th>
+                    <th>Required policy</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Crash before claim COMMIT</td>
+                    <td>Transaction rolls back; row remains ready.</td>
+                    <td>Another worker can claim normally.</td>
+                  </tr>
+                  <tr>
+                    <td>Crash after claim COMMIT</td>
+                    <td>Row remains running with worker/time metadata.</td>
+                    <td>
+                      Lease/stale-claim reaper or explicit operator recovery.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      External effect succeeds, DB completion update fails
+                    </td>
+                    <td>Database may still say running.</td>
+                    <td>
+                      External operation must be idempotent or reconcilable.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Repeated processing failure</td>
+                    <td>attempts rises.</td>
+                    <td>
+                      Bound retries; transition to failed/dead-letter workflow.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <h3>
+                Fairness is not guaranteed by ORDER BY once rows are skipped
+              </h3>
+              <p>
+                The <code>ORDER BY priority, created_at, job_id</code> clause
+                gives a deterministic preference among rows available to the
+                worker. It cannot force the worker to wait for an earlier row
+                that <code>SKIP LOCKED</code> deliberately skips. Under
+                sustained contention, a repeatedly locked high-priority row can
+                be starved. If strict fairness is a business requirement, SKIP
+                LOCKED may be the wrong primitive or must be augmented with
+                aging, partitions, ownership shards, or a scheduler that
+                periodically revisits skipped work.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    find stale claims for an explicit recovery policy
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT job_id, job_key, claimed_by, claimed_at, attempts,</span><span class="code-line">       clock_timestamp() - claimed_at AS claim_age</span><span class="code-line">FROM app.ch07_job</span><span class="code-line">WHERE status = 'running'</span><span class="code-line">  AND claimed_at &lt; clock_timestamp() - interval '5 minutes'</span><span class="code-line">ORDER BY claimed_at, job_id;</span><span class="code-line"></span><span class="code-line">-- Do not blindly UPDATE these rows to ready in production.</span><span class="code-line">-- First define whether the external work can be safely repeated.</span></code></pre>
+              </div>
+              <h3>Timeouts should preserve meaning</h3>
+              <p>
+                A lock timeout and a statement timeout are not interchangeable
+                application outcomes. A 55P03 lock timeout says the statement
+                spent too long waiting for a lock; a 57014 statement
+                cancellation might reflect a lock wait, CPU work, I/O,
+                <code>pg_sleep</code>, or another execution phase. If the
+                application exposes “resource busy” separately from “operation
+                exceeded request deadline,” preserve those distinctions instead
+                of collapsing every cancellation into a generic retry.
+              </p>
+              <p>
+                <code>deadlock_timeout</code> is also not a request latency
+                limit. Lowering it causes PostgreSQL to run deadlock detection
+                sooner and can increase detection overhead on normal waits;
+                raising it delays deadlock diagnosis. It is usually an
+                operational tuning choice informed by expected transaction
+                duration and lock-wait logging goals, not a per-query SLA knob.
+              </p>
+              <h3>Deadlock logs are part of the debugging contract</h3>
+              <p>
+                The client receives a victim error, but server logs can provide
+                the participating statements and process relationships needed to
+                understand the cycle. Preserve enough application metadata—such
+                as <code>application_name</code>, request identifiers outside
+                secrets, and transaction-purpose tags in logs/traces—to connect
+                database PIDs back to business operations. Fix the lock
+                acquisition order or transaction design; do not simply retry
+                forever and accept a permanent deadlock pattern as normal.
+              </p>
+              <div class="callout">
+                <strong>Queue invariant</strong>
+                <p>
+                  SKIP LOCKED helps workers avoid waiting on each other. It does
+                  not guarantee exactly-once external processing. Exactly-once
+                  business effects require idempotency and durable state
+                  transitions, which Lesson 5 develops.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>9. Verify queue state and cleanup</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    queue verification
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT job_id, job_key, priority, status, claimed_by, attempts</span><span class="code-line">FROM app.ch07_job</span><span class="code-line">ORDER BY priority, created_at, job_id;</span><span class="code-line"></span><span class="code-line">SELECT status, count(*)</span><span class="code-line">FROM app.ch07_job</span><span class="code-line">GROUP BY status</span><span class="code-line">ORDER BY status;</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    cleanup
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">ROLLBACK;</span><span class="code-line">DROP TABLE IF EXISTS app.ch07_job;</span><span class="code-line">DROP TABLE IF EXISTS app.ch07_deadlock_item;</span></code></pre>
+              </div>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>
+                    What distinguishes a deadlock from an ordinary lock wait?
+                  </li>
+                  <li>Which SQLSTATE should identify a detected deadlock?</li>
+                  <li>Why is lock_timeout different from statement_timeout?</li>
+                  <li>When is SKIP LOCKED appropriate?</li>
+                  <li>
+                    Why should job selection and the running-state transition
+                    happen in one transaction?
+                  </li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      A deadlock is a cycle of waits that cannot resolve without
+                      aborting a participant; PostgreSQL reports 40P01.
+                      lock_timeout measures only time waiting to acquire locks,
+                      whereas statement_timeout covers total statement execution
+                      time. SKIP LOCKED is appropriate for queue-like consumers
+                      where intentionally skipping locked rows is correct.
+                      Claiming and state transition in one transaction prevents
+                      another worker from seeing the same job as still ready
+                      after the claim commits.
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section>
+              <h2>10. Production judgment and bridge</h2>
+              <p>
+                Set timeouts per workload, log enough evidence to diagnose
+                waits, and use deterministic resource ordering to prevent
+                avoidable deadlocks. Queue consumers should define starvation,
+                stale-claim, external-side-effect, and retry policies
+                explicitly. Lesson 5 generalizes these ideas into a
+                transaction-retry contract: which SQLSTATEs are transient, what
+                “retry the whole transaction” means, and how idempotency
+                prevents retries from duplicating business effects.
+              </p>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <ul>
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/18/explicit-locking.html"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL 18 — Explicit Locking and Deadlocks</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/18/sql-select.html"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL 18 — SELECT NOWAIT / SKIP LOCKED</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/18/runtime-config-client.html"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL 18 — Client Connection Defaults / Timeouts</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/18/errcodes-appendix.html"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL 18 — Error Codes</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/18/monitoring-stats.html"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL 18 — pg_stat_activity / Monitoring</a
+                  >
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a href="Lesson3.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Table, Row, Page, Advisory, and Predicate Locks with Lock
+                Compatibility</strong
+              ></a
+            ><a class="next" href="Lesson5.html"
+              ><small>Next lesson</small
+              ><strong
+                >Designing Retryable Transactions, Idempotency, and Serializable
+                Workflows</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                  <a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                  <a
+                    href="https://x.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >X
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                >
+                <button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only assets compatible with the Ethereum/ERC-20 network.
+                  Do not send TRC-20/TRON assets.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <div>
+          <a href="../../../index.html#roadmap">Roadmap</a
+          ><a href="../../../index.html#courses">Courses</a
+          ><a href="https://github.com/mohammadijoo/Big_Data_Academy"
+            >Repository</a
+          >
+        </div>
+        <small
+          >Created and maintained by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>

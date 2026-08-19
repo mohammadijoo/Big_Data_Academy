@@ -1,0 +1,1532 @@
+<!doctype html>
+
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Observe how PostgreSQL stores oversized variable-length attributes, compression and out-of-line TOAST pointers, then design query and schema patterns that avoid unnecessary large-value work."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      TOAST Storage, Compression, Out-of-Line Values, and Large Attribute
+      Tradeoffs | PostgreSQL | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">PG</span>
+            <div><small>Course 05</small><strong>PostgreSQL</strong></div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 120 lessons..."
+            type="search"
+        /></label>
+        <nav aria-label="PostgreSQL curriculum" class="sidebar-curriculum">
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>PostgreSQL Foundations, Release Cadence,
+              Installation, and Lab Design
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>PostgreSQL Architecture and Philosophy: Process
+                Model, Catalogs, and Extensibility</a
+              >
+              <a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Major Releases, Minor Releases, Support Policy,
+                Compatibility, and Upgrade Planning</a
+              >
+              <a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>Install PostgreSQL on Windows, Linux,
+                Containers, and Initialize a Cluster</a
+              >
+              <a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>psql Fundamentals, Connection Parameters,
+                Service Files, and Safe CLI Workflows</a
+              >
+              <a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Repeatable Lab with Roles, Databases,
+                Schemas, Extensions, and Sample Workloads</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>Cluster Architecture, Processes, Memory, Files, and
+              Configuration
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>Postmaster, Backend Processes, Auxiliary
+                Processes, and Connection Lifecycle</a
+              >
+              <a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>Data Directory, Tablespaces, Configuration
+                Files, Include Hierarchy, and Reload vs Restart</a
+              >
+              <a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Shared Buffers, WAL Buffers, Work Memory,
+                Maintenance Memory, and Memory Budgeting</a
+              >
+              <a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>GUC Parameters, ALTER SYSTEM, Session Settings,
+                and Configuration Scope</a
+              >
+              <a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Logging Collector, Structured Logs, Startup
+                Diagnostics, and a Baseline Production Profile</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>Databases, Schemas, Roles, Catalogs, and Object
+              Namespaces
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>Cluster vs Database vs Schema Boundaries and
+                Search Path Semantics</a
+              >
+              <a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Roles, Membership, Ownership, SET ROLE, and
+                Privilege Inheritance</a
+              >
+              <a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>System Catalogs, information_schema, psql
+                Introspection, and Metadata Queries</a
+              >
+              <a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>Object Dependencies, DROP CASCADE Risks,
+                Extensions, and Namespace Hygiene</a
+              >
+              <a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Design Multi-Team Database and Schema Boundaries
+                with Least-Privilege Ownership</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Data Types, Domains, Constraints, Identity, and
+              Generated Data
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Numeric, Text, Boolean, Temporal, UUID, Network,
+                Range, Multirange, and Binary Types</a
+              >
+              <a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>Arrays, Composite Types, ENUMs, Domains, and
+                When Custom Types Improve Modeling</a
+              >
+              <a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK,
+                EXCLUDE, NOT NULL, and Constraint Timing</a
+              >
+              <a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>Identity Columns, Sequences, Sequence Caching,
+                Gaps, and Distributed-ID Considerations</a
+              >
+              <a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Generated Columns, Defaults, Collations,
+                Encoding, and Data-Integrity Design</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>SQL Querying: Joins, Subqueries, CTEs, Set
+              Operations, and LATERAL
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>SELECT Semantics, NULL, Three-Valued Logic,
+                Ordering, and Expression Evaluation</a
+              >
+              <a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>Join Types, Join Conditions, Cardinality
+                Reasoning, and Join Elimination Concepts</a
+              >
+              <a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>Subqueries, EXISTS, IN, Scalar Contexts,
+                Correlation, and LATERAL</a
+              >
+              <a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>CTEs, Recursive Queries, Materialization
+                Control, and Graph/Hierarchy Traversal</a
+              >
+              <a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>UNION/INTERSECT/EXCEPT, DISTINCT ON, Row
+                Constructors, and Query Composition</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Advanced SQL: Aggregates, Windows, GROUPING SETS,
+              and MERGE
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>Aggregate Functions, FILTER,
+                Ordered-Set/Hypothetical-Set Aggregates, and Custom
+                Aggregates</a
+              >
+              <a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>Window Partitions, Frames, Ranking, Running
+                Metrics, and Gaps-and-Islands</a
+              >
+              <a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>GROUPING SETS, CUBE, ROLLUP, and Multi-Level
+                Analytical Reports</a
+              >
+              <a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>INSERT ... ON CONFLICT, MERGE, RETURNING, and
+                Observable DML Workflows</a
+              >
+              <a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Advanced Reporting Patterns with CTEs, Windows,
+                JSON Construction, and Reusable Views</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>MVCC, Transactions, Isolation, Locks, and
+              Serialization
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>Tuple Versions, xmin/xmax, Snapshots,
+                Visibility, and the MVCC Mental Model</a
+              >
+              <a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>READ COMMITTED, REPEATABLE READ, SERIALIZABLE,
+                and Anomaly Prevention</a
+              >
+              <a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>Table, Row, Page, Advisory, and Predicate Locks
+                with Lock Compatibility</a
+              >
+              <a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Deadlocks, Lock Queues, Timeouts, SKIP LOCKED,
+                NOWAIT, and Worker Queues</a
+              >
+              <a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Designing Retryable Transactions, Idempotency,
+                and Serializable Workflows</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>08</span>Heap Storage, TOAST, HOT Updates, Bloat, and
+              Page-Level Internals
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="Lesson1.html"
+                ><span>01</span>Heap Pages, Line Pointers, Tuple Headers, Free
+                Space, and Visibility Map</a
+              >
+              <a class="sidebar-lesson is-current" href="Lesson2.html"
+                ><span>02</span>TOAST Storage, Compression, Out-of-Line Values,
+                and Large Attribute Tradeoffs<i>Current</i></a
+              >
+              <a class="sidebar-lesson" href="Lesson3.html"
+                ><span>03</span>HOT Updates, Fillfactor, Index Churn, and
+                Update-Heavy Table Design</a
+              >
+              <a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>Dead Tuples, Bloat Formation, Measuring Bloat,
+                and Repack/Rewrite Tradeoffs</a
+              >
+              <a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Inspect Storage Internals with pageinspect and
+                Connect Physical Evidence to SQL Behavior</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>VACUUM, Autovacuum, ANALYZE, Freeze, and
+              Maintenance Engineering
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>Why VACUUM Exists: Dead Tuple Reclamation and
+                Visibility Maintenance</a
+              >
+              <a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>Autovacuum Thresholds, Scale Factors, Worker
+                Capacity, and Per-Table Tuning</a
+              >
+              <a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>Transaction ID Wraparound, Freezing,
+                relfrozenxid, and Emergency Prevention</a
+              >
+              <a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>ANALYZE, Statistics Targets, Extended
+                Statistics, and Planner Cardinality Quality</a
+              >
+              <a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>VACUUM FULL, CLUSTER, REINDEX, Concurrent
+                Maintenance, and Maintenance Windows</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>B-Tree and Specialized Indexes: Hash, GiST,
+              SP-GiST, GIN, and BRIN
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>B-Tree Structure, Operator Classes, Sort Order,
+                Multicolumn Rules, and Skip Scan</a
+              >
+              <a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>Partial, Expression, INCLUDE/Covering, Unique,
+                and Concurrent Indexes</a
+              >
+              <a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>GIN for Arrays/JSONB/Text Search and GiST for
+                Ranges/Geometry-Like Semantics</a
+              >
+              <a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>SP-GiST Partitioned Search Structures and BRIN
+                for Physically Correlated Huge Tables</a
+              >
+              <a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Index Selection, Write Amplification,
+                Deduplication, Reindexing, and Portfolio Audits</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>Planner and Executor Internals, EXPLAIN,
+              Statistics, and Cost Modeling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>Planner Search Space, Paths, Join Orders, Cost
+                Parameters, and Generic vs Custom Plans</a
+              >
+              <a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>EXPLAIN / EXPLAIN ANALYZE with BUFFERS, WAL,
+                TIMING, SETTINGS, and JIT</a
+              >
+              <a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>Sequential, Index, Bitmap, Index-Only, TID, and
+                Parallel Scan Behavior</a
+              >
+              <a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Nested Loop, Hash Join, Merge Join, Memoize,
+                Sort, Hash Aggregate, and Incremental Sort</a
+              >
+              <a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Cardinality Misestimates, Extended Statistics,
+                Planner Knobs, and Evidence-Driven Tuning</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>WAL, Checkpoints, Crash Recovery, and Durability
+              Engineering
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>Write-Ahead Logging, LSNs, WAL Records,
+                Segments, and Durability Guarantees</a
+              >
+              <a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>Checkpoints, Background Writer, WAL Writer,
+                Full-Page Writes, and I/O Spikes</a
+              >
+              <a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>synchronous_commit, fsync, wal_sync_method, and
+                Durability/Latency Tradeoffs</a
+              >
+              <a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>Crash Recovery Timeline, Recovery Consistency,
+                and Corruption Boundaries</a
+              >
+              <a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>WAL Sizing, Checkpoint Tuning, pg_wal Growth,
+                and Production Alerting</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Backup, Restore, PITR, Base Backups, and Archiving
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>Logical Backups with pg_dump/pg_restore and
+                Object-Level Recovery</a
+              >
+              <a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Physical Base Backups, pg_basebackup,
+                Tablespaces, and Backup Manifests</a
+              >
+              <a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>Continuous Archiving, archive_command, WAL
+                Retention, and Restore Commands</a
+              >
+              <a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Point-in-Time Recovery, Recovery Targets,
+                Timelines, and Promotion</a
+              >
+              <a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Backup Verification, Restore Drills, RPO/RTO
+                Testing, and Immutable Backup Design</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Physical Streaming Replication, Standbys, and High
+              Availability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Primary/Standby Architecture, WAL
+                Sender/Receiver, Replay, and Replication Slots</a
+              >
+              <a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Hot Standby Reads, Conflict Cancellation,
+                max_standby Delays, and Feedback</a
+              >
+              <a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Synchronous Replication, Quorum Commit, Latency,
+                and Failure Semantics</a
+              >
+              <a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Cascading Replication, Replication Slots, WAL
+                Retention, and Replica Lag Diagnosis</a
+              >
+              <a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Promotion, Rewind, Failover Orchestration
+                Concepts, Fencing, and Split-Brain Avoidance</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Logical Replication, Publications, Subscriptions,
+              and Data Movement
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>Logical Decoding Mental Model, Replication
+                Identity, Publications, and Subscriptions</a
+              >
+              <a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Initial Table Synchronization, Ongoing Apply,
+                Conflict Classes, and Monitoring</a
+              >
+              <a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Row Filters, Column Lists, Selective
+                Replication, and Multi-Database Integration Patterns</a
+              >
+              <a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Schema Evolution, DDL Coordination, Sequences,
+                Large Objects, and Operational Gaps</a
+              >
+              <a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Upgrade/Migration, CDC, Zero-Downtime Cutovers,
+                and Logical Replication Runbooks</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Partitioning, Pruning, Routing, and Large-Table
+              Operations
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>Range, List, Hash Partitioning, Partition
+                Bounds, and Data Modeling Decisions</a
+              >
+              <a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Partition Pruning at Plan/Execution Time and
+                Query Shape Requirements</a
+              >
+              <a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>Indexes, Constraints, Foreign Keys, Triggers,
+                and Uniqueness Across Partitions</a
+              >
+              <a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Attach/Detach, Rolling Windows, Retention, Bulk
+                Load, and Archiving Workflows</a
+              >
+              <a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Too Many Partitions, Planner Overhead, Skew, Hot
+                Partitions, and Maintenance Strategy</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>JSONB, Arrays, Full-Text Search, Range Types, and
+              Advanced Data Modeling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>JSON vs JSONB Storage, Operators, SQL/JSON,
+                Construction, and Extraction</a
+              >
+              <a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>GIN Indexing for JSONB, Containment Queries,
+                jsonpath, and Selectivity Tradeoffs</a
+              >
+              <a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>Arrays, ANY/ALL, Unnesting, Multidimensional
+                Semantics, and Modeling Boundaries</a
+              >
+              <a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>Built-In Full-Text Search: Dictionaries,
+                tsvector, tsquery, Ranking, and GIN</a
+              >
+              <a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Range/Multirange Types, Exclusion Constraints,
+                Temporal Scheduling, and Overlap Models</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Functions, Procedures, Triggers, PL/pgSQL, and
+              Server-Side Programming
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>SQL Functions, PL/pgSQL Functions, Procedures,
+                Volatility, Parallel Safety, and Cost</a
+              >
+              <a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>Control Flow, Exceptions, Diagnostics, Dynamic
+                SQL, and SECURITY DEFINER Safety</a
+              >
+              <a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Triggers, Transition Tables, Deferred Behavior,
+                Audit Patterns, and Recursion Risks</a
+              >
+              <a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Event Triggers, DDL Governance, Policy
+                Enforcement, and Deployment Concerns</a
+              >
+              <a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>When to Use Database Logic vs Application
+                Services—and How to Test Both</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>19</span>Extensions, Foreign Data Wrappers, Languages, and
+              PostgreSQL Extensibility
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Extension Packaging, CREATE EXTENSION,
+                Versioning, Dependencies, and Trust Boundaries</a
+              >
+              <a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Foreign Data Wrappers, Foreign Tables, Pushdown,
+                Transactions, and Federated Queries</a
+              >
+              <a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>Procedural Languages, Trusted vs Untrusted Code,
+                and Operational Risk</a
+              >
+              <a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>Custom Types, Operators, Operator Classes,
+                Aggregates, and Extension Architecture</a
+              >
+              <a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Extension Lifecycle: Security Review, Upgrade
+                Compatibility, Backup, and Disaster Recovery</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Authentication, Authorization, TLS, Row-Level
+              Security, and Hardening
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>pg_hba.conf Rule Matching, Authentication
+                Methods, SCRAM, Certificates, and OAuth Concepts</a
+              >
+              <a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>TLS Configuration, Certificate Verification,
+                Channel Security, and Rotation</a
+              >
+              <a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>Privileges, Default Privileges, Role Design, SET
+                ROLE, and Least-Privilege Administration</a
+              >
+              <a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>Row-Level Security Policies, FORCE RLS, Security
+                Barrier Views, and Tenant Isolation</a
+              >
+              <a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Hardening Network Access, Extensions, SECURITY
+                DEFINER, Search Path, Logging, and Patching</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Observability: Statistics Views,
+              pg_stat_statements, Logs, and Wait Events
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>pg_stat_activity, Sessions, Transactions,
+                Blocking, and Long-Running Work</a
+              >
+              <a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>pg_stat_database/table/index Views and
+                Interpreting Cache/Scan/Write Counters</a
+              >
+              <a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>pg_stat_statements, Query Fingerprints, Plan
+                Variance, and Workload Ranking</a
+              >
+              <a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Wait Events, Locks, I/O Visibility,
+                WAL/Replication Stats, and Incident Diagnosis</a
+              >
+              <a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>Logging Strategy, auto_explain, Sampling,
+                Dashboards, Baselines, and Alert Design</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Performance Engineering: Memory, I/O, Parallelism,
+              JIT, and Connection Scaling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>shared_buffers, work_mem, maintenance_work_mem,
+                huge pages, and Memory Budgeting</a
+              >
+              <a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>effective_cache_size, random_page_cost, I/O
+                Concurrency, AIO, and Storage Characteristics</a
+              >
+              <a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>Parallel Query, Parallel Workers, Gather/Gather
+                Merge, and Parallel Safety</a
+              >
+              <a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>JIT Compilation, Thresholds, Analytical
+                Workloads, and When JIT Hurts</a
+              >
+              <a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Connection Scaling, Poolers, max_connections,
+                Session State, and Transaction Pooling</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>23</span>Upgrades, pg_upgrade, Compatibility, Migrations,
+              and Production Change
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter23/Lesson1.html"
+                ><span>01</span>Major vs Minor Upgrades, Binary Compatibility,
+                Extension Readiness, and Release Notes</a
+              >
+              <a class="sidebar-lesson" href="../Chapter23/Lesson2.html"
+                ><span>02</span>pg_upgrade Workflows, Link/Clone Modes,
+                Statistics, Analyze, and Rollback Planning</a
+              >
+              <a class="sidebar-lesson" href="../Chapter23/Lesson3.html"
+                ><span>03</span>Logical Upgrade Paths, Cross-Platform Migration,
+                Downtime Minimization, and Validation</a
+              >
+              <a class="sidebar-lesson" href="../Chapter23/Lesson4.html"
+                ><span>04</span>Schema Migration Expand/Contract, Lock-Aware
+                DDL, CREATE INDEX CONCURRENTLY, and Backfills</a
+              >
+              <a class="sidebar-lesson" href="../Chapter23/Lesson5.html"
+                ><span>05</span>Canary Upgrades, Performance Comparison,
+                Regression Detection, and Post-Upgrade Runbooks</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>Production Capstone: Operate a Secure, Highly
+              Available PostgreSQL Platform
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter24/Lesson1.html"
+                ><span>01</span>Define SLOs, Workload Classes, Data Model,
+                Capacity Forecast, and Architecture Decisions</a
+              >
+              <a class="sidebar-lesson" href="../Chapter24/Lesson2.html"
+                ><span>02</span>Implement Schema, Indexes, Partitioning,
+                Security, RLS, and Migration Automation</a
+              >
+              <a class="sidebar-lesson" href="../Chapter24/Lesson3.html"
+                ><span>03</span>Tune Queries, Autovacuum, Memory, WAL, I/O, and
+                Connection Architecture from Evidence</a
+              >
+              <a class="sidebar-lesson" href="../Chapter24/Lesson4.html"
+                ><span>04</span>Implement PITR, Replication/Failover,
+                Monitoring, Alerts, Upgrades, and Incident Runbooks</a
+              >
+              <a class="sidebar-lesson" href="../Chapter24/Lesson5.html"
+                ><span>05</span>Run Failure, Corruption, Restore, Failover, and
+                Performance Drills—and Defend the Design</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 08 · Lesson 02</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">PostgreSQL</a><span>/</span
+            ><span>Chapter 08 · Lesson 02</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 08 · Heap Storage, TOAST, HOT Updates, Bloat, and
+              Page-Level Internals
+            </p>
+            <h1>
+              TOAST Storage, Compression, Out-of-Line Values, and Large
+              Attribute Tradeoffs
+            </h1>
+            <p>
+              Observe how PostgreSQL stores oversized variable-length
+              attributes, compression and out-of-line TOAST pointers, then
+              design query and schema patterns that avoid unnecessary
+              large-value work.
+            </p>
+            <div class="lesson-meta">
+              <span>Intermediate → Advanced</span><span>145–185 minutes</span
+              ><span>TOAST storage + detoasting evidence lab</span
+              ><span>Current patched PostgreSQL 18.x</span
+              ><span
+                >pageinspect/pg_visibility/pg_freespacemap supplied extensions
+                where indicated</span
+              ><span>Local superuser required for raw-page inspection</span
+              ><span>No paid or managed-service dependency</span
+              ><span>Last reviewed: August 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                A ServiceHub work order starts storing diagnostic payloads and
+                attachment metadata. Most rows are small, but some payloads are
+                hundreds of kilobytes. PostgreSQL still uses fixed-size pages
+                and does not let one heap tuple span pages.
+                <strong>TOAST</strong>—The Oversized-Attribute Storage
+                Technique—lets large variable-length values be compressed and/or
+                moved out of the main heap while preserving ordinary SQL
+                semantics.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Explain why fixed-size pages require special handling for
+                    large variable-length attributes.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Distinguish PLAIN, EXTENDED, EXTERNAL, and MAIN storage
+                    strategies and understand that strategy changes apply to
+                    subsequently stored values.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Discover a table's TOAST relation and observe
+                    compression/out-of-line state with supported PostgreSQL 18
+                    functions.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Explain why selecting narrow columns can avoid
+                    fetching/detoasting a large value that a query does not
+                    need.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Judge when TOAST is appropriate and when a dedicated
+                    object/blob storage architecture is the clearer system
+                    boundary.
+                  </p>
+                </div>
+              </div>
+            </section>
+            <section>
+              <h2>1. Why TOAST exists</h2>
+              <p>
+                PostgreSQL's heap pages are fixed-size and tuples do not cross
+                page boundaries. TOAST-able data types use a variable-length
+                representation. When a row becomes too wide, PostgreSQL can
+                compress values and/or replace the inline value with a small
+                pointer to chunks stored in a per-table TOAST relation. This is
+                transparent to SQL: the application still selects one
+                <code>text</code>, <code>bytea</code>, <code>jsonb</code>,
+                array, or other TOAST-able value.
+              </p>
+              <p>
+                TOAST is triggered based on physical row width, not a simplistic
+                rule like “every text longer than 2 KB goes to another table.”
+                Compressibility, other columns, storage strategy, table-level
+                <code>toast_tuple_target</code>, and the actual stored
+                representation all matter.
+              </p>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Strategy</th>
+                    <th>Compression</th>
+                    <th>Out-of-line</th>
+                    <th>Typical intent</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>PLAIN</code></td>
+                    <td>No</td>
+                    <td>No</td>
+                    <td>
+                      Fixed/small or non-TOAST-able types; wide values may make
+                      the row impossible to store.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>EXTENDED</code></td>
+                    <td>Yes</td>
+                    <td>Yes</td>
+                    <td>
+                      Default for most TOAST-able types; compress first, move
+                      out-of-line if needed.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>EXTERNAL</code></td>
+                    <td>No</td>
+                    <td>Yes</td>
+                    <td>
+                      Trade more space for direct access patterns such as
+                      substring on wide uncompressed text/bytea.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>MAIN</code></td>
+                    <td>Yes</td>
+                    <td>Only as last resort</td>
+                    <td>
+                      Prefer compressed inline storage but still move
+                      out-of-line if required to make the row fit.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+            <section>
+              <h2>2. Build one deliberately large deterministic payload</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    setup
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">DROP TABLE IF EXISTS app.ch08_large_payload;</span><span class="code-line">CREATE TABLE app.ch08_large_payload (</span><span class="code-line">    payload_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,</span><span class="code-line">    work_code text NOT NULL UNIQUE,</span><span class="code-line">    status text NOT NULL,</span><span class="code-line">    payload text NOT NULL,</span><span class="code-line">    created_at timestamptz NOT NULL DEFAULT now()</span><span class="code-line">);</span><span class="code-line"></span><span class="code-line">INSERT INTO app.ch08_large_payload(work_code, status, payload)</span><span class="code-line">SELECT 'WO-TOAST-1', 'open', string_agg(md5(g::text || ':servicehub'), '')</span><span class="code-line">FROM generate_series(1, 6000) AS g;</span><span class="code-line"></span><span class="code-line">SELECT payload_id, work_code, status, length(payload) AS characters</span><span class="code-line">FROM app.ch08_large_payload;</span></code></pre>
+              </div>
+              <p>
+                The payload is deterministic but intentionally wide. Its exact
+                compressed/stored size can vary with build and compression
+                settings, so observe instead of asserting a byte count.
+              </p>
+            </section>
+            <section>
+              <h2>3. Compare compressible and hard-to-compress values</h2>
+              <p>
+                TOAST decisions are about physical representation, not just
+                logical length. Add a second row containing a highly repetitive
+                payload. Its logical character count can be similar to the first
+                row while its compressed representation differs dramatically.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    add a compressible payload and compare storage evidence
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">INSERT INTO app.ch08_large_payload(work_code, status, payload)</span><span class="code-line">VALUES ('WO-TOAST-2', 'open', repeat('SERVICEHUB-REPEAT-', 12000));</span><span class="code-line"></span><span class="code-line">SELECT payload_id, work_code, length(payload) AS logical_chars,</span><span class="code-line">       pg_column_size(payload) AS stored_bytes_reported,</span><span class="code-line">       pg_column_compression(payload) AS compression_method,</span><span class="code-line">       pg_column_toast_chunk_id(payload) AS toast_chunk_id</span><span class="code-line">FROM app.ch08_large_payload</span><span class="code-line">ORDER BY payload_id;</span></code></pre>
+              </div>
+              <p>
+                Do not expect both rows to choose the same representation. A
+                compressed value can become small enough to remain inline, while
+                a less-compressible value may move out-of-line. Conversely, an
+                out-of-line value may itself be compressed. This is why “length
+                &gt; 2 KB means TOAST table” is an unreliable rule.
+              </p>
+            </section>
+            <section>
+              <h2>4. Discover the TOAST relation without querying its internal
+                rows</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    catalog and size evidence
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT c.oid::regclass AS main_relation,</span><span class="code-line">       c.reltoastrelid,</span><span class="code-line">       CASE WHEN c.reltoastrelid = 0 THEN NULL</span><span class="code-line">            ELSE c.reltoastrelid::regclass::text END AS toast_relation</span><span class="code-line">FROM pg_class AS c</span><span class="code-line">WHERE c.oid = 'app.ch08_large_payload'::regclass;</span><span class="code-line"></span><span class="code-line">SELECT pg_size_pretty(pg_relation_size('app.ch08_large_payload'::regclass)) AS heap_main,</span><span class="code-line">       pg_size_pretty(pg_table_size('app.ch08_large_payload'::regclass)) AS table_plus_toast_forks,</span><span class="code-line">       pg_size_pretty(pg_total_relation_size('app.ch08_large_payload'::regclass)) AS including_indexes;</span></code></pre>
+              </div>
+              <p>
+                <code>pg_class.reltoastrelid</code> links the main relation to
+                its secondary TOAST table when one exists. Treat the TOAST table
+                as PostgreSQL-owned storage. Do not build application SQL
+                against its <code>chunk_id/chunk_seq/chunk_data</code> rows.
+              </p>
+            </section>
+            <section>
+              <h2>5. PostgreSQL 18 can expose compression and out-of-line chunk
+                identity safely</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    value-level storage evidence
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT payload_id,</span><span class="code-line">       pg_column_size(payload) AS stored_bytes_reported,</span><span class="code-line">       pg_column_compression(payload) AS compression_method,</span><span class="code-line">       pg_column_toast_chunk_id(payload) AS toast_chunk_id</span><span class="code-line">FROM app.ch08_large_payload;</span></code></pre>
+              </div>
+              <p>
+                <code>pg_column_compression()</code> returns the compression
+                method when the datum is compressed and
+                <code>NULL</code> otherwise.
+                <code>pg_column_toast_chunk_id()</code> returns an identifier
+                for an on-disk out-of-line TOAST value and
+                <code>NULL</code> when the value is not stored that way. These
+                are diagnostic functions, not business identifiers for
+                attachments.
+              </p>
+              <div class="callout">
+                <strong>Do not freeze sample output</strong>
+                <p>
+                  A local baseline might show pglz, lz4, or no compression
+                  depending on how the server was built/configured and how
+                  compressible the value is. The robust lesson is to inspect the
+                  server/value, not memorize a particular method.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>6. Column storage strategy is a policy for future storage
+                decisions</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    inspect attstorage and compression policy
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT attname,</span><span class="code-line">       CASE attstorage</span><span class="code-line">         WHEN 'p' THEN 'PLAIN'</span><span class="code-line">         WHEN 'e' THEN 'EXTERNAL'</span><span class="code-line">         WHEN 'm' THEN 'MAIN'</span><span class="code-line">         WHEN 'x' THEN 'EXTENDED'</span><span class="code-line">       END AS storage_strategy,</span><span class="code-line">       attcompression</span><span class="code-line">FROM pg_attribute</span><span class="code-line">WHERE attrelid = 'app.ch08_large_payload'::regclass</span><span class="code-line">  AND attnum &gt; 0 AND NOT attisdropped</span><span class="code-line">ORDER BY attnum;</span><span class="code-line"></span><span class="code-line">SHOW default_toast_compression;</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    change policy, then store a new version/value
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">ALTER TABLE app.ch08_large_payload</span><span class="code-line">  ALTER COLUMN payload SET STORAGE EXTERNAL;</span><span class="code-line"></span><span class="code-line">UPDATE app.ch08_large_payload</span><span class="code-line">SET payload = payload || md5(clock_timestamp()::text)</span><span class="code-line">WHERE payload_id = 1;</span><span class="code-line"></span><span class="code-line">SELECT pg_column_compression(payload),</span><span class="code-line">       pg_column_toast_chunk_id(payload)</span><span class="code-line">FROM app.ch08_large_payload</span><span class="code-line">WHERE payload_id = 1;</span></code></pre>
+              </div>
+              <p>
+                Changing <code>SET STORAGE</code> does not magically rewrite
+                every existing datum. A newly stored/updated value is evaluated
+                under the new strategy. For production schema changes, document
+                whether a rewrite/update is intended and what WAL/I/O/storage
+                consequences it creates.
+              </p>
+            </section>
+            <section>
+              <h2>7. Narrow projection can avoid work on large values</h2>
+              <p>
+                PostgreSQL's TOAST design allows the main heap tuple to carry a
+                small pointer to the oversized value. If a query needs only
+                <code>payload_id</code>, <code>work_code</code>, and
+                <code>status</code>, it does not need to reconstruct the payload
+                just to return those columns. This is a concrete reason to avoid
+                habitual <code>SELECT *</code> on wide tables.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    contrast logical requirements
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">-- Narrow list view: no payload value requested.</span><span class="code-line">SELECT payload_id, work_code, status</span><span class="code-line">FROM app.ch08_large_payload</span><span class="code-line">ORDER BY payload_id;</span><span class="code-line"></span><span class="code-line">-- Detail request: the large value is required.</span><span class="code-line">SELECT payload_id, length(payload) AS characters</span><span class="code-line">FROM app.ch08_large_payload</span><span class="code-line">WHERE payload_id = 1;</span></code></pre>
+              </div>
+              <p>
+                Do not invent performance numbers from this tiny table. On a
+                real workload, validate with representative row widths,
+                buffer/cache state, query plans, network transfer, and
+                application behavior.
+              </p>
+            </section>
+            <section>
+              <h2>8. Updating a narrow column does not necessarily rewrite a large
+                out-of-line value</h2>
+              <p>
+                PostgreSQL's TOAST machinery normally preserves unchanged field
+                representations during <code>UPDATE</code>. That matters for a
+                table where a large diagnostic payload is immutable but status
+                changes frequently: changing <code>status</code> does not imply
+                that PostgreSQL must fetch, recompress and rewrite the payload
+                simply because the logical row received a new MVCC version.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    change only narrow metadata, then re-check payload identity
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT payload_id, pg_column_toast_chunk_id(payload) AS before_chunk</span><span class="code-line">FROM app.ch08_large_payload</span><span class="code-line">ORDER BY payload_id;</span><span class="code-line"></span><span class="code-line">UPDATE app.ch08_large_payload</span><span class="code-line">SET status = 'reviewed'</span><span class="code-line">WHERE payload_id = 1;</span><span class="code-line"></span><span class="code-line">SELECT payload_id, status, pg_column_toast_chunk_id(payload) AS after_chunk</span><span class="code-line">FROM app.ch08_large_payload</span><span class="code-line">ORDER BY payload_id;</span></code></pre>
+              </div>
+              <p>
+                For an unchanged out-of-line attribute, the stored
+                representation is normally preserved. The exact chunk identifier
+                is still an internal diagnostic value, but comparing it inside
+                this one lab can illustrate that a narrow metadata update is not
+                equivalent to rewriting the large payload.
+              </p>
+            </section>
+            <section>
+              <h2>9. toast_tuple_target is a table-level physical tradeoff, not a
+                tuning slogan</h2>
+              <p>
+                The table storage parameter
+                <code>toast_tuple_target</code> influences when PostgreSQL
+                starts trying to compress/move long values and the width it
+                tries to reach. Changing it affects newly stored tuples; it does
+                not retroactively rewrite the table. Raising the target can keep
+                more data inline, potentially improving some access patterns
+                while making the heap wider; lowering it can move/compress more
+                data, potentially making the main heap denser while increasing
+                TOAST activity.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    inspect table-level storage parameters without changing
+                    production defaults
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT reloptions</span><span class="code-line">FROM pg_class</span><span class="code-line">WHERE oid = 'app.ch08_large_payload'::regclass;</span><span class="code-line"></span><span class="code-line">-- Disposable demonstration only; future writes are evaluated under this policy.</span><span class="code-line">ALTER TABLE app.ch08_large_payload SET (toast_tuple_target = 3072);</span><span class="code-line"></span><span class="code-line">SELECT reloptions</span><span class="code-line">FROM pg_class</span><span class="code-line">WHERE oid = 'app.ch08_large_payload'::regclass;</span></code></pre>
+              </div>
+              <p>
+                There is no universal “best” target. Measure representative row
+                widths, projection patterns, cache behavior, compression
+                availability and update frequency before changing it.
+              </p>
+            </section>
+            <section>
+              <h2>10. Wrong approach: “TOAST is PostgreSQL's blob service”</h2>
+              <p>
+                TOAST solves tuple/page representation inside PostgreSQL. It
+                does not automatically provide content-addressed object naming,
+                CDN delivery, streaming APIs, lifecycle policies, cheap archival
+                tiers, malware scanning, or external-object integrity. Storing
+                <code>bytea</code> in PostgreSQL can be correct when
+                transactional coupling and object size/workload justify it;
+                using external object storage can be correct when
+                delivery/lifecycle economics dominate.
+              </p>
+              <div class="callout">
+                <strong>Repair</strong>
+                <p>
+                  Model an explicit attachment identity, metadata, checksum and
+                  state transition. Choose bytea versus external object storage
+                  as an architecture decision; do not expose TOAST chunk IDs or
+                  internal TOAST tables to applications.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>11. Lab verification and cleanup</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    verify large-value state
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT payload_id, length(payload),</span><span class="code-line">       pg_column_compression(payload),</span><span class="code-line">       pg_column_toast_chunk_id(payload)</span><span class="code-line">FROM app.ch08_large_payload;</span><span class="code-line"></span><span class="code-line">SELECT pg_size_pretty(pg_relation_size('app.ch08_large_payload'::regclass)) AS heap_main,</span><span class="code-line">       pg_size_pretty(pg_table_size('app.ch08_large_payload'::regclass)) AS table_with_toast;</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    cleanup
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">DROP TABLE IF EXISTS app.ch08_large_payload;</span></code></pre>
+              </div>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>
+                    Why can PostgreSQL not simply let a normal heap tuple span
+                    arbitrary data pages?
+                  </li>
+                  <li>How do EXTENDED and EXTERNAL differ?</li>
+                  <li>
+                    Does ALTER COLUMN ... SET STORAGE rewrite all existing
+                    values?
+                  </li>
+                  <li>
+                    Why can a narrow projection be materially different from
+                    SELECT * on a wide table?
+                  </li>
+                  <li>Is a TOAST chunk ID a safe attachment identifier?</li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      PostgreSQL heap tuples must fit within a page, so TOAST
+                      provides alternate representations. EXTENDED allows
+                      compression and out-of-line storage; EXTERNAL allows
+                      out-of-line but not compression. Storage-policy changes
+                      govern subsequently stored values unless you intentionally
+                      rewrite/update old data. A narrow query can avoid
+                      fetching/detoasting a large attribute it never needs.
+                      TOAST chunk IDs are internal storage metadata, not durable
+                      application identity.
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section>
+              <h2>12. Production judgment and bridge</h2>
+              <p>
+                Use TOAST as transparent PostgreSQL storage machinery, not an
+                API. Monitor main-table, TOAST and index sizes separately when
+                wide attributes dominate. Lesson 3 moves from large values to
+                frequent updates: when PostgreSQL can create a new row version
+                without creating new entries in ordinary indexes, and how
+                fillfactor affects that opportunity.
+              </p>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <ul>
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/18/storage-toast.html"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL 18 — TOAST</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/18/sql-altertable.html"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL 18 — ALTER TABLE / SET STORAGE</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/18/sql-createtable.html#SQL-CREATETABLE-STORAGE-PARAMETERS"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL 18 — CREATE TABLE storage parameters</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/18/catalog-pg-class.html"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL 18 — pg_class reltoastrelid</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/18/functions-admin.html"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL 18 — System Administration Functions</a
+                  >
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a href="Lesson1.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Heap Pages, Line Pointers, Tuple Headers, Free Space, and
+                Visibility Map</strong
+              ></a
+            ><a class="next" href="Lesson3.html"
+              ><small>Next lesson</small
+              ><strong
+                >HOT Updates, Fillfactor, Index Churn, and Update-Heavy Table
+                Design</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                  <a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                  <a
+                    href="https://x.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >X
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                >
+                <button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only assets compatible with the Ethereum/ERC-20 network.
+                  Do not send TRC-20/TRON assets.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <div>
+          <a href="../../../index.html#roadmap">Roadmap</a
+          ><a href="../../../index.html#courses">Courses</a
+          ><a href="https://github.com/mohammadijoo/Big_Data_Academy"
+            >Repository</a
+          >
+        </div>
+        <small
+          >Created and maintained by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>

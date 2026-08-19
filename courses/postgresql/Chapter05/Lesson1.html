@@ -1,0 +1,1655 @@
+<!doctype html>
+
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Build PostgreSQL SELECT queries from relational semantics, reason correctly about NULL and three-valued logic, guarantee deterministic ordering, resolve expression types, and avoid relying on unspecified expression-evaluation order."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      SELECT Semantics, NULL, Three-Valued Logic, Ordering, and Expression
+      Evaluation | PostgreSQL | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">PG</span>
+            <div><small>Course 05</small><strong>PostgreSQL</strong></div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 120 lessons..."
+            type="search"
+        /></label>
+        <nav aria-label="PostgreSQL curriculum" class="sidebar-curriculum">
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>PostgreSQL Foundations, Release Cadence,
+              Installation, and Lab Design
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>PostgreSQL Architecture and Philosophy: Process
+                Model, Catalogs, and Extensibility</a
+              >
+              <a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Major Releases, Minor Releases, Support Policy,
+                Compatibility, and Upgrade Planning</a
+              >
+              <a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>Install PostgreSQL on Windows, Linux,
+                Containers, and Initialize a Cluster</a
+              >
+              <a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>psql Fundamentals, Connection Parameters,
+                Service Files, and Safe CLI Workflows</a
+              >
+              <a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Repeatable Lab with Roles, Databases,
+                Schemas, Extensions, and Sample Workloads</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>Cluster Architecture, Processes, Memory, Files, and
+              Configuration
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>Postmaster, Backend Processes, Auxiliary
+                Processes, and Connection Lifecycle</a
+              >
+              <a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>Data Directory, Tablespaces, Configuration
+                Files, Include Hierarchy, and Reload vs Restart</a
+              >
+              <a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Shared Buffers, WAL Buffers, Work Memory,
+                Maintenance Memory, and Memory Budgeting</a
+              >
+              <a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>GUC Parameters, ALTER SYSTEM, Session Settings,
+                and Configuration Scope</a
+              >
+              <a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Logging Collector, Structured Logs, Startup
+                Diagnostics, and a Baseline Production Profile</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>Databases, Schemas, Roles, Catalogs, and Object
+              Namespaces
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>Cluster vs Database vs Schema Boundaries and
+                Search Path Semantics</a
+              >
+              <a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Roles, Membership, Ownership, SET ROLE, and
+                Privilege Inheritance</a
+              >
+              <a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>System Catalogs, information_schema, psql
+                Introspection, and Metadata Queries</a
+              >
+              <a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>Object Dependencies, DROP CASCADE Risks,
+                Extensions, and Namespace Hygiene</a
+              >
+              <a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Design Multi-Team Database and Schema Boundaries
+                with Least-Privilege Ownership</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Data Types, Domains, Constraints, Identity, and
+              Generated Data
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Numeric, Text, Boolean, Temporal, UUID, Network,
+                Range, Multirange, and Binary Types</a
+              >
+              <a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>Arrays, Composite Types, ENUMs, Domains, and
+                When Custom Types Improve Modeling</a
+              >
+              <a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK,
+                EXCLUDE, NOT NULL, and Constraint Timing</a
+              >
+              <a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>Identity Columns, Sequences, Sequence Caching,
+                Gaps, and Distributed-ID Considerations</a
+              >
+              <a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Generated Columns, Defaults, Collations,
+                Encoding, and Data-Integrity Design</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>05</span>SQL Querying: Joins, Subqueries, CTEs, Set
+              Operations, and LATERAL
+            </summary>
+            <div>
+              <a class="sidebar-lesson is-current" href="Lesson1.html"
+                ><span>01</span>SELECT Semantics, NULL, Three-Valued Logic,
+                Ordering, and Expression Evaluation<i>Current</i></a
+              >
+              <a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>Join Types, Join Conditions, Cardinality
+                Reasoning, and Join Elimination Concepts</a
+              >
+              <a class="sidebar-lesson" href="Lesson3.html"
+                ><span>03</span>Subqueries, EXISTS, IN, Scalar Contexts,
+                Correlation, and LATERAL</a
+              >
+              <a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>CTEs, Recursive Queries, Materialization
+                Control, and Graph/Hierarchy Traversal</a
+              >
+              <a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>UNION/INTERSECT/EXCEPT, DISTINCT ON, Row
+                Constructors, and Query Composition</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Advanced SQL: Aggregates, Windows, GROUPING SETS,
+              and MERGE
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>Aggregate Functions, FILTER,
+                Ordered-Set/Hypothetical-Set Aggregates, and Custom
+                Aggregates</a
+              >
+              <a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>Window Partitions, Frames, Ranking, Running
+                Metrics, and Gaps-and-Islands</a
+              >
+              <a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>GROUPING SETS, CUBE, ROLLUP, and Multi-Level
+                Analytical Reports</a
+              >
+              <a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>INSERT ... ON CONFLICT, MERGE, RETURNING, and
+                Observable DML Workflows</a
+              >
+              <a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Advanced Reporting Patterns with CTEs, Windows,
+                JSON Construction, and Reusable Views</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>MVCC, Transactions, Isolation, Locks, and
+              Serialization
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>Tuple Versions, xmin/xmax, Snapshots,
+                Visibility, and the MVCC Mental Model</a
+              >
+              <a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>READ COMMITTED, REPEATABLE READ, SERIALIZABLE,
+                and Anomaly Prevention</a
+              >
+              <a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>Table, Row, Page, Advisory, and Predicate Locks
+                with Lock Compatibility</a
+              >
+              <a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Deadlocks, Lock Queues, Timeouts, SKIP LOCKED,
+                NOWAIT, and Worker Queues</a
+              >
+              <a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Designing Retryable Transactions, Idempotency,
+                and Serializable Workflows</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>Heap Storage, TOAST, HOT Updates, Bloat, and
+              Page-Level Internals
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>Heap Pages, Line Pointers, Tuple Headers, Free
+                Space, and Visibility Map</a
+              >
+              <a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>TOAST Storage, Compression, Out-of-Line Values,
+                and Large Attribute Tradeoffs</a
+              >
+              <a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>HOT Updates, Fillfactor, Index Churn, and
+                Update-Heavy Table Design</a
+              >
+              <a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>Dead Tuples, Bloat Formation, Measuring Bloat,
+                and Repack/Rewrite Tradeoffs</a
+              >
+              <a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Inspect Storage Internals with pageinspect and
+                Connect Physical Evidence to SQL Behavior</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>VACUUM, Autovacuum, ANALYZE, Freeze, and
+              Maintenance Engineering
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>Why VACUUM Exists: Dead Tuple Reclamation and
+                Visibility Maintenance</a
+              >
+              <a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>Autovacuum Thresholds, Scale Factors, Worker
+                Capacity, and Per-Table Tuning</a
+              >
+              <a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>Transaction ID Wraparound, Freezing,
+                relfrozenxid, and Emergency Prevention</a
+              >
+              <a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>ANALYZE, Statistics Targets, Extended
+                Statistics, and Planner Cardinality Quality</a
+              >
+              <a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>VACUUM FULL, CLUSTER, REINDEX, Concurrent
+                Maintenance, and Maintenance Windows</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>B-Tree and Specialized Indexes: Hash, GiST,
+              SP-GiST, GIN, and BRIN
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>B-Tree Structure, Operator Classes, Sort Order,
+                Multicolumn Rules, and Skip Scan</a
+              >
+              <a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>Partial, Expression, INCLUDE/Covering, Unique,
+                and Concurrent Indexes</a
+              >
+              <a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>GIN for Arrays/JSONB/Text Search and GiST for
+                Ranges/Geometry-Like Semantics</a
+              >
+              <a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>SP-GiST Partitioned Search Structures and BRIN
+                for Physically Correlated Huge Tables</a
+              >
+              <a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Index Selection, Write Amplification,
+                Deduplication, Reindexing, and Portfolio Audits</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>Planner and Executor Internals, EXPLAIN,
+              Statistics, and Cost Modeling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>Planner Search Space, Paths, Join Orders, Cost
+                Parameters, and Generic vs Custom Plans</a
+              >
+              <a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>EXPLAIN / EXPLAIN ANALYZE with BUFFERS, WAL,
+                TIMING, SETTINGS, and JIT</a
+              >
+              <a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>Sequential, Index, Bitmap, Index-Only, TID, and
+                Parallel Scan Behavior</a
+              >
+              <a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Nested Loop, Hash Join, Merge Join, Memoize,
+                Sort, Hash Aggregate, and Incremental Sort</a
+              >
+              <a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Cardinality Misestimates, Extended Statistics,
+                Planner Knobs, and Evidence-Driven Tuning</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>WAL, Checkpoints, Crash Recovery, and Durability
+              Engineering
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>Write-Ahead Logging, LSNs, WAL Records,
+                Segments, and Durability Guarantees</a
+              >
+              <a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>Checkpoints, Background Writer, WAL Writer,
+                Full-Page Writes, and I/O Spikes</a
+              >
+              <a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>synchronous_commit, fsync, wal_sync_method, and
+                Durability/Latency Tradeoffs</a
+              >
+              <a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>Crash Recovery Timeline, Recovery Consistency,
+                and Corruption Boundaries</a
+              >
+              <a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>WAL Sizing, Checkpoint Tuning, pg_wal Growth,
+                and Production Alerting</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Backup, Restore, PITR, Base Backups, and Archiving
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>Logical Backups with pg_dump/pg_restore and
+                Object-Level Recovery</a
+              >
+              <a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Physical Base Backups, pg_basebackup,
+                Tablespaces, and Backup Manifests</a
+              >
+              <a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>Continuous Archiving, archive_command, WAL
+                Retention, and Restore Commands</a
+              >
+              <a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Point-in-Time Recovery, Recovery Targets,
+                Timelines, and Promotion</a
+              >
+              <a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Backup Verification, Restore Drills, RPO/RTO
+                Testing, and Immutable Backup Design</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Physical Streaming Replication, Standbys, and High
+              Availability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Primary/Standby Architecture, WAL
+                Sender/Receiver, Replay, and Replication Slots</a
+              >
+              <a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Hot Standby Reads, Conflict Cancellation,
+                max_standby Delays, and Feedback</a
+              >
+              <a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Synchronous Replication, Quorum Commit, Latency,
+                and Failure Semantics</a
+              >
+              <a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Cascading Replication, Replication Slots, WAL
+                Retention, and Replica Lag Diagnosis</a
+              >
+              <a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Promotion, Rewind, Failover Orchestration
+                Concepts, Fencing, and Split-Brain Avoidance</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Logical Replication, Publications, Subscriptions,
+              and Data Movement
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>Logical Decoding Mental Model, Replication
+                Identity, Publications, and Subscriptions</a
+              >
+              <a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Initial Table Synchronization, Ongoing Apply,
+                Conflict Classes, and Monitoring</a
+              >
+              <a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Row Filters, Column Lists, Selective
+                Replication, and Multi-Database Integration Patterns</a
+              >
+              <a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Schema Evolution, DDL Coordination, Sequences,
+                Large Objects, and Operational Gaps</a
+              >
+              <a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Upgrade/Migration, CDC, Zero-Downtime Cutovers,
+                and Logical Replication Runbooks</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Partitioning, Pruning, Routing, and Large-Table
+              Operations
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>Range, List, Hash Partitioning, Partition
+                Bounds, and Data Modeling Decisions</a
+              >
+              <a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Partition Pruning at Plan/Execution Time and
+                Query Shape Requirements</a
+              >
+              <a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>Indexes, Constraints, Foreign Keys, Triggers,
+                and Uniqueness Across Partitions</a
+              >
+              <a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Attach/Detach, Rolling Windows, Retention, Bulk
+                Load, and Archiving Workflows</a
+              >
+              <a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Too Many Partitions, Planner Overhead, Skew, Hot
+                Partitions, and Maintenance Strategy</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>JSONB, Arrays, Full-Text Search, Range Types, and
+              Advanced Data Modeling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>JSON vs JSONB Storage, Operators, SQL/JSON,
+                Construction, and Extraction</a
+              >
+              <a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>GIN Indexing for JSONB, Containment Queries,
+                jsonpath, and Selectivity Tradeoffs</a
+              >
+              <a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>Arrays, ANY/ALL, Unnesting, Multidimensional
+                Semantics, and Modeling Boundaries</a
+              >
+              <a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>Built-In Full-Text Search: Dictionaries,
+                tsvector, tsquery, Ranking, and GIN</a
+              >
+              <a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Range/Multirange Types, Exclusion Constraints,
+                Temporal Scheduling, and Overlap Models</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Functions, Procedures, Triggers, PL/pgSQL, and
+              Server-Side Programming
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>SQL Functions, PL/pgSQL Functions, Procedures,
+                Volatility, Parallel Safety, and Cost</a
+              >
+              <a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>Control Flow, Exceptions, Diagnostics, Dynamic
+                SQL, and SECURITY DEFINER Safety</a
+              >
+              <a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Triggers, Transition Tables, Deferred Behavior,
+                Audit Patterns, and Recursion Risks</a
+              >
+              <a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Event Triggers, DDL Governance, Policy
+                Enforcement, and Deployment Concerns</a
+              >
+              <a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>When to Use Database Logic vs Application
+                Services—and How to Test Both</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>19</span>Extensions, Foreign Data Wrappers, Languages, and
+              PostgreSQL Extensibility
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Extension Packaging, CREATE EXTENSION,
+                Versioning, Dependencies, and Trust Boundaries</a
+              >
+              <a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Foreign Data Wrappers, Foreign Tables, Pushdown,
+                Transactions, and Federated Queries</a
+              >
+              <a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>Procedural Languages, Trusted vs Untrusted Code,
+                and Operational Risk</a
+              >
+              <a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>Custom Types, Operators, Operator Classes,
+                Aggregates, and Extension Architecture</a
+              >
+              <a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Extension Lifecycle: Security Review, Upgrade
+                Compatibility, Backup, and Disaster Recovery</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Authentication, Authorization, TLS, Row-Level
+              Security, and Hardening
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>pg_hba.conf Rule Matching, Authentication
+                Methods, SCRAM, Certificates, and OAuth Concepts</a
+              >
+              <a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>TLS Configuration, Certificate Verification,
+                Channel Security, and Rotation</a
+              >
+              <a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>Privileges, Default Privileges, Role Design, SET
+                ROLE, and Least-Privilege Administration</a
+              >
+              <a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>Row-Level Security Policies, FORCE RLS, Security
+                Barrier Views, and Tenant Isolation</a
+              >
+              <a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Hardening Network Access, Extensions, SECURITY
+                DEFINER, Search Path, Logging, and Patching</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Observability: Statistics Views,
+              pg_stat_statements, Logs, and Wait Events
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>pg_stat_activity, Sessions, Transactions,
+                Blocking, and Long-Running Work</a
+              >
+              <a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>pg_stat_database/table/index Views and
+                Interpreting Cache/Scan/Write Counters</a
+              >
+              <a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>pg_stat_statements, Query Fingerprints, Plan
+                Variance, and Workload Ranking</a
+              >
+              <a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Wait Events, Locks, I/O Visibility,
+                WAL/Replication Stats, and Incident Diagnosis</a
+              >
+              <a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>Logging Strategy, auto_explain, Sampling,
+                Dashboards, Baselines, and Alert Design</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Performance Engineering: Memory, I/O, Parallelism,
+              JIT, and Connection Scaling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>shared_buffers, work_mem, maintenance_work_mem,
+                huge pages, and Memory Budgeting</a
+              >
+              <a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>effective_cache_size, random_page_cost, I/O
+                Concurrency, AIO, and Storage Characteristics</a
+              >
+              <a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>Parallel Query, Parallel Workers, Gather/Gather
+                Merge, and Parallel Safety</a
+              >
+              <a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>JIT Compilation, Thresholds, Analytical
+                Workloads, and When JIT Hurts</a
+              >
+              <a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Connection Scaling, Poolers, max_connections,
+                Session State, and Transaction Pooling</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>23</span>Upgrades, pg_upgrade, Compatibility, Migrations,
+              and Production Change
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter23/Lesson1.html"
+                ><span>01</span>Major vs Minor Upgrades, Binary Compatibility,
+                Extension Readiness, and Release Notes</a
+              >
+              <a class="sidebar-lesson" href="../Chapter23/Lesson2.html"
+                ><span>02</span>pg_upgrade Workflows, Link/Clone Modes,
+                Statistics, Analyze, and Rollback Planning</a
+              >
+              <a class="sidebar-lesson" href="../Chapter23/Lesson3.html"
+                ><span>03</span>Logical Upgrade Paths, Cross-Platform Migration,
+                Downtime Minimization, and Validation</a
+              >
+              <a class="sidebar-lesson" href="../Chapter23/Lesson4.html"
+                ><span>04</span>Schema Migration Expand/Contract, Lock-Aware
+                DDL, CREATE INDEX CONCURRENTLY, and Backfills</a
+              >
+              <a class="sidebar-lesson" href="../Chapter23/Lesson5.html"
+                ><span>05</span>Canary Upgrades, Performance Comparison,
+                Regression Detection, and Post-Upgrade Runbooks</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>Production Capstone: Operate a Secure, Highly
+              Available PostgreSQL Platform
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter24/Lesson1.html"
+                ><span>01</span>Define SLOs, Workload Classes, Data Model,
+                Capacity Forecast, and Architecture Decisions</a
+              >
+              <a class="sidebar-lesson" href="../Chapter24/Lesson2.html"
+                ><span>02</span>Implement Schema, Indexes, Partitioning,
+                Security, RLS, and Migration Automation</a
+              >
+              <a class="sidebar-lesson" href="../Chapter24/Lesson3.html"
+                ><span>03</span>Tune Queries, Autovacuum, Memory, WAL, I/O, and
+                Connection Architecture from Evidence</a
+              >
+              <a class="sidebar-lesson" href="../Chapter24/Lesson4.html"
+                ><span>04</span>Implement PITR, Replication/Failover,
+                Monitoring, Alerts, Upgrades, and Incident Runbooks</a
+              >
+              <a class="sidebar-lesson" href="../Chapter24/Lesson5.html"
+                ><span>05</span>Run Failure, Corruption, Restore, Failover, and
+                Performance Drills—and Defend the Design</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 05 · Lesson 01</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">PostgreSQL</a><span>/</span
+            ><span>Chapter 05 · Lesson 01</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 05 · SQL Querying: Joins, Subqueries, CTEs, Set
+              Operations, and LATERAL
+            </p>
+            <h1>
+              SELECT Semantics, NULL, Three-Valued Logic, Ordering, and
+              Expression Evaluation
+            </h1>
+            <p>
+              Build PostgreSQL SELECT queries from relational semantics, reason
+              correctly about NULL and three-valued logic, guarantee
+              deterministic ordering, resolve expression types, and avoid
+              relying on unspecified expression-evaluation order.
+            </p>
+            <div class="lesson-meta">
+              <span>Intermediate</span><span>120–150 minutes</span
+              ><span>Query semantics + NULL/order lab</span
+              ><span>Current patched PostgreSQL 18.x</span
+              ><span>Core SQL; no extensions required</span
+              ><span>Last reviewed: August 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                ServiceHub needs a dashboard for open and recently closed work
+                orders. A first draft seems trivial—write <code>SELECT</code>,
+                add a few predicates, and sort. Then three production-grade bugs
+                appear: rows with <code>NULL</code> values disappear
+                unexpectedly, “latest 5” changes between executions, and a
+                supposedly guarded division still raises
+                <code>division by zero</code>. These are not planner
+                curiosities; they are consequences of SQL semantics.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Explain the logical stages of a <code>SELECT</code> without
+                    confusing them with a physical execution plan.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Reason with SQL three-valued logic and use
+                    <code>IS NULL</code>, <code>IS [NOT] DISTINCT FROM</code>,
+                    and Boolean truth tests deliberately.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Guarantee deterministic result order with a complete
+                    <code>ORDER BY</code> contract, including tie-breaking and
+                    NULL placement.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Use <code>CASE</code>, <code>COALESCE</code>, and explicit
+                    casts while understanding common-type resolution.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Avoid depending on left-to-right Boolean or
+                    function-argument evaluation when correctness or safety
+                    depends on order.
+                  </p>
+                </div>
+              </div>
+              <div class="callout">
+                <strong>Prerequisite connection</strong>
+                <p>
+                  Course 01 introduced SELECT/filter/order syntax. Here the
+                  focus is PostgreSQL semantics: which rows conceptually exist
+                  at each query stage, how NULL propagates through Boolean
+                  logic, and why a plan may evaluate equivalent expressions in
+                  an order different from the source text.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>1. Chapter 05 lab bootstrap</h2>
+              <p>
+                All five lessons use the same small
+                <strong>ServiceHub</strong> dataset so row counts and edge cases
+                remain explainable. Run this as
+                <code>servicehub_owner</code> (or another role that owns the
+                disposable <code>app</code> schema) in
+                <code>servicehub_lab</code>. The objects are deliberately
+                prefixed <code>ch05_</code>. Before the drops, verify the
+                current database and inspect the matching objects; do not paste
+                this into a production database.
+              </p>
+              <div class="callout">
+                <strong>Safety boundary</strong>
+                <p>
+                  The DROP statements below target only chapter-scoped objects.
+                  If your database contains valuable objects with these names,
+                  stop and use another disposable database. No CASCADE is used.
+                </p>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    reset and seed the deterministic ServiceHub query lab
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">\echo 'Verify target before recreating chapter-scoped lab objects'</span><span class="code-line">SELECT current_database(), current_user;</span><span class="code-line">\dt app.ch05_*</span><span class="code-line"></span><span class="code-line">DROP TABLE IF EXISTS app.ch05_work_order_event;</span><span class="code-line">DROP TABLE IF EXISTS app.ch05_work_order_tag;</span><span class="code-line">DROP TABLE IF EXISTS app.ch05_work_order;</span><span class="code-line">DROP TABLE IF EXISTS app.ch05_technician;</span><span class="code-line">DROP TABLE IF EXISTS app.ch05_customer;</span><span class="code-line">DROP TABLE IF EXISTS app.ch05_team;</span><span class="code-line"></span><span class="code-line">CREATE TABLE app.ch05_customer (</span><span class="code-line">    customer_id integer PRIMARY KEY,</span><span class="code-line">    customer_name text NOT NULL,</span><span class="code-line">    region text,</span><span class="code-line">    active boolean NOT NULL DEFAULT true</span><span class="code-line">);</span><span class="code-line"></span><span class="code-line">CREATE TABLE app.ch05_technician (</span><span class="code-line">    technician_id integer PRIMARY KEY,</span><span class="code-line">    technician_name text NOT NULL,</span><span class="code-line">    specialty text NOT NULL,</span><span class="code-line">    team_code text NOT NULL</span><span class="code-line">);</span><span class="code-line"></span><span class="code-line">CREATE TABLE app.ch05_work_order (</span><span class="code-line">    work_order_id integer PRIMARY KEY,</span><span class="code-line">    customer_id integer NOT NULL REFERENCES app.ch05_customer(customer_id),</span><span class="code-line">    assigned_technician_id integer REFERENCES app.ch05_technician(technician_id),</span><span class="code-line">    status text NOT NULL CHECK (status IN ('queued','open','closed','cancelled')),</span><span class="code-line">    priority smallint NOT NULL CHECK (priority BETWEEN 1 AND 4),</span><span class="code-line">    city text NOT NULL,</span><span class="code-line">    opened_at timestamptz NOT NULL,</span><span class="code-line">    closed_at timestamptz,</span><span class="code-line">    estimated_minutes integer NOT NULL CHECK (estimated_minutes &gt;= 0),</span><span class="code-line">    actual_minutes integer CHECK (actual_minutes &gt;= 0),</span><span class="code-line">    cost numeric(10,2) NOT NULL CHECK (cost &gt;= 0)</span><span class="code-line">);</span><span class="code-line"></span><span class="code-line">CREATE TABLE app.ch05_work_order_tag (</span><span class="code-line">    work_order_id integer NOT NULL REFERENCES app.ch05_work_order(work_order_id),</span><span class="code-line">    tag text NOT NULL,</span><span class="code-line">    PRIMARY KEY (work_order_id, tag)</span><span class="code-line">);</span><span class="code-line"></span><span class="code-line">CREATE TABLE app.ch05_work_order_event (</span><span class="code-line">    event_id integer PRIMARY KEY,</span><span class="code-line">    work_order_id integer NOT NULL REFERENCES app.ch05_work_order(work_order_id),</span><span class="code-line">    event_at timestamptz NOT NULL,</span><span class="code-line">    event_type text NOT NULL,</span><span class="code-line">    detail text</span><span class="code-line">);</span><span class="code-line"></span><span class="code-line">CREATE TABLE app.ch05_team (</span><span class="code-line">    team_id integer PRIMARY KEY,</span><span class="code-line">    team_name text NOT NULL UNIQUE,</span><span class="code-line">    parent_team_id integer REFERENCES app.ch05_team(team_id)</span><span class="code-line">);</span><span class="code-line"></span><span class="code-line">INSERT INTO app.ch05_customer VALUES</span><span class="code-line">(1,'Northwind Health','North',true),</span><span class="code-line">(2,'Alpine Manufacturing','North',true),</span><span class="code-line">(3,'City Library','Central',true),</span><span class="code-line">(4,'Delta Foods','South',true),</span><span class="code-line">(5,'Evergreen School','South',false);</span><span class="code-line"></span><span class="code-line">INSERT INTO app.ch05_technician VALUES</span><span class="code-line">(10,'Ada','electrical','A'),</span><span class="code-line">(11,'Linus','network','A'),</span><span class="code-line">(12,'Grace','mechanical','B'),</span><span class="code-line">(13,'Ken','network','B');</span><span class="code-line"></span><span class="code-line">INSERT INTO app.ch05_work_order VALUES</span><span class="code-line">(1001,1,10,'closed',1,'Baku','2026-08-01 08:00+00','2026-08-01 10:00+00',90,110,240.00),</span><span class="code-line">(1002,1,11,'open',2,'Baku','2026-08-02 09:00+00',NULL,60,NULL,80.00),</span><span class="code-line">(1003,2,10,'closed',2,'Sumqayit','2026-08-02 07:30+00','2026-08-02 09:00+00',120,85,150.00),</span><span class="code-line">(1004,2,NULL,'queued',3,'Sumqayit','2026-08-03 12:00+00',NULL,45,NULL,50.00),</span><span class="code-line">(1005,3,12,'closed',1,'Baku','2026-08-01 06:00+00','2026-08-01 08:30+00',120,150,300.00),</span><span class="code-line">(1006,4,13,'cancelled',4,'Ganja','2026-08-04 14:00+00','2026-08-04 14:10+00',30,10,0.00),</span><span class="code-line">(1007,4,13,'open',2,'Ganja','2026-08-05 11:00+00',NULL,90,NULL,120.00),</span><span class="code-line">(1008,1,10,'closed',1,'Baku','2026-08-06 05:00+00','2026-08-06 06:00+00',60,55,90.00),</span><span class="code-line">(1009,3,12,'closed',2,'Baku','2026-08-06 09:00+00','2026-08-06 12:00+00',90,180,400.00),</span><span class="code-line">(1010,2,11,'open',1,'Baku','2026-08-07 10:00+00',NULL,0,NULL,75.00);</span><span class="code-line"></span><span class="code-line">INSERT INTO app.ch05_work_order_tag VALUES</span><span class="code-line">(1001,'electrical'),(1001,'urgent'),(1002,'network'),(1003,'electrical'),</span><span class="code-line">(1005,'mechanical'),(1005,'safety'),(1007,'network'),(1007,'urgent'),</span><span class="code-line">(1008,'electrical'),(1009,'mechanical'),(1009,'urgent'),(1010,'network');</span><span class="code-line"></span><span class="code-line">INSERT INTO app.ch05_work_order_event VALUES</span><span class="code-line">(1,1001,'2026-08-01 08:00+00','created','portal'),</span><span class="code-line">(2,1001,'2026-08-01 09:30+00','arrived','Ada on site'),</span><span class="code-line">(3,1001,'2026-08-01 10:00+00','closed','restored'),</span><span class="code-line">(4,1002,'2026-08-02 09:00+00','created','portal'),</span><span class="code-line">(5,1002,'2026-08-02 09:10+00','assigned','Linus'),</span><span class="code-line">(6,1003,'2026-08-02 07:30+00','created','monitoring'),</span><span class="code-line">(7,1003,'2026-08-02 09:00+00','closed','breaker replaced'),</span><span class="code-line">(8,1007,'2026-08-05 11:00+00','created','phone'),</span><span class="code-line">(9,1007,'2026-08-05 11:20+00','assigned','Ken'),</span><span class="code-line">(10,1008,'2026-08-06 05:00+00','created','monitoring'),</span><span class="code-line">(11,1008,'2026-08-06 06:00+00','closed','reset'),</span><span class="code-line">(12,1009,'2026-08-06 09:00+00','created','portal'),</span><span class="code-line">(13,1009,'2026-08-06 10:00+00','diagnosed','pump wear'),</span><span class="code-line">(14,1009,'2026-08-06 12:00+00','closed','pump replaced'),</span><span class="code-line">(15,1010,'2026-08-07 10:00+00','created','portal');</span><span class="code-line"></span><span class="code-line">INSERT INTO app.ch05_team VALUES</span><span class="code-line">(1,'Field Operations',NULL),</span><span class="code-line">(2,'Electrical',1),</span><span class="code-line">(3,'Network',1),</span><span class="code-line">(4,'Mechanical',1),</span><span class="code-line">(5,'Night Shift',3);</span></code></pre>
+              </div>
+              <p>
+                After setup, <code>app.ch05_work_order</code> contains 10 work
+                orders, including one unassigned row, several NULL completion
+                values, and one zero-minute estimate. Those details are
+                intentional: they make outer joins, three-valued logic,
+                <code>NOT IN</code>, scalar errors, and evaluation-order
+                mistakes observable.
+              </p>
+            </section>
+            <section>
+              <h2>2. Start with relational meaning, not a guessed execution sequence</h2>
+              <p>
+                PostgreSQL documents a logical processing model for
+                <code>SELECT</code>: source rows are formed from
+                <code>FROM</code>, filtered by <code>WHERE</code>, grouped when
+                needed, filtered at group level by <code>HAVING</code>,
+                projected through the select list, optionally deduplicated,
+                combined by set operations, ordered, and finally limited. That
+                sequence is a semantic model. It does <em>not</em> mean the
+                executor must scan, join, sort, and compute expressions in that
+                textual order.
+              </p>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Clause</th>
+                    <th>Relational question</th>
+                    <th>Do not infer</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>FROM</code> / joins</td>
+                    <td>What candidate row combinations exist?</td>
+                    <td>That tables are physically scanned left-to-right.</td>
+                  </tr>
+                  <tr>
+                    <td><code>WHERE</code></td>
+                    <td>Which candidate rows satisfy TRUE?</td>
+                    <td>That predicates are evaluated in written order.</td>
+                  </tr>
+                  <tr>
+                    <td><code>GROUP BY</code> / aggregates</td>
+                    <td>
+                      Which rows form each group and what aggregate values
+                      exist?
+                    </td>
+                    <td>That grouping must use a visible sort.</td>
+                  </tr>
+                  <tr>
+                    <td><code>SELECT</code></td>
+                    <td>Which expressions become output columns?</td>
+                    <td>
+                      That every expression is evaluated before LIMIT in every
+                      query shape.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>DISTINCT</code></td>
+                    <td>Which duplicate output rows are removed?</td>
+                    <td>
+                      That the surviving row has meaningful “first” identity.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>ORDER BY</code></td>
+                    <td>What ordering contract is requested?</td>
+                    <td>That heap or index order is a substitute.</td>
+                  </tr>
+                  <tr>
+                    <td><code>LIMIT</code></td>
+                    <td>
+                      Which prefix/subset of the ordered result is returned?
+                    </td>
+                    <td>That LIMIT without ORDER BY identifies stable rows.</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    one query, several semantic stages
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT city,</span><span class="code-line">       count(*) AS work_orders,</span><span class="code-line">       sum(cost) AS total_cost</span><span class="code-line">FROM app.ch05_work_order</span><span class="code-line">WHERE status &lt;&gt; 'cancelled'</span><span class="code-line">GROUP BY city</span><span class="code-line">HAVING count(*) &gt;= 2</span><span class="code-line">ORDER BY total_cost DESC, city</span><span class="code-line">LIMIT 3;</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="text">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>text ·
+                    deterministic result for the seeded dataset
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">city     | work_orders | total_cost</span><span class="code-line">---------+-------------+-----------</span><span class="code-line">Baku     |           6 |    1185.00</span><span class="code-line">Sumqayit |           2 |     200.00</span></code></pre>
+              </div>
+              <p>
+                The result follows the relational definition. Whether PostgreSQL
+                uses a sequential scan, an index, hash aggregation, or a sort is
+                an optimization question. Change the data or indexes and the
+                plan may change while the correct result remains the same.
+              </p>
+            </section>
+            <section>
+              <h2>3. NULL means unknown or absent—not an ordinary value</h2>
+              <p>
+                SQL Boolean expressions have three truth states: TRUE, FALSE,
+                and UNKNOWN, represented by <code>NULL</code>. A
+                <code>WHERE</code> clause keeps only rows for which its
+                condition is TRUE. FALSE and UNKNOWN are both rejected. This is
+                why <code>closed_at = NULL</code> is not a valid null test:
+                equality with an unknown value is itself unknown.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    observe three-valued logic directly
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT work_order_id,</span><span class="code-line">       closed_at = NULL AS wrong_test,</span><span class="code-line">       closed_at IS NULL AS is_openish,</span><span class="code-line">       status = 'open' OR closed_at IS NULL AS open_or_unfinished</span><span class="code-line">FROM app.ch05_work_order</span><span class="code-line">WHERE work_order_id IN (1002, 1006)</span><span class="code-line">ORDER BY work_order_id;</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="text">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>text ·
+                    expected truth values
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">work_order_id | wrong_test | is_openish | open_or_unfinished</span><span class="code-line">--------------+------------+------------+-------------------</span><span class="code-line">1002          | NULL       | t          | t</span><span class="code-line">1006          | NULL       | f          | f</span></code></pre>
+              </div>
+              <p>
+                PostgreSQL also provides <code>IS DISTINCT FROM</code> and
+                <code>IS NOT DISTINCT FROM</code>. They compare values while
+                treating NULL as a comparable marker, so their result is always
+                TRUE or FALSE rather than UNKNOWN.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    null-safe equality and inequality
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT NULL = NULL AS ordinary_equality,</span><span class="code-line">       NULL IS NOT DISTINCT FROM NULL AS null_safe_equal,</span><span class="code-line">       10 IS DISTINCT FROM NULL AS null_safe_different;</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="text">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>text ·
+                    expected result
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">ordinary_equality | null_safe_equal | null_safe_different</span><span class="code-line">------------------+-----------------+--------------------</span><span class="code-line">NULL              | t               | t</span></code></pre>
+              </div>
+              <div class="callout">
+                <strong>Constraint connection</strong>
+                <p>
+                  A CHECK constraint is satisfied when its expression is TRUE or
+                  UNKNOWN; it rejects FALSE. A WHERE clause, by contrast, emits
+                  only TRUE rows. This distinction is why NOT NULL and CHECK
+                  constraints often need to be designed together.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>4. Deterministic ordering requires a complete contract</h2>
+              <p>
+                Without <code>ORDER BY</code>, PostgreSQL may return rows in any
+                order the chosen plan finds convenient. With an
+                <code>ORDER BY</code> that has ties, the tied rows are still
+                free to appear in implementation-dependent order. Pagination,
+                “latest N”, and reproducible exports therefore need enough sort
+                keys to establish the order you actually mean.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    weak versus deterministic latest-work ordering
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">-- Incomplete: many rows can share priority/opened_at values.</span><span class="code-line">SELECT work_order_id, priority, opened_at</span><span class="code-line">FROM app.ch05_work_order</span><span class="code-line">ORDER BY priority, opened_at DESC</span><span class="code-line">LIMIT 5;</span><span class="code-line"></span><span class="code-line">-- Better: work_order_id is the unique final tie-breaker.</span><span class="code-line">SELECT work_order_id, priority, opened_at</span><span class="code-line">FROM app.ch05_work_order</span><span class="code-line">ORDER BY priority ASC, opened_at DESC, work_order_id DESC</span><span class="code-line">LIMIT 5;</span></code></pre>
+              </div>
+              <p>
+                NULL placement is also part of the ordering contract. PostgreSQL
+                defaults to NULLS LAST for ascending order and NULLS FIRST for
+                descending order, but production queries are clearer when
+                business intent is explicit.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    place unfinished work before completed work explicitly
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT work_order_id, closed_at</span><span class="code-line">FROM app.ch05_work_order</span><span class="code-line">ORDER BY closed_at ASC NULLS FIRST, work_order_id;</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>5. CASE and COALESCE produce values—and still need type agreement</h2>
+              <p>
+                <code>CASE</code> chooses among result expressions;
+                <code>COALESCE</code> returns the first non-null argument.
+                PostgreSQL resolves their branches/arguments to a common output
+                type. This is useful, but implicit conversion should not become
+                a substitute for a clear contract.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    classification and common-type inspection
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT work_order_id,</span><span class="code-line">       CASE</span><span class="code-line">         WHEN status = 'closed' THEN 'done'</span><span class="code-line">         WHEN status = 'cancelled' THEN 'void'</span><span class="code-line">         ELSE 'active'</span><span class="code-line">       END AS lifecycle,</span><span class="code-line">       COALESCE(actual_minutes, estimated_minutes) AS observed_or_estimated,</span><span class="code-line">       pg_typeof(COALESCE(actual_minutes, estimated_minutes)) AS duration_type</span><span class="code-line">FROM app.ch05_work_order</span><span class="code-line">WHERE work_order_id IN (1001,1002,1006)</span><span class="code-line">ORDER BY work_order_id;</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="text">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>text ·
+                    expected result
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">work_order_id | lifecycle | observed_or_estimated | duration_type</span><span class="code-line">--------------+-----------+-----------------------+--------------</span><span class="code-line">1001          | done      |                   110 | integer</span><span class="code-line">1002          | active    |                    60 | integer</span><span class="code-line">1006          | void      |                    10 | integer</span></code></pre>
+              </div>
+              <p>
+                If branches cannot be reconciled, PostgreSQL reports a type
+                error. In public APIs or migration code, explicit casts document
+                intent and prevent surprising changes when a branch is edited
+                later.
+              </p>
+            </section>
+            <section>
+              <h2>6. Do not depend on left-to-right expression evaluation</h2>
+              <p>
+                SQL is declarative. PostgreSQL may reorder Boolean expressions
+                when that preserves semantics, and operator/function inputs are
+                not promised to execute left-to-right. Therefore “I put the
+                safety predicate first” is not a correctness mechanism.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    the tempting but unsafe guard
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">-- Do not rely on the written order of these predicates.</span><span class="code-line">SELECT work_order_id,</span><span class="code-line">       actual_minutes::numeric / estimated_minutes AS ratio</span><span class="code-line">FROM app.ch05_work_order</span><span class="code-line">WHERE estimated_minutes &lt;&gt; 0</span><span class="code-line">  AND actual_minutes::numeric / estimated_minutes &gt; 1.0;</span></code></pre>
+              </div>
+              <p>
+                For this particular arithmetic case, the best repair is to make
+                division itself safe or algebraically avoid it.
+                <code>NULLIF</code> turns a zero divisor into NULL, and
+                comparisons against that NULL become UNKNOWN rather than raising
+                an error.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    safe expression independent of predicate order
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT work_order_id,</span><span class="code-line">       round(actual_minutes::numeric / NULLIF(estimated_minutes, 0), 4) AS ratio</span><span class="code-line">FROM app.ch05_work_order</span><span class="code-line">WHERE actual_minutes::numeric / NULLIF(estimated_minutes, 0) &gt; 1.0</span><span class="code-line">ORDER BY work_order_id;</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="text">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>text ·
+                    expected result
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">work_order_id | ratio</span><span class="code-line">--------------+--------------------</span><span class="code-line">1001          | 1.2222</span><span class="code-line">1005          | 1.2500</span><span class="code-line">1009          | 2.0000</span></code></pre>
+              </div>
+              <p>
+                When evaluation order truly is part of the business rule, a
+                <code>CASE</code> expression can create a conditional boundary.
+                Even then, do not use side-effecting functions merely to observe
+                evaluation order; planners may pre-evaluate immutable constants
+                and may transform equivalent expressions.
+              </p>
+            </section>
+            <section>
+              <h2>7. Deliberately wrong query: “latest open work” without a total
+                order</h2>
+              <p>
+                A dashboard author writes
+                <code>WHERE status = 'open' LIMIT 2</code> and sees work orders
+                1002 and 1007. They conclude those are the “latest two.” The
+                query never stated “latest”, so that conclusion is unsupported.
+                A sequential scan, index scan, changed statistics, VACUUM, or
+                different LIMIT can expose a different subset.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    repair the business requirement, not the current plan
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT work_order_id, opened_at</span><span class="code-line">FROM app.ch05_work_order</span><span class="code-line">WHERE status = 'open'</span><span class="code-line">ORDER BY opened_at DESC, work_order_id DESC</span><span class="code-line">LIMIT 2;</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="text">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>text ·
+                    expected deterministic result
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">work_order_id | opened_at</span><span class="code-line">--------------+------------------------</span><span class="code-line">1010          | 2026-08-07 10:00:00+00</span><span class="code-line">1007          | 2026-08-05 11:00:00+00</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>8. Hands-on lab: prove semantics before looking at a plan</h2>
+              <p>
+                Run the bootstrap, then answer each question with result rows
+                first. Only after the result is correct should you run
+                <code>EXPLAIN</code>. This discipline prevents “the plan looks
+                fast” from disguising a relational bug.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    semantic verification tasks
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">-- 1. Which rows are not completed, treating NULL closed_at explicitly?</span><span class="code-line">SELECT work_order_id, status, closed_at</span><span class="code-line">FROM app.ch05_work_order</span><span class="code-line">WHERE closed_at IS NULL</span><span class="code-line">ORDER BY work_order_id;</span><span class="code-line"></span><span class="code-line">-- 2. Make NULL equality observable.</span><span class="code-line">SELECT work_order_id,</span><span class="code-line">       actual_minutes IS NOT DISTINCT FROM estimated_minutes AS exact_match</span><span class="code-line">FROM app.ch05_work_order</span><span class="code-line">ORDER BY work_order_id;</span><span class="code-line"></span><span class="code-line">-- 3. Explain only after checking the expected rows.</span><span class="code-line">EXPLAIN (COSTS ON)</span><span class="code-line">SELECT work_order_id, opened_at</span><span class="code-line">FROM app.ch05_work_order</span><span class="code-line">WHERE status = 'open'</span><span class="code-line">ORDER BY opened_at DESC, work_order_id DESC</span><span class="code-line">LIMIT 2;</span></code></pre>
+              </div>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>
+                    Why does <code>WHERE closed_at = NULL</code> return no TRUE
+                    matches?
+                  </li>
+                  <li>
+                    What does <code>IS NOT DISTINCT FROM</code> add compared
+                    with ordinary equality?
+                  </li>
+                  <li>
+                    Why is <code>ORDER BY priority</code> insufficient for
+                    deterministic pagination when priorities repeat?
+                  </li>
+                  <li>
+                    Why should a safe arithmetic expression not depend on the
+                    left predicate being evaluated first?
+                  </li>
+                  <li>
+                    What is the difference between the logical SELECT processing
+                    model and an EXPLAIN plan?
+                  </li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      Equality with NULL normally yields UNKNOWN, while WHERE
+                      keeps only TRUE.
+                      <code>IS NOT DISTINCT FROM</code> provides null-safe
+                      equality. Repeated sort keys leave ties unordered, so add
+                      a unique tie-breaker. PostgreSQL may reorder Boolean
+                      expressions, so make the risky expression itself safe (for
+                      example with <code>NULLIF</code>) or use a genuinely
+                      conditional expression. Logical processing defines the
+                      relational result; EXPLAIN describes one chosen physical
+                      strategy.
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section>
+              <h2>9. Production judgment and bridge</h2>
+              <p>
+                Correct querying starts with a result contract: explicit null
+                policy, explicit ordering, explicit type intent, and no hidden
+                dependency on evaluation order. These rules are portable SQL
+                ideas with PostgreSQL-specific details around ordering defaults,
+                type resolution, and planner behavior. The next lesson adds
+                multiple relations, where the same discipline becomes
+                cardinality reasoning: before asking whether a join is fast,
+                predict how many rows it is supposed to produce.
+              </p>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <ul>
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/18/sql-select.html"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL 18 — SELECT</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/18/queries-order.html"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL 18 — Sorting Rows</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/18/functions-logical.html"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL 18 — Logical Operators</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/18/functions-comparison.html"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL 18 — Comparison Functions and Operators</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/18/functions-conditional.html"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL 18 — Conditional Expressions</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/18/typeconv-overview.html"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL 18 — Type Conversion Overview</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/18/sql-explain.html"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL 18 — EXPLAIN</a
+                  >
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a href="../Chapter04/Lesson5.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Generated Columns, Defaults, Collations, Encoding, and
+                Data-Integrity Design</strong
+              ></a
+            ><a class="next" href="Lesson2.html"
+              ><small>Next lesson</small
+              ><strong
+                >Join Types, Join Conditions, Cardinality Reasoning, and Join
+                Elimination Concepts</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                  <a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                  <a
+                    href="https://x.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >X
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                >
+                <button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only assets compatible with the Ethereum/ERC-20 network.
+                  Do not send TRC-20/TRON assets.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <div>
+          <a href="../../../index.html#roadmap">Roadmap</a
+          ><a href="../../../index.html#courses">Courses</a
+          ><a href="https://github.com/mohammadijoo/Big_Data_Academy"
+            >Repository</a
+          >
+        </div>
+        <small
+          >Created and maintained by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>

@@ -1,0 +1,1455 @@
+<!doctype html>
+
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Enable and operate pg_stat_statements safely, understand normalized query fingerprints/query IDs, rank workload by time/I/O/WAL, account for resets/deallocations, and connect fingerprints to representative current plans."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      pg_stat_statements, Query Fingerprints, Plan Variance, and Workload
+      Ranking | PostgreSQL | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">PG</span>
+            <div><small>Course 05</small><strong>PostgreSQL</strong></div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 120 lessons..."
+            type="search"
+        /></label>
+        <nav aria-label="PostgreSQL curriculum" class="sidebar-curriculum">
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>PostgreSQL Foundations, Release Cadence,
+              Installation, and Lab Design
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>PostgreSQL Architecture and Philosophy: Process
+                Model, Catalogs, and Extensibility</a
+              >
+              <a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Major Releases, Minor Releases, Support Policy,
+                Compatibility, and Upgrade Planning</a
+              >
+              <a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>Install PostgreSQL on Windows, Linux,
+                Containers, and Initialize a Cluster</a
+              >
+              <a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>psql Fundamentals, Connection Parameters,
+                Service Files, and Safe CLI Workflows</a
+              >
+              <a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Repeatable Lab with Roles, Databases,
+                Schemas, Extensions, and Sample Workloads</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>Cluster Architecture, Processes, Memory, Files, and
+              Configuration
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>Postmaster, Backend Processes, Auxiliary
+                Processes, and Connection Lifecycle</a
+              >
+              <a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>Data Directory, Tablespaces, Configuration
+                Files, Include Hierarchy, and Reload vs Restart</a
+              >
+              <a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Shared Buffers, WAL Buffers, Work Memory,
+                Maintenance Memory, and Memory Budgeting</a
+              >
+              <a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>GUC Parameters, ALTER SYSTEM, Session Settings,
+                and Configuration Scope</a
+              >
+              <a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Logging Collector, Structured Logs, Startup
+                Diagnostics, and a Baseline Production Profile</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>Databases, Schemas, Roles, Catalogs, and Object
+              Namespaces
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>Cluster vs Database vs Schema Boundaries and
+                Search Path Semantics</a
+              >
+              <a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Roles, Membership, Ownership, SET ROLE, and
+                Privilege Inheritance</a
+              >
+              <a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>System Catalogs, information_schema, psql
+                Introspection, and Metadata Queries</a
+              >
+              <a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>Object Dependencies, DROP CASCADE Risks,
+                Extensions, and Namespace Hygiene</a
+              >
+              <a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Design Multi-Team Database and Schema Boundaries
+                with Least-Privilege Ownership</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Data Types, Domains, Constraints, Identity, and
+              Generated Data
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Numeric, Text, Boolean, Temporal, UUID, Network,
+                Range, Multirange, and Binary Types</a
+              >
+              <a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>Arrays, Composite Types, ENUMs, Domains, and
+                When Custom Types Improve Modeling</a
+              >
+              <a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK,
+                EXCLUDE, NOT NULL, and Constraint Timing</a
+              >
+              <a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>Identity Columns, Sequences, Sequence Caching,
+                Gaps, and Distributed-ID Considerations</a
+              >
+              <a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Generated Columns, Defaults, Collations,
+                Encoding, and Data-Integrity Design</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>SQL Querying: Joins, Subqueries, CTEs, Set
+              Operations, and LATERAL
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>SELECT Semantics, NULL, Three-Valued Logic,
+                Ordering, and Expression Evaluation</a
+              >
+              <a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>Join Types, Join Conditions, Cardinality
+                Reasoning, and Join Elimination Concepts</a
+              >
+              <a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>Subqueries, EXISTS, IN, Scalar Contexts,
+                Correlation, and LATERAL</a
+              >
+              <a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>CTEs, Recursive Queries, Materialization
+                Control, and Graph/Hierarchy Traversal</a
+              >
+              <a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>UNION/INTERSECT/EXCEPT, DISTINCT ON, Row
+                Constructors, and Query Composition</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Advanced SQL: Aggregates, Windows, GROUPING SETS,
+              and MERGE
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>Aggregate Functions, FILTER,
+                Ordered-Set/Hypothetical-Set Aggregates, and Custom
+                Aggregates</a
+              >
+              <a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>Window Partitions, Frames, Ranking, Running
+                Metrics, and Gaps-and-Islands</a
+              >
+              <a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>GROUPING SETS, CUBE, ROLLUP, and Multi-Level
+                Analytical Reports</a
+              >
+              <a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>INSERT ... ON CONFLICT, MERGE, RETURNING, and
+                Observable DML Workflows</a
+              >
+              <a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Advanced Reporting Patterns with CTEs, Windows,
+                JSON Construction, and Reusable Views</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>MVCC, Transactions, Isolation, Locks, and
+              Serialization
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>Tuple Versions, xmin/xmax, Snapshots,
+                Visibility, and the MVCC Mental Model</a
+              >
+              <a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>READ COMMITTED, REPEATABLE READ, SERIALIZABLE,
+                and Anomaly Prevention</a
+              >
+              <a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>Table, Row, Page, Advisory, and Predicate Locks
+                with Lock Compatibility</a
+              >
+              <a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Deadlocks, Lock Queues, Timeouts, SKIP LOCKED,
+                NOWAIT, and Worker Queues</a
+              >
+              <a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Designing Retryable Transactions, Idempotency,
+                and Serializable Workflows</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>Heap Storage, TOAST, HOT Updates, Bloat, and
+              Page-Level Internals
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>Heap Pages, Line Pointers, Tuple Headers, Free
+                Space, and Visibility Map</a
+              >
+              <a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>TOAST Storage, Compression, Out-of-Line Values,
+                and Large Attribute Tradeoffs</a
+              >
+              <a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>HOT Updates, Fillfactor, Index Churn, and
+                Update-Heavy Table Design</a
+              >
+              <a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>Dead Tuples, Bloat Formation, Measuring Bloat,
+                and Repack/Rewrite Tradeoffs</a
+              >
+              <a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Inspect Storage Internals with pageinspect and
+                Connect Physical Evidence to SQL Behavior</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>VACUUM, Autovacuum, ANALYZE, Freeze, and
+              Maintenance Engineering
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>Why VACUUM Exists: Dead Tuple Reclamation and
+                Visibility Maintenance</a
+              >
+              <a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>Autovacuum Thresholds, Scale Factors, Worker
+                Capacity, and Per-Table Tuning</a
+              >
+              <a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>Transaction ID Wraparound, Freezing,
+                relfrozenxid, and Emergency Prevention</a
+              >
+              <a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>ANALYZE, Statistics Targets, Extended
+                Statistics, and Planner Cardinality Quality</a
+              >
+              <a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>VACUUM FULL, CLUSTER, REINDEX, Concurrent
+                Maintenance, and Maintenance Windows</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>B-Tree and Specialized Indexes: Hash, GiST,
+              SP-GiST, GIN, and BRIN
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>B-Tree Structure, Operator Classes, Sort Order,
+                Multicolumn Rules, and Skip Scan</a
+              >
+              <a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>Partial, Expression, INCLUDE/Covering, Unique,
+                and Concurrent Indexes</a
+              >
+              <a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>GIN for Arrays/JSONB/Text Search and GiST for
+                Ranges/Geometry-Like Semantics</a
+              >
+              <a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>SP-GiST Partitioned Search Structures and BRIN
+                for Physically Correlated Huge Tables</a
+              >
+              <a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Index Selection, Write Amplification,
+                Deduplication, Reindexing, and Portfolio Audits</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>Planner and Executor Internals, EXPLAIN,
+              Statistics, and Cost Modeling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>Planner Search Space, Paths, Join Orders, Cost
+                Parameters, and Generic vs Custom Plans</a
+              >
+              <a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>EXPLAIN / EXPLAIN ANALYZE with BUFFERS, WAL,
+                TIMING, SETTINGS, and JIT</a
+              >
+              <a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>Sequential, Index, Bitmap, Index-Only, TID, and
+                Parallel Scan Behavior</a
+              >
+              <a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Nested Loop, Hash Join, Merge Join, Memoize,
+                Sort, Hash Aggregate, and Incremental Sort</a
+              >
+              <a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Cardinality Misestimates, Extended Statistics,
+                Planner Knobs, and Evidence-Driven Tuning</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>WAL, Checkpoints, Crash Recovery, and Durability
+              Engineering
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>Write-Ahead Logging, LSNs, WAL Records,
+                Segments, and Durability Guarantees</a
+              >
+              <a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>Checkpoints, Background Writer, WAL Writer,
+                Full-Page Writes, and I/O Spikes</a
+              >
+              <a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>synchronous_commit, fsync, wal_sync_method, and
+                Durability/Latency Tradeoffs</a
+              >
+              <a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>Crash Recovery Timeline, Recovery Consistency,
+                and Corruption Boundaries</a
+              >
+              <a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>WAL Sizing, Checkpoint Tuning, pg_wal Growth,
+                and Production Alerting</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Backup, Restore, PITR, Base Backups, and Archiving
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>Logical Backups with pg_dump/pg_restore and
+                Object-Level Recovery</a
+              >
+              <a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Physical Base Backups, pg_basebackup,
+                Tablespaces, and Backup Manifests</a
+              >
+              <a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>Continuous Archiving, archive_command, WAL
+                Retention, and Restore Commands</a
+              >
+              <a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Point-in-Time Recovery, Recovery Targets,
+                Timelines, and Promotion</a
+              >
+              <a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Backup Verification, Restore Drills, RPO/RTO
+                Testing, and Immutable Backup Design</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Physical Streaming Replication, Standbys, and High
+              Availability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Primary/Standby Architecture, WAL
+                Sender/Receiver, Replay, and Replication Slots</a
+              >
+              <a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Hot Standby Reads, Conflict Cancellation,
+                max_standby Delays, and Feedback</a
+              >
+              <a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Synchronous Replication, Quorum Commit, Latency,
+                and Failure Semantics</a
+              >
+              <a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Cascading Replication, Replication Slots, WAL
+                Retention, and Replica Lag Diagnosis</a
+              >
+              <a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Promotion, Rewind, Failover Orchestration
+                Concepts, Fencing, and Split-Brain Avoidance</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Logical Replication, Publications, Subscriptions,
+              and Data Movement
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>Logical Decoding Mental Model, Replication
+                Identity, Publications, and Subscriptions</a
+              >
+              <a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Initial Table Synchronization, Ongoing Apply,
+                Conflict Classes, and Monitoring</a
+              >
+              <a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Row Filters, Column Lists, Selective
+                Replication, and Multi-Database Integration Patterns</a
+              >
+              <a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Schema Evolution, DDL Coordination, Sequences,
+                Large Objects, and Operational Gaps</a
+              >
+              <a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Upgrade/Migration, CDC, Zero-Downtime Cutovers,
+                and Logical Replication Runbooks</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Partitioning, Pruning, Routing, and Large-Table
+              Operations
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>Range, List, Hash Partitioning, Partition
+                Bounds, and Data Modeling Decisions</a
+              >
+              <a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Partition Pruning at Plan/Execution Time and
+                Query Shape Requirements</a
+              >
+              <a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>Indexes, Constraints, Foreign Keys, Triggers,
+                and Uniqueness Across Partitions</a
+              >
+              <a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Attach/Detach, Rolling Windows, Retention, Bulk
+                Load, and Archiving Workflows</a
+              >
+              <a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Too Many Partitions, Planner Overhead, Skew, Hot
+                Partitions, and Maintenance Strategy</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>JSONB, Arrays, Full-Text Search, Range Types, and
+              Advanced Data Modeling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>JSON vs JSONB Storage, Operators, SQL/JSON,
+                Construction, and Extraction</a
+              >
+              <a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>GIN Indexing for JSONB, Containment Queries,
+                jsonpath, and Selectivity Tradeoffs</a
+              >
+              <a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>Arrays, ANY/ALL, Unnesting, Multidimensional
+                Semantics, and Modeling Boundaries</a
+              >
+              <a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>Built-In Full-Text Search: Dictionaries,
+                tsvector, tsquery, Ranking, and GIN</a
+              >
+              <a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Range/Multirange Types, Exclusion Constraints,
+                Temporal Scheduling, and Overlap Models</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Functions, Procedures, Triggers, PL/pgSQL, and
+              Server-Side Programming
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>SQL Functions, PL/pgSQL Functions, Procedures,
+                Volatility, Parallel Safety, and Cost</a
+              >
+              <a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>Control Flow, Exceptions, Diagnostics, Dynamic
+                SQL, and SECURITY DEFINER Safety</a
+              >
+              <a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Triggers, Transition Tables, Deferred Behavior,
+                Audit Patterns, and Recursion Risks</a
+              >
+              <a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Event Triggers, DDL Governance, Policy
+                Enforcement, and Deployment Concerns</a
+              >
+              <a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>When to Use Database Logic vs Application
+                Services—and How to Test Both</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>19</span>Extensions, Foreign Data Wrappers, Languages, and
+              PostgreSQL Extensibility
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Extension Packaging, CREATE EXTENSION,
+                Versioning, Dependencies, and Trust Boundaries</a
+              >
+              <a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Foreign Data Wrappers, Foreign Tables, Pushdown,
+                Transactions, and Federated Queries</a
+              >
+              <a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>Procedural Languages, Trusted vs Untrusted Code,
+                and Operational Risk</a
+              >
+              <a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>Custom Types, Operators, Operator Classes,
+                Aggregates, and Extension Architecture</a
+              >
+              <a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Extension Lifecycle: Security Review, Upgrade
+                Compatibility, Backup, and Disaster Recovery</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Authentication, Authorization, TLS, Row-Level
+              Security, and Hardening
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>pg_hba.conf Rule Matching, Authentication
+                Methods, SCRAM, Certificates, and OAuth Concepts</a
+              >
+              <a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>TLS Configuration, Certificate Verification,
+                Channel Security, and Rotation</a
+              >
+              <a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>Privileges, Default Privileges, Role Design, SET
+                ROLE, and Least-Privilege Administration</a
+              >
+              <a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>Row-Level Security Policies, FORCE RLS, Security
+                Barrier Views, and Tenant Isolation</a
+              >
+              <a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Hardening Network Access, Extensions, SECURITY
+                DEFINER, Search Path, Logging, and Patching</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>21</span>Observability: Statistics Views,
+              pg_stat_statements, Logs, and Wait Events
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>pg_stat_activity, Sessions, Transactions,
+                Blocking, and Long-Running Work</a
+              >
+              <a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>pg_stat_database/table/index Views and
+                Interpreting Cache/Scan/Write Counters</a
+              >
+              <a
+                class="sidebar-lesson is-current"
+                href="../Chapter21/Lesson3.html"
+                ><span>03</span>pg_stat_statements, Query Fingerprints, Plan
+                Variance, and Workload Ranking<i>Current</i></a
+              >
+              <a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Wait Events, Locks, I/O Visibility,
+                WAL/Replication Stats, and Incident Diagnosis</a
+              >
+              <a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>Logging Strategy, auto_explain, Sampling,
+                Dashboards, Baselines, and Alert Design</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Performance Engineering: Memory, I/O, Parallelism,
+              JIT, and Connection Scaling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>shared_buffers, work_mem, maintenance_work_mem,
+                huge pages, and Memory Budgeting</a
+              >
+              <a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>effective_cache_size, random_page_cost, I/O
+                Concurrency, AIO, and Storage Characteristics</a
+              >
+              <a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>Parallel Query, Parallel Workers, Gather/Gather
+                Merge, and Parallel Safety</a
+              >
+              <a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>JIT Compilation, Thresholds, Analytical
+                Workloads, and When JIT Hurts</a
+              >
+              <a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Connection Scaling, Poolers, max_connections,
+                Session State, and Transaction Pooling</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>23</span>Upgrades, pg_upgrade, Compatibility, Migrations,
+              and Production Change
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter23/Lesson1.html"
+                ><span>01</span>Major vs Minor Upgrades, Binary Compatibility,
+                Extension Readiness, and Release Notes</a
+              >
+              <a class="sidebar-lesson" href="../Chapter23/Lesson2.html"
+                ><span>02</span>pg_upgrade Workflows, Link/Clone Modes,
+                Statistics, Analyze, and Rollback Planning</a
+              >
+              <a class="sidebar-lesson" href="../Chapter23/Lesson3.html"
+                ><span>03</span>Logical Upgrade Paths, Cross-Platform Migration,
+                Downtime Minimization, and Validation</a
+              >
+              <a class="sidebar-lesson" href="../Chapter23/Lesson4.html"
+                ><span>04</span>Schema Migration Expand/Contract, Lock-Aware
+                DDL, CREATE INDEX CONCURRENTLY, and Backfills</a
+              >
+              <a class="sidebar-lesson" href="../Chapter23/Lesson5.html"
+                ><span>05</span>Canary Upgrades, Performance Comparison,
+                Regression Detection, and Post-Upgrade Runbooks</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>Production Capstone: Operate a Secure, Highly
+              Available PostgreSQL Platform
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter24/Lesson1.html"
+                ><span>01</span>Define SLOs, Workload Classes, Data Model,
+                Capacity Forecast, and Architecture Decisions</a
+              >
+              <a class="sidebar-lesson" href="../Chapter24/Lesson2.html"
+                ><span>02</span>Implement Schema, Indexes, Partitioning,
+                Security, RLS, and Migration Automation</a
+              >
+              <a class="sidebar-lesson" href="../Chapter24/Lesson3.html"
+                ><span>03</span>Tune Queries, Autovacuum, Memory, WAL, I/O, and
+                Connection Architecture from Evidence</a
+              >
+              <a class="sidebar-lesson" href="../Chapter24/Lesson4.html"
+                ><span>04</span>Implement PITR, Replication/Failover,
+                Monitoring, Alerts, Upgrades, and Incident Runbooks</a
+              >
+              <a class="sidebar-lesson" href="../Chapter24/Lesson5.html"
+                ><span>05</span>Run Failure, Corruption, Restore, Failover, and
+                Performance Drills—and Defend the Design</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 14 · Lesson 03</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">PostgreSQL</a><span>/</span
+            ><span>Chapter 21 · Lesson 03</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Enable and operate pg_stat_statements safely, understand
+              normalized query fingerprints/query IDs, rank workload by
+              time/I/O/WAL, account for resets/deallocations, and connect
+              fingerprints to representative current plans.
+            </p>
+            <h1>
+              pg_stat_statements, Query Fingerprints, Plan Variance, and
+              Workload Ranking
+            </h1>
+            <p>
+              Enable and operate pg_stat_statements safely, understand
+              normalized query fingerprints/query IDs, rank workload by
+              time/I/O/WAL, account for resets/deallocations, and connect
+              fingerprints to representative current plans.
+            </p>
+            <div class="lesson-meta">
+              <span>Intermediate → Advanced</span><span>180–240 minutes</span
+              ><span>PostgreSQL observability and incident diagnosis</span
+              ><span
+                >Current patched PostgreSQL 18.x; verify current minor at lab
+                time</span
+              ><span
+                >Core PostgreSQL; pg_stat_statements + auto_explain are
+                PostgreSQL-supplied modules</span
+              ><span>ServiceHub disposable objects: app.ch21_*</span
+              ><span
+                >Observer/admin role recommended; some statistics/signaling
+                require pg_read_all_stats or pg_signal_backend/superuser</span
+              ><span
+                >Free local tooling; OS iostat/vmstat/top equivalents are
+                optional corroborating evidence</span
+              ><span>Last reviewed: August 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                Table counters tell us <em>where</em> work accumulated, but
+                ServiceHub needs to know
+                <em>which statement shapes</em> consumed database time, I/O,
+                temporary blocks, and Write-Ahead Log (WAL). The
+                PostgreSQL-supplied <code>pg_stat_statements</code> module
+                aggregates normalized statement fingerprints across executions.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Enable pg_stat_statements with its shared_preload_libraries
+                    restart requirement and query-ID requirement.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Explain queryid normalization, representative query text,
+                    user/database/toplevel dimensions, and major-version
+                    stability limits.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Rank workload by total versus mean execution time, calls,
+                    I/O, temp blocks, and WAL instead of one universal score.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Use pg_stat_statements_info and
+                    stats_since/minmax_stats_since to interpret resets and entry
+                    deallocation.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Connect a fingerprint to a fresh representative EXPLAIN
+                    without pretending pg_stat_statements stores historical
+                    plans.
+                  </p>
+                </div>
+              </div>
+            </section>
+            <section>
+              <h2>1. Preload is a server-start decision</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>
+                    sql · preflight
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0 2 2v9a2 2 0 0 0 2 2h3"
+                      ></path>
+                    </svg>
+                    Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT name, setting, context, source, pending_restart</span><span class="code-line">FROM pg_settings</span><span class="code-line">WHERE name IN (</span><span class="code-line">  'shared_preload_libraries',</span><span class="code-line">  'compute_query_id'</span><span class="code-line">)</span><span class="code-line">ORDER BY name;</span><span class="code-line"></span><span class="code-line">SELECT name, default_version, installed_version</span><span class="code-line">FROM pg_available_extensions</span><span class="code-line">WHERE name = 'pg_stat_statements';</span></code></pre>
+              </div>
+              <p>
+                <code>pg_stat_statements</code> allocates shared memory and
+                hooks statement planning/execution across the server, so
+                adding/removing it requires
+                <code>shared_preload_libraries</code> and a server restart.
+                <code>CREATE EXTENSION</code> alone only creates the SQL-facing
+                views/functions in one database; it cannot retrofit the server
+                preload.
+              </p>
+            </section>
+            <section>
+              <h2>2. Configure without clobbering existing preload libraries</h2>
+              <div class="code-window" data-code-block="" data-language="conf">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>
+                    conf · postgresql.conf example — preserve existing entries
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0 2 2v9a2 2 0 0 0 2 2h3"
+                      ></path>
+                    </svg>
+                    Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line"># Merge with existing required libraries; do not overwrite blindly.</span><span class="code-line">shared_preload_libraries = 'pg_stat_statements'</span><span class="code-line">compute_query_id = auto</span><span class="code-line"></span><span class="code-line"># Start conservatively:</span><span class="code-line">pg_stat_statements.track = top</span><span class="code-line"># Planning timing is OFF by default and adds overhead:</span><span class="code-line">pg_stat_statements.track_planning = off</span></code></pre>
+              </div>
+              <p>
+                If other preload modules already exist, keep them in the
+                comma-separated list. Restart PostgreSQL, then verify
+                <code>pending_restart=false</code>.
+                <code>compute_query_id=auto</code> lets modules such as
+                pg_stat_statements enable query IDs.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>
+                    sql · database registration after restart
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0 2 2v9a2 2 0 0 0 2 2h3"
+                      ></path>
+                    </svg>
+                    Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">CREATE EXTENSION IF NOT EXISTS pg_stat_statements;</span><span class="code-line"></span><span class="code-line">SELECT extname, extversion</span><span class="code-line">FROM pg_extension</span><span class="code-line">WHERE extname = 'pg_stat_statements';</span><span class="code-line"></span><span class="code-line">SELECT *</span><span class="code-line">FROM pg_stat_statements_info;</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>3. Generate one normalized query shape with different constants</h2>
+              <p>
+                Use the Chapter 21 workload table. Different literal
+                tenant/status values should aggregate into a common parsed query
+                shape when their analyzed structure is identical.
+              </p>
+              <div class="code-window" data-code-block="" data-language="psql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>
+                    psql · execute several literal variants
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0 2 2v9a2 2 0 0 0 2 2h3"
+                      ></path>
+                    </svg>
+                    Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT format(</span><span class="code-line">  'SELECT count(*) FROM app.ch21_workload WHERE tenant_id = %s AND status = %L;',</span><span class="code-line">  (g % 10) + 1,</span><span class="code-line">  CASE WHEN g % 2 = 0 THEN 'open' ELSE 'queued' END</span><span class="code-line">)</span><span class="code-line">FROM generate_series(1,40) AS g</span><span class="code-line">\gexec</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>
+                    sql · find the normalized entry
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0 2 2v9a2 2 0 0 0 2 2h3"
+                      ></path>
+                    </svg>
+                    Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT r.rolname AS executed_by,</span><span class="code-line">       d.datname AS database_name,</span><span class="code-line">       s.toplevel,</span><span class="code-line">       s.queryid,</span><span class="code-line">       s.calls,</span><span class="code-line">       s.rows,</span><span class="code-line">       round(s.total_exec_time::numeric,2) AS total_exec_ms,</span><span class="code-line">       round(s.mean_exec_time::numeric,3) AS mean_exec_ms,</span><span class="code-line">       round(s.stddev_exec_time::numeric,3) AS stddev_exec_ms,</span><span class="code-line">       s.stats_since,</span><span class="code-line">       s.query</span><span class="code-line">FROM pg_stat_statements AS s</span><span class="code-line">JOIN pg_database AS d ON d.oid = s.dbid</span><span class="code-line">LEFT JOIN pg_roles AS r ON r.oid = s.userid</span><span class="code-line">WHERE s.query LIKE 'SELECT count(*) FROM app.ch21_workload%'</span><span class="code-line">ORDER BY s.total_exec_time DESC;</span></code></pre>
+              </div>
+              <p>
+                Representative text replaces ignored constants with
+                <code>$1</code>, <code>$2</code>, etc. The entry key also
+                includes database/user/top-level dimensions. A query ID is a
+                hash of the analyzed query structure, not a cryptographic
+                identity and not guaranteed stable across PostgreSQL major
+                versions.
+              </p>
+            </section>
+            <section>
+              <h2>4. Rank by the question you are asking</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>
+                    sql · top contributors by total execution time
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0 2 2v9a2 2 0 0 0 2 2h3"
+                      ></path>
+                    </svg>
+                    Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT queryid,</span><span class="code-line">       calls,</span><span class="code-line">       round(total_exec_time::numeric,1) AS total_exec_ms,</span><span class="code-line">       round(mean_exec_time::numeric,3) AS mean_exec_ms,</span><span class="code-line">       rows,</span><span class="code-line">       shared_blks_hit,</span><span class="code-line">       shared_blks_read,</span><span class="code-line">       temp_blks_written,</span><span class="code-line">       pg_size_pretty(wal_bytes::bigint) AS wal_generated,</span><span class="code-line">       left(query,120) AS representative_query</span><span class="code-line">FROM pg_stat_statements</span><span class="code-line">WHERE dbid = (SELECT oid FROM pg_database WHERE datname=current_database())</span><span class="code-line">ORDER BY total_exec_time DESC</span><span class="code-line">LIMIT 10;</span></code></pre>
+              </div>
+              <p>
+                <strong>Total time</strong> finds workload-wide consumers.
+                <strong>Mean/max time</strong> finds per-call latency problems.
+                <strong>Calls</strong> finds chatty SQL.
+                <strong>shared_blks_read/temp_blks_written</strong> suggests I/O
+                or spill pressure. <strong>wal_bytes</strong> identifies
+                write-heavy statement shapes. No single ordering answers every
+                operational question.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>
+                    sql · alternative rankings
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0 2 2v9a2 2 0 0 0 2 2h3"
+                      ></path>
+                    </svg>
+                    Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT queryid, calls,</span><span class="code-line">       round(mean_exec_time::numeric,3) AS mean_ms,</span><span class="code-line">       round(max_exec_time::numeric,3) AS max_ms,</span><span class="code-line">       temp_blks_read, temp_blks_written,</span><span class="code-line">       wal_records, wal_fpi, wal_bytes</span><span class="code-line">FROM pg_stat_statements</span><span class="code-line">WHERE calls &gt;= 5</span><span class="code-line">ORDER BY mean_exec_time DESC</span><span class="code-line">LIMIT 10;</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>5. Planning metrics are optional and have their own cost</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>
+                    sql · planning collection state
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0 2 2v9a2 2 0 0 0 2 2h3"
+                      ></path>
+                    </svg>
+                    Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SHOW pg_stat_statements.track_planning;</span><span class="code-line"></span><span class="code-line">SELECT queryid, plans, calls,</span><span class="code-line">       total_plan_time, mean_plan_time,</span><span class="code-line">       total_exec_time, mean_exec_time</span><span class="code-line">FROM pg_stat_statements</span><span class="code-line">WHERE query LIKE '%app.ch21_workload%'</span><span class="code-line">ORDER BY total_exec_time DESC;</span></code></pre>
+              </div>
+              <p>
+                If <code>track_planning=off</code>, plan counters/times are
+                zero. Enabling planning tracking can add noticeable
+                contention/overhead on highly concurrent repeated statement
+                shapes. Enable it deliberately when plan-time diagnosis is worth
+                that cost.
+              </p>
+            </section>
+            <section>
+              <h2>6. “Plan variance” must be measured, not inferred from timing
+                spread alone</h2>
+              <p>
+                <code>min_exec_time</code>, <code>max_exec_time</code>, and
+                standard deviation show execution-time variability, but they do
+                not prove the optimizer chose multiple plan shapes. Cache state,
+                lock waits, parameter selectivity, parallel-worker availability,
+                and I/O can change execution time without changing the plan.
+              </p>
+              <div class="callout warning">
+                <strong>Wrong approach</strong>
+                <p>
+                  Calling max_exec_time/min_exec_time a 'plan variance ratio'
+                  confuses latency variance with plan-shape variance.
+                  pg_stat_statements does not retain each historical execution
+                  plan. Capture representative EXPLAIN/auto_explain evidence if
+                  plan changes matter.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>7. Connect a fingerprint to a representative current plan</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>
+                    sql · fresh representative plan
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0 2 2v9a2 2 0 0 0 2 2h3"
+                      ></path>
+                    </svg>
+                    Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">EXPLAIN (ANALYZE, BUFFERS, WAL, SETTINGS, VERBOSE)</span><span class="code-line">SELECT count(*)</span><span class="code-line">FROM app.ch21_workload</span><span class="code-line">WHERE tenant_id = 7</span><span class="code-line">  AND status = 'open';</span></code></pre>
+              </div>
+              <p>
+                With query IDs enabled, EXPLAIN can display a Query Identifier.
+                Compare it with the fingerprint entry, then inspect the current
+                plan. This plan is evidence for
+                <em>this representative execution now</em>; it is not the
+                historical plan that produced every cumulative sample.
+              </p>
+            </section>
+            <section>
+              <h2>8. Resets and deallocation change the baseline</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>
+                    sql · module baseline health
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0 2 2v9a2 2 0 0 0 2 2h3"
+                      ></path>
+                    </svg>
+                    Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT dealloc, stats_reset</span><span class="code-line">FROM pg_stat_statements_info;</span><span class="code-line"></span><span class="code-line">SELECT min(stats_since) AS oldest_entry_stats_since,</span><span class="code-line">       max(stats_since) AS newest_entry_stats_since,</span><span class="code-line">       count(*) AS tracked_entries</span><span class="code-line">FROM pg_stat_statements;</span></code></pre>
+              </div>
+              <p>
+                If distinct statement shapes exceed
+                <code>pg_stat_statements.max</code>, least-used entries are
+                deallocated; <code>dealloc</code> shows how often this occurred.
+                High deallocation means workload ranking can lose low-frequency
+                fingerprints and representative query text behavior may become
+                less stable. Reset events also break continuity with old
+                dashboard rates.
+              </p>
+            </section>
+            <section>
+              <h2>9. Do not reset global history casually</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>
+                    sql · targeted reset pattern — admin only
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0 2 2v9a2 2 0 0 0 2 2h3"
+                      ></path>
+                    </svg>
+                    Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">-- Identify one exact entry first:</span><span class="code-line">SELECT userid, dbid, queryid, query</span><span class="code-line">FROM pg_stat_statements</span><span class="code-line">WHERE query LIKE 'SELECT count(*) FROM app.ch21_workload%'</span><span class="code-line">ORDER BY calls DESC</span><span class="code-line">LIMIT 1;</span><span class="code-line"></span><span class="code-line">-- Then, only if the lab/change procedure intentionally needs it:</span><span class="code-line">-- SELECT pg_stat_statements_reset(userid, dbid, queryid, false);</span></code></pre>
+              </div>
+              <p>
+                A global reset discards the evidence every database on the
+                server has accumulated through the module. Production dashboards
+                normally keep the counters and compute deltas externally.
+              </p>
+            </section>
+            <section>
+              <h2>10. Query text and security boundaries</h2>
+              <p>
+                Only superusers and roles with
+                <code>pg_read_all_stats</code> can see other users' query
+                text/query IDs in full. Normalization reduces literal
+                variability but is not a secret-sanitization guarantee. Never
+                put passwords/tokens into SQL text; utility commands and
+                application-generated strings can still create sensitive
+                observability data.
+              </p>
+              <div class="callout">
+                <strong>Production judgment</strong>
+                <p>
+                  Keep pg_stat_statements always available when its overhead is
+                  acceptable, but interpret it as cumulative fingerprint
+                  economics—not traces. Pair it with live waits, plans, logs,
+                  and application request metrics; preserve reset/deallocation
+                  context and protect query text like operationally sensitive
+                  data.
+                </p>
+              </div>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>
+                    Why does CREATE EXTENSION pg_stat_statements not remove the
+                    restart requirement?
+                  </li>
+                  <li>
+                    What dimensions besides queryid distinguish rows in
+                    pg_stat_statements?
+                  </li>
+                  <li>
+                    Why can total_exec_time and mean_exec_time produce very
+                    different priority lists?
+                  </li>
+                  <li>
+                    Why does execution-time standard deviation not prove
+                    multiple plan shapes?
+                  </li>
+                  <li>What does pg_stat_statements_info.dealloc tell you?</li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      The server hook/shared memory must be preloaded at
+                      startup; CREATE EXTENSION only exposes SQL objects in a
+                      database. Entries include user, database, query ID and
+                      top-level status. Total time prioritizes aggregate load;
+                      mean time prioritizes per-call latency. Timing variance
+                      has many causes and plans are not stored historically.
+                      dealloc counts least-used entry evictions after exceeding
+                      pg_stat_statements.max.
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <p>
+                Statistics and logging fields evolve across PostgreSQL majors.
+                These PostgreSQL 18 primary sources define the mechanisms used
+                in this lesson.
+              </p>
+              <ul>
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/18/pgstatstatements.html"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL 18 — pg_stat_statements</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/18/runtime-config-statistics.html"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL 18 — Run-time Statistics / compute_query_id</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/18/sql-explain.html"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL 18 — EXPLAIN</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/18/predefined-roles.html"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL 18 — Predefined Roles / pg_read_all_stats</a
+                  >
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a href="Lesson2.html"
+              ><small>Previous lesson</small
+              ><strong
+                >pg_stat_database/table/index Views and Interpreting
+                Cache/Scan/Write Counters</strong
+              ></a
+            ><a class="next" href="Lesson4.html"
+              ><small>Next lesson</small
+              ><strong
+                >Wait Events, Locks, I/O Visibility, WAL/Replication Stats, and
+                Incident Diagnosis</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                  <a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                  <a
+                    href="https://x.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >X
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                >
+                <button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only assets compatible with the Ethereum/ERC-20 network.
+                  Do not send TRC-20/TRON assets.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <div>
+          <a href="../../../index.html#roadmap">Roadmap</a
+          ><a href="../../../index.html#courses">Courses</a
+          ><a href="https://github.com/mohammadijoo/Big_Data_Academy"
+            >Repository</a
+          >
+        </div>
+        <small
+          >Created and maintained by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>
