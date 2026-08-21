@@ -1,0 +1,1530 @@
+<!doctype html>
+
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Trace MariaDB asynchronous replication from primary commit and binary log through relay transport and apply, then diagnose thread health, lag, filters, and incomplete-replica failure modes with a disposable two-node lab."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Primary/Replica Flow, Binary Logs, Relay Logs, Replication Threads, and
+      Filters | MariaDB | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">MA</span>
+            <div><small>Course 06</small><strong>MariaDB</strong></div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 110 lessons..."
+            type="search"
+        /></label>
+        <nav aria-label="MariaDB curriculum" class="sidebar-curriculum">
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>MariaDB Foundations, Release Model, Editions, and
+              Lab Setup
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>What MariaDB Is: Origins, Server Architecture,
+                Ecosystem, and Common Deployment Roles</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Community Server, Enterprise Offerings,
+                Licensing, and Operational Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>LTS vs Innovation Releases, Support Horizons,
+                Upgrade Cadence, and Version Selection</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>Install MariaDB on Windows, Linux, Containers,
+                and Verify Client/Server Tooling</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Reproducible Lab with Databases,
+                Accounts, Sample Workloads, and Safe Defaults</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>MariaDB vs MySQL: Compatibility, Divergence, and
+              Migration Awareness
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>Shared Heritage vs Independent Evolution: Why
+                Syntax Compatibility Is Not Feature Parity</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>Version Numbering, Removed/Added Features,
+                Defaults, and Configuration Divergence</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Data Types, SQL Semantics, JSON Differences,
+                Generated Columns, and Compatibility Traps</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>Replication and Binary Log Compatibility
+                Boundaries Across MariaDB and MySQL</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Plan a Compatibility Assessment Before Migration
+                or Mixed-Environment Operations</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>Server Architecture, Configuration, Connections,
+              and Metadata
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>mariadbd Startup, Data Directory, Option Files,
+                and Configuration Precedence</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Threads, Sessions, Connection Limits, Thread
+                Pool Concepts, and Resource Controls</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>System/Status Variables, Dynamic Settings,
+                Persisted Configuration Patterns, and Validation</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>information_schema, performance_schema, SHOW
+                Commands, and Metadata Discovery</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Logs, Startup Failures, Time Zones, Character
+                Sets, Collations, and Baseline Configuration</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Schemas, Data Types, Keys, Constraints, and SQL
+              Modes
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Databases, Tables, Temporary Objects, Views, and
+                Namespace Conventions</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>Numeric, String, Temporal, UUID, JSON/Text,
+                Vector, Spatial, and Binary Types</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK,
+                DEFAULT, and Generated/Virtual Columns</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>AUTO_INCREMENT, Sequences, Natural vs Surrogate
+                Keys, and Identifier Strategy</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>SQL_MODE, Strictness, Implicit Conversion,
+                Oracle Mode Awareness, and Data Quality</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>SQL Querying, Joins, CTEs, Windows, and Analytical
+              SQL
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>Filtering, NULL Semantics, Ordering,
+                Expressions, and Deterministic Query Results</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>Join Types, Derived Tables, Correlated
+                Subqueries, EXISTS/IN, and Semijoin Reasoning</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>Common Table Expressions, Recursive CTEs, and
+                Hierarchical Data</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>Window Functions, Frames, Ranking, Running
+                Metrics, and Top-N per Group</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>Aggregations, ROLLUP, GROUPING Patterns, Set
+                Operations, and Reporting Workflows</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Data Modification, Transactions, Isolation, Locks,
+              and Deadlocks
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>INSERT/REPLACE/INSERT ... ON DUPLICATE KEY,
+                UPDATE, DELETE, and RETURNING Capabilities</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>Autocommit, Transactions, SAVEPOINT, Atomicity,
+                and Application Error Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>Isolation Levels, Consistent Reads, Locking
+                Reads, MVCC, and Concurrency Anomalies</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>Metadata Locks, Row Locks, Gap/Next-Key Locking,
+                and Online Change Interactions</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Deadlock Analysis, Lock Waits, Retry Policies,
+                Idempotency, and Contention Testing</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>InnoDB in MariaDB: Storage, Buffering, Redo, Undo,
+              and Recovery
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>InnoDB Tablespaces, Pages, Row Formats,
+                Clustered/Secondary Indexes, and Record Layout</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>Buffer Pool, Flushing, Dirty Pages, Read-Ahead,
+                and Cache Efficiency</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>Redo Logs, Undo, Doublewrite, Checkpoints, Crash
+                Recovery, and Durability</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Purge, History, Long Transactions, Undo Growth,
+                and Bloat-Like Operational Symptoms</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Inspect InnoDB Metrics and Tune Storage Behavior
+                for OLTP Workloads</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>MariaDB Storage Engines Beyond InnoDB
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>Aria Architecture, Crash Safety, Temporary Work,
+                and Operational Use Cases</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>MyISAM Legacy Characteristics, Table Locks,
+                FULLTEXT History, and Migration Concerns</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>MEMORY Engine, Ephemeral Data, Limits, and Safer
+                Alternatives</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>CONNECT and Other Specialized Engines: External
+                Data Access and Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Choose a Storage Engine Deliberately and Avoid
+                Cross-Engine Transaction Assumptions</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>Index Design, FULLTEXT, Spatial, Vector, and
+              Specialized Access Paths
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>B-Tree Indexes, Composite Keys, Prefix Rules,
+                Covering Indexes, and Write Costs</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>Functional/Expression and Generated-Column
+                Indexing Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>FULLTEXT Indexes, Tokenization, Boolean/Natural
+                Language Search, and Limits</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>Spatial Types and Indexes, SRIDs, Geometry
+                Functions, and GIS Workloads</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>Vector Search Capabilities, Distance Functions,
+                Vector Indexing Concepts, and AI Workloads</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>Optimizer, EXPLAIN, Statistics, Histograms, and
+              Query Tuning
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>Optimizer Architecture, Access Paths, Join
+                Orders, Costing, and Query Transformations</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>EXPLAIN, ANALYZE, FORMAT=JSON, Runtime
+                Statistics, and Reading Plans</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>Table/Index Statistics, Histograms, Cardinality,
+                and Misestimate Diagnosis</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>Join Algorithms, Subquery Optimizations, Derived
+                Tables, Semijoins, and Materialization</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Optimizer Switches, Hints, Invisible/Ignored
+                Index Concepts, and Regression Control</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>Views, Stored Programs, Triggers, Events, and
+              SQL/PSM
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>Views, Updatability, ALGORITHM, SQL SECURITY,
+                and Definer Risks</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>Stored Procedures and Functions, Parameters,
+                Handlers, Cursors, and Diagnostics</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>Triggers, OLD/NEW Rows, Ordering, Auditing, and
+                Hidden Coupling</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Event Scheduler, Recurring Jobs, Maintenance,
+                and Failure Visibility</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Server-Side Logic Testing, Deployment,
+                Privileges, and Application-Boundary Decisions</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>Accounts, Roles, Authentication, Authorization, and
+              Security Hardening
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>Accounts, Authentication Plugins, Password
+                Policy, Locking, Expiry, and Lifecycle</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>Privileges, Roles, Default Roles, Grant Design,
+                and Delegated Administration</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>Definers, SQL SECURITY, Stored Objects, Views,
+                and Privilege-Escalation Prevention</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>TLS, Certificates, Secure Transport, Network
+                Segmentation, and Secret Rotation</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>Hardening Checklist, Audit Options, Plugin Risk,
+                File Privileges, and Patch Discipline</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Backup, mariadb-backup, Restore, and Point-in-Time
+              Recovery
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>Logical Backup with mariadb-dump: Consistency,
+                Objects, Routines, and Large Databases</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Physical Backup with mariadb-backup: Prepare,
+                Copy-Back, Incrementals, and Encryption</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>Binary Logs, Retention, Coordinates/GTIDs, and
+                PITR Prerequisites</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Point-in-Time Recovery, Partial Recovery,
+                Validation, and Data-Loss Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Backup Automation, Offloading to Replicas,
+                Restore Drills, RPO/RTO, and Corruption Tests</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>14</span>Asynchronous Replication, GTIDs, Parallel Apply,
+              and Topology Design
+            </summary>
+            <div>
+              <a
+                aria-current="page"
+                class="sidebar-lesson is-current"
+                href="Lesson1.html"
+                ><span>01</span>Primary/Replica Flow, Binary Logs, Relay Logs,
+                Replication Threads, and Filters<i>Current</i></a
+              ><a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>MariaDB GTIDs, Domains, Positions, Strict Mode,
+                and Failover Semantics</a
+              ><a class="sidebar-lesson" href="Lesson3.html"
+                ><span>03</span>Parallel Replication, Commit Ordering, Worker
+                Tuning, and Replica Throughput</a
+              ><a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>Delayed Replicas, Read Scaling, Multi-Source
+                Replication, and Reporting Patterns</a
+              ><a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Lag, Breakage, Data Drift, Rebuilds, Promotion,
+                and Replication Incident Runbooks</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Galera Cluster: Synchronous Multi-Primary
+              Replication and High Availability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>Galera Architecture, Write Sets, Certification,
+                Quorum, and Cluster Membership</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Bootstrap, Join, State Snapshot Transfer,
+                Incremental State Transfer, and Donor Selection</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Flow Control, Certification Conflicts,
+                Auto-Increment, Hot Rows, and Workload Constraints</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Load Balancing, Primary Component, Split Brain,
+                Fencing, and Application Failover</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Galera Security, TLS, Rolling Maintenance,
+                Upgrades, Failure Injection, and Recovery</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Partitioning, Large Tables, Online DDL, and Data
+              Lifecycle
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>Partitioning Strategies, Partition Pruning,
+                Keys, Constraints, and Design Limits</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Hot/Cold Data, Rolling Partitions, Archiving,
+                Retention, and Bulk Loads</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>ALTER TABLE Algorithms, Lock Levels, Online DDL,
+                and Operational Planning</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Large Delete/Update Pathologies, Chunking, Purge
+                Effects, and Storage Reclamation</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Multi-Terabyte Capacity Planning, Maintenance
+                Windows, and Growth Forecasting</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Performance Schema, sys Schema, Logs, and
+              Observability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>Performance Schema Instrumentation, Consumers,
+                Statements, Waits, and Overhead</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>sys Schema Views, User/Host Activity, I/O,
+                Statements, Memory, and Index Usage</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>Slow Query Log, General Log, Error Log, and
+                Query-Digest Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>InnoDB, Replication, Galera, Connections, Temp
+                Tables, and OS Metrics</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Build Dashboards, Baselines, SLO Alerts, and
+                Incident Timelines</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Performance Engineering: Memory, I/O, Threading,
+              and Workload Tuning
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>Buffer Pool Sizing, Dirty Pages, Flushing,
+                Read-Ahead, and Cache Hit Interpretation</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>Per-Session Memory, Sort/Join Buffers, Temp
+                Tables, and Memory Explosion Risks</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Thread Pool, Connection Concurrency, Queueing,
+                and CPU Saturation</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Redo Capacity, I/O Capacity, Flush Methods,
+                Storage Latency, and Checkpoint Behavior</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>Benchmark Design, Warmup, Concurrency,
+                Percentiles, Regression Tests, and Capacity Headroom</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>19</span>Application Integration, Connectors, ORMs, Pools,
+              and Reliability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Client Connectors, Connection Strings, TLS,
+                Timeouts, Pooling, and Session Contracts</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Prepared Statements, Parameters, Injection
+                Defense, Type Mapping, and Unicode</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>Transaction Scoping, Retryable Errors,
+                Idempotency, and Network Failure Handling</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>ORM Query Shapes, Pagination, N+1, Bulk
+                Operations, and Index Visibility</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Schema Migrations, Health Checks, Failover
+                Behavior, and Deployment Coordination</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Upgrades, Migrations, Compatibility Testing, and
+              Low-Downtime Change
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>Patch, Innovation, and LTS Upgrade Planning with
+                Release Notes and Deprecations</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>mariadb-upgrade, System Tables, Configuration
+                Drift, and Post-Upgrade Validation</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>MySQL-to-MariaDB and MariaDB-to-MySQL Migration:
+                Compatibility Matrix and Data Tests</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>Expand/Contract Schema Changes, Online DDL,
+                Backfills, and Application Compatibility</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Rolling Cluster/Replication Upgrades, Rollback
+                Plans, Canaries, and Performance Comparison</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Advanced MariaDB Features: System-Versioned Tables,
+              Oracle Mode, and Federation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>System-Versioned Tables, Temporal Queries,
+                Retention, and Audit/History Use Cases</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>Application-Time Periods, Bitemporal Modeling
+                Concepts, and Constraint Design</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>Oracle SQL_MODE / Compatibility Features,
+                PL/SQL-Like Syntax, and Migration Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Spider/Federated Data Access Concepts,
+                Distributed Queries, and Operational Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>When MariaDB-Native Features Replace—or Should
+                Not Replace—Dedicated Data Systems</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Production Capstone: Design, Cluster, Secure, Tune,
+              and Recover MariaDB
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>Define Workload, SLOs, Data Model, Engine
+                Choices, Capacity, and Architecture Record</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>Implement Schema, Indexes, Security, Application
+                Access, and Migration Automation</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>Tune SQL, InnoDB, Memory, I/O, Threading, and
+                Galera/Replication from Evidence</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>Implement Backups/PITR, HA, Monitoring, Alerts,
+                Upgrades, and Incident Runbooks</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Run Restore, Failover, Split-Brain, Performance,
+                and Corruption Drills—and Defend the Design</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 14 · Lesson 01</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">MariaDB</a><span>/</span
+            ><span>Chapter 14 · Lesson 01</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 14 · Asynchronous Replication, GTIDs, Parallel Apply, and
+              Topology Design
+            </p>
+            <h1>
+              Primary/Replica Flow, Binary Logs, Relay Logs, Replication
+              Threads, and Filters
+            </h1>
+            <p>
+              Trace MariaDB asynchronous replication from primary commit and
+              binary log through relay transport and apply, then diagnose thread
+              health, lag, filters, and incomplete-replica failure modes with a
+              disposable two-node lab.
+            </p>
+            <div class="lesson-meta">
+              <span>Advanced</span><span>135–170 minutes</span
+              ><span>Replication pipeline + filters lab</span
+              ><span>MariaDB Community 12.3.2 baseline</span
+              ><span>Curriculum anchor: 11.8 LTS · verify target version</span
+              ><span>Last reviewed: August 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                ServiceHub is adding a read replica for reporting and backup
+                offload. The application team sees “replication is running” and
+                assumes the copy is current and complete. That assumption is
+                unsafe. Asynchronous replication is a pipeline: the primary
+                commits a transaction, writes replication events to its binary
+                log, the replica's I/O thread fetches them into a relay log, and
+                the SQL coordinator/workers apply them later. Each stage can be
+                healthy, blocked, filtered, or behind independently.
+              </p>
+              <p>
+                <strong>Primary</strong> is the server accepting the
+                authoritative write stream. A <strong>replica</strong> receives
+                and replays that stream. A
+                <strong>binary log (binlog)</strong> is the ordered
+                replication/recovery event stream on the source. A
+                <strong>relay log</strong> is the replica-side queue of received
+                events. MariaDB's current documentation increasingly uses
+                primary/replica terminology, while some SQL options and status
+                fields still retain historical <code>MASTER_*</code>,
+                <code>Slave_*</code>, and <code>slave_*</code> names for
+                compatibility.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Follow one committed transaction from primary binlog through
+                    replica relay log to applied row.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Configure a disposable two-node MariaDB Community
+                    replication topology and prove both transport and apply
+                    health.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Distinguish I/O-thread progress, SQL/apply progress, lag,
+                    and data correctness.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Explain why replication filters can create intentionally
+                    incomplete replicas even when status is green.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Diagnose a filtered-data surprise and choose repair/reseed
+                    rather than assuming future events backfill history.
+                  </p>
+                </div>
+              </div>
+              <div class="callout">
+                <strong>Topology requirement</strong>
+                <p>
+                  This chapter necessarily uses multiple MariaDB server
+                  instances. The mandatory labs use two or three local Community
+                  Server containers only—no Enterprise subscription, MaxScale,
+                  cloud service, or external orchestrator is required. If
+                  Docker/Podman is unavailable, run equivalent disposable local
+                  instances on different ports and data directories.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>
+                1. The replication pipeline is three different pieces of
+                evidence
+              </h2>
+              <p>
+                Suppose transaction T42 commits on the primary. The primary
+                first makes the transaction durable according to its
+                storage/binlog durability settings, then exposes its binlog
+                events to replicas. The replica I/O thread can receive T42 and
+                persist it in the relay log while the SQL side is blocked behind
+                a metadata lock. At that moment network transport is current but
+                the queryable replica is stale.
+              </p>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Stage</th>
+                    <th>Observable evidence</th>
+                    <th>What it proves</th>
+                    <th>What it does not prove</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Primary generated event</td>
+                    <td>
+                      <code>SHOW MASTER STATUS</code>, GTID/binlog position
+                    </td>
+                    <td>event is in primary replication stream</td>
+                    <td>a replica received or applied it</td>
+                  </tr>
+                  <tr>
+                    <td>Replica received event</td>
+                    <td>
+                      <code>Master_Log_File</code
+                      >/<code>Read_Master_Log_Pos</code>,
+                      <code>Gtid_IO_Pos</code>
+                    </td>
+                    <td>I/O thread fetched through that point</td>
+                    <td>SQL thread committed it</td>
+                  </tr>
+                  <tr>
+                    <td>Replica applied event</td>
+                    <td>
+                      <code>Exec_Master_Log_Pos</code>,
+                      <code>Gtid_Slave_Pos</code>, target row
+                    </td>
+                    <td>apply advanced through that point</td>
+                    <td>
+                      replica is complete if filters intentionally excluded data
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Thread health</td>
+                    <td>
+                      <code>Slave_IO_Running=Yes</code>,
+                      <code>Slave_SQL_Running=Yes</code>
+                    </td>
+                    <td>threads are currently running</td>
+                    <td>zero lag, zero drift, or correct routing</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+            <section>
+              <h2>2. Reproducible two-node local lab</h2>
+              <p>
+                Create an empty directory for this lesson and save the following
+                as <code>compose.yaml</code>. The explicit server IDs are
+                mandatory because replication servers must have distinct
+                identities. The lab uses row-based binary logging so data-change
+                filtering semantics are less surprising than statement-based
+                logging, but DDL is still statement-like and deserves separate
+                validation.
+              </p>
+              <div class="code-window" data-code-block="" data-language="yaml">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>yaml ·
+                    compose.yaml — two disposable Community servers
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">services:</span><span class="code-line">  primary:</span><span class="code-line">    image: mariadb:12.3.2</span><span class="code-line">    container_name: mdb14-primary</span><span class="code-line">    environment:</span><span class="code-line">      MARIADB_ROOT_PASSWORD: labroot</span><span class="code-line">    command:</span><span class="code-line">      - --server-id=141</span><span class="code-line">      - --log-bin=mariadb-bin</span><span class="code-line">      - --binlog-format=ROW</span><span class="code-line">      - --gtid-domain-id=14</span><span class="code-line">      - --gtid-strict-mode=ON</span><span class="code-line">    ports:</span><span class="code-line">      - "33141:3306"</span><span class="code-line">  replica:</span><span class="code-line">    image: mariadb:12.3.2</span><span class="code-line">    container_name: mdb14-replica</span><span class="code-line">    environment:</span><span class="code-line">      MARIADB_ROOT_PASSWORD: labroot</span><span class="code-line">    command:</span><span class="code-line">      - --server-id=142</span><span class="code-line">      - --log-bin=replica-bin</span><span class="code-line">      - --log-slave-updates=ON</span><span class="code-line">      - --relay-log=relay-bin</span><span class="code-line">      - --gtid-domain-id=14</span><span class="code-line">      - --gtid-strict-mode=ON</span><span class="code-line">      - --read-only=ON</span><span class="code-line">    ports:</span><span class="code-line">      - "33142:3306"</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="shell">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>shell ·
+                    start the lab — same command in PowerShell, cmd, Bash, or
+                    zsh
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">docker compose up -d</span><span class="code-line">docker ps --filter name=mdb14-</span></code></pre>
+              </div>
+              <p>
+                Wait for both servers to report healthy enough to accept
+                connections, then initialize the replication account on the
+                primary. <code>RESET MASTER</code> is intentionally used only
+                because this is a throwaway empty lab; never copy that step into
+                a production runbook without understanding that it discards
+                binary-log history.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    primary — create replication identity and clean lab binlog
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">CREATE USER IF NOT EXISTS 'repl'@'%' IDENTIFIED BY 'lab-repl';</span><span class="code-line">GRANT REPLICATION REPLICA ON *.* TO 'repl'@'%';</span><span class="code-line">-- Disposable lab only: discard initialization-era binlogs before application data.</span><span class="code-line">RESET MASTER;</span><span class="code-line">SHOW MASTER STATUS;</span><span class="code-line">SELECT @@server_id, @@gtid_domain_id, @@global.gtid_binlog_pos;</span></code></pre>
+              </div>
+              <p>
+                Now connect the replica. MariaDB still configures the connection
+                with <code>CHANGE MASTER TO</code>; <code>START REPLICA</code>,
+                <code>STOP REPLICA</code>, and
+                <code>SHOW REPLICA STATUS</code> are current synonyms for the
+                historical SLAVE forms.
+                <code>MASTER_USE_GTID=slave_pos</code> tells the replica to
+                request events after its applied MariaDB GTID position.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    replica — configure and start
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">STOP REPLICA;</span><span class="code-line">RESET REPLICA ALL;</span><span class="code-line">SET GLOBAL gtid_slave_pos='';</span><span class="code-line">CHANGE MASTER TO</span><span class="code-line">  MASTER_HOST='primary',</span><span class="code-line">  MASTER_PORT=3306,</span><span class="code-line">  MASTER_USER='repl',</span><span class="code-line">  MASTER_PASSWORD='lab-repl',</span><span class="code-line">  MASTER_USE_GTID=slave_pos;</span><span class="code-line">START REPLICA;</span><span class="code-line">SHOW REPLICA STATUS\G</span></code></pre>
+              </div>
+              <div class="callout">
+                <strong>Expected state</strong>
+                <p>
+                  After connection succeeds, <code>Slave_IO_Running</code> and
+                  <code>Slave_SQL_Running</code> should be <code>Yes</code>. A
+                  successful <code>START REPLICA</code> statement alone is not
+                  evidence of a durable healthy connection: MariaDB documents
+                  that threads can start and fail shortly afterward, so always
+                  re-check status and the server error log.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>3. Watch one transaction cross the pipeline</h2>
+              <p>
+                Create the ServiceHub fixture only after replication is running.
+                This makes the sequence easy to reason about: every application
+                object is born in the primary's binlog and should appear through
+                normal replay.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    primary — create the course fixture
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">CREATE DATABASE IF NOT EXISTS servicehub_replication_lab;</span><span class="code-line">CREATE TABLE IF NOT EXISTS servicehub_replication_lab.tickets (</span><span class="code-line">  ticket_id BIGINT PRIMARY KEY,</span><span class="code-line">  customer_id BIGINT NOT NULL,</span><span class="code-line">  state VARCHAR(20) NOT NULL,</span><span class="code-line">  updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)</span><span class="code-line">             ON UPDATE CURRENT_TIMESTAMP(6)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line">INSERT INTO servicehub_replication_lab.tickets(ticket_id,customer_id,state)</span><span class="code-line">VALUES (1,101,'open'),(2,102,'open')</span><span class="code-line">ON DUPLICATE KEY UPDATE state=VALUES(state);</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    primary — make a traceable change
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">UPDATE servicehub_replication_lab.tickets</span><span class="code-line">SET state='assigned'</span><span class="code-line">WHERE ticket_id=1;</span><span class="code-line">SHOW MASTER STATUS;</span><span class="code-line">SELECT @@global.gtid_binlog_pos;</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    replica — correlate status with the row
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SHOW REPLICA STATUS\G</span><span class="code-line">SELECT @@global.gtid_slave_pos;</span><span class="code-line">SELECT ticket_id,state,updated_at</span><span class="code-line">FROM servicehub_replication_lab.tickets</span><span class="code-line">WHERE ticket_id=1;</span></code></pre>
+              </div>
+              <p>
+                If the row says <code>assigned</code> and the applied position
+                includes the primary transaction, you have direct evidence of
+                replay. You still have not proven that every table is
+                replicated, that no filters exist, or that future reads are
+                causally fresh.
+              </p>
+            </section>
+            <section>
+              <h2>4. Transport lag and apply lag are different incidents</h2>
+              <p>
+                Stop only the SQL thread and leave the I/O thread running. Then
+                write to the primary. The replica can continue downloading
+                events into the relay log while deliberately not applying them.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    replica — pause only apply
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">STOP REPLICA SQL_THREAD;</span><span class="code-line">SHOW REPLICA STATUS\G</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    primary — create backlog
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">INSERT INTO servicehub_replication_lab.tickets(ticket_id,customer_id,state)</span><span class="code-line">VALUES (3,103,'open'),(4,104,'open'),(5,105,'open');</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    replica — observe received-but-not-applied state
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SHOW REPLICA STATUS\G</span><span class="code-line">SELECT COUNT(*) AS visible_rows FROM servicehub_replication_lab.tickets;</span></code></pre>
+              </div>
+              <p>
+                On MariaDB 11.6 and later, status also exposes
+                <code>Master_last_event_time</code>,
+                <code>Slave_last_event_time</code>, and
+                <code>Master_Slave_time_diff</code>. These improve lag
+                visibility, especially when simple
+                <code>Seconds_Behind_Master</code> interpretation is ambiguous.
+                Restart apply and verify the row count becomes five.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    replica — resume and verify
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">START REPLICA SQL_THREAD;</span><span class="code-line">SHOW REPLICA STATUS\G</span><span class="code-line">SELECT COUNT(*) AS visible_rows FROM servicehub_replication_lab.tickets;</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>
+                5. Deliberately wrong approach: “green threads mean a full copy”
+              </h2>
+              <p>
+                Replication filters intentionally suppress some events. They are
+                useful for specialized replicas, but they change the data
+                contract. A common operational mistake is to add a filter for
+                storage savings and later treat the replica as a complete
+                failover or backup source.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    replica — deliberately install a table filter
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">STOP REPLICA;</span><span class="code-line">SET GLOBAL replicate_ignore_table='servicehub_replication_lab.private_notes';</span><span class="code-line">START REPLICA;</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    primary — create and populate the filtered table
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">CREATE TABLE servicehub_replication_lab.private_notes(</span><span class="code-line">  note_id BIGINT PRIMARY KEY, note_text VARCHAR(200) NOT NULL</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line">INSERT INTO servicehub_replication_lab.private_notes VALUES (1,'internal-only');</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    replica — healthy threads can coexist with missing data
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SHOW REPLICA STATUS\G</span><span class="code-line">SHOW TABLES FROM servicehub_replication_lab;</span><span class="code-line">SELECT @@global.replicate_ignore_table;</span></code></pre>
+              </div>
+              <div class="callout warning">
+                <strong>Why the result is dangerous</strong>
+                <p>
+                  The I/O and SQL threads can both be healthy while the replica
+                  is intentionally incomplete. Removing the filter later does
+                  not travel backward in time and replay skipped history. Future
+                  matching events can flow, but past omitted events require
+                  explicit reconciliation or a trusted reseed/rebuild.
+                </p>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    replica — remove the filter for future events
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">STOP REPLICA;</span><span class="code-line">SET GLOBAL replicate_ignore_table='';</span><span class="code-line">START REPLICA;</span><span class="code-line">SHOW REPLICA STATUS\G</span></code></pre>
+              </div>
+              <p>
+                Do not “repair” missing history by assuming the next event will
+                recreate it. For a production replica whose completeness
+                contract changed, rebuild from a validated snapshot or perform a
+                controlled reconciliation with acceptance checks.
+              </p>
+            </section>
+            <section>
+              <h2>6. Filters depend on binary-log semantics</h2>
+              <p>
+                MariaDB evaluates some database filters against the default
+                database under statement-based logging, while row-based events
+                carry the affected table/database more directly. DDL remains
+                statement-oriented even with <code>binlog_format=ROW</code>.
+                Cross-database statements can therefore defeat intuitive filter
+                expectations. Treat filter design as part of schema/application
+                design and test representative DML and DDL.
+              </p>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Filter family</th>
+                    <th>Where applied</th>
+                    <th>Main risk</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <code>binlog_do_db</code>/<code>binlog_ignore_db</code>
+                    </td>
+                    <td>primary, before events exist for replicas</td>
+                    <td>
+                      excluded history cannot be recovered from that primary's
+                      binlogs
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <code>replicate_do_db</code>/<code
+                        >replicate_ignore_db</code
+                      >
+                    </td>
+                    <td>replica apply side</td>
+                    <td>
+                      statement default-database semantics surprise cross-db SQL
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>replicate_*_table</code></td>
+                    <td>replica apply side</td>
+                    <td>DDL and qualified-name behavior require testing</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      GTID domain/server filters in <code>CHANGE MASTER</code>
+                    </td>
+                    <td>connection receive side</td>
+                    <td>
+                      topology/domain mistakes can suppress intended streams
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+            <section>
+              <h2>7. Production judgment</h2>
+              <p>
+                Use asynchronous replication when your workload can tolerate a
+                nonzero replication delay and you have an explicit plan for read
+                staleness, monitoring, failover, and independent backups. Do not
+                market it internally as “HA” without a control plane: standard
+                MariaDB replication moves events but does not itself fence an
+                old primary, move client traffic, decide which replica is
+                safest, or guarantee zero data loss.
+              </p>
+              <ul>
+                <li>
+                  <strong>Prerequisites:</strong> unique
+                  <code>server_id</code> values, binary logging on the primary,
+                  TCP reachability, a least-privilege replication account,
+                  compatible server versions, and a consistent initial
+                  snapshot/position.
+                </li>
+                <li>
+                  <strong>Monitor:</strong> both thread states, last I/O/SQL
+                  errors, received versus applied positions, relay backlog,
+                  newer lag timestamps, binlog retention headroom, disk space,
+                  and application-level freshness SLOs.
+                </li>
+                <li>
+                  <strong>Security:</strong> production replication credentials
+                  should use TLS and credential rotation from Chapter 12; the
+                  plaintext lab secret is intentionally disposable.
+                </li>
+                <li>
+                  <strong>Durability:</strong> replication is not a backup. A
+                  destructive transaction is faithfully replicated unless
+                  delay/filtering interrupts it.
+                </li>
+              </ul>
+              <p>
+                Next, replace file/position thinking with MariaDB GTIDs so
+                failover and topology changes can reason about logical
+                transaction identity rather than physical binlog filenames.
+              </p>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>
+                    Can the replica I/O thread be current while the queryable
+                    data is stale?
+                  </li>
+                  <li>
+                    What do healthy I/O and SQL thread states fail to prove?
+                  </li>
+                  <li>
+                    Why can removing a replication filter fail to repair
+                    historical omissions?
+                  </li>
+                  <li>Why must server_id values be unique?</li>
+                  <li>
+                    Why is asynchronous replication not, by itself, an automatic
+                    failover system?
+                  </li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      Yes. The I/O thread can receive events into relay logs
+                      while the SQL side is blocked or stopped. Green threads
+                      prove current thread activity, not completeness,
+                      freshness, absence of drift, or correct client routing.
+                      Filters suppress historical events; removing a filter
+                      changes future handling but does not backfill what was
+                      already skipped. Unique server IDs identify event origins
+                      and avoid topology ambiguity. Finally, async replication
+                      does not fence, choose a promotion candidate, reroute
+                      clients, or guarantee zero data loss; those are
+                      control-plane and operational responsibilities.
+                    </p>
+                  </div>
+                </details>
+              </div>
+              <div class="code-window" data-code-block="" data-language="shell">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>shell ·
+                    cleanup the disposable topology
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">docker compose down -v</span></code></pre>
+              </div>
+              <section>
+                <h2>Authoritative references</h2>
+                <ul>
+                  <li>
+                    <a
+                      href="https://mariadb.com/docs/server/ha-and-performance/standard-replication/replication-overview"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB Documentation — Replication Overview</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://mariadb.com/docs/server/ha-and-performance/standard-replication/setting-up-replication"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB Documentation — Setting Up Replication</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://mariadb.com/docs/server/reference/sql-statements/administrative-sql-statements/replication-statements/change-master-to"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB Documentation — CHANGE MASTER TO</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://mariadb.com/docs/server/reference/sql-statements/administrative-sql-statements/show/show-replica-status"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB Documentation — SHOW REPLICA STATUS</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://mariadb.com/docs/server/ha-and-performance/standard-replication/replication-filters"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB Documentation — Replication Filters</a
+                    >
+                  </li>
+                </ul>
+              </section>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a class="previous" href="../Chapter13/Lesson5.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Backup Automation, Offloading to Replicas, Restore Drills,
+                RPO/RTO, and Corruption Tests</strong
+              ></a
+            ><a class="next" href="Lesson2.html"
+              ><small>Next lesson</small
+              ><strong
+                >MariaDB GTIDs, Domains, Positions, Strict Mode, and Failover
+                Semantics</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://x.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >X
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only assets compatible with the Ethereum/ERC-20 network.
+                  Do not send TRC-20/TRON assets.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <div>
+          <a href="../../../index.html#roadmap">Roadmap</a
+          ><a href="../../../index.html#courses">Courses</a
+          ><a href="https://github.com/mohammadijoo/Big_Data_Academy"
+            >Repository</a
+          >
+        </div>
+        <small
+          >Created and maintained by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>

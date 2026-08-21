@@ -1,0 +1,1245 @@
+<!doctype html>
+
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Understand how MariaDB parses, transforms and costs candidate access paths and join orders, then diagnose optimizer choices with estimates, runtime evidence and trace rather than folklore."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Optimizer Architecture, Access Paths, Join Orders, Costing, and Query
+      Transformations | MariaDB | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">MA</span>
+            <div><small>Course 06</small><strong>MariaDB</strong></div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 110 lessons..."
+            type="search"
+        /></label>
+        <nav aria-label="MariaDB curriculum" class="sidebar-curriculum">
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>MariaDB Foundations, Release Model, Editions, and
+              Lab Setup
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>What MariaDB Is: Origins, Server Architecture,
+                Ecosystem, and Common Deployment Roles</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Community Server, Enterprise Offerings,
+                Licensing, and Operational Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>LTS vs Innovation Releases, Support Horizons,
+                Upgrade Cadence, and Version Selection</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>Install MariaDB on Windows, Linux, Containers,
+                and Verify Client/Server Tooling</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Reproducible Lab with Databases,
+                Accounts, Sample Workloads, and Safe Defaults</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>MariaDB vs MySQL: Compatibility, Divergence, and
+              Migration Awareness
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>Shared Heritage vs Independent Evolution: Why
+                Syntax Compatibility Is Not Feature Parity</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>Version Numbering, Removed/Added Features,
+                Defaults, and Configuration Divergence</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Data Types, SQL Semantics, JSON Differences,
+                Generated Columns, and Compatibility Traps</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>Replication and Binary Log Compatibility
+                Boundaries Across MariaDB and MySQL</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Plan a Compatibility Assessment Before Migration
+                or Mixed-Environment Operations</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>Server Architecture, Configuration, Connections,
+              and Metadata
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>mariadbd Startup, Data Directory, Option Files,
+                and Configuration Precedence</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Threads, Sessions, Connection Limits, Thread
+                Pool Concepts, and Resource Controls</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>System/Status Variables, Dynamic Settings,
+                Persisted Configuration Patterns, and Validation</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>information_schema, performance_schema, SHOW
+                Commands, and Metadata Discovery</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Logs, Startup Failures, Time Zones, Character
+                Sets, Collations, and Baseline Configuration</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Schemas, Data Types, Keys, Constraints, and SQL
+              Modes
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Databases, Tables, Temporary Objects, Views, and
+                Namespace Conventions</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>Numeric, String, Temporal, UUID, JSON/Text,
+                Vector, Spatial, and Binary Types</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK,
+                DEFAULT, and Generated/Virtual Columns</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>AUTO_INCREMENT, Sequences, Natural vs Surrogate
+                Keys, and Identifier Strategy</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>SQL_MODE, Strictness, Implicit Conversion,
+                Oracle Mode Awareness, and Data Quality</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>SQL Querying, Joins, CTEs, Windows, and Analytical
+              SQL
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>Filtering, NULL Semantics, Ordering,
+                Expressions, and Deterministic Query Results</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>Join Types, Derived Tables, Correlated
+                Subqueries, EXISTS/IN, and Semijoin Reasoning</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>Common Table Expressions, Recursive CTEs, and
+                Hierarchical Data</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>Window Functions, Frames, Ranking, Running
+                Metrics, and Top-N per Group</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>Aggregations, ROLLUP, GROUPING Patterns, Set
+                Operations, and Reporting Workflows</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Data Modification, Transactions, Isolation, Locks,
+              and Deadlocks
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>INSERT/REPLACE/INSERT ... ON DUPLICATE KEY,
+                UPDATE, DELETE, and RETURNING Capabilities</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>Autocommit, Transactions, SAVEPOINT, Atomicity,
+                and Application Error Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>Isolation Levels, Consistent Reads, Locking
+                Reads, MVCC, and Concurrency Anomalies</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>Metadata Locks, Row Locks, Gap/Next-Key Locking,
+                and Online Change Interactions</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Deadlock Analysis, Lock Waits, Retry Policies,
+                Idempotency, and Contention Testing</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>InnoDB in MariaDB: Storage, Buffering, Redo, Undo,
+              and Recovery
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>InnoDB Tablespaces, Pages, Row Formats,
+                Clustered/Secondary Indexes, and Record Layout</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>Buffer Pool, Flushing, Dirty Pages, Read-Ahead,
+                and Cache Efficiency</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>Redo Logs, Undo, Doublewrite, Checkpoints, Crash
+                Recovery, and Durability</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Purge, History, Long Transactions, Undo Growth,
+                and Bloat-Like Operational Symptoms</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Inspect InnoDB Metrics and Tune Storage Behavior
+                for OLTP Workloads</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>MariaDB Storage Engines Beyond InnoDB
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>Aria Architecture, Crash Safety, Temporary Work,
+                and Operational Use Cases</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>MyISAM Legacy Characteristics, Table Locks,
+                FULLTEXT History, and Migration Concerns</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>MEMORY Engine, Ephemeral Data, Limits, and Safer
+                Alternatives</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>CONNECT and Other Specialized Engines: External
+                Data Access and Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Choose a Storage Engine Deliberately and Avoid
+                Cross-Engine Transaction Assumptions</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>Index Design, FULLTEXT, Spatial, Vector, and
+              Specialized Access Paths
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>B-Tree Indexes, Composite Keys, Prefix Rules,
+                Covering Indexes, and Write Costs</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>Functional/Expression and Generated-Column
+                Indexing Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>FULLTEXT Indexes, Tokenization, Boolean/Natural
+                Language Search, and Limits</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>Spatial Types and Indexes, SRIDs, Geometry
+                Functions, and GIS Workloads</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>Vector Search Capabilities, Distance Functions,
+                Vector Indexing Concepts, and AI Workloads</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>10</span>Optimizer, EXPLAIN, Statistics, Histograms, and
+              Query Tuning
+            </summary>
+            <div>
+              <a class="sidebar-lesson is-current" href="Lesson1.html"
+                ><span>01</span>Optimizer Architecture, Access Paths, Join
+                Orders, Costing, and Query Transformations<i>Current</i></a
+              ><a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>EXPLAIN, ANALYZE, FORMAT=JSON, Runtime
+                Statistics, and Reading Plans</a
+              ><a class="sidebar-lesson" href="Lesson3.html"
+                ><span>03</span>Table/Index Statistics, Histograms, Cardinality,
+                and Misestimate Diagnosis</a
+              ><a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>Join Algorithms, Subquery Optimizations, Derived
+                Tables, Semijoins, and Materialization</a
+              ><a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Optimizer Switches, Hints, Invisible/Ignored
+                Index Concepts, and Regression Control</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>Views, Stored Programs, Triggers, Events, and
+              SQL/PSM
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>Views, Updatability, ALGORITHM, SQL SECURITY,
+                and Definer Risks</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>Stored Procedures and Functions, Parameters,
+                Handlers, Cursors, and Diagnostics</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>Triggers, OLD/NEW Rows, Ordering, Auditing, and
+                Hidden Coupling</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Event Scheduler, Recurring Jobs, Maintenance,
+                and Failure Visibility</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Server-Side Logic Testing, Deployment,
+                Privileges, and Application-Boundary Decisions</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>Accounts, Roles, Authentication, Authorization, and
+              Security Hardening
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>Accounts, Authentication Plugins, Password
+                Policy, Locking, Expiry, and Lifecycle</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>Privileges, Roles, Default Roles, Grant Design,
+                and Delegated Administration</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>Definers, SQL SECURITY, Stored Objects, Views,
+                and Privilege-Escalation Prevention</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>TLS, Certificates, Secure Transport, Network
+                Segmentation, and Secret Rotation</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>Hardening Checklist, Audit Options, Plugin Risk,
+                File Privileges, and Patch Discipline</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Backup, mariadb-backup, Restore, and Point-in-Time
+              Recovery
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>Logical Backup with mariadb-dump: Consistency,
+                Objects, Routines, and Large Databases</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Physical Backup with mariadb-backup: Prepare,
+                Copy-Back, Incrementals, and Encryption</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>Binary Logs, Retention, Coordinates/GTIDs, and
+                PITR Prerequisites</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Point-in-Time Recovery, Partial Recovery,
+                Validation, and Data-Loss Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Backup Automation, Offloading to Replicas,
+                Restore Drills, RPO/RTO, and Corruption Tests</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Asynchronous Replication, GTIDs, Parallel Apply,
+              and Topology Design
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Primary/Replica Flow, Binary Logs, Relay Logs,
+                Replication Threads, and Filters</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>MariaDB GTIDs, Domains, Positions, Strict Mode,
+                and Failover Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Parallel Replication, Commit Ordering, Worker
+                Tuning, and Replica Throughput</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Delayed Replicas, Read Scaling, Multi-Source
+                Replication, and Reporting Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Lag, Breakage, Data Drift, Rebuilds, Promotion,
+                and Replication Incident Runbooks</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Galera Cluster: Synchronous Multi-Primary
+              Replication and High Availability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>Galera Architecture, Write Sets, Certification,
+                Quorum, and Cluster Membership</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Bootstrap, Join, State Snapshot Transfer,
+                Incremental State Transfer, and Donor Selection</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Flow Control, Certification Conflicts,
+                Auto-Increment, Hot Rows, and Workload Constraints</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Load Balancing, Primary Component, Split Brain,
+                Fencing, and Application Failover</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Galera Security, TLS, Rolling Maintenance,
+                Upgrades, Failure Injection, and Recovery</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Partitioning, Large Tables, Online DDL, and Data
+              Lifecycle
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>Partitioning Strategies, Partition Pruning,
+                Keys, Constraints, and Design Limits</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Hot/Cold Data, Rolling Partitions, Archiving,
+                Retention, and Bulk Loads</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>ALTER TABLE Algorithms, Lock Levels, Online DDL,
+                and Operational Planning</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Large Delete/Update Pathologies, Chunking, Purge
+                Effects, and Storage Reclamation</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Multi-Terabyte Capacity Planning, Maintenance
+                Windows, and Growth Forecasting</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Performance Schema, sys Schema, Logs, and
+              Observability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>Performance Schema Instrumentation, Consumers,
+                Statements, Waits, and Overhead</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>sys Schema Views, User/Host Activity, I/O,
+                Statements, Memory, and Index Usage</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>Slow Query Log, General Log, Error Log, and
+                Query-Digest Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>InnoDB, Replication, Galera, Connections, Temp
+                Tables, and OS Metrics</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Build Dashboards, Baselines, SLO Alerts, and
+                Incident Timelines</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Performance Engineering: Memory, I/O, Threading,
+              and Workload Tuning
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>Buffer Pool Sizing, Dirty Pages, Flushing,
+                Read-Ahead, and Cache Hit Interpretation</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>Per-Session Memory, Sort/Join Buffers, Temp
+                Tables, and Memory Explosion Risks</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Thread Pool, Connection Concurrency, Queueing,
+                and CPU Saturation</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Redo Capacity, I/O Capacity, Flush Methods,
+                Storage Latency, and Checkpoint Behavior</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>Benchmark Design, Warmup, Concurrency,
+                Percentiles, Regression Tests, and Capacity Headroom</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>19</span>Application Integration, Connectors, ORMs, Pools,
+              and Reliability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Client Connectors, Connection Strings, TLS,
+                Timeouts, Pooling, and Session Contracts</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Prepared Statements, Parameters, Injection
+                Defense, Type Mapping, and Unicode</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>Transaction Scoping, Retryable Errors,
+                Idempotency, and Network Failure Handling</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>ORM Query Shapes, Pagination, N+1, Bulk
+                Operations, and Index Visibility</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Schema Migrations, Health Checks, Failover
+                Behavior, and Deployment Coordination</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Upgrades, Migrations, Compatibility Testing, and
+              Low-Downtime Change
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>Patch, Innovation, and LTS Upgrade Planning with
+                Release Notes and Deprecations</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>mariadb-upgrade, System Tables, Configuration
+                Drift, and Post-Upgrade Validation</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>MySQL-to-MariaDB and MariaDB-to-MySQL Migration:
+                Compatibility Matrix and Data Tests</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>Expand/Contract Schema Changes, Online DDL,
+                Backfills, and Application Compatibility</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Rolling Cluster/Replication Upgrades, Rollback
+                Plans, Canaries, and Performance Comparison</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Advanced MariaDB Features: System-Versioned Tables,
+              Oracle Mode, and Federation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>System-Versioned Tables, Temporal Queries,
+                Retention, and Audit/History Use Cases</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>Application-Time Periods, Bitemporal Modeling
+                Concepts, and Constraint Design</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>Oracle SQL_MODE / Compatibility Features,
+                PL/SQL-Like Syntax, and Migration Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Spider/Federated Data Access Concepts,
+                Distributed Queries, and Operational Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>When MariaDB-Native Features Replace—or Should
+                Not Replace—Dedicated Data Systems</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Production Capstone: Design, Cluster, Secure, Tune,
+              and Recover MariaDB
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>Define Workload, SLOs, Data Model, Engine
+                Choices, Capacity, and Architecture Record</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>Implement Schema, Indexes, Security, Application
+                Access, and Migration Automation</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>Tune SQL, InnoDB, Memory, I/O, Threading, and
+                Galera/Replication from Evidence</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>Implement Backups/PITR, HA, Monitoring, Alerts,
+                Upgrades, and Incident Runbooks</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Run Restore, Failover, Split-Brain, Performance,
+                and Corruption Drills—and Defend the Design</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 10 · Lesson 01</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">MariaDB</a><span>/</span
+            ><span>Chapter 10 · Lesson 01</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 10 · Optimizer, EXPLAIN, Statistics, Histograms, and Query
+              Tuning
+            </p>
+            <h1>
+              Optimizer Architecture, Access Paths, Join Orders, Costing, and
+              Query Transformations
+            </h1>
+            <p>
+              Understand how MariaDB parses, transforms and costs candidate
+              access paths and join orders, then diagnose optimizer choices with
+              estimates, runtime evidence and trace rather than folklore.
+            </p>
+            <div class="lesson-meta">
+              <span>Intermediate → Advanced</span><span>100–120 minutes</span
+              ><span>Optimizer cost/join-order + trace lab</span
+              ><span>MariaDB Community 12.3.2 baseline</span
+              ><span>InnoDB + free local server</span
+              ><span>Last reviewed: August 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                ServiceHub receives a report that the same SQL statement became
+                slower after the dataset grew, even though no application code
+                changed. The tempting explanation is that “MariaDB suddenly
+                stopped using the index.” That wording skips the mechanism. The
+                query optimizer takes a declarative SQL statement, enumerates
+                feasible access paths and join orders, estimates how many rows
+                each step will produce, assigns costs to candidate plans,
+                applies transformations, and selects a plan before the executor
+                asks storage engines such as InnoDB to perform the chosen
+                operations.
+              </p>
+              <p>
+                MariaDB 11.0 introduced a substantially revised cost model, so
+                Chapter 10 treats cost as an optimizer comparison instrument
+                rather than a stopwatch. The current model includes engine-aware
+                costs and exposes them through
+                <code>information_schema.optimizer_costs</code>, but even where
+                cost units are calibrated toward time, an estimated cost is
+                still not the same thing as observed wall-clock latency. Cache
+                state, concurrency, I/O queues, locks, CPU scheduling and data
+                distribution can all make two executions differ.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Trace a SELECT through parsing, transformation, candidate
+                    access paths, join ordering, costing and execution.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Distinguish cardinality estimates from optimizer costs and
+                    from measured runtime.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Explain why a selective predicate, useful ordering, covering
+                    access or join fan-out can change the chosen plan.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Use EXPLAIN, ANALYZE FORMAT=JSON and optimizer trace as
+                    complementary evidence rather than interchangeable commands.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Recognize when statistics/schema/query-shape changes should
+                    be investigated before reaching for hints or global cost
+                    changes.
+                  </p>
+                </div>
+              </div>
+              <div class="callout">
+                <strong>Lab baseline</strong>
+                <p>
+                  Mandatory examples target MariaDB Community Server 12.3.2 with
+                  InnoDB and free local tooling. The generated dataset is
+                  deliberately modest so the lab is reproducible; exact access
+                  types, row estimates, costs and timings can vary. The lesson
+                  teaches how to interpret the evidence, not how to force a
+                  particular local plan.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>1. Build a workload where the optimizer has real choices</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    create the optimizer lab
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">DROP DATABASE IF EXISTS servicehub_optimizer_lab;</span><span class="code-line">CREATE DATABASE servicehub_optimizer_lab CHARACTER SET utf8mb4 COLLATE utf8mb4_uca1400_ai_ci;</span><span class="code-line">USE servicehub_optimizer_lab;</span><span class="code-line"></span><span class="code-line">CREATE TABLE digits (d TINYINT UNSIGNED PRIMARY KEY) ENGINE=InnoDB;</span><span class="code-line">INSERT INTO digits VALUES (0),(1),(2),(3),(4),(5),(6),(7),(8),(9);</span><span class="code-line"></span><span class="code-line">CREATE TABLE customers (</span><span class="code-line">  customer_id INT UNSIGNED NOT NULL PRIMARY KEY,</span><span class="code-line">  region_code CHAR(3) NOT NULL,</span><span class="code-line">  tier ENUM('standard','premium','enterprise') NOT NULL,</span><span class="code-line">  active TINYINT(1) NOT NULL,</span><span class="code-line">  KEY idx_customer_region_tier(region_code,tier,customer_id)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">INSERT INTO customers(customer_id,region_code,tier,active)</span><span class="code-line">SELECT n,</span><span class="code-line">       CASE WHEN MOD(n,10)&lt;7 THEN 'BAK' WHEN MOD(n,10)&lt;9 THEN 'GAN' ELSE 'TBZ' END,</span><span class="code-line">       CASE WHEN MOD(n,20)=0 THEN 'enterprise' WHEN MOD(n,5)=0 THEN 'premium' ELSE 'standard' END,</span><span class="code-line">       1</span><span class="code-line">FROM (</span><span class="code-line">  SELECT 1 + a.d + 10*b.d + 100*c.d AS n</span><span class="code-line">  FROM digits a CROSS JOIN digits b CROSS JOIN digits c</span><span class="code-line">) s WHERE n&lt;=900;</span><span class="code-line"></span><span class="code-line">CREATE TABLE work_orders (</span><span class="code-line">  work_order_id INT UNSIGNED NOT NULL PRIMARY KEY,</span><span class="code-line">  customer_id INT UNSIGNED NOT NULL,</span><span class="code-line">  status VARCHAR(16) NOT NULL,</span><span class="code-line">  priority TINYINT UNSIGNED NOT NULL,</span><span class="code-line">  region_code CHAR(3) NOT NULL,</span><span class="code-line">  scheduled_at DATETIME NOT NULL,</span><span class="code-line">  total_cents INT UNSIGNED NOT NULL,</span><span class="code-line">  summary VARCHAR(120) NOT NULL,</span><span class="code-line">  CONSTRAINT fk_opt_wo_customer FOREIGN KEY(customer_id) REFERENCES customers(customer_id),</span><span class="code-line">  KEY idx_status_region_sched(status,region_code,scheduled_at,customer_id),</span><span class="code-line">  KEY idx_customer_sched(customer_id,scheduled_at)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">INSERT INTO work_orders(work_order_id,customer_id,status,priority,region_code,scheduled_at,total_cents,summary)</span><span class="code-line">SELECT n,</span><span class="code-line">       1+MOD(n,900),</span><span class="code-line">       CASE WHEN MOD(n,100)&lt;95 THEN 'closed' WHEN MOD(n,100)&lt;99 THEN 'open' ELSE 'escalated' END,</span><span class="code-line">       1+MOD(n,4),</span><span class="code-line">       CASE WHEN MOD(n,10)&lt;7 THEN 'BAK' WHEN MOD(n,10)&lt;9 THEN 'GAN' ELSE 'TBZ' END,</span><span class="code-line">       TIMESTAMP('2026-01-01 00:00:00') + INTERVAL MOD(n,200) DAY + INTERVAL MOD(n,24) HOUR,</span><span class="code-line">       5000 + MOD(n*137,120000),</span><span class="code-line">       CONCAT('ServiceHub work order ',n)</span><span class="code-line">FROM (</span><span class="code-line">  SELECT 1 + a.d + 10*b.d + 100*c.d + 1000*e.d AS n</span><span class="code-line">  FROM digits a CROSS JOIN digits b CROSS JOIN digits c CROSS JOIN digits e</span><span class="code-line">) s WHERE n&lt;=10000;</span><span class="code-line"></span><span class="code-line">CREATE TABLE work_order_events (</span><span class="code-line">  event_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,</span><span class="code-line">  work_order_id INT UNSIGNED NOT NULL,</span><span class="code-line">  event_type VARCHAR(24) NOT NULL,</span><span class="code-line">  created_at DATETIME NOT NULL,</span><span class="code-line">  note VARCHAR(120) NULL,</span><span class="code-line">  KEY idx_event_order_type(work_order_id,event_type,created_at),</span><span class="code-line">  CONSTRAINT fk_opt_event_order FOREIGN KEY(work_order_id) REFERENCES work_orders(work_order_id)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">INSERT INTO work_order_events(work_order_id,event_type,created_at,note)</span><span class="code-line">SELECT work_order_id,</span><span class="code-line">       CASE WHEN MOD(work_order_id,5)=0 THEN 'reopened' ELSE 'status_change' END,</span><span class="code-line">       scheduled_at + INTERVAL 1 HOUR,</span><span class="code-line">       'optimizer lab event'</span><span class="code-line">FROM work_orders WHERE MOD(work_order_id,3)=0;</span></code></pre>
+              </div>
+              <p>
+                The work-order table has a skewed
+                <code>status</code> distribution: roughly 95% closed, 4% open
+                and 1% escalated. It also has two useful secondary indexes. This
+                creates a realistic optimizer problem: a predicate on
+                <code>status='closed'</code> is weakly selective, while
+                <code>status='escalated'</code> is selective. The same physical
+                index can therefore be attractive for one constant and
+                unattractive for another.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    compare candidate access paths
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">EXPLAIN</span><span class="code-line">SELECT work_order_id,customer_id,scheduled_at</span><span class="code-line">FROM work_orders</span><span class="code-line">WHERE status='escalated' AND region_code='BAK'</span><span class="code-line">ORDER BY scheduled_at</span><span class="code-line">LIMIT 25;</span><span class="code-line"></span><span class="code-line">EXPLAIN</span><span class="code-line">SELECT work_order_id,customer_id,scheduled_at</span><span class="code-line">FROM work_orders</span><span class="code-line">WHERE status='closed' AND region_code='BAK'</span><span class="code-line">ORDER BY scheduled_at</span><span class="code-line">LIMIT 25;</span><span class="code-line"></span><span class="code-line">SHOW INDEX FROM work_orders;</span></code></pre>
+              </div>
+              <p>
+                A plan is a hypothesis about row flow.
+                <code>possible_keys</code> lists indexes the optimizer can
+                consider for the access conditions; <code>key</code> is the
+                chosen index; <code>rows</code> is an estimate, not a count
+                produced by the executor. If a broad predicate causes a scan,
+                that is not automatically an optimizer bug—the cost model may
+                estimate that touching a large fraction of secondary-index
+                entries plus base rows costs more than scanning the clustered
+                table.
+              </p>
+            </section>
+            <section>
+              <h2>
+                2. Access path, selectivity, cardinality and cost are different
+                concepts
+              </h2>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Concept</th>
+                    <th>Operational meaning</th>
+                    <th>Common mistake</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Access path</td>
+                    <td>
+                      How rows are reached: const/ref/range/index/full scan and
+                      related mechanisms.
+                    </td>
+                    <td>Calling every index-based access “fast.”</td>
+                  </tr>
+                  <tr>
+                    <td>Selectivity</td>
+                    <td>Fraction of rows expected to survive a predicate.</td>
+                    <td>Assuming equality always means high selectivity.</td>
+                  </tr>
+                  <tr>
+                    <td>Cardinality estimate</td>
+                    <td>Estimated row count at a plan node.</td>
+                    <td>Treating EXPLAIN rows as measured truth.</td>
+                  </tr>
+                  <tr>
+                    <td>Cost</td>
+                    <td>Optimizer score used to compare candidate work.</td>
+                    <td>Reading cost as guaranteed milliseconds.</td>
+                  </tr>
+                  <tr>
+                    <td>Runtime evidence</td>
+                    <td>
+                      Observed loops, rows, filtering and timing from executed
+                      ANALYZE.
+                    </td>
+                    <td>
+                      Using it without controlling cache/concurrency/workload.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <p>
+                The optimizer combines multiple estimates. For a join it must
+                decide not only how to access each table but also which table
+                should be first. Starting with a highly selective input can
+                reduce downstream lookups; starting with the wrong input can
+                multiply work. MariaDB’s optimizer can reorder inner joins,
+                transform subqueries, merge or materialize derived tables, push
+                conditions closer to their data source and consider index/order
+                interactions. These are not separate “tricks”—they all change
+                estimated row flow and therefore candidate cost.
+              </p>
+            </section>
+            <section>
+              <h2>3. Join order is multiplicative</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql · a
+                    customer/work-order join with competing starts
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">EXPLAIN FORMAT=JSON</span><span class="code-line">SELECT c.customer_id,c.tier,w.work_order_id,w.total_cents</span><span class="code-line">FROM customers AS c</span><span class="code-line">JOIN work_orders AS w ON w.customer_id=c.customer_id</span><span class="code-line">WHERE c.region_code='BAK'</span><span class="code-line">  AND c.tier='enterprise'</span><span class="code-line">  AND w.status='open';</span><span class="code-line"></span><span class="code-line">ANALYZE FORMAT=JSON</span><span class="code-line">SELECT c.customer_id,c.tier,w.work_order_id,w.total_cents</span><span class="code-line">FROM customers AS c</span><span class="code-line">JOIN work_orders AS w ON w.customer_id=c.customer_id</span><span class="code-line">WHERE c.region_code='BAK'</span><span class="code-line">  AND c.tier='enterprise'</span><span class="code-line">  AND w.status='open';</span></code></pre>
+              </div>
+              <p>
+                The useful question is not “which table did MariaDB put first?”
+                but “why does that order reduce expected downstream work?” If
+                the customer predicate yields only a small set, probing work
+                orders by customer may be cheap. If the open-work-order
+                predicate is more selective, the reverse can win. Read the JSON
+                plan as a tree of row-producing operations and compare estimates
+                with the <code>r_*</code> runtime fields taught in Lesson 2.
+              </p>
+            </section>
+            <section>
+              <h2>4. Transformations can change the shape before costing</h2>
+              <p>
+                SQL text is not a literal execution recipe. MariaDB can
+                transform <code>IN</code>/<code>EXISTS</code> subqueries into
+                semijoins, merge some derived tables into the outer query,
+                materialize others, push outer predicates into derived tables or
+                apply index-condition pushdown. The exact set of enabled
+                strategies is visible in <code>@@optimizer_switch</code>. From
+                MariaDB 12.0 the default switch set includes strategies such as
+                <code>derived_merge</code>, <code>firstmatch</code>,
+                <code>loosescan</code>, <code>duplicateweedout</code>,
+                <code>materialization</code>, <code>semijoin</code>,
+                <code>subquery_cache</code> and condition-pushdown options.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    inspect optimizer policy and trace one decision
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT @@optimizer_switch\G</span><span class="code-line">SELECT * FROM information_schema.optimizer_costs</span><span class="code-line">WHERE engine IN ('DEFAULT','InnoDB');</span><span class="code-line"></span><span class="code-line">SET optimizer_trace='enabled=on';</span><span class="code-line">SELECT c.customer_id</span><span class="code-line">FROM customers c</span><span class="code-line">WHERE EXISTS (</span><span class="code-line">  SELECT 1 FROM work_orders w</span><span class="code-line">  WHERE w.customer_id=c.customer_id AND w.status='escalated'</span><span class="code-line">);</span><span class="code-line">SELECT QUERY,TRACE,MISSING_BYTES_BEYOND_MAX_MEM_SIZE</span><span class="code-line">FROM information_schema.OPTIMIZER_TRACE\G</span><span class="code-line">SET optimizer_trace='enabled=off';</span></code></pre>
+              </div>
+              <p>
+                Optimizer trace is particularly valuable when the question is
+                “why was another plan rejected?” It records optimization
+                decisions for the last traced statement in the current
+                connection. It is not a permanent telemetry store, and large
+                traces can be truncated according to
+                <code>optimizer_trace_max_mem_size</code>. Use it as a focused
+                diagnostic artifact, not an always-on production log.
+              </p>
+            </section>
+            <section>
+              <h2>
+                5. Deliberately wrong: change global cost variables until the
+                plan looks familiar
+              </h2>
+              <p>
+                Because MariaDB exposes optimizer-cost variables, an operator
+                can be tempted to “fix” a regression by globally inflating scan
+                or disk-read cost until an index plan appears. That is
+                dangerous: one changed cost can affect thousands of unrelated
+                statements and may encode a symptom rather than the real cause.
+                The 11.0+ cost model is engine-aware and already calibrated
+                around modern storage assumptions; changing it is an
+                expert-level operation that requires controlled benchmarking and
+                rollback.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    safe diagnostic alternative
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">-- Record evidence first; do not change global optimizer costs as a first response.</span><span class="code-line">SELECT VERSION(),@@optimizer_switch;</span><span class="code-line">SHOW INDEX FROM work_orders;</span><span class="code-line">ANALYZE TABLE work_orders;</span><span class="code-line">EXPLAIN FORMAT=JSON</span><span class="code-line">SELECT * FROM work_orders WHERE status='escalated' AND region_code='BAK';</span><span class="code-line">ANALYZE FORMAT=JSON</span><span class="code-line">SELECT * FROM work_orders WHERE status='escalated' AND region_code='BAK';</span></code></pre>
+              </div>
+              <p>
+                Repair the investigation in layers: confirm schema/index
+                definitions, check row-distribution changes, refresh statistics
+                when justified, compare estimate versus runtime, inspect
+                transformations, and only then run a narrowly scoped experiment
+                such as a session-level switch or query hint. A forced familiar
+                plan is not evidence that the forced plan is correct.
+              </p>
+            </section>
+            <section>
+              <h2>6. Production judgment and bridge</h2>
+              <ol>
+                <li>
+                  Capture the exact SQL, parameter class, server version,
+                  schema/index definitions and optimizer settings.
+                </li>
+                <li>
+                  Separate estimated cardinality/cost from observed runtime.
+                </li>
+                <li>
+                  Check whether the regression correlates with data skew, stale
+                  statistics, schema changes or an upgrade.
+                </li>
+                <li>
+                  Use optimizer trace only for focused questions about rejected
+                  alternatives.
+                </li>
+                <li>
+                  Prefer session/query-scoped experiments before global
+                  optimizer changes.
+                </li>
+                <li>
+                  Keep a rollback path for any statistics, index or
+                  optimizer-policy change.
+                </li>
+              </ol>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>
+                    Why can status=closed and status=escalated choose different
+                    access paths on the same index?
+                  </li>
+                  <li>
+                    What is the difference between cardinality and optimizer
+                    cost?
+                  </li>
+                  <li>
+                    Why is a join-order mistake potentially multiplicative?
+                  </li>
+                  <li>
+                    What question does optimizer trace answer better than
+                    ordinary EXPLAIN?
+                  </li>
+                  <li>
+                    Why is changing global optimizer costs a poor first-line
+                    response to one slow query?
+                  </li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      Different constants can have very different selectivity,
+                      changing the estimated work of index access versus
+                      scanning. Cardinality estimates how many rows flow through
+                      a node; cost is the optimizer’s comparison score for
+                      candidate work. Join order controls how many downstream
+                      probes are repeated, so errors can multiply. Optimizer
+                      trace exposes decisions and rejected alternatives during
+                      optimization. Global cost changes affect many statements
+                      and can hide stale statistics, skew, schema or query-shape
+                      problems.
+                    </p>
+                  </div>
+                </details>
+              </div>
+              <p>
+                Lesson 2 now turns the plan hypothesis into executed evidence
+                and establishes the safety boundary between EXPLAIN and ANALYZE.
+              </p>
+              <section>
+                <h2>Authoritative references</h2>
+                <ul>
+                  <li>
+                    <a
+                      href="https://mariadb.com/docs/server/ha-and-performance/optimization-and-tuning/query-optimizer"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB Documentation — Query Optimizer</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://mariadb.com/docs/server/ha-and-performance/optimization-and-tuning/query-optimizer/the-optimizer-cost-model-from-mariadb-11-0"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB Documentation — Optimizer Cost Model from 11.0</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://mariadb.com/docs/server/ha-and-performance/optimization-and-tuning/query-optimizer/optimizer-trace/optimizer-trace-overview"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB Documentation — Optimizer Trace Overview</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://mariadb.com/docs/server/ha-and-performance/optimization-and-tuning/query-optimizations/optimizer-switch"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB Documentation — optimizer_switch</a
+                    >
+                  </li>
+                </ul>
+              </section>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a class="previous" href="../Chapter09/Lesson5.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Vector Search Capabilities, Distance Functions, Vector Indexing
+                Concepts, and AI Workloads</strong
+              ></a
+            ><a class="next" href="Lesson2.html"
+              ><small>Next lesson</small
+              ><strong
+                >EXPLAIN, ANALYZE, FORMAT=JSON, Runtime Statistics, and Reading
+                Plans</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://x.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >X
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only assets compatible with the Ethereum/ERC-20 network.
+                  Do not send TRC-20/TRON assets.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <div>
+          <a href="../../../index.html#roadmap">Roadmap</a
+          ><a href="../../../index.html#courses">Courses</a
+          ><a href="https://github.com/mohammadijoo/Big_Data_Academy"
+            >Repository</a
+          >
+        </div>
+        <small
+          >Created and maintained by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>

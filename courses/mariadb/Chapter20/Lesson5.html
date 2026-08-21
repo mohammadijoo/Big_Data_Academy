@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Plan low-downtime topology upgrades with canaries, supported version ordering, promotion/fencing, rollback limits, and before/after performance evidence for replication and Galera." name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>
+      Rolling Cluster/Replication Upgrades, Rollback Plans, Canaries, and
+      Performance Comparison | MariaDB | Big Data Academy
+    </title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html"><span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24">
+<ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+<path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span><span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span></a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a><a class="is-active" href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="4"></circle>
+<path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path>
+</svg></button><button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="M4 7h16M4 12h16M4 17h16"></path>
+</svg>
+</button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu="">
+<a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+</nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">MA</span>
+<div><small>Course 06</small><strong>MariaDB</strong></div></a><button aria-label="Close course navigation" data-sidebar-close="" type="button">
+            ×
+          </button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24">
+<circle cx="11" cy="11" r="7"></circle>
+<path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 110 lessons..." type="search"/></label>
+<nav aria-label="MariaDB curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter">
+<summary>
+<span>01</span>MariaDB Foundations, Release Model, Editions, and
+              Lab Setup
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What MariaDB Is: Origins, Server Architecture,
+                Ecosystem, and Common Deployment Roles</a><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Community Server, Enterprise Offerings,
+                Licensing, and Operational Boundaries</a><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>LTS vs Innovation Releases, Support Horizons,
+                Upgrade Cadence, and Version Selection</a><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Install MariaDB on Windows, Linux, Containers,
+                and Verify Client/Server Tooling</a><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build a Reproducible Lab with Databases,
+                Accounts, Sample Workloads, and Safe Defaults</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>02</span>MariaDB vs MySQL: Compatibility, Divergence, and
+              Migration Awareness
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>Shared Heritage vs Independent Evolution: Why
+                Syntax Compatibility Is Not Feature Parity</a><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Version Numbering, Removed/Added Features,
+                Defaults, and Configuration Divergence</a><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>Data Types, SQL Semantics, JSON Differences,
+                Generated Columns, and Compatibility Traps</a><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Replication and Binary Log Compatibility
+                Boundaries Across MariaDB and MySQL</a><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Plan a Compatibility Assessment Before Migration
+                or Mixed-Environment Operations</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>03</span>Server Architecture, Configuration, Connections,
+              and Metadata
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>mariadbd Startup, Data Directory, Option Files,
+                and Configuration Precedence</a><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Threads, Sessions, Connection Limits, Thread
+                Pool Concepts, and Resource Controls</a><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>System/Status Variables, Dynamic Settings,
+                Persisted Configuration Patterns, and Validation</a><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>information_schema, performance_schema, SHOW
+                Commands, and Metadata Discovery</a><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>Logs, Startup Failures, Time Zones, Character
+                Sets, Collations, and Baseline Configuration</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>04</span>Schemas, Data Types, Keys, Constraints, and SQL
+              Modes
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>Databases, Tables, Temporary Objects, Views, and
+                Namespace Conventions</a><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>Numeric, String, Temporal, UUID, JSON/Text,
+                Vector, Spatial, and Binary Types</a><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK,
+                DEFAULT, and Generated/Virtual Columns</a><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>AUTO_INCREMENT, Sequences, Natural vs Surrogate
+                Keys, and Identifier Strategy</a><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>SQL_MODE, Strictness, Implicit Conversion,
+                Oracle Mode Awareness, and Data Quality</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>05</span>SQL Querying, Joins, CTEs, Windows, and Analytical
+              SQL
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>Filtering, NULL Semantics, Ordering,
+                Expressions, and Deterministic Query Results</a><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Join Types, Derived Tables, Correlated
+                Subqueries, EXISTS/IN, and Semijoin Reasoning</a><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>Common Table Expressions, Recursive CTEs, and
+                Hierarchical Data</a><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Window Functions, Frames, Ranking, Running
+                Metrics, and Top-N per Group</a><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Aggregations, ROLLUP, GROUPING Patterns, Set
+                Operations, and Reporting Workflows</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>06</span>Data Modification, Transactions, Isolation, Locks,
+              and Deadlocks
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>INSERT/REPLACE/INSERT ... ON DUPLICATE KEY,
+                UPDATE, DELETE, and RETURNING Capabilities</a><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>Autocommit, Transactions, SAVEPOINT, Atomicity,
+                and Application Error Boundaries</a><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Isolation Levels, Consistent Reads, Locking
+                Reads, MVCC, and Concurrency Anomalies</a><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Metadata Locks, Row Locks, Gap/Next-Key Locking,
+                and Online Change Interactions</a><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Deadlock Analysis, Lock Waits, Retry Policies,
+                Idempotency, and Contention Testing</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>07</span>InnoDB in MariaDB: Storage, Buffering, Redo, Undo,
+              and Recovery
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>InnoDB Tablespaces, Pages, Row Formats,
+                Clustered/Secondary Indexes, and Record Layout</a><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Buffer Pool, Flushing, Dirty Pages, Read-Ahead,
+                and Cache Efficiency</a><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Redo Logs, Undo, Doublewrite, Checkpoints, Crash
+                Recovery, and Durability</a><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Purge, History, Long Transactions, Undo Growth,
+                and Bloat-Like Operational Symptoms</a><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Inspect InnoDB Metrics and Tune Storage Behavior
+                for OLTP Workloads</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>08</span>MariaDB Storage Engines Beyond InnoDB
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>Aria Architecture, Crash Safety, Temporary Work,
+                and Operational Use Cases</a><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>MyISAM Legacy Characteristics, Table Locks,
+                FULLTEXT History, and Migration Concerns</a><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>MEMORY Engine, Ephemeral Data, Limits, and Safer
+                Alternatives</a><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>CONNECT and Other Specialized Engines: External
+                Data Access and Tradeoffs</a><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Choose a Storage Engine Deliberately and Avoid
+                Cross-Engine Transaction Assumptions</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>09</span>Index Design, FULLTEXT, Spatial, Vector, and
+              Specialized Access Paths
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>B-Tree Indexes, Composite Keys, Prefix Rules,
+                Covering Indexes, and Write Costs</a><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>Functional/Expression and Generated-Column
+                Indexing Patterns</a><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>FULLTEXT Indexes, Tokenization, Boolean/Natural
+                Language Search, and Limits</a><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Spatial Types and Indexes, SRIDs, Geometry
+                Functions, and GIS Workloads</a><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Vector Search Capabilities, Distance Functions,
+                Vector Indexing Concepts, and AI Workloads</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>10</span>Optimizer, EXPLAIN, Statistics, Histograms, and
+              Query Tuning
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Optimizer Architecture, Access Paths, Join
+                Orders, Costing, and Query Transformations</a><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>EXPLAIN, ANALYZE, FORMAT=JSON, Runtime
+                Statistics, and Reading Plans</a><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Table/Index Statistics, Histograms, Cardinality,
+                and Misestimate Diagnosis</a><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Join Algorithms, Subquery Optimizations, Derived
+                Tables, Semijoins, and Materialization</a><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>Optimizer Switches, Hints, Invisible/Ignored
+                Index Concepts, and Regression Control</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>11</span>Views, Stored Programs, Triggers, Events, and
+              SQL/PSM
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Views, Updatability, ALGORITHM, SQL SECURITY,
+                and Definer Risks</a><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Stored Procedures and Functions, Parameters,
+                Handlers, Cursors, and Diagnostics</a><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Triggers, OLD/NEW Rows, Ordering, Auditing, and
+                Hidden Coupling</a><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>Event Scheduler, Recurring Jobs, Maintenance,
+                and Failure Visibility</a><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Server-Side Logic Testing, Deployment,
+                Privileges, and Application-Boundary Decisions</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>12</span>Accounts, Roles, Authentication, Authorization, and
+              Security Hardening
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>Accounts, Authentication Plugins, Password
+                Policy, Locking, Expiry, and Lifecycle</a><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Privileges, Roles, Default Roles, Grant Design,
+                and Delegated Administration</a><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Definers, SQL SECURITY, Stored Objects, Views,
+                and Privilege-Escalation Prevention</a><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>TLS, Certificates, Secure Transport, Network
+                Segmentation, and Secret Rotation</a><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Hardening Checklist, Audit Options, Plugin Risk,
+                File Privileges, and Patch Discipline</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>13</span>Backup, mariadb-backup, Restore, and Point-in-Time
+              Recovery
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>Logical Backup with mariadb-dump: Consistency,
+                Objects, Routines, and Large Databases</a><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>Physical Backup with mariadb-backup: Prepare,
+                Copy-Back, Incrementals, and Encryption</a><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>Binary Logs, Retention, Coordinates/GTIDs, and
+                PITR Prerequisites</a><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Point-in-Time Recovery, Partial Recovery,
+                Validation, and Data-Loss Boundaries</a><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Backup Automation, Offloading to Replicas,
+                Restore Drills, RPO/RTO, and Corruption Tests</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>14</span>Asynchronous Replication, GTIDs, Parallel Apply,
+              and Topology Design
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Primary/Replica Flow, Binary Logs, Relay Logs,
+                Replication Threads, and Filters</a><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>MariaDB GTIDs, Domains, Positions, Strict Mode,
+                and Failover Semantics</a><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Parallel Replication, Commit Ordering, Worker
+                Tuning, and Replica Throughput</a><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Delayed Replicas, Read Scaling, Multi-Source
+                Replication, and Reporting Patterns</a><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Lag, Breakage, Data Drift, Rebuilds, Promotion,
+                and Replication Incident Runbooks</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>15</span>Galera Cluster: Synchronous Multi-Primary
+              Replication and High Availability
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Galera Architecture, Write Sets, Certification,
+                Quorum, and Cluster Membership</a><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Bootstrap, Join, State Snapshot Transfer,
+                Incremental State Transfer, and Donor Selection</a><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>Flow Control, Certification Conflicts,
+                Auto-Increment, Hot Rows, and Workload Constraints</a><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>Load Balancing, Primary Component, Split Brain,
+                Fencing, and Application Failover</a><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Galera Security, TLS, Rolling Maintenance,
+                Upgrades, Failure Injection, and Recovery</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>16</span>Partitioning, Large Tables, Online DDL, and Data
+              Lifecycle
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Partitioning Strategies, Partition Pruning,
+                Keys, Constraints, and Design Limits</a><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>Hot/Cold Data, Rolling Partitions, Archiving,
+                Retention, and Bulk Loads</a><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>ALTER TABLE Algorithms, Lock Levels, Online DDL,
+                and Operational Planning</a><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>Large Delete/Update Pathologies, Chunking, Purge
+                Effects, and Storage Reclamation</a><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Multi-Terabyte Capacity Planning, Maintenance
+                Windows, and Growth Forecasting</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>17</span>Performance Schema, sys Schema, Logs, and
+              Observability
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Performance Schema Instrumentation, Consumers,
+                Statements, Waits, and Overhead</a><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>sys Schema Views, User/Host Activity, I/O,
+                Statements, Memory, and Index Usage</a><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Slow Query Log, General Log, Error Log, and
+                Query-Digest Workflows</a><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>InnoDB, Replication, Galera, Connections, Temp
+                Tables, and OS Metrics</a><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Build Dashboards, Baselines, SLO Alerts, and
+                Incident Timelines</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>18</span>Performance Engineering: Memory, I/O, Threading,
+              and Workload Tuning
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Buffer Pool Sizing, Dirty Pages, Flushing,
+                Read-Ahead, and Cache Hit Interpretation</a><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Per-Session Memory, Sort/Join Buffers, Temp
+                Tables, and Memory Explosion Risks</a><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Thread Pool, Connection Concurrency, Queueing,
+                and CPU Saturation</a><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Redo Capacity, I/O Capacity, Flush Methods,
+                Storage Latency, and Checkpoint Behavior</a><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Benchmark Design, Warmup, Concurrency,
+                Percentiles, Regression Tests, and Capacity Headroom</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>19</span>Application Integration, Connectors, ORMs, Pools,
+              and Reliability
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>Client Connectors, Connection Strings, TLS,
+                Timeouts, Pooling, and Session Contracts</a><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Prepared Statements, Parameters, Injection
+                Defense, Type Mapping, and Unicode</a><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Transaction Scoping, Retryable Errors,
+                Idempotency, and Network Failure Handling</a><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>ORM Query Shapes, Pagination, N+1, Bulk
+                Operations, and Index Visibility</a><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Schema Migrations, Health Checks, Failover
+                Behavior, and Deployment Coordination</a>
+</div>
+</details>
+<details class="sidebar-chapter" open="">
+<summary>
+<span>20</span>Upgrades, Migrations, Compatibility Testing, and
+              Low-Downtime Change
+            </summary>
+<div>
+<a class="sidebar-lesson" href="Lesson1.html"><span>01</span>Patch, Innovation, and LTS Upgrade Planning with
+                Release Notes and Deprecations</a><a class="sidebar-lesson" href="Lesson2.html"><span>02</span>mariadb-upgrade, System Tables, Configuration
+                Drift, and Post-Upgrade Validation</a><a class="sidebar-lesson" href="Lesson3.html"><span>03</span>MySQL-to-MariaDB and MariaDB-to-MySQL Migration:
+                Compatibility Matrix and Data Tests</a><a class="sidebar-lesson" href="Lesson4.html"><span>04</span>Expand/Contract Schema Changes, Online DDL,
+                Backfills, and Application Compatibility</a><a class="sidebar-lesson is-current" href="Lesson5.html"><span>05</span>Rolling Cluster/Replication Upgrades, Rollback
+                Plans, Canaries, and Performance Comparison<i>Current</i></a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>21</span>Advanced MariaDB Features: System-Versioned Tables,
+              Oracle Mode, and Federation
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>System-Versioned Tables, Temporal Queries,
+                Retention, and Audit/History Use Cases</a><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>Application-Time Periods, Bitemporal Modeling
+                Concepts, and Constraint Design</a><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Oracle SQL_MODE / Compatibility Features,
+                PL/SQL-Like Syntax, and Migration Boundaries</a><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>Spider/Federated Data Access Concepts,
+                Distributed Queries, and Operational Tradeoffs</a><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>When MariaDB-Native Features Replace—or Should
+                Not Replace—Dedicated Data Systems</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>22</span>Production Capstone: Design, Cluster, Secure, Tune,
+              and Recover MariaDB
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Define Workload, SLOs, Data Model, Engine
+                Choices, Capacity, and Architecture Record</a><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>Implement Schema, Indexes, Security, Application
+                Access, and Migration Automation</a><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>Tune SQL, InnoDB, Memory, I/O, Threading, and
+                Galera/Replication from Evidence</a><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Implement Backups/PITR, HA, Monitoring, Alerts,
+                Upgrades, and Incident Runbooks</a><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Run Restore, Failover, Split-Brain, Performance,
+                and Corruption Drills—and Defend the Design</a>
+</div>
+</details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar">
+<button data-sidebar-open="" type="button">
+<span>Course navigation</span><span>Chapter 20 · Lesson 05</span>
+</button>
+</div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+<a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">MariaDB</a><span>/</span><span>Chapter 20 · Lesson 05</span>
+</nav>
+<header class="lesson-header">
+<p class="eyebrow">
+              Chapter 20 · Upgrades, Migrations, Compatibility Testing, and
+              Low-Downtime Change
+            </p>
+<h1>
+              Rolling Cluster/Replication Upgrades, Rollback Plans, Canaries,
+              and Performance Comparison
+            </h1>
+<p>
+              Plan low-downtime topology upgrades with canaries, supported
+              version ordering, promotion/fencing, rollback limits, and
+              before/after performance evidence for replication and Galera.
+            </p>
+<div class="lesson-meta">
+<span>Advanced</span><span>190–240 minutes</span><span>rolling-upgrade runbook and canary comparison lab</span><span>MariaDB Community 12.3.2 current GA reference</span><span>Curriculum anchor: MariaDB 11.8 LTS · verify exact
+                source→target guide</span><span>Free local tooling · Last reviewed: August 2026</span>
+</div>
+</header>
+<nav aria-label="On this page" class="lesson-toc">
+<strong>On this page</strong>
+<ol data-generated-toc=""></ol>
+</nav>
+<div class="lesson-content">
+<section>
+<h2>Learning outcomes</h2>
+<p>
+                A low-downtime database upgrade is not “upgrade each node one at
+                a time.” Mixed-version replication or Galera operation is safe
+                only where the exact path is documented, and rollback becomes
+                harder after promotion or new-version writes. A
+                <strong>canary</strong> is useful only if it receives
+                representative work and has explicit stop criteria.
+              </p>
+<div class="objectives">
+<div class="objective">
+<span>01</span>
+<p>
+                    Design a rolling async-replication upgrade order using a
+                    new-version replica as the first canary when supported.
+                  </p>
+</div>
+<div class="objective">
+<span>02</span>
+<p>
+                    Explain why Galera mixed-version upgrades require
+                    path-specific official compatibility guidance.
+                  </p>
+</div>
+<div class="objective">
+<span>03</span>
+<p>
+                    Define fencing, promotion, repointing and rollback
+                    boundaries before changing writer roles.
+                  </p>
+</div>
+<div class="objective">
+<span>04</span>
+<p>
+                    Compare identical pre/post workloads using plans,
+                    percentiles, errors and database/OS metrics.
+                  </p>
+</div>
+<div class="objective">
+<span>05</span>
+<p>
+                    Write a failure-injection runbook that prefers
+                    rebuild/failback over unsafe skip-and-hope behavior.
+                  </p>
+</div>
+</div>
+</section>
+<section>
+<h2>1. Async replication: canary the replica first</h2>
+<p>
+                MariaDB’s general major-upgrade guidance recommends upgrading a
+                replica first, validating it, then the remaining replicas, and
+                only later switching/promoting as part of the primary upgrade.
+                That pattern reduces risk because the old primary remains
+                authoritative while the new binary consumes real replication
+                traffic. It is not permission to use any arbitrary old/new pair;
+                verify the exact source→target path and binlog/GTID
+                compatibility.
+              </p>
+<table class="data-table">
+<thead>
+<tr>
+<th>Stage</th>
+<th>Writer</th>
+<th>Canary evidence</th>
+<th>Rollback</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0 baseline</td>
+<td>old primary</td>
+<td>backup + GTID/file-pos + workload baseline</td>
+<td>no change</td>
+</tr>
+<tr>
+<td>1 canary replica</td>
+<td>old primary</td>
+<td>
+                      I/O/apply healthy, no drift, query suite, performance
+                    </td>
+<td>rebuild/drop canary</td>
+</tr>
+<tr>
+<td>2 other replicas</td>
+<td>old primary</td>
+<td>same acceptance per replica</td>
+<td>rebuild one replica</td>
+</tr>
+<tr>
+<td>3 promotion</td>
+<td>new-version replica</td>
+<td>fence old writer, verify position, route traffic</td>
+<td>failback only if data direction remains safe</td>
+</tr>
+<tr>
+<td>4 old primary upgrade</td>
+<td>new primary</td>
+<td>rejoin/repoint validation</td>
+<td>restore/rebuild if downgrade unsupported</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section>
+<h2>2. Promotion must include fencing and data-loss checks</h2>
+<div class="code-window" data-code-block="" data-language="sql">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    evidence before role change
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code><span class="code-line">SHOW MASTER STATUS;</span><span class="code-line">SHOW REPLICA STATUS\G</span><span class="code-line">SELECT @@server_id, @@read_only, @@gtid_current_pos, @@gtid_slave_pos;</span><span class="code-line">-- Use exact MariaDB GTID/domain semantics from Chapter 14.</span><span class="code-line">-- Do not promote until expected transactions are present and the old writer is fenced.</span></code></pre>
+</div>
+<p>
+                Application routing follows database safety; it does not create
+                it. Disable/fence the old writer at the infrastructure/database
+                layer appropriate to your design, then repoint clients only
+                after the new target passes role/data checks.
+              </p>
+</section>
+<section>
+<h2>3. Galera rolling upgrades are path-specific</h2>
+<p>
+                Galera adds provider/application protocol compatibility, quorum,
+                SST/IST behavior and cluster membership to the version problem.
+                Follow the exact MariaDB Galera upgrade page for the
+                source/target versions. Never infer “one node at a time” from a
+                generic cluster article when the documented path requires a
+                different order, configuration, full restart or SST.
+              </p>
+<div class="code-window" data-code-block="" data-language="sql">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    cluster evidence during any supported rolling path
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code><span class="code-line">SHOW STATUS WHERE Variable_name IN</span><span class="code-line">('wsrep_cluster_status','wsrep_cluster_size','wsrep_connected','wsrep_ready',</span><span class="code-line"> 'wsrep_local_state_comment','wsrep_local_recv_queue_avg','wsrep_flow_control_paused');</span><span class="code-line">SHOW VARIABLES LIKE 'wsrep_provider_version';</span></code></pre>
+</div>
+</section>
+<section>
+<h2>
+                4. Canary criteria must include correctness and performance
+              </h2>
+<table class="data-table">
+<thead>
+<tr>
+<th>Signal</th>
+<th>Before</th>
+<th>After/canary</th>
+<th>Stop condition example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Errors</td>
+<td>baseline rate</td>
+<td>same workload</td>
+<td>new SQL/server errors</td>
+</tr>
+<tr>
+<td>p95/p99 latency</td>
+<td>recorded window</td>
+<td>same dataset/concurrency</td>
+<td>predeclared regression threshold</td>
+</tr>
+<tr>
+<td>Plans</td>
+<td>representative EXPLAIN/ANALYZE</td>
+<td>same SQL</td>
+<td>unexpected access-path change</td>
+</tr>
+<tr>
+<td>Replica/Galera</td>
+<td>healthy baseline</td>
+<td>healthy mixed-version state</td>
+<td>lag/apply/flow-control beyond agreed gate</td>
+</tr>
+<tr>
+<td>Resources</td>
+<td>CPU/memory/I/O</td>
+<td>same host/container limits</td>
+<td>new saturation/headroom loss</td>
+</tr>
+</tbody>
+</table>
+<p>
+                Do not invent percentages universally. The threshold belongs to
+                the application SLO and the baseline variability measured in
+                Chapter 18.
+              </p>
+</section>
+<section>
+<h2>
+                5. Wrong approach: “downgrade the package if anything fails”
+              </h2>
+<p>
+                After a new-version server has written system tables or
+                application data, downgrade may be unsupported. The safer
+                rollback is often failback to an untouched old-version node
+                before divergent writes, or restore/rebuild from a compatible
+                backup. The runbook must state which rollback remains valid at
+                each stage.
+              </p>
+</section>
+<section>
+<h2>6. Free local canary mechanics lab</h2>
+<div class="code-window" data-code-block="" data-language="text">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>text ·
+                    topology lab outline
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code><span class="code-line">1. Create disposable source primary + replica using the exact source version you need to test.</span><span class="code-line">2. Seed ServiceHub data and capture GTID/file-position, counts, workload baseline and backup.</span><span class="code-line">3. Upgrade ONLY the replica using the official source→target guide.</span><span class="code-line">4. Run mariadb-upgrade if required; verify replication I/O/apply and data invariants.</span><span class="code-line">5. Run the same query/benchmark suite against primary and canary replica under comparable conditions.</span><span class="code-line">6. Inject one safe failure: stop canary, restart, verify catch-up; or reject the target if an incompatibility appears.</span><span class="code-line">7. Do NOT promote unless your lab goal includes a full promotion/fencing drill from Chapter 14.</span><span class="code-line">8. Destroy the topology after recording evidence.</span></code></pre>
+</div>
+<div class="checkpoint"><h3>Check your reasoning</h3><ol><li>Why upgrade a replica before the primary?</li><li>What must happen before promotion?</li><li>Why is Galera upgrade guidance separate?</li><li>What makes a canary meaningful?</li><li>Why can package downgrade be unsafe?</li></ol><details class="answer-toggle"><summary>Review the answers</summary><div><ol><li>
+<p>
+                    It exposes the target binary to real replicated workload
+                    while the old primary remains authoritative, giving a
+                    comparatively cheap rejection/rebuild path.
+                  </p>
+</li><li>
+<p>
+                    Verify data position/correctness, fence the old writer,
+                    establish the new writer role, then repoint clients.
+                  </p>
+</li><li>
+<p>
+                    Provider/protocol/quorum/SST/IST compatibility adds
+                    constraints that generic async-replication advice does not
+                    cover.
+                  </p>
+</li><li>
+<p>
+                    Representative traffic/workload plus explicit correctness,
+                    performance and topology-health stop criteria.
+                  </p>
+</li><li>
+<p>
+                    New binaries may have modified system/on-disk/application
+                    state; supported rollback may require failback, restore or
+                    rebuild instead.
+                  </p>
+</li></ol></div></details></div>
+</section>
+<section>
+<h2>7. Chapter runbook: go/no-go gates</h2>
+<p>
+                Before production, require signed evidence for: target
+                release/support status, backups/restores, config diff,
+                upgrade-tool result, data invariants, app suite, replica/Galera
+                health, canary latency/error comparison, promotion/fencing
+                procedure, rollback boundary, and post-change observation
+                window. A no-go is a successful outcome of testing—it prevents
+                an uncontrolled production experiment.
+              </p>
+</section>
+<section>
+<h2>Production judgment and bridge to Chapter 21</h2>
+<p>
+                The safest upgrade strategy minimizes simultaneous unknowns:
+                change one layer at a time, preserve an authoritative old path
+                until evidence closes the gate, and compare behavior under
+                reproducible load. With upgrade/change discipline established,
+                Chapter 21 turns to advanced MariaDB-native
+                features—system-versioned tables, temporal modeling, Oracle
+                compatibility modes and federation—where feature adoption
+                requires the same version/plugin/semantics discipline.
+              </p>
+</section>
+<section data-depth-fix="ch20l5"><h2>Rolling topology upgrades: prove coexistence, canary behavior, and rollback separately</h2>
+<p>A rolling upgrade is not “restart nodes one by one.” It depends on whether the exact old/new server, replication protocol, binlog format, GTID behavior, storage format, and Galera provider combination is supported during the coexistence window. Async replication and Galera have different safety models, so use the procedure for the actual topology and target versions rather than a generic cluster checklist.</p>
+<p>For asynchronous replication, a common canary pattern is to upgrade a replica first, let it process production-like replicated traffic, and compare correctness/performance while the write primary remains unchanged. Observe receiver/apply health, GTID positions, lag, error logs, query plans, read-serving behavior if used, and backup tooling. Promotion is a separate operation: fence the old writer, prove the candidate is caught up to the declared recovery point, change client routing, and verify writes before considering the old primary a rollback target.</p>
+<p>A Galera rolling upgrade requires version-specific provider/server guidance because nodes exchange write sets and state-transfer data while different versions coexist. Check whether rolling upgrade is supported for that exact transition, whether intermediate series are required, and whether IST/SST behavior constrains the procedure. Quorum, primary-component status, donor/joiner state, certification conflicts, and flow control remain application-visible risks even when the cluster stays “up.”</p>
+<p>Canary acceptance must include identical workload evidence. Compare error rate, p50/p95/p99 latency, throughput, CPU/I/O, memory, top statement digests/plans, replication/wsrep indicators, and backup/restore compatibility. One node surviving a restart is not a performance canary. Likewise, “no SQL errors” does not prove sorted/collated results, optimizer choices, or application semantics remained acceptable.</p>
+<p>Rollback has levels: routing rollback, role/promotion rollback, binary/package rollback, and restore-based rollback. After an upgraded node has accepted new writes or system metadata has changed, some earlier rollback options may no longer be valid. State the boundary for every step and keep an untouched, recoverable copy of the pre-change state until the post-upgrade validation window closes.</p></section><section data-depth-fix="ch20l5-extra"><h2>Performance regression triage after a rolling upgrade</h2><p>When a canary is slower, resist changing several variables at once. First classify the regression: plan/cardinality change, cache/warmup effect, CPU instruction/runtime change, storage latency, connection/thread scheduling, redo/flushing behavior, replication/wsrep pressure, connector behavior, or workload mismatch. Compare the same statement digest and parameter class on old and new nodes, then inspect plan and observed counters for that statement.</p><p>Some differences are expected during warmup. A newly restarted node has a colder buffer pool and filesystem cache, different prepared-statement/session history, and possibly different statistics state. Define a warmup protocol before comparing. Conversely, do not dismiss persistent p95/p99 regressions as “cache” when the new node has already processed an equivalent workload window.</p><p>Keep the upgraded canary reversible until the comparison is complete. Avoid introducing target-only schema or application behavior while it is still serving as the rollback experiment. If it fails acceptance, remove traffic, preserve diagnostic evidence, and either correct/retest or return to the supported prior state. The objective of a canary is to make a bad target cheap to reject.</p></section><section data-depth-fix="ch20l5-extra2"><h2>Closure criteria after the last node is upgraded</h2><p>Do not close the change when the final package installs. Require a stable observation window with topology health, lag/wsrep state, backups, error logs, application SLOs, query-regression checks, and capacity signals all inside their acceptance bands. Remove temporary bypasses or compatibility settings, update the configuration/version inventory, and schedule cleanup of rollback artifacts only after the restore and failback assumptions have been revalidated.</p></section><section>
+<h2>Authoritative references</h2>
+<ul>
+<li><a href="https://mariadb.com/docs/server/server-management/install-and-upgrade-mariadb/upgrading/upgrading-between-major-mariadb-versions" rel="noopener" target="_blank">MariaDB Documentation — Upgrading Between Major MariaDB Versions and exact source→target guides.</a></li>
+<li><a href="https://mariadb.com/docs/server/ha-and-performance/standard-replication/gtid" rel="noopener" target="_blank">MariaDB Documentation — standard replication upgrade/failover semantics and GTIDs.</a></li>
+<li><a href="https://mariadb.com/docs/galera-cluster/galera-management/upgrading-galera-cluster" rel="noopener" target="_blank">MariaDB Galera Cluster documentation — version-specific rolling/full upgrade procedures.</a></li>
+<li><a href="https://mariadb.com/docs/release-notes/" rel="noopener" target="_blank">MariaDB Release Notes and mariadb-upgrade documentation.</a></li>
+</ul>
+</section>
+</div>
+<nav aria-label="Lesson navigation" class="lesson-nav">
+<a class="previous" href="Lesson4.html"><small>Previous lesson</small><strong>Expand/Contract Schema Changes, Online DDL, Backfills, and Application Compatibility</strong></a><a class="next" href="../Chapter21/Lesson1.html"><small>Next lesson</small><strong>System-Versioned Tables, Temporal Queries, Retention, and Audit/History Use Cases</strong></a>
+</nav>
+</article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+<div aria-label="Author links" class="social-row">
+<a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="M15 3h6v6"></path>
+<path d="M10 14 21 3"></path>
+<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a><a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="M15 3h6v6"></path>
+<path d="M10 14 21 3"></path>
+<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a><a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="M15 3h6v6"></path>
+<path d="M10 14 21 3"></path>
+<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a><a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="M15 3h6v6"></path>
+<path d="M10 14 21 3"></path>
+<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head">
+<span>ETH</span><small>Ethereum / ERC-20 only</small>
+</div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code><button class="button secondary compact" data-copy-donation="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy address
+                </button>
+<p>
+                  Send only assets compatible with the Ethereum/ERC-20 network.
+                  Do not send TRC-20/TRON assets.
+                </p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div>
+<strong>Big Data Academy</strong>
+<p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+</div>
+<div>
+<a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a>
+</div>
+<small>Created and maintained by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>

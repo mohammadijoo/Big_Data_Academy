@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Coordinate schema and application change through expand/contract migrations, readiness evidence, pool rotation, and failover-aware deployment sequencing without confusing routing with database correctness." name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>
+      Schema Migrations, Health Checks, Failover Behavior, and Deployment
+      Coordination | MariaDB | Big Data Academy
+    </title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html"><span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24">
+<ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+<path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span><span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span></a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a><a class="is-active" href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="4"></circle>
+<path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path>
+</svg></button><button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="M4 7h16M4 12h16M4 17h16"></path>
+</svg>
+</button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu="">
+<a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+</nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">MA</span>
+<div><small>Course 06</small><strong>MariaDB</strong></div></a><button aria-label="Close course navigation" data-sidebar-close="" type="button">
+            ×
+          </button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24">
+<circle cx="11" cy="11" r="7"></circle>
+<path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 110 lessons..." type="search"/></label>
+<nav aria-label="MariaDB curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter">
+<summary>
+<span>01</span>MariaDB Foundations, Release Model, Editions, and
+              Lab Setup
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What MariaDB Is: Origins, Server Architecture,
+                Ecosystem, and Common Deployment Roles</a><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Community Server, Enterprise Offerings,
+                Licensing, and Operational Boundaries</a><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>LTS vs Innovation Releases, Support Horizons,
+                Upgrade Cadence, and Version Selection</a><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Install MariaDB on Windows, Linux, Containers,
+                and Verify Client/Server Tooling</a><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build a Reproducible Lab with Databases,
+                Accounts, Sample Workloads, and Safe Defaults</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>02</span>MariaDB vs MySQL: Compatibility, Divergence, and
+              Migration Awareness
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>Shared Heritage vs Independent Evolution: Why
+                Syntax Compatibility Is Not Feature Parity</a><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Version Numbering, Removed/Added Features,
+                Defaults, and Configuration Divergence</a><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>Data Types, SQL Semantics, JSON Differences,
+                Generated Columns, and Compatibility Traps</a><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Replication and Binary Log Compatibility
+                Boundaries Across MariaDB and MySQL</a><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Plan a Compatibility Assessment Before Migration
+                or Mixed-Environment Operations</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>03</span>Server Architecture, Configuration, Connections,
+              and Metadata
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>mariadbd Startup, Data Directory, Option Files,
+                and Configuration Precedence</a><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Threads, Sessions, Connection Limits, Thread
+                Pool Concepts, and Resource Controls</a><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>System/Status Variables, Dynamic Settings,
+                Persisted Configuration Patterns, and Validation</a><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>information_schema, performance_schema, SHOW
+                Commands, and Metadata Discovery</a><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>Logs, Startup Failures, Time Zones, Character
+                Sets, Collations, and Baseline Configuration</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>04</span>Schemas, Data Types, Keys, Constraints, and SQL
+              Modes
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>Databases, Tables, Temporary Objects, Views, and
+                Namespace Conventions</a><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>Numeric, String, Temporal, UUID, JSON/Text,
+                Vector, Spatial, and Binary Types</a><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK,
+                DEFAULT, and Generated/Virtual Columns</a><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>AUTO_INCREMENT, Sequences, Natural vs Surrogate
+                Keys, and Identifier Strategy</a><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>SQL_MODE, Strictness, Implicit Conversion,
+                Oracle Mode Awareness, and Data Quality</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>05</span>SQL Querying, Joins, CTEs, Windows, and Analytical
+              SQL
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>Filtering, NULL Semantics, Ordering,
+                Expressions, and Deterministic Query Results</a><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Join Types, Derived Tables, Correlated
+                Subqueries, EXISTS/IN, and Semijoin Reasoning</a><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>Common Table Expressions, Recursive CTEs, and
+                Hierarchical Data</a><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Window Functions, Frames, Ranking, Running
+                Metrics, and Top-N per Group</a><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Aggregations, ROLLUP, GROUPING Patterns, Set
+                Operations, and Reporting Workflows</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>06</span>Data Modification, Transactions, Isolation, Locks,
+              and Deadlocks
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>INSERT/REPLACE/INSERT ... ON DUPLICATE KEY,
+                UPDATE, DELETE, and RETURNING Capabilities</a><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>Autocommit, Transactions, SAVEPOINT, Atomicity,
+                and Application Error Boundaries</a><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Isolation Levels, Consistent Reads, Locking
+                Reads, MVCC, and Concurrency Anomalies</a><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Metadata Locks, Row Locks, Gap/Next-Key Locking,
+                and Online Change Interactions</a><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Deadlock Analysis, Lock Waits, Retry Policies,
+                Idempotency, and Contention Testing</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>07</span>InnoDB in MariaDB: Storage, Buffering, Redo, Undo,
+              and Recovery
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>InnoDB Tablespaces, Pages, Row Formats,
+                Clustered/Secondary Indexes, and Record Layout</a><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Buffer Pool, Flushing, Dirty Pages, Read-Ahead,
+                and Cache Efficiency</a><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Redo Logs, Undo, Doublewrite, Checkpoints, Crash
+                Recovery, and Durability</a><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Purge, History, Long Transactions, Undo Growth,
+                and Bloat-Like Operational Symptoms</a><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Inspect InnoDB Metrics and Tune Storage Behavior
+                for OLTP Workloads</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>08</span>MariaDB Storage Engines Beyond InnoDB
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>Aria Architecture, Crash Safety, Temporary Work,
+                and Operational Use Cases</a><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>MyISAM Legacy Characteristics, Table Locks,
+                FULLTEXT History, and Migration Concerns</a><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>MEMORY Engine, Ephemeral Data, Limits, and Safer
+                Alternatives</a><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>CONNECT and Other Specialized Engines: External
+                Data Access and Tradeoffs</a><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Choose a Storage Engine Deliberately and Avoid
+                Cross-Engine Transaction Assumptions</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>09</span>Index Design, FULLTEXT, Spatial, Vector, and
+              Specialized Access Paths
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>B-Tree Indexes, Composite Keys, Prefix Rules,
+                Covering Indexes, and Write Costs</a><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>Functional/Expression and Generated-Column
+                Indexing Patterns</a><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>FULLTEXT Indexes, Tokenization, Boolean/Natural
+                Language Search, and Limits</a><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Spatial Types and Indexes, SRIDs, Geometry
+                Functions, and GIS Workloads</a><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Vector Search Capabilities, Distance Functions,
+                Vector Indexing Concepts, and AI Workloads</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>10</span>Optimizer, EXPLAIN, Statistics, Histograms, and
+              Query Tuning
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Optimizer Architecture, Access Paths, Join
+                Orders, Costing, and Query Transformations</a><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>EXPLAIN, ANALYZE, FORMAT=JSON, Runtime
+                Statistics, and Reading Plans</a><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Table/Index Statistics, Histograms, Cardinality,
+                and Misestimate Diagnosis</a><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Join Algorithms, Subquery Optimizations, Derived
+                Tables, Semijoins, and Materialization</a><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>Optimizer Switches, Hints, Invisible/Ignored
+                Index Concepts, and Regression Control</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>11</span>Views, Stored Programs, Triggers, Events, and
+              SQL/PSM
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Views, Updatability, ALGORITHM, SQL SECURITY,
+                and Definer Risks</a><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Stored Procedures and Functions, Parameters,
+                Handlers, Cursors, and Diagnostics</a><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Triggers, OLD/NEW Rows, Ordering, Auditing, and
+                Hidden Coupling</a><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>Event Scheduler, Recurring Jobs, Maintenance,
+                and Failure Visibility</a><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Server-Side Logic Testing, Deployment,
+                Privileges, and Application-Boundary Decisions</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>12</span>Accounts, Roles, Authentication, Authorization, and
+              Security Hardening
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>Accounts, Authentication Plugins, Password
+                Policy, Locking, Expiry, and Lifecycle</a><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Privileges, Roles, Default Roles, Grant Design,
+                and Delegated Administration</a><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Definers, SQL SECURITY, Stored Objects, Views,
+                and Privilege-Escalation Prevention</a><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>TLS, Certificates, Secure Transport, Network
+                Segmentation, and Secret Rotation</a><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Hardening Checklist, Audit Options, Plugin Risk,
+                File Privileges, and Patch Discipline</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>13</span>Backup, mariadb-backup, Restore, and Point-in-Time
+              Recovery
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>Logical Backup with mariadb-dump: Consistency,
+                Objects, Routines, and Large Databases</a><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>Physical Backup with mariadb-backup: Prepare,
+                Copy-Back, Incrementals, and Encryption</a><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>Binary Logs, Retention, Coordinates/GTIDs, and
+                PITR Prerequisites</a><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Point-in-Time Recovery, Partial Recovery,
+                Validation, and Data-Loss Boundaries</a><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Backup Automation, Offloading to Replicas,
+                Restore Drills, RPO/RTO, and Corruption Tests</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>14</span>Asynchronous Replication, GTIDs, Parallel Apply,
+              and Topology Design
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Primary/Replica Flow, Binary Logs, Relay Logs,
+                Replication Threads, and Filters</a><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>MariaDB GTIDs, Domains, Positions, Strict Mode,
+                and Failover Semantics</a><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Parallel Replication, Commit Ordering, Worker
+                Tuning, and Replica Throughput</a><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Delayed Replicas, Read Scaling, Multi-Source
+                Replication, and Reporting Patterns</a><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Lag, Breakage, Data Drift, Rebuilds, Promotion,
+                and Replication Incident Runbooks</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>15</span>Galera Cluster: Synchronous Multi-Primary
+              Replication and High Availability
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Galera Architecture, Write Sets, Certification,
+                Quorum, and Cluster Membership</a><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Bootstrap, Join, State Snapshot Transfer,
+                Incremental State Transfer, and Donor Selection</a><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>Flow Control, Certification Conflicts,
+                Auto-Increment, Hot Rows, and Workload Constraints</a><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>Load Balancing, Primary Component, Split Brain,
+                Fencing, and Application Failover</a><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Galera Security, TLS, Rolling Maintenance,
+                Upgrades, Failure Injection, and Recovery</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>16</span>Partitioning, Large Tables, Online DDL, and Data
+              Lifecycle
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Partitioning Strategies, Partition Pruning,
+                Keys, Constraints, and Design Limits</a><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>Hot/Cold Data, Rolling Partitions, Archiving,
+                Retention, and Bulk Loads</a><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>ALTER TABLE Algorithms, Lock Levels, Online DDL,
+                and Operational Planning</a><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>Large Delete/Update Pathologies, Chunking, Purge
+                Effects, and Storage Reclamation</a><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Multi-Terabyte Capacity Planning, Maintenance
+                Windows, and Growth Forecasting</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>17</span>Performance Schema, sys Schema, Logs, and
+              Observability
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Performance Schema Instrumentation, Consumers,
+                Statements, Waits, and Overhead</a><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>sys Schema Views, User/Host Activity, I/O,
+                Statements, Memory, and Index Usage</a><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Slow Query Log, General Log, Error Log, and
+                Query-Digest Workflows</a><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>InnoDB, Replication, Galera, Connections, Temp
+                Tables, and OS Metrics</a><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Build Dashboards, Baselines, SLO Alerts, and
+                Incident Timelines</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>18</span>Performance Engineering: Memory, I/O, Threading,
+              and Workload Tuning
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Buffer Pool Sizing, Dirty Pages, Flushing,
+                Read-Ahead, and Cache Hit Interpretation</a><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Per-Session Memory, Sort/Join Buffers, Temp
+                Tables, and Memory Explosion Risks</a><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Thread Pool, Connection Concurrency, Queueing,
+                and CPU Saturation</a><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Redo Capacity, I/O Capacity, Flush Methods,
+                Storage Latency, and Checkpoint Behavior</a><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Benchmark Design, Warmup, Concurrency,
+                Percentiles, Regression Tests, and Capacity Headroom</a>
+</div>
+</details>
+<details class="sidebar-chapter" open="">
+<summary>
+<span>19</span>Application Integration, Connectors, ORMs, Pools,
+              and Reliability
+            </summary>
+<div>
+<a class="sidebar-lesson" href="Lesson1.html"><span>01</span>Client Connectors, Connection Strings, TLS,
+                Timeouts, Pooling, and Session Contracts</a><a class="sidebar-lesson" href="Lesson2.html"><span>02</span>Prepared Statements, Parameters, Injection
+                Defense, Type Mapping, and Unicode</a><a class="sidebar-lesson" href="Lesson3.html"><span>03</span>Transaction Scoping, Retryable Errors,
+                Idempotency, and Network Failure Handling</a><a class="sidebar-lesson" href="Lesson4.html"><span>04</span>ORM Query Shapes, Pagination, N+1, Bulk
+                Operations, and Index Visibility</a><a class="sidebar-lesson is-current" href="Lesson5.html"><span>05</span>Schema Migrations, Health Checks, Failover
+                Behavior, and Deployment Coordination<i>Current</i></a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>20</span>Upgrades, Migrations, Compatibility Testing, and
+              Low-Downtime Change
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Patch, Innovation, and LTS Upgrade Planning with
+                Release Notes and Deprecations</a><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>mariadb-upgrade, System Tables, Configuration
+                Drift, and Post-Upgrade Validation</a><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>MySQL-to-MariaDB and MariaDB-to-MySQL Migration:
+                Compatibility Matrix and Data Tests</a><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Expand/Contract Schema Changes, Online DDL,
+                Backfills, and Application Compatibility</a><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Rolling Cluster/Replication Upgrades, Rollback
+                Plans, Canaries, and Performance Comparison</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>21</span>Advanced MariaDB Features: System-Versioned Tables,
+              Oracle Mode, and Federation
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>System-Versioned Tables, Temporal Queries,
+                Retention, and Audit/History Use Cases</a><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>Application-Time Periods, Bitemporal Modeling
+                Concepts, and Constraint Design</a><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Oracle SQL_MODE / Compatibility Features,
+                PL/SQL-Like Syntax, and Migration Boundaries</a><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>Spider/Federated Data Access Concepts,
+                Distributed Queries, and Operational Tradeoffs</a><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>When MariaDB-Native Features Replace—or Should
+                Not Replace—Dedicated Data Systems</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>22</span>Production Capstone: Design, Cluster, Secure, Tune,
+              and Recover MariaDB
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Define Workload, SLOs, Data Model, Engine
+                Choices, Capacity, and Architecture Record</a><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>Implement Schema, Indexes, Security, Application
+                Access, and Migration Automation</a><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>Tune SQL, InnoDB, Memory, I/O, Threading, and
+                Galera/Replication from Evidence</a><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Implement Backups/PITR, HA, Monitoring, Alerts,
+                Upgrades, and Incident Runbooks</a><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Run Restore, Failover, Split-Brain, Performance,
+                and Corruption Drills—and Defend the Design</a>
+</div>
+</details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar">
+<button data-sidebar-open="" type="button">
+<span>Course navigation</span><span>Chapter 19 · Lesson 05</span>
+</button>
+</div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+<a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">MariaDB</a><span>/</span><span>Chapter 19 · Lesson 05</span>
+</nav>
+<header class="lesson-header">
+<p class="eyebrow">
+              Chapter 19 · Application Integration, Connectors, ORMs, Pools, and
+              Reliability
+            </p>
+<h1>
+              Schema Migrations, Health Checks, Failover Behavior, and
+              Deployment Coordination
+            </h1>
+<p>
+              Coordinate schema and application change through expand/contract
+              migrations, readiness evidence, pool rotation, and failover-aware
+              deployment sequencing without confusing routing with database
+              correctness.
+            </p>
+<div class="lesson-meta">
+<span>Advanced</span><span>190–235 minutes</span><span>expand/contract and endpoint-rotation lab</span><span>MariaDB Community 12.3.2 baseline</span><span>Curriculum anchor: 11.8 LTS · verify target connector/server
+                behavior</span><span>Free local tooling · Last reviewed: August 2026</span>
+</div>
+</header>
+<nav aria-label="On this page" class="lesson-toc">
+<strong>On this page</strong>
+<ol data-generated-toc=""></ol>
+</nav>
+<div class="lesson-content">
+<section>
+<h2>Learning outcomes</h2>
+<p>
+                ServiceHub needs to rename a column, backfill millions of rows,
+                deploy two application versions, and later move traffic after a
+                primary failure. A schema migration is therefore not “run ALTER
+                TABLE before deploy.” It is a distributed change across code,
+                database metadata, data contents, connection pools, routing and
+                rollback assumptions. The safe pattern is a
+                <strong>compatibility window</strong>: old and new components
+                overlap while both remain correct.
+              </p>
+<div class="objectives">
+<div class="objective">
+<span>01</span>
+<p>
+                    Use expand/contract migrations so old and new application
+                    versions remain compatible during rollout.
+                  </p>
+</div>
+<div class="objective">
+<span>02</span>
+<p>
+                    Plan online DDL and chunked backfills with target-version
+                    evidence rather than assuming zero locking or zero
+                    replication impact.
+                  </p>
+</div>
+<div class="objective">
+<span>03</span>
+<p>
+                    Distinguish liveness, readiness and deep diagnostics and
+                    include database role/state where routing requires it.
+                  </p>
+</div>
+<div class="objective">
+<span>04</span>
+<p>
+                    Rotate connection pools deliberately after endpoint/failover
+                    changes instead of assuming existing sockets follow
+                    DNS/config.
+                  </p>
+</div>
+<div class="objective">
+<span>05</span>
+<p>
+                    Test routing mechanics in a disposable local topology while
+                    keeping database promotion, fencing and consistency as
+                    separate HA responsibilities.
+                  </p>
+</div>
+</div>
+</section>
+<section>
+<h2>
+                1. Expand/contract creates a deliberate compatibility window
+              </h2>
+<p>
+                Suppose ServiceHub wants to replace
+                <code>status_text</code> with a constrained
+                <code>status_code</code>. A one-step rename breaks whichever
+                application version deploys second. Expand/contract instead adds
+                the new representation, makes application code temporarily
+                tolerate/write both, backfills historical rows, verifies
+                convergence, switches reads, and only later removes the legacy
+                representation.
+              </p>
+<table class="data-table">
+<thead>
+<tr>
+<th>Phase</th>
+<th>Database</th>
+<th>Application contract</th>
+<th>Rollback posture</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Expand</td>
+<td>Add nullable/new column/index</td>
+<td>Old app still works; new app can detect feature</td>
+<td>Usually easy: old path remains</td>
+</tr>
+<tr>
+<td>Dual/read compatibility</td>
+<td>Both representations exist</td>
+<td>New writes populate both or deterministic transform</td>
+<td>Roll back app without losing legacy path</td>
+</tr>
+<tr>
+<td>Backfill</td>
+<td>Chunk old rows into new representation</td>
+<td>Readers tolerate mixed completion</td>
+<td>Pause/resume from durable key</td>
+</tr>
+<tr>
+<td>Cutover</td>
+<td>New reads become authoritative</td>
+<td>Old version no longer safe after boundary</td>
+<td>Requires explicit deployment gate</td>
+</tr>
+<tr>
+<td>Contract</td>
+<td>Remove obsolete column/index later</td>
+<td>Only new app versions supported</td>
+<td>Rollback may require schema/data restoration</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section>
+<h2>2. Build the migration lab with evidence-first DDL</h2>
+<div class="code-window" data-code-block="" data-language="sql">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    servicehub19_l5 baseline
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code><span class="code-line">DROP DATABASE IF EXISTS servicehub19_l5;</span><span class="code-line">CREATE DATABASE servicehub19_l5 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;</span><span class="code-line">USE servicehub19_l5;</span><span class="code-line">CREATE TABLE tickets (</span><span class="code-line">  ticket_id BIGINT PRIMARY KEY AUTO_INCREMENT,</span><span class="code-line">  status_text VARCHAR(20) NOT NULL,</span><span class="code-line">  subject VARCHAR(180) NOT NULL,</span><span class="code-line">  updated_at DATETIME(6) NOT NULL,</span><span class="code-line">  INDEX ix_updated(updated_at)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line">INSERT INTO tickets(status_text,subject,updated_at)</span><span class="code-line">VALUES ('open','A','2026-08-20 10:00:00'),</span><span class="code-line">       ('closed','B','2026-08-20 11:00:00'),</span><span class="code-line">       ('waiting','C','2026-08-20 12:00:00');</span><span class="code-line"></span><span class="code-line">SELECT VERSION();</span><span class="code-line">SHOW CREATE TABLE tickets;</span><span class="code-line">SELECT TABLE_ROWS, DATA_LENGTH, INDEX_LENGTH</span><span class="code-line">FROM information_schema.TABLES</span><span class="code-line">WHERE TABLE_SCHEMA='servicehub19_l5' AND TABLE_NAME='tickets';</span></code></pre>
+</div>
+<div class="code-window" data-code-block="" data-language="sql">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    expand and verify chosen ALTER behavior
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code><span class="code-line">ALTER TABLE tickets</span><span class="code-line">  ADD COLUMN status_code TINYINT NULL,</span><span class="code-line">  ALGORITHM=INSTANT,</span><span class="code-line">  LOCK=NONE;</span><span class="code-line"></span><span class="code-line">SHOW CREATE TABLE tickets;</span></code></pre>
+</div>
+<p>
+                If the requested <code>ALGORITHM</code>/<code>LOCK</code>
+                combination is unsupported on your exact version/table shape,
+                MariaDB should reject rather than silently violating the
+                requested guarantee. Re-plan using the target version’s ALTER
+                documentation and a disposable copy. “Online” does not mean zero
+                metadata locking, zero temporary space, zero replication/Galera
+                effect, or zero rollback cost.
+              </p>
+</section>
+<section>
+<h2>3. Backfill in deterministic bounded chunks</h2>
+<div class="code-window" data-code-block="" data-language="sql">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    idempotent chunk shape
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code><span class="code-line">UPDATE tickets</span><span class="code-line">SET status_code = CASE status_text</span><span class="code-line">  WHEN 'open' THEN 1 WHEN 'waiting' THEN 2 WHEN 'closed' THEN 3 END</span><span class="code-line">WHERE ticket_id &gt; ? AND ticket_id &lt;= ?</span><span class="code-line">  AND status_code IS NULL;</span><span class="code-line"></span><span class="code-line">-- Acceptance evidence after all chunks:</span><span class="code-line">SELECT COUNT(*) AS missing</span><span class="code-line">FROM tickets WHERE status_code IS NULL;</span><span class="code-line">SELECT status_text, status_code, COUNT(*)</span><span class="code-line">FROM tickets GROUP BY status_text, status_code;</span></code></pre>
+</div>
+<p>
+                The application or migration worker persists the last completed
+                key/range outside the transaction so it can pause safely.
+                Monitor transaction duration, lock waits, redo/binlog volume and
+                replica/Galera health while backfilling. A fixed chunk size is
+                only a starting point; adjust from measured impact.
+              </p>
+</section>
+<section>
+<h2>4. Liveness, readiness and database-role checks</h2>
+<div class="code-window" data-code-block="" data-language="sql">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    cheap readiness evidence
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code><span class="code-line">SELECT 1 AS sql_round_trip,</span><span class="code-line">       @@hostname AS server_host,</span><span class="code-line">       @@server_id AS server_id,</span><span class="code-line">       @@read_only AS read_only,</span><span class="code-line">       DATABASE() AS selected_database,</span><span class="code-line">       VERSION() AS server_version;</span><span class="code-line"></span><span class="code-line">-- On Galera nodes, also inspect the exact wsrep state required by your routing policy:</span><span class="code-line">SHOW STATUS LIKE 'wsrep_ready';</span><span class="code-line">SHOW STATUS LIKE 'wsrep_connected';</span><span class="code-line">SHOW STATUS LIKE 'wsrep_local_state_comment';</span></code></pre>
+</div>
+<p>
+<strong>Liveness</strong> asks whether the process should be
+                restarted. <strong>Readiness</strong> asks whether this instance
+                should receive traffic. A database dependency can make an
+                endpoint unready without meaning the process itself is dead. For
+                a write service, a reachable read-only replica may be unhealthy
+                for writes even though <code>SELECT 1</code> succeeds.
+              </p>
+</section>
+<section>
+<h2>
+                5. Wrong approach: assume existing pool sockets follow failover
+              </h2>
+<p>
+                Changing DNS, a configuration value, or a proxy backend does not
+                necessarily move connections already open in an application
+                pool. Existing TCP sessions can remain attached to the old node
+                until they fail or are recycled. A failover-aware deployment
+                must define how endpoint change is detected, how new connections
+                are validated, how the old pool drains, and what happens to
+                in-flight transactions.
+              </p>
+<div class="code-window" data-code-block="" data-language="javascript">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>javascript · controlled pool rotation pattern
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code><span class="code-line">const mariadb = require('mariadb');</span><span class="code-line">let activePool;</span><span class="code-line"></span><span class="code-line">function makePool(cfg) {</span><span class="code-line">  return mariadb.createPool({ ...cfg, connectionLimit: 6, connectTimeout: 3000 });</span><span class="code-line">}</span><span class="code-line"></span><span class="code-line">async function verifyWritable(pool) {</span><span class="code-line">  const conn = await pool.getConnection();</span><span class="code-line">  try {</span><span class="code-line">    const [r] = await conn.query(</span><span class="code-line">      `SELECT @@hostname AS host, @@server_id AS sid, @@read_only AS ro`</span><span class="code-line">    );</span><span class="code-line">    if (Number(r.ro) !== 0) throw new Error('target is read-only');</span><span class="code-line">    return r;</span><span class="code-line">  } finally { conn.release(); }</span><span class="code-line">}</span><span class="code-line"></span><span class="code-line">async function rotatePool(newCfg) {</span><span class="code-line">  const candidate = makePool(newCfg);</span><span class="code-line">  try {</span><span class="code-line">    const evidence = await verifyWritable(candidate);</span><span class="code-line">    const old = activePool;</span><span class="code-line">    activePool = candidate;</span><span class="code-line">    if (old) await old.end();</span><span class="code-line">    return evidence;</span><span class="code-line">  } catch (e) {</span><span class="code-line">    await candidate.end();</span><span class="code-line">    throw e;</span><span class="code-line">  }</span><span class="code-line">}</span></code></pre>
+</div>
+<p>
+                This verifies only a routing/application contract. It does not
+                promote a replica, fence an old primary, prove GTID convergence,
+                establish Galera quorum, or prevent split brain. Those are
+                database/HA control-plane responsibilities from Chapters 14 and
+                15.
+              </p>
+</section>
+<section>
+<h2>6. Free local routing-change lab</h2>
+<div class="code-window" data-code-block="" data-language="text">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>terminal
+                    · two disposable endpoints for routing mechanics only
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code><span class="code-line"># Docker or Podman syntax may differ slightly by platform.</span><span class="code-line">docker run -d --name m19a -p 33191:3306 -e MARIADB_ROOT_PASSWORD=labroot mariadb:12.3</span><span class="code-line">docker run -d --name m19b -p 33192:3306 -e MARIADB_ROOT_PASSWORD=labroot mariadb:12.3</span><span class="code-line"></span><span class="code-line"># Wait for both servers, then seed the same minimal schema/account on each.</span><span class="code-line"># Point the application pool first at 127.0.0.1:33191 and capture @@server_id/@@hostname.</span><span class="code-line"># Stop m19a, rotate the application config to 127.0.0.1:33192, recreate/verify the pool,</span><span class="code-line"># and record the new server identity plus request failures during the transition.</span><span class="code-line"></span><span class="code-line">docker stop m19a</span><span class="code-line"># ...call rotatePool({host:'127.0.0.1', port:33192, ...})...</span><span class="code-line"></span><span class="code-line">docker rm -f m19a m19b</span></code></pre>
+</div>
+<div class="code-window" data-code-block="" data-language="sql">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    run this seed once against port 33191 and once against 33192
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code><span class="code-line">CREATE DATABASE IF NOT EXISTS servicehub19_route CHARACTER SET utf8mb4;</span><span class="code-line">DROP USER IF EXISTS 'svc19_route'@'%';</span><span class="code-line">CREATE USER 'svc19_route'@'%' IDENTIFIED BY 'route-lab-only';</span><span class="code-line">GRANT SELECT ON servicehub19_route.* TO 'svc19_route'@'%';</span><span class="code-line">SELECT @@hostname AS host, @@server_id AS sid, @@read_only AS ro;</span></code></pre>
+</div>
+<p>
+                Use <code>svc19_route</code> only in this disposable topology
+                and pass its password through local environment/configuration,
+                not source control. For the routing-mechanics probe, set
+                <code>database: 'servicehub19_route'</code> in the pool
+                configuration.
+                <strong>The <code>@'%'</code> host is used only to keep this
+                  disposable two-container routing lab portable; do not copy
+                  wildcard-host accounts into production. Narrow account
+                  hosts/network paths there.</strong>
+</p>
+<div class="callout warning">
+<strong>What this lab does—and does not—prove</strong>
+<p>
+                  It proves that the application detects endpoint loss, creates
+                  a fresh pool to a new endpoint, and verifies server
+                  role/identity before accepting traffic. The two lab servers
+                  are not a valid replicated HA pair unless you explicitly
+                  configure replication/Galera. For a real promotion drill,
+                  reuse the Chapter 14 async-replication or Chapter 15 Galera
+                  topology, fence the old writer, validate data position/quorum,
+                  then run this application pool-rotation test against the
+                  promoted/routed endpoint.
+                </p>
+</div>
+</section>
+<section>
+<h2>7. Deployment ordering and acceptance gates</h2>
+<p>
+                A safe release pipeline encodes dependencies instead of relying
+                on human memory. A typical order is: preflight/version/backup →
+                expand DDL → deploy compatibility-capable app → backfill in
+                bounded chunks → verify data parity → switch reads/feature flag
+                → observe → deploy versions that no longer use legacy schema →
+                contract later. If any step makes rollback impossible, make that
+                a named gate with recovery evidence.
+              </p>
+<table class="data-table">
+<thead>
+<tr>
+<th>Gate</th>
+<th>Evidence before continuing</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DDL gate</td>
+<td>
+                      Target-version algorithm/lock behavior tested;
+                      metadata-lock/space/replication impact acceptable
+                    </td>
+</tr>
+<tr>
+<td>App compatibility</td>
+<td>
+                      Old and new versions both pass against expanded schema
+                    </td>
+</tr>
+<tr>
+<td>Backfill</td>
+<td>
+                      Zero/known missing rows; error/deadlock/lag signals within
+                      limits
+                    </td>
+</tr>
+<tr>
+<td>Cutover</td>
+<td>
+                      New-path correctness metrics match expectations; rollback
+                      decision documented
+                    </td>
+</tr>
+<tr>
+<td>Failover/routing</td>
+<td>
+                      Old writer fenced where applicable; new target role/data
+                      state verified; pools refreshed
+                    </td>
+</tr>
+<tr>
+<td>Contract</td>
+<td>
+                      No supported app version references legacy object;
+                      restore/rollback implications accepted
+                    </td>
+</tr>
+</tbody>
+</table>
+</section>
+<section>
+<h2>8. Reproducible cleanup and checks</h2>
+<div class="code-window" data-code-block="" data-language="sql">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    final verification and cleanup
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code><span class="code-line">SELECT COUNT(*) AS unmapped</span><span class="code-line">FROM servicehub19_l5.tickets</span><span class="code-line">WHERE status_code IS NULL;</span><span class="code-line"></span><span class="code-line">-- Only after the compatibility window is complete in the lab:</span><span class="code-line">ALTER TABLE servicehub19_l5.tickets DROP COLUMN status_text;</span><span class="code-line">SHOW CREATE TABLE servicehub19_l5.tickets;</span><span class="code-line"></span><span class="code-line">DROP DATABASE IF EXISTS servicehub19_l5;</span></code></pre>
+</div>
+<div class="checkpoint"><h3>Check your reasoning</h3><ol><li>
+                  Why add the new column before deploying code that requires it?
+                </li><li>Why can LOCK=NONE still require operational planning?</li><li>
+                  Why is SELECT 1 insufficient for a write-service readiness
+                  check?
+                </li><li>Why destroy/recreate a pool after an endpoint change?</li><li>
+                  Does application endpoint rotation make async replication
+                  failover safe?
+                </li></ol><details class="answer-toggle"><summary>Review the answers</summary><div><ol><li>
+<p>
+                    Expand first creates a compatibility window: old code still
+                    works, while new code can begin using the new
+                    representation.
+                  </p>
+</li><li>
+<p>
+                    Online DDL can still need metadata locks, I/O/temp space,
+                    redo/binlog work and can affect replicas/Galera. LOCK=NONE
+                    does not mean zero impact.
+                  </p>
+</li><li>
+<p>
+                    It proves SQL round-trip, not that the endpoint is the
+                    intended writable role or Galera-ready state.
+                  </p>
+</li><li>
+<p>
+                    Existing physical connections may remain attached to the old
+                    server; pool rotation forces new connections through the new
+                    routing contract and lets the app verify identity/role.
+                  </p>
+</li><li>
+<p>
+                    No. Promotion, fencing, data-loss checks/GTID position and
+                    routing control are separate HA responsibilities. The app
+                    test verifies only its behavior after the database control
+                    plane chooses a safe target.
+                  </p>
+</li></ol></div></details></div>
+
+
+
+
+</section>
+<section>
+<h2>Production judgment and bridge to Chapter 20</h2>
+<p>
+                Treat schema change and failover as rehearsed protocols with
+                explicit compatibility windows, gates and evidence. Migration
+                tooling may automate commands, but it cannot decide whether a
+                table rewrite fits the maintenance window or whether an old
+                primary is safely fenced. Application health checks must reflect
+                role semantics, and pool refresh must be part of routing change.
+                Chapter 20 builds on this deployment discipline for maintenance
+                updates, LTS/current release upgrades,
+                <code>mariadb-upgrade</code>, compatibility testing, rolling
+                replication/Galera upgrades and rollback limits.
+              </p>
+</section>
+<section data-depth-fix="ch19l5"><h2>Deployment choreography: schema, application, and routing must overlap safely</h2>
+<p>A low-risk deployment is a compatibility window rather than a single instant. During an expand/contract change, old and new application versions may run at the same time because of rolling deployment, retries, background workers, or delayed rollback. The schema must therefore support both versions until traffic and asynchronous work have drained from the old contract. Backfills should be resumable and observable, and the final constraint or column removal belongs in a later deployment after evidence shows the legacy path is unused.</p>
+<p>Health checks should test the contract they claim to represent. Liveness answers whether the process should be restarted; readiness answers whether it can safely receive traffic. A readiness check may validate pool acquisition and a cheap database operation, but it should not perform expensive business queries or mutate data. After failover, readiness also needs to reflect whether the application has refreshed stale pooled connections and whether the destination node is in the intended write/read role.</p>
+<p>Coordinate migration locks, application rollout, pool refresh, and rollback in one runbook. A schema change that is technically online can still wait on metadata locks or generate I/O/replication pressure, while an application rollback may become impossible after a destructive contract step. Explicit gates turn those hidden dependencies into observable deployment decisions.</p></section><section>
+<h2>Authoritative references</h2>
+<p>
+                Primary references are current MariaDB documentation or official
+                connector source; verify the target server/connector version
+                before relying on defaults or option behavior.
+              </p>
+<ul>
+<li>
+<a href="https://mariadb.com/docs/server/reference/sql-statements/data-definition/alter/alter-table/" rel="noreferrer" target="_blank">MariaDB ALTER TABLE</a>
+</li>
+<li>
+<a href="https://mariadb.com/docs/server/reference/sql-statements/transactions/metadata-locking" rel="noreferrer" target="_blank">MariaDB metadata locking</a>
+</li>
+<li>
+<a href="https://mariadb.com/docs/server/ha-and-performance/standard-replication" rel="noreferrer" target="_blank">MariaDB standard replication</a>
+</li>
+<li>
+<a href="https://mariadb.com/docs/galera-cluster" rel="noreferrer" target="_blank">MariaDB Galera Cluster documentation</a>
+</li>
+<li>
+<a href="https://mariadb.com/docs/connectors/mariadb-connector-nodejs/connector-nodejs-promise-api" rel="noreferrer" target="_blank">MariaDB Connector/Node.js Promise API</a>
+</li>
+</ul>
+</section>
+</div>
+<nav aria-label="Lesson navigation" class="lesson-nav">
+<a class="previous" href="Lesson4.html"><small>Previous lesson</small><strong>ORM Query Shapes, Pagination, N+1, Bulk Operations, and Index Visibility</strong></a><a class="next" href="../Chapter20/Lesson1.html"><small>Next lesson</small><strong>Patch, Innovation, and LTS Upgrade Planning with Release Notes and Deprecations</strong></a>
+</nav>
+</article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+<div aria-label="Author links" class="social-row">
+<a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="M15 3h6v6"></path>
+<path d="M10 14 21 3"></path>
+<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a><a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="M15 3h6v6"></path>
+<path d="M10 14 21 3"></path>
+<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a><a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="M15 3h6v6"></path>
+<path d="M10 14 21 3"></path>
+<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a><a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="M15 3h6v6"></path>
+<path d="M10 14 21 3"></path>
+<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head">
+<span>ETH</span><small>Ethereum / ERC-20 only</small>
+</div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code><button class="button secondary compact" data-copy-donation="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy address
+                </button>
+<p>
+                  Send only assets compatible with the Ethereum/ERC-20 network.
+                  Do not send TRC-20/TRON assets.
+                </p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div>
+<strong>Big Data Academy</strong>
+<p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+</div>
+<div>
+<a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a>
+</div>
+<small>Created and maintained by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>

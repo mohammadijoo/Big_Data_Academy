@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Map application units of work to MariaDB transactions, classify retryable failures, and make ambiguous network outcomes safe with bounded retries and idempotency evidence." name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>
+      Transaction Scoping, Retryable Errors, Idempotency, and Network Failure
+      Handling | MariaDB | Big Data Academy
+    </title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html"><span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24">
+<ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+<path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span><span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span></a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a><a class="is-active" href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="4"></circle>
+<path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path>
+</svg></button><button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="M4 7h16M4 12h16M4 17h16"></path>
+</svg>
+</button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu="">
+<a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+</nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">MA</span>
+<div><small>Course 06</small><strong>MariaDB</strong></div></a><button aria-label="Close course navigation" data-sidebar-close="" type="button">
+            ×
+          </button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24">
+<circle cx="11" cy="11" r="7"></circle>
+<path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 110 lessons..." type="search"/></label>
+<nav aria-label="MariaDB curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter">
+<summary>
+<span>01</span>MariaDB Foundations, Release Model, Editions, and
+              Lab Setup
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What MariaDB Is: Origins, Server Architecture,
+                Ecosystem, and Common Deployment Roles</a><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Community Server, Enterprise Offerings,
+                Licensing, and Operational Boundaries</a><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>LTS vs Innovation Releases, Support Horizons,
+                Upgrade Cadence, and Version Selection</a><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Install MariaDB on Windows, Linux, Containers,
+                and Verify Client/Server Tooling</a><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build a Reproducible Lab with Databases,
+                Accounts, Sample Workloads, and Safe Defaults</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>02</span>MariaDB vs MySQL: Compatibility, Divergence, and
+              Migration Awareness
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>Shared Heritage vs Independent Evolution: Why
+                Syntax Compatibility Is Not Feature Parity</a><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Version Numbering, Removed/Added Features,
+                Defaults, and Configuration Divergence</a><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>Data Types, SQL Semantics, JSON Differences,
+                Generated Columns, and Compatibility Traps</a><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Replication and Binary Log Compatibility
+                Boundaries Across MariaDB and MySQL</a><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Plan a Compatibility Assessment Before Migration
+                or Mixed-Environment Operations</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>03</span>Server Architecture, Configuration, Connections,
+              and Metadata
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>mariadbd Startup, Data Directory, Option Files,
+                and Configuration Precedence</a><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Threads, Sessions, Connection Limits, Thread
+                Pool Concepts, and Resource Controls</a><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>System/Status Variables, Dynamic Settings,
+                Persisted Configuration Patterns, and Validation</a><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>information_schema, performance_schema, SHOW
+                Commands, and Metadata Discovery</a><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>Logs, Startup Failures, Time Zones, Character
+                Sets, Collations, and Baseline Configuration</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>04</span>Schemas, Data Types, Keys, Constraints, and SQL
+              Modes
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>Databases, Tables, Temporary Objects, Views, and
+                Namespace Conventions</a><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>Numeric, String, Temporal, UUID, JSON/Text,
+                Vector, Spatial, and Binary Types</a><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK,
+                DEFAULT, and Generated/Virtual Columns</a><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>AUTO_INCREMENT, Sequences, Natural vs Surrogate
+                Keys, and Identifier Strategy</a><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>SQL_MODE, Strictness, Implicit Conversion,
+                Oracle Mode Awareness, and Data Quality</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>05</span>SQL Querying, Joins, CTEs, Windows, and Analytical
+              SQL
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>Filtering, NULL Semantics, Ordering,
+                Expressions, and Deterministic Query Results</a><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Join Types, Derived Tables, Correlated
+                Subqueries, EXISTS/IN, and Semijoin Reasoning</a><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>Common Table Expressions, Recursive CTEs, and
+                Hierarchical Data</a><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Window Functions, Frames, Ranking, Running
+                Metrics, and Top-N per Group</a><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Aggregations, ROLLUP, GROUPING Patterns, Set
+                Operations, and Reporting Workflows</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>06</span>Data Modification, Transactions, Isolation, Locks,
+              and Deadlocks
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>INSERT/REPLACE/INSERT ... ON DUPLICATE KEY,
+                UPDATE, DELETE, and RETURNING Capabilities</a><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>Autocommit, Transactions, SAVEPOINT, Atomicity,
+                and Application Error Boundaries</a><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Isolation Levels, Consistent Reads, Locking
+                Reads, MVCC, and Concurrency Anomalies</a><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Metadata Locks, Row Locks, Gap/Next-Key Locking,
+                and Online Change Interactions</a><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Deadlock Analysis, Lock Waits, Retry Policies,
+                Idempotency, and Contention Testing</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>07</span>InnoDB in MariaDB: Storage, Buffering, Redo, Undo,
+              and Recovery
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>InnoDB Tablespaces, Pages, Row Formats,
+                Clustered/Secondary Indexes, and Record Layout</a><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Buffer Pool, Flushing, Dirty Pages, Read-Ahead,
+                and Cache Efficiency</a><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Redo Logs, Undo, Doublewrite, Checkpoints, Crash
+                Recovery, and Durability</a><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Purge, History, Long Transactions, Undo Growth,
+                and Bloat-Like Operational Symptoms</a><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Inspect InnoDB Metrics and Tune Storage Behavior
+                for OLTP Workloads</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>08</span>MariaDB Storage Engines Beyond InnoDB
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>Aria Architecture, Crash Safety, Temporary Work,
+                and Operational Use Cases</a><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>MyISAM Legacy Characteristics, Table Locks,
+                FULLTEXT History, and Migration Concerns</a><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>MEMORY Engine, Ephemeral Data, Limits, and Safer
+                Alternatives</a><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>CONNECT and Other Specialized Engines: External
+                Data Access and Tradeoffs</a><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Choose a Storage Engine Deliberately and Avoid
+                Cross-Engine Transaction Assumptions</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>09</span>Index Design, FULLTEXT, Spatial, Vector, and
+              Specialized Access Paths
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>B-Tree Indexes, Composite Keys, Prefix Rules,
+                Covering Indexes, and Write Costs</a><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>Functional/Expression and Generated-Column
+                Indexing Patterns</a><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>FULLTEXT Indexes, Tokenization, Boolean/Natural
+                Language Search, and Limits</a><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Spatial Types and Indexes, SRIDs, Geometry
+                Functions, and GIS Workloads</a><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Vector Search Capabilities, Distance Functions,
+                Vector Indexing Concepts, and AI Workloads</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>10</span>Optimizer, EXPLAIN, Statistics, Histograms, and
+              Query Tuning
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Optimizer Architecture, Access Paths, Join
+                Orders, Costing, and Query Transformations</a><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>EXPLAIN, ANALYZE, FORMAT=JSON, Runtime
+                Statistics, and Reading Plans</a><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Table/Index Statistics, Histograms, Cardinality,
+                and Misestimate Diagnosis</a><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Join Algorithms, Subquery Optimizations, Derived
+                Tables, Semijoins, and Materialization</a><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>Optimizer Switches, Hints, Invisible/Ignored
+                Index Concepts, and Regression Control</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>11</span>Views, Stored Programs, Triggers, Events, and
+              SQL/PSM
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Views, Updatability, ALGORITHM, SQL SECURITY,
+                and Definer Risks</a><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Stored Procedures and Functions, Parameters,
+                Handlers, Cursors, and Diagnostics</a><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Triggers, OLD/NEW Rows, Ordering, Auditing, and
+                Hidden Coupling</a><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>Event Scheduler, Recurring Jobs, Maintenance,
+                and Failure Visibility</a><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Server-Side Logic Testing, Deployment,
+                Privileges, and Application-Boundary Decisions</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>12</span>Accounts, Roles, Authentication, Authorization, and
+              Security Hardening
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>Accounts, Authentication Plugins, Password
+                Policy, Locking, Expiry, and Lifecycle</a><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Privileges, Roles, Default Roles, Grant Design,
+                and Delegated Administration</a><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Definers, SQL SECURITY, Stored Objects, Views,
+                and Privilege-Escalation Prevention</a><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>TLS, Certificates, Secure Transport, Network
+                Segmentation, and Secret Rotation</a><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Hardening Checklist, Audit Options, Plugin Risk,
+                File Privileges, and Patch Discipline</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>13</span>Backup, mariadb-backup, Restore, and Point-in-Time
+              Recovery
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>Logical Backup with mariadb-dump: Consistency,
+                Objects, Routines, and Large Databases</a><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>Physical Backup with mariadb-backup: Prepare,
+                Copy-Back, Incrementals, and Encryption</a><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>Binary Logs, Retention, Coordinates/GTIDs, and
+                PITR Prerequisites</a><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Point-in-Time Recovery, Partial Recovery,
+                Validation, and Data-Loss Boundaries</a><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Backup Automation, Offloading to Replicas,
+                Restore Drills, RPO/RTO, and Corruption Tests</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>14</span>Asynchronous Replication, GTIDs, Parallel Apply,
+              and Topology Design
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Primary/Replica Flow, Binary Logs, Relay Logs,
+                Replication Threads, and Filters</a><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>MariaDB GTIDs, Domains, Positions, Strict Mode,
+                and Failover Semantics</a><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Parallel Replication, Commit Ordering, Worker
+                Tuning, and Replica Throughput</a><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Delayed Replicas, Read Scaling, Multi-Source
+                Replication, and Reporting Patterns</a><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Lag, Breakage, Data Drift, Rebuilds, Promotion,
+                and Replication Incident Runbooks</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>15</span>Galera Cluster: Synchronous Multi-Primary
+              Replication and High Availability
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Galera Architecture, Write Sets, Certification,
+                Quorum, and Cluster Membership</a><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Bootstrap, Join, State Snapshot Transfer,
+                Incremental State Transfer, and Donor Selection</a><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>Flow Control, Certification Conflicts,
+                Auto-Increment, Hot Rows, and Workload Constraints</a><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>Load Balancing, Primary Component, Split Brain,
+                Fencing, and Application Failover</a><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Galera Security, TLS, Rolling Maintenance,
+                Upgrades, Failure Injection, and Recovery</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>16</span>Partitioning, Large Tables, Online DDL, and Data
+              Lifecycle
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>Partitioning Strategies, Partition Pruning,
+                Keys, Constraints, and Design Limits</a><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>Hot/Cold Data, Rolling Partitions, Archiving,
+                Retention, and Bulk Loads</a><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>ALTER TABLE Algorithms, Lock Levels, Online DDL,
+                and Operational Planning</a><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>Large Delete/Update Pathologies, Chunking, Purge
+                Effects, and Storage Reclamation</a><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Multi-Terabyte Capacity Planning, Maintenance
+                Windows, and Growth Forecasting</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>17</span>Performance Schema, sys Schema, Logs, and
+              Observability
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Performance Schema Instrumentation, Consumers,
+                Statements, Waits, and Overhead</a><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>sys Schema Views, User/Host Activity, I/O,
+                Statements, Memory, and Index Usage</a><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Slow Query Log, General Log, Error Log, and
+                Query-Digest Workflows</a><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>InnoDB, Replication, Galera, Connections, Temp
+                Tables, and OS Metrics</a><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Build Dashboards, Baselines, SLO Alerts, and
+                Incident Timelines</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>18</span>Performance Engineering: Memory, I/O, Threading,
+              and Workload Tuning
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Buffer Pool Sizing, Dirty Pages, Flushing,
+                Read-Ahead, and Cache Hit Interpretation</a><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Per-Session Memory, Sort/Join Buffers, Temp
+                Tables, and Memory Explosion Risks</a><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Thread Pool, Connection Concurrency, Queueing,
+                and CPU Saturation</a><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Redo Capacity, I/O Capacity, Flush Methods,
+                Storage Latency, and Checkpoint Behavior</a><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Benchmark Design, Warmup, Concurrency,
+                Percentiles, Regression Tests, and Capacity Headroom</a>
+</div>
+</details>
+<details class="sidebar-chapter" open="">
+<summary>
+<span>19</span>Application Integration, Connectors, ORMs, Pools,
+              and Reliability
+            </summary>
+<div>
+<a class="sidebar-lesson" href="Lesson1.html"><span>01</span>Client Connectors, Connection Strings, TLS,
+                Timeouts, Pooling, and Session Contracts</a><a class="sidebar-lesson" href="Lesson2.html"><span>02</span>Prepared Statements, Parameters, Injection
+                Defense, Type Mapping, and Unicode</a><a class="sidebar-lesson is-current" href="Lesson3.html"><span>03</span>Transaction Scoping, Retryable Errors,
+                Idempotency, and Network Failure Handling<i>Current</i></a><a class="sidebar-lesson" href="Lesson4.html"><span>04</span>ORM Query Shapes, Pagination, N+1, Bulk
+                Operations, and Index Visibility</a><a class="sidebar-lesson" href="Lesson5.html"><span>05</span>Schema Migrations, Health Checks, Failover
+                Behavior, and Deployment Coordination</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>20</span>Upgrades, Migrations, Compatibility Testing, and
+              Low-Downtime Change
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Patch, Innovation, and LTS Upgrade Planning with
+                Release Notes and Deprecations</a><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>mariadb-upgrade, System Tables, Configuration
+                Drift, and Post-Upgrade Validation</a><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>MySQL-to-MariaDB and MariaDB-to-MySQL Migration:
+                Compatibility Matrix and Data Tests</a><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Expand/Contract Schema Changes, Online DDL,
+                Backfills, and Application Compatibility</a><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Rolling Cluster/Replication Upgrades, Rollback
+                Plans, Canaries, and Performance Comparison</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>21</span>Advanced MariaDB Features: System-Versioned Tables,
+              Oracle Mode, and Federation
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>System-Versioned Tables, Temporal Queries,
+                Retention, and Audit/History Use Cases</a><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>Application-Time Periods, Bitemporal Modeling
+                Concepts, and Constraint Design</a><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Oracle SQL_MODE / Compatibility Features,
+                PL/SQL-Like Syntax, and Migration Boundaries</a><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>Spider/Federated Data Access Concepts,
+                Distributed Queries, and Operational Tradeoffs</a><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>When MariaDB-Native Features Replace—or Should
+                Not Replace—Dedicated Data Systems</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>22</span>Production Capstone: Design, Cluster, Secure, Tune,
+              and Recover MariaDB
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Define Workload, SLOs, Data Model, Engine
+                Choices, Capacity, and Architecture Record</a><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>Implement Schema, Indexes, Security, Application
+                Access, and Migration Automation</a><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>Tune SQL, InnoDB, Memory, I/O, Threading, and
+                Galera/Replication from Evidence</a><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Implement Backups/PITR, HA, Monitoring, Alerts,
+                Upgrades, and Incident Runbooks</a><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Run Restore, Failover, Split-Brain, Performance,
+                and Corruption Drills—and Defend the Design</a>
+</div>
+</details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar">
+<button data-sidebar-open="" type="button">
+<span>Course navigation</span><span>Chapter 19 · Lesson 03</span>
+</button>
+</div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+<a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">MariaDB</a><span>/</span><span>Chapter 19 · Lesson 03</span>
+</nav>
+<header class="lesson-header">
+<p class="eyebrow">
+              Chapter 19 · Application Integration, Connectors, ORMs, Pools, and
+              Reliability
+            </p>
+<h1>
+              Transaction Scoping, Retryable Errors, Idempotency, and Network
+              Failure Handling
+            </h1>
+<p>
+              Map application units of work to MariaDB transactions, classify
+              retryable failures, and make ambiguous network outcomes safe with
+              bounded retries and idempotency evidence.
+            </p>
+<div class="lesson-meta">
+<span>Advanced</span><span>180–220 minutes</span><span>two-session failure and idempotency lab</span><span>MariaDB Community 12.3.2 baseline</span><span>Curriculum anchor: 11.8 LTS · verify target connector/server
+                behavior</span><span>Free local tooling · Last reviewed: August 2026</span>
+</div>
+</header>
+<nav aria-label="On this page" class="lesson-toc">
+<strong>On this page</strong>
+<ol data-generated-toc=""></ol>
+</nav>
+<div class="lesson-content">
+<section>
+<h2>Learning outcomes</h2>
+<p>
+                ServiceHub receives a payment request that inserts an invoice
+                and writes an outbox row. Under contention, a deadlock occurs;
+                under a different fault, the TCP connection disappears
+                immediately after <code>COMMIT</code> was sent. A generic “retry
+                three times” loop is dangerous because the two failures have
+                different semantics. This lesson builds a transaction contract
+                around <strong>unit of work</strong>,
+                <strong>retry classification</strong>,
+                <strong>idempotency</strong>, and
+                <strong>ambiguous commit</strong>.
+              </p>
+<div class="objectives">
+<div class="objective">
+<span>01</span>
+<p>
+                    Map an application unit of work to one explicit MariaDB
+                    transaction and always close it with commit or rollback.
+                  </p>
+</div>
+<div class="objective">
+<span>02</span>
+<p>
+                    Distinguish deadlock, lock-wait timeout, connection loss and
+                    validation/constraint failures.
+                  </p>
+</div>
+<div class="objective">
+<span>03</span>
+<p>
+                    Retry only bounded, retryable units and reconstruct the
+                    entire transaction instead of continuing on uncertain state.
+                  </p>
+</div>
+<div class="objective">
+<span>04</span>
+<p>
+                    Use a unique idempotency key to make a repeated request
+                    converge on one durable outcome.
+                  </p>
+</div>
+<div class="objective">
+<span>05</span>
+<p>
+                    Explain why a disconnect around COMMIT may leave the client
+                    uncertain even when the database is internally consistent.
+                  </p>
+</div>
+</div>
+</section>
+<section>
+<h2>
+                1. The transaction boundary belongs to the business operation
+              </h2>
+<p>
+                Autocommit is convenient for independent single statements, but
+                a business action often spans several writes that must succeed
+                or fail together. A MariaDB transaction gives atomicity for
+                transactional engines such as InnoDB. It does not automatically
+                make external HTTP calls, queues, files, or email atomic with
+                the database. Keep the database transaction short and avoid
+                waiting on slow network services while holding locks.
+              </p>
+</section>
+<section>
+<h2>2. Build idempotent transaction tables</h2>
+<div class="code-window" data-code-block="" data-language="sql">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    servicehub19_l3
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code><span class="code-line">DROP DATABASE IF EXISTS servicehub19_l3;</span><span class="code-line">CREATE DATABASE servicehub19_l3 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;</span><span class="code-line">USE servicehub19_l3;</span><span class="code-line"></span><span class="code-line">CREATE TABLE requests (</span><span class="code-line">  request_key VARCHAR(80) PRIMARY KEY,</span><span class="code-line">  status ENUM('started','committed') NOT NULL,</span><span class="code-line">  result_invoice_id BIGINT NULL,</span><span class="code-line">  created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">CREATE TABLE invoices (</span><span class="code-line">  invoice_id BIGINT PRIMARY KEY AUTO_INCREMENT,</span><span class="code-line">  customer_id BIGINT NOT NULL,</span><span class="code-line">  amount DECIMAL(18,4) NOT NULL,</span><span class="code-line">  request_key VARCHAR(80) NOT NULL UNIQUE,</span><span class="code-line">  created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">CREATE TABLE outbox (</span><span class="code-line">  event_id BIGINT PRIMARY KEY AUTO_INCREMENT,</span><span class="code-line">  request_key VARCHAR(80) NOT NULL UNIQUE,</span><span class="code-line">  event_type VARCHAR(64) NOT NULL,</span><span class="code-line">  payload LONGTEXT NOT NULL,</span><span class="code-line">  created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">DROP USER IF EXISTS 'svc19_tx'@'127.0.0.1';</span><span class="code-line">CREATE USER 'svc19_tx'@'127.0.0.1' IDENTIFIED BY 'local-tx-lab';</span><span class="code-line">GRANT SELECT, INSERT, UPDATE ON servicehub19_l3.* TO 'svc19_tx'@'127.0.0.1';</span><span class="code-line"></span><span class="code-line">CREATE TABLE deadlock_items (</span><span class="code-line">  item_id INT PRIMARY KEY,</span><span class="code-line">  value_int INT NOT NULL</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line">INSERT INTO deadlock_items VALUES (1,10),(2,20);</span></code></pre>
+</div>
+<p>
+                The unique request key is not merely a cache hint. It is durable
+                database evidence that lets a retry ask, “Did this logical
+                operation already create an invoice?” rather than blindly
+                creating another one.
+              </p>
+</section>
+<section>
+<h2>
+                3. Implement the whole unit with commit/rollback discipline
+              </h2>
+<div class="code-window" data-code-block="" data-language="javascript">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>javascript · one transaction attempt
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code><span class="code-line">async function createInvoiceOnce(conn, requestKey, customerId, amount) {</span><span class="code-line">  await conn.beginTransaction();</span><span class="code-line">  try {</span><span class="code-line">    await conn.query(</span><span class="code-line">      `INSERT INTO requests(request_key,status)</span><span class="code-line">       VALUES (?, 'started')`, [requestKey]</span><span class="code-line">    );</span><span class="code-line"></span><span class="code-line">    const r = await conn.query(</span><span class="code-line">      `INSERT INTO invoices(customer_id,amount,request_key)</span><span class="code-line">       VALUES (?,?,?)`, [customerId, amount, requestKey]</span><span class="code-line">    );</span><span class="code-line">    const invoiceId = Number(r.insertId);</span><span class="code-line"></span><span class="code-line">    await conn.query(</span><span class="code-line">      `INSERT INTO outbox(request_key,event_type,payload)</span><span class="code-line">       VALUES (?, 'invoice.created', ?)`,</span><span class="code-line">      [requestKey, JSON.stringify({ invoiceId })]</span><span class="code-line">    );</span><span class="code-line"></span><span class="code-line">    await conn.query(</span><span class="code-line">      `UPDATE requests SET status='committed', result_invoice_id=?</span><span class="code-line">       WHERE request_key=?`, [invoiceId, requestKey]</span><span class="code-line">    );</span><span class="code-line">    await conn.commit();</span><span class="code-line">    return { invoiceId, replay: false };</span><span class="code-line">  } catch (err) {</span><span class="code-line">    try { await conn.rollback(); } catch (_) {}</span><span class="code-line">    throw err;</span><span class="code-line">  }</span><span class="code-line">}</span></code></pre>
+</div>
+<p>
+                After an error, the safest default is to roll back and discard
+                any assumptions about partial progress. A lock-wait timeout can
+                have statement-vs-transaction nuances depending on
+                configuration; application code should not continue composing
+                business work on a transaction whose outcome it has not
+                explicitly reasoned about.
+              </p>
+</section>
+<section>
+<h2>4. Classify failures before retrying</h2>
+<table class="data-table">
+<thead>
+<tr>
+<th>Failure</th>
+<th>Typical MariaDB evidence</th>
+<th>Default application response</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Deadlock</td>
+<td>Error 1213, SQLSTATE 40001</td>
+<td>
+                      Rollback; retry the entire idempotent unit with bounded
+                      backoff
+                    </td>
+</tr>
+<tr>
+<td>Lock wait timeout</td>
+<td>Error 1205</td>
+<td>
+                      Rollback transaction explicitly; inspect contention; retry
+                      only if business operation is safe
+                    </td>
+</tr>
+<tr>
+<td>Duplicate idempotency key</td>
+<td>Unique-key violation</td>
+<td>
+                      Read the existing durable result; do not create a second
+                      logical operation
+                    </td>
+</tr>
+<tr>
+<td>Validation/constraint failure</td>
+<td>CHECK/FK/type/range error</td>
+<td>Do not blind-retry; correct input or business state</td>
+</tr>
+<tr>
+<td>Disconnect before any write</td>
+<td>Connector network error</td>
+<td>
+                      Reconnect; retry may be safe if nothing was sent/committed
+                      and unit is idempotent
+                    </td>
+</tr>
+<tr>
+<td>Disconnect around COMMIT</td>
+<td>Connection lost/unknown response</td>
+<td>
+                      Outcome is ambiguous; reconcile by idempotency key before
+                      deciding
+                    </td>
+</tr>
+</tbody>
+</table>
+<p>
+                Error numbers are useful diagnostics, but production code should
+                use connector-documented error properties and test against the
+                deployed connector/server pair. A broad “any SQL error is
+                retryable” rule creates duplicate work and hides real defects.
+              </p>
+</section>
+<section>
+<h2>5. Deadlock lab: two sessions, one cycle</h2>
+<div class="code-window" data-code-block="" data-language="sql">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    Session A
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code><span class="code-line">START TRANSACTION;</span><span class="code-line">UPDATE deadlock_items SET value_int=value_int+1 WHERE item_id=1;</span><span class="code-line">-- Wait until Session B has locked item_id=2, then request it:</span><span class="code-line">UPDATE deadlock_items SET value_int=value_int+1 WHERE item_id=2;</span></code></pre>
+</div>
+<div class="code-window" data-code-block="" data-language="sql">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    Session B
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code><span class="code-line">START TRANSACTION;</span><span class="code-line">UPDATE deadlock_items SET value_int=value_int+1 WHERE item_id=2;</span><span class="code-line">-- Wait until Session A has locked item_id=1, then request it:</span><span class="code-line">UPDATE deadlock_items SET value_int=value_int+1 WHERE item_id=1;</span></code></pre>
+</div>
+<p>
+                One session should become a deadlock victim so InnoDB can break
+                the cycle. Immediately inspect
+                <code>SHOW ENGINE INNODB STATUS</code> for the latest detected
+                deadlock. The error proves a cycle was resolved; it does not
+                prove which query should be optimized without reading the
+                lock/order evidence.
+              </p>
+</section>
+<section>
+<h2>6. Bounded retry plus idempotency reconciliation</h2>
+<div class="code-window" data-code-block="" data-language="javascript">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>javascript · retry only a known-safe transaction unit
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code><span class="code-line">const mariadb = require('mariadb');</span><span class="code-line">const pool = mariadb.createPool({</span><span class="code-line">  host: '127.0.0.1', user: 'svc19_tx', password: process.env.DB_PASSWORD,</span><span class="code-line">  database: 'servicehub19_l3', connectionLimit: 4</span><span class="code-line">});</span><span class="code-line">const sleep = ms =&gt; new Promise(r =&gt; setTimeout(r, ms));</span><span class="code-line"></span><span class="code-line">async function createInvoice(pool, input) {</span><span class="code-line">  for (let attempt = 1; attempt &lt;= 3; attempt++) {</span><span class="code-line">    let conn;</span><span class="code-line">    try {</span><span class="code-line">      conn = await pool.getConnection();</span><span class="code-line"></span><span class="code-line">      const existing = await conn.query(</span><span class="code-line">        `SELECT result_invoice_id FROM requests</span><span class="code-line">         WHERE request_key=? AND status='committed'`,</span><span class="code-line">        [input.requestKey]</span><span class="code-line">      );</span><span class="code-line">      if (existing.length) {</span><span class="code-line">        return { invoiceId: Number(existing[0].result_invoice_id), replay: true };</span><span class="code-line">      }</span><span class="code-line"></span><span class="code-line">      return await createInvoiceOnce(</span><span class="code-line">        conn, input.requestKey, input.customerId, input.amount</span><span class="code-line">      );</span><span class="code-line">    } catch (err) {</span><span class="code-line">      const retryable = err &amp;&amp; (err.errno === 1213 || err.errno === 1205);</span><span class="code-line">      if (!retryable || attempt === 3) throw err;</span><span class="code-line">      await sleep(50 * attempt + Math.floor(Math.random() * 50));</span><span class="code-line">    } finally {</span><span class="code-line">      if (conn) conn.release();</span><span class="code-line">    }</span><span class="code-line">  }</span><span class="code-line">}</span></code></pre>
+</div>
+<p>
+                Backoff reduces immediate collision, but retry count and timing
+                are workload decisions, not universal constants. More
+                importantly, a retry recreates the whole transaction and
+                rechecks durable idempotency evidence.
+              </p>
+</section>
+<section>
+<h2>
+                7. Ambiguous commit: the server may know while the client does
+                not
+              </h2>
+<p>
+                Suppose the client sends <code>COMMIT</code>, MariaDB durably
+                commits, and then the network breaks before the acknowledgment
+                reaches the application. From the client’s perspective, “commit
+                returned an error” does <em>not</em> prove rollback. Reissuing
+                the business operation without an idempotency key can duplicate
+                it. The repair is reconciliation: reconnect, query by the
+                durable request key, and decide whether the logical operation
+                already exists.
+              </p>
+<div class="callout warning">
+<strong>Exactly-once is an application protocol claim</strong>
+<p>
+                  MariaDB can make one transaction atomic, but exactly-once
+                  effects across retries, queues and external systems require
+                  identifiers, uniqueness, outbox/inbox patterns or equivalent
+                  protocols. Do not claim the connector’s retry feature makes
+                  arbitrary business side effects exactly once.
+                </p>
+</div>
+</section>
+<section>
+<h2>8. Reproducible verification and cleanup</h2>
+<div class="code-window" data-code-block="" data-language="sql">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    verify one logical result per request
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code><span class="code-line">SELECT request_key, COUNT(*) AS invoices</span><span class="code-line">FROM servicehub19_l3.invoices</span><span class="code-line">GROUP BY request_key</span><span class="code-line">HAVING COUNT(*) &lt;&gt; 1;</span><span class="code-line"></span><span class="code-line">SELECT r.request_key, r.status, r.result_invoice_id,</span><span class="code-line">       i.invoice_id, o.event_id</span><span class="code-line">FROM servicehub19_l3.requests r</span><span class="code-line">LEFT JOIN servicehub19_l3.invoices i USING (request_key)</span><span class="code-line">LEFT JOIN servicehub19_l3.outbox o USING (request_key)</span><span class="code-line">ORDER BY r.created_at;</span><span class="code-line"></span><span class="code-line">DROP USER IF EXISTS 'svc19_tx'@'127.0.0.1';</span><span class="code-line">DROP DATABASE IF EXISTS servicehub19_l3;</span></code></pre>
+</div>
+<div class="checkpoint"><h3>Check your reasoning</h3><ol><li>
+                  Why retry the entire transaction after a deadlock rather than
+                  continuing from the failed statement?
+                </li><li>Why is a lock-wait timeout not equivalent to a deadlock?</li><li>
+                  What makes a request key useful after a COMMIT-time
+                  disconnect?
+                </li><li>
+                  Should a validation error be retried with exponential backoff?
+                </li><li>
+                  Why keep external API calls out of a long database
+                  transaction?
+                </li></ol><details class="answer-toggle"><summary>Review the answers</summary><div><ol><li>
+<p>
+                    InnoDB chose a transaction as the deadlock victim; the
+                    application must rebuild the unit of work from a clean
+                    boundary and revalidate business preconditions.
+                  </p>
+</li><li>
+<p>
+                    A timeout is elapsed waiting for a lock; a deadlock is a
+                    dependency cycle detected and broken. Their diagnostics and
+                    rollback semantics differ.
+                  </p>
+</li><li>
+<p>
+                    It is durable, unique evidence that lets the application
+                    determine whether the logical operation already committed
+                    before attempting another write.
+                  </p>
+</li><li>
+<p>
+                    No. The same invalid input/state will usually fail again;
+                    blind retries waste capacity and hide defects.
+                  </p>
+</li><li>
+<p>
+                    Waiting on external services extends lock/transaction
+                    lifetime and cannot make those external effects atomic with
+                    the database transaction.
+                  </p>
+</li></ol></div></details></div>
+
+
+
+
+</section>
+<section>
+<h2>Production judgment and bridge to Lesson 4</h2>
+<p>
+                Retries belong to known failure classes and idempotent
+                transaction units, not generic middleware around every database
+                call. Instrument attempt count, error code/SQLSTATE, transaction
+                duration, deadlocks, lock waits and reconciliation outcomes.
+                Lesson 4 moves upward to ORMs: transaction correctness can still
+                be undermined when an abstraction quietly emits dozens of
+                queries, OFFSET scans, or unindexed predicates.
+              </p>
+</section>
+<section data-depth-fix="ch19l3"><h2>Retry state machine: classify before repeating work</h2>
+<p>A retry loop should start from a state machine, not from a list of error strings. Before the transaction begins, reconnecting is generally straightforward. After the transaction has begun but before commit, a confirmed deadlock victim or lock-wait failure can be retryable if the complete unit of work is safe to run again. After the application sends <code>COMMIT</code> and loses the network before receiving the response, the outcome can be ambiguous: the server may have committed even though the client saw an exception. Blindly replaying the business operation can then create a duplicate side effect.</p>
+<p>Idempotency moves that ambiguity into data design. Give externally retried commands a stable request key and enforce it with a unique constraint in the same transactional database that records the business effect. On a retry, read the existing result associated with that key instead of creating a second order, payment instruction, ticket, or message. The unique constraint is important because two concurrent workers can both observe “not found” before either inserts; application-only checking is not a concurrency guarantee.</p>
+<ul><li>Retry the whole transaction, not only the final failed statement, after a deadlock has rolled work back.</li><li>Use bounded attempts, jitter/backoff where appropriate, and an overall request deadline.</li><li>Do not retry deterministic constraint or syntax errors as if they were transient.</li><li>When commit outcome is ambiguous, reconcile through the idempotency/business key before issuing another side effect.</li><li>Record retry count and terminal error class so a retry storm is observable.</li></ul>
+<p>Network failure handling should also destroy or revalidate a connection whose protocol state is uncertain. Returning such a connection to the pool can spread one request's failure into later requests. Connector fatal/error metadata and a deliberate pool policy are part of the transaction contract, not merely plumbing.</p></section><section>
+<h2>Authoritative references</h2>
+<p>
+                Primary references are current MariaDB documentation or official
+                connector source; verify the target server/connector version
+                before relying on defaults or option behavior.
+              </p>
+<ul>
+<li>
+<a href="https://mariadb.com/docs/server/reference/sql-statements/transactions" rel="noreferrer" target="_blank">MariaDB transactions</a>
+</li>
+<li>
+<a href="https://mariadb.com/docs/connectors/mariadb-connector-nodejs/connector-nodejs-promise-api" rel="noreferrer" target="_blank">MariaDB Connector/Node.js Promise API</a>
+</li>
+<li>
+<a href="https://mariadb.com/docs/server/server-usage/storage-engines/innodb/innodb-lock-modes" rel="noreferrer" target="_blank">MariaDB InnoDB locking documentation</a>
+</li>
+<li>
+<a href="https://mariadb.com/docs/server/reference/error-codes" rel="noreferrer" target="_blank">MariaDB error codes</a>
+</li>
+</ul>
+</section>
+</div>
+<nav aria-label="Lesson navigation" class="lesson-nav">
+<a class="previous" href="Lesson2.html"><small>Previous lesson</small><strong>Prepared Statements, Parameters, Injection Defense, Type Mapping, and Unicode</strong></a><a class="next" href="Lesson4.html"><small>Next lesson</small><strong>ORM Query Shapes, Pagination, N+1, Bulk Operations, and Index Visibility</strong></a>
+</nav>
+</article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+<div aria-label="Author links" class="social-row">
+<a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="M15 3h6v6"></path>
+<path d="M10 14 21 3"></path>
+<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a><a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="M15 3h6v6"></path>
+<path d="M10 14 21 3"></path>
+<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a><a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="M15 3h6v6"></path>
+<path d="M10 14 21 3"></path>
+<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a><a href="https://x.com/mohammadijoo" rel="noopener" target="_blank">X
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="M15 3h6v6"></path>
+<path d="M10 14 21 3"></path>
+<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head">
+<span>ETH</span><small>Ethereum / ERC-20 only</small>
+</div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code><button class="button secondary compact" data-copy-donation="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy address
+                </button>
+<p>
+                  Send only assets compatible with the Ethereum/ERC-20 network.
+                  Do not send TRC-20/TRON assets.
+                </p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div>
+<strong>Big Data Academy</strong>
+<p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+</div>
+<div>
+<a href="../../../index.html#roadmap">Roadmap</a><a href="../../../index.html#courses">Courses</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">Repository</a>
+</div>
+<small>Created and maintained by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>

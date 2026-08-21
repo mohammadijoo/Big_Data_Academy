@@ -1,0 +1,1332 @@
+<!doctype html>
+
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Design MariaDB partitioned tables from lifecycle and access requirements, obey unique-key and foreign-key constraints, and prove pruning with EXPLAIN PARTITIONS instead of assuming performance."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Partitioning Strategies, Partition Pruning, Keys, Constraints, and Design
+      Limits | MariaDB | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">MA</span>
+            <div><small>Course 06</small><strong>MariaDB</strong></div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 110 lessons..."
+            type="search"
+        /></label>
+        <nav aria-label="MariaDB curriculum" class="sidebar-curriculum">
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>MariaDB Foundations, Release Model, Editions, and
+              Lab Setup
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>What MariaDB Is: Origins, Server Architecture,
+                Ecosystem, and Common Deployment Roles</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Community Server, Enterprise Offerings,
+                Licensing, and Operational Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>LTS vs Innovation Releases, Support Horizons,
+                Upgrade Cadence, and Version Selection</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>Install MariaDB on Windows, Linux, Containers,
+                and Verify Client/Server Tooling</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Reproducible Lab with Databases,
+                Accounts, Sample Workloads, and Safe Defaults</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>MariaDB vs MySQL: Compatibility, Divergence, and
+              Migration Awareness
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>Shared Heritage vs Independent Evolution: Why
+                Syntax Compatibility Is Not Feature Parity</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>Version Numbering, Removed/Added Features,
+                Defaults, and Configuration Divergence</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Data Types, SQL Semantics, JSON Differences,
+                Generated Columns, and Compatibility Traps</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>Replication and Binary Log Compatibility
+                Boundaries Across MariaDB and MySQL</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Plan a Compatibility Assessment Before Migration
+                or Mixed-Environment Operations</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>Server Architecture, Configuration, Connections,
+              and Metadata
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>mariadbd Startup, Data Directory, Option Files,
+                and Configuration Precedence</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Threads, Sessions, Connection Limits, Thread
+                Pool Concepts, and Resource Controls</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>System/Status Variables, Dynamic Settings,
+                Persisted Configuration Patterns, and Validation</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>information_schema, performance_schema, SHOW
+                Commands, and Metadata Discovery</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Logs, Startup Failures, Time Zones, Character
+                Sets, Collations, and Baseline Configuration</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Schemas, Data Types, Keys, Constraints, and SQL
+              Modes
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Databases, Tables, Temporary Objects, Views, and
+                Namespace Conventions</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>Numeric, String, Temporal, UUID, JSON/Text,
+                Vector, Spatial, and Binary Types</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK,
+                DEFAULT, and Generated/Virtual Columns</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>AUTO_INCREMENT, Sequences, Natural vs Surrogate
+                Keys, and Identifier Strategy</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>SQL_MODE, Strictness, Implicit Conversion,
+                Oracle Mode Awareness, and Data Quality</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>SQL Querying, Joins, CTEs, Windows, and Analytical
+              SQL
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>Filtering, NULL Semantics, Ordering,
+                Expressions, and Deterministic Query Results</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>Join Types, Derived Tables, Correlated
+                Subqueries, EXISTS/IN, and Semijoin Reasoning</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>Common Table Expressions, Recursive CTEs, and
+                Hierarchical Data</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>Window Functions, Frames, Ranking, Running
+                Metrics, and Top-N per Group</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>Aggregations, ROLLUP, GROUPING Patterns, Set
+                Operations, and Reporting Workflows</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Data Modification, Transactions, Isolation, Locks,
+              and Deadlocks
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>INSERT/REPLACE/INSERT ... ON DUPLICATE KEY,
+                UPDATE, DELETE, and RETURNING Capabilities</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>Autocommit, Transactions, SAVEPOINT, Atomicity,
+                and Application Error Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>Isolation Levels, Consistent Reads, Locking
+                Reads, MVCC, and Concurrency Anomalies</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>Metadata Locks, Row Locks, Gap/Next-Key Locking,
+                and Online Change Interactions</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Deadlock Analysis, Lock Waits, Retry Policies,
+                Idempotency, and Contention Testing</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>InnoDB in MariaDB: Storage, Buffering, Redo, Undo,
+              and Recovery
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>InnoDB Tablespaces, Pages, Row Formats,
+                Clustered/Secondary Indexes, and Record Layout</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>Buffer Pool, Flushing, Dirty Pages, Read-Ahead,
+                and Cache Efficiency</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>Redo Logs, Undo, Doublewrite, Checkpoints, Crash
+                Recovery, and Durability</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Purge, History, Long Transactions, Undo Growth,
+                and Bloat-Like Operational Symptoms</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Inspect InnoDB Metrics and Tune Storage Behavior
+                for OLTP Workloads</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>MariaDB Storage Engines Beyond InnoDB
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>Aria Architecture, Crash Safety, Temporary Work,
+                and Operational Use Cases</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>MyISAM Legacy Characteristics, Table Locks,
+                FULLTEXT History, and Migration Concerns</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>MEMORY Engine, Ephemeral Data, Limits, and Safer
+                Alternatives</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>CONNECT and Other Specialized Engines: External
+                Data Access and Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Choose a Storage Engine Deliberately and Avoid
+                Cross-Engine Transaction Assumptions</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>Index Design, FULLTEXT, Spatial, Vector, and
+              Specialized Access Paths
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>B-Tree Indexes, Composite Keys, Prefix Rules,
+                Covering Indexes, and Write Costs</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>Functional/Expression and Generated-Column
+                Indexing Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>FULLTEXT Indexes, Tokenization, Boolean/Natural
+                Language Search, and Limits</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>Spatial Types and Indexes, SRIDs, Geometry
+                Functions, and GIS Workloads</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>Vector Search Capabilities, Distance Functions,
+                Vector Indexing Concepts, and AI Workloads</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>Optimizer, EXPLAIN, Statistics, Histograms, and
+              Query Tuning
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>Optimizer Architecture, Access Paths, Join
+                Orders, Costing, and Query Transformations</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>EXPLAIN, ANALYZE, FORMAT=JSON, Runtime
+                Statistics, and Reading Plans</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>Table/Index Statistics, Histograms, Cardinality,
+                and Misestimate Diagnosis</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>Join Algorithms, Subquery Optimizations, Derived
+                Tables, Semijoins, and Materialization</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Optimizer Switches, Hints, Invisible/Ignored
+                Index Concepts, and Regression Control</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>Views, Stored Programs, Triggers, Events, and
+              SQL/PSM
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>Views, Updatability, ALGORITHM, SQL SECURITY,
+                and Definer Risks</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>Stored Procedures and Functions, Parameters,
+                Handlers, Cursors, and Diagnostics</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>Triggers, OLD/NEW Rows, Ordering, Auditing, and
+                Hidden Coupling</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Event Scheduler, Recurring Jobs, Maintenance,
+                and Failure Visibility</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Server-Side Logic Testing, Deployment,
+                Privileges, and Application-Boundary Decisions</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>Accounts, Roles, Authentication, Authorization, and
+              Security Hardening
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>Accounts, Authentication Plugins, Password
+                Policy, Locking, Expiry, and Lifecycle</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>Privileges, Roles, Default Roles, Grant Design,
+                and Delegated Administration</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>Definers, SQL SECURITY, Stored Objects, Views,
+                and Privilege-Escalation Prevention</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>TLS, Certificates, Secure Transport, Network
+                Segmentation, and Secret Rotation</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>Hardening Checklist, Audit Options, Plugin Risk,
+                File Privileges, and Patch Discipline</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Backup, mariadb-backup, Restore, and Point-in-Time
+              Recovery
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>Logical Backup with mariadb-dump: Consistency,
+                Objects, Routines, and Large Databases</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Physical Backup with mariadb-backup: Prepare,
+                Copy-Back, Incrementals, and Encryption</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>Binary Logs, Retention, Coordinates/GTIDs, and
+                PITR Prerequisites</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Point-in-Time Recovery, Partial Recovery,
+                Validation, and Data-Loss Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Backup Automation, Offloading to Replicas,
+                Restore Drills, RPO/RTO, and Corruption Tests</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Asynchronous Replication, GTIDs, Parallel Apply,
+              and Topology Design
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Primary/Replica Flow, Binary Logs, Relay Logs,
+                Replication Threads, and Filters</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>MariaDB GTIDs, Domains, Positions, Strict Mode,
+                and Failover Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Parallel Replication, Commit Ordering, Worker
+                Tuning, and Replica Throughput</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Delayed Replicas, Read Scaling, Multi-Source
+                Replication, and Reporting Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Lag, Breakage, Data Drift, Rebuilds, Promotion,
+                and Replication Incident Runbooks</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Galera Cluster: Synchronous Multi-Primary
+              Replication and High Availability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>Galera Architecture, Write Sets, Certification,
+                Quorum, and Cluster Membership</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Bootstrap, Join, State Snapshot Transfer,
+                Incremental State Transfer, and Donor Selection</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Flow Control, Certification Conflicts,
+                Auto-Increment, Hot Rows, and Workload Constraints</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Load Balancing, Primary Component, Split Brain,
+                Fencing, and Application Failover</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Galera Security, TLS, Rolling Maintenance,
+                Upgrades, Failure Injection, and Recovery</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>16</span>Partitioning, Large Tables, Online DDL, and Data
+              Lifecycle
+            </summary>
+            <div>
+              <a
+                aria-current="page"
+                class="sidebar-lesson is-current"
+                href="Lesson1.html"
+                ><span>01</span>Partitioning Strategies, Partition Pruning,
+                Keys, Constraints, and Design Limits<i>Current</i></a
+              ><a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>Hot/Cold Data, Rolling Partitions, Archiving,
+                Retention, and Bulk Loads</a
+              ><a class="sidebar-lesson" href="Lesson3.html"
+                ><span>03</span>ALTER TABLE Algorithms, Lock Levels, Online DDL,
+                and Operational Planning</a
+              ><a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>Large Delete/Update Pathologies, Chunking, Purge
+                Effects, and Storage Reclamation</a
+              ><a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Multi-Terabyte Capacity Planning, Maintenance
+                Windows, and Growth Forecasting</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Performance Schema, sys Schema, Logs, and
+              Observability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>Performance Schema Instrumentation, Consumers,
+                Statements, Waits, and Overhead</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>sys Schema Views, User/Host Activity, I/O,
+                Statements, Memory, and Index Usage</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>Slow Query Log, General Log, Error Log, and
+                Query-Digest Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>InnoDB, Replication, Galera, Connections, Temp
+                Tables, and OS Metrics</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Build Dashboards, Baselines, SLO Alerts, and
+                Incident Timelines</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Performance Engineering: Memory, I/O, Threading,
+              and Workload Tuning
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>Buffer Pool Sizing, Dirty Pages, Flushing,
+                Read-Ahead, and Cache Hit Interpretation</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>Per-Session Memory, Sort/Join Buffers, Temp
+                Tables, and Memory Explosion Risks</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Thread Pool, Connection Concurrency, Queueing,
+                and CPU Saturation</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Redo Capacity, I/O Capacity, Flush Methods,
+                Storage Latency, and Checkpoint Behavior</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>Benchmark Design, Warmup, Concurrency,
+                Percentiles, Regression Tests, and Capacity Headroom</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>19</span>Application Integration, Connectors, ORMs, Pools,
+              and Reliability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Client Connectors, Connection Strings, TLS,
+                Timeouts, Pooling, and Session Contracts</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Prepared Statements, Parameters, Injection
+                Defense, Type Mapping, and Unicode</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>Transaction Scoping, Retryable Errors,
+                Idempotency, and Network Failure Handling</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>ORM Query Shapes, Pagination, N+1, Bulk
+                Operations, and Index Visibility</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Schema Migrations, Health Checks, Failover
+                Behavior, and Deployment Coordination</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Upgrades, Migrations, Compatibility Testing, and
+              Low-Downtime Change
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>Patch, Innovation, and LTS Upgrade Planning with
+                Release Notes and Deprecations</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>mariadb-upgrade, System Tables, Configuration
+                Drift, and Post-Upgrade Validation</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>MySQL-to-MariaDB and MariaDB-to-MySQL Migration:
+                Compatibility Matrix and Data Tests</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>Expand/Contract Schema Changes, Online DDL,
+                Backfills, and Application Compatibility</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Rolling Cluster/Replication Upgrades, Rollback
+                Plans, Canaries, and Performance Comparison</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Advanced MariaDB Features: System-Versioned Tables,
+              Oracle Mode, and Federation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>System-Versioned Tables, Temporal Queries,
+                Retention, and Audit/History Use Cases</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>Application-Time Periods, Bitemporal Modeling
+                Concepts, and Constraint Design</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>Oracle SQL_MODE / Compatibility Features,
+                PL/SQL-Like Syntax, and Migration Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Spider/Federated Data Access Concepts,
+                Distributed Queries, and Operational Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>When MariaDB-Native Features Replace—or Should
+                Not Replace—Dedicated Data Systems</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Production Capstone: Design, Cluster, Secure, Tune,
+              and Recover MariaDB
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>Define Workload, SLOs, Data Model, Engine
+                Choices, Capacity, and Architecture Record</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>Implement Schema, Indexes, Security, Application
+                Access, and Migration Automation</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>Tune SQL, InnoDB, Memory, I/O, Threading, and
+                Galera/Replication from Evidence</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>Implement Backups/PITR, HA, Monitoring, Alerts,
+                Upgrades, and Incident Runbooks</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Run Restore, Failover, Split-Brain, Performance,
+                and Corruption Drills—and Defend the Design</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 16 · Lesson 01</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">MariaDB</a><span>/</span
+            ><span>Chapter 16 · Lesson 01</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 16 · Partitioning, Large Tables, Online DDL, and Data
+              Lifecycle
+            </p>
+            <h1>
+              Partitioning Strategies, Partition Pruning, Keys, Constraints, and
+              Design Limits
+            </h1>
+            <p>
+              Design partitioning as a routing and lifecycle mechanism, then
+              prove optimizer pruning and confront the key/constraint limits
+              that determine whether partitioning is appropriate.
+            </p>
+            <div class="lesson-meta">
+              <span>Advanced</span><span>150–190 minutes</span
+              ><span>Partition design + pruning lab</span
+              ><span>MariaDB Community 12.3.2 baseline</span
+              ><span
+                >Curriculum anchor: 11.8 LTS · verify target-version
+                behavior</span
+              ><span
+                >Free local MariaDB tooling · Last reviewed: August 2026</span
+              >
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                ServiceHub has grown from a small ticketing database into an
+                event platform that retains years of operational telemetry. A
+                query that asks for one recent day should not need to touch
+                every historical chunk, and retention should not mean deleting
+                hundreds of millions of rows one by one. Partitioning can
+                help—but only when its routing rules, key restrictions,
+                optimizer pruning, and operational limits are understood
+                precisely.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Distinguish partition routing from partition pruning and
+                    explain why partitioning is not automatically a query-speed
+                    feature.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Choose among RANGE, LIST, HASH, and KEY strategies based on
+                    the access/lifecycle problem rather than fashion.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Apply MariaDB restrictions on unique keys, storage engines,
+                    and foreign keys before designing a partitioned schema.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Build a time-series InnoDB table and prove pruning with
+                    EXPLAIN PARTITIONS and INFORMATION_SCHEMA.PARTITIONS.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Diagnose two realistic partitioning mistakes and repair them
+                    without weakening relational correctness.
+                  </p>
+                </div>
+              </div>
+              <div class="callout warning">
+                <strong>Version discipline</strong>
+                <p>
+                  This lesson uses MariaDB Community Server 12.3.2 as the
+                  current lab/reference baseline while retaining the course
+                  curriculum anchor of 11.8 LTS. Partitioning behavior is
+                  storage-engine and version sensitive. Verify the target
+                  version before using limits or maintenance syntax in
+                  production.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>
+                1. Mental model: one logical table, many physical partitions
+              </h2>
+              <p>
+                A <strong>partitioned table</strong> is still one SQL table.
+                MariaDB evaluates a partitioning expression to decide which
+                partition owns each row. That write-time decision is
+                <strong>routing</strong>. On reads, the optimizer may infer that
+                only a subset of partitions can satisfy a predicate; eliminating
+                the rest is <strong>partition pruning</strong>. Pruning is an
+                optimizer result, not a promise that follows merely from
+                creating partitions.
+              </p>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Term</th>
+                    <th>Meaning</th>
+                    <th>Operational consequence</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>partitioning key</td>
+                    <td>Column(s)/expression used to route a row</td>
+                    <td>Changing it can move a row between partitions.</td>
+                  </tr>
+                  <tr>
+                    <td>RANGE / RANGE COLUMNS</td>
+                    <td>Partitions cover ordered intervals</td>
+                    <td>
+                      Natural fit for time-based retention and rolling windows.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>LIST / LIST COLUMNS</td>
+                    <td>Partitions own enumerated values</td>
+                    <td>Useful for small, stable categorical domains.</td>
+                  </tr>
+                  <tr>
+                    <td>HASH / LINEAR HASH</td>
+                    <td>Expression maps rows across N partitions</td>
+                    <td>
+                      Distributes data but usually does not provide
+                      time-retention semantics.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>KEY / LINEAR KEY</td>
+                    <td>MariaDB hashes key columns</td>
+                    <td>
+                      Useful for distribution when an explicit hash expression
+                      is undesirable.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>pruning</td>
+                    <td>Optimizer excludes impossible partitions</td>
+                    <td>Must be demonstrated from the real query shape.</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p>
+                MariaDB also supports SYSTEM_TIME partitioning for
+                system-versioned tables, but that is a separate lifecycle
+                mechanism covered later in the course. For this chapter, focus
+                on conventional partitioning of current tables.
+              </p>
+            </section>
+            <section>
+              <h2>
+                2. Verify support and capture a baseline before creating
+                anything
+              </h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    server and partition capability
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT VERSION() AS server_version;</span><span class="code-line">SHOW PLUGINS;</span><span class="code-line">SHOW ENGINES;</span><span class="code-line">SELECT @@sql_mode, @@innodb_file_per_table;</span></code></pre>
+              </div>
+              <p>
+                Look for active partition support and an available InnoDB
+                engine. “CREATE TABLE succeeded on another MariaDB machine” does
+                not prove your packaged server, storage engine, or version has
+                the same capabilities.
+              </p>
+            </section>
+            <section>
+              <h2>
+                3. Build a time-series table whose keys obey partition rules
+              </h2>
+              <p>
+                MariaDB requires every unique key—including the primary key—to
+                include every column used by the partitioning expression. That
+                requirement affects identifier design. A globally unique
+                <code>event_id</code> by itself cannot be the primary key if the
+                table is partitioned by <code>event_day</code>.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    create the disposable ServiceHub table
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">DROP DATABASE IF EXISTS servicehub16_l1;</span><span class="code-line">CREATE DATABASE servicehub16_l1;</span><span class="code-line">USE servicehub16_l1;</span><span class="code-line"></span><span class="code-line">CREATE TABLE ticket_events (</span><span class="code-line">  event_id BIGINT NOT NULL AUTO_INCREMENT,</span><span class="code-line">  event_day DATE NOT NULL,</span><span class="code-line">  ticket_id BIGINT NOT NULL,</span><span class="code-line">  event_type VARCHAR(32) NOT NULL,</span><span class="code-line">  payload VARCHAR(255) NULL,</span><span class="code-line">  created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),</span><span class="code-line">  PRIMARY KEY (event_id, event_day),</span><span class="code-line">  KEY ix_ticket_day (ticket_id, event_day)</span><span class="code-line">) ENGINE=InnoDB</span><span class="code-line">PARTITION BY RANGE COLUMNS(event_day) (</span><span class="code-line">  PARTITION p2026q1 VALUES LESS THAN ('2026-04-01'),</span><span class="code-line">  PARTITION p2026q2 VALUES LESS THAN ('2026-07-01'),</span><span class="code-line">  PARTITION p2026q3 VALUES LESS THAN ('2026-10-01'),</span><span class="code-line">  PARTITION p2026q4 VALUES LESS THAN ('2027-01-01'),</span><span class="code-line">  PARTITION p_future VALUES LESS THAN (MAXVALUE)</span><span class="code-line">);</span><span class="code-line"></span><span class="code-line">INSERT INTO ticket_events(event_day,ticket_id,event_type,payload) VALUES</span><span class="code-line">('2026-02-10',101,'created','web'),</span><span class="code-line">('2026-05-12',101,'assigned','queue-a'),</span><span class="code-line">('2026-08-03',202,'created','api'),</span><span class="code-line">('2026-11-18',303,'closed','resolved');</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    observe partition metadata
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT PARTITION_NAME, PARTITION_ORDINAL_POSITION,</span><span class="code-line">       PARTITION_DESCRIPTION, TABLE_ROWS</span><span class="code-line">FROM INFORMATION_SCHEMA.PARTITIONS</span><span class="code-line">WHERE TABLE_SCHEMA='servicehub16_l1'</span><span class="code-line">  AND TABLE_NAME='ticket_events'</span><span class="code-line">ORDER BY PARTITION_ORDINAL_POSITION;</span></code></pre>
+              </div>
+              <p>
+                <code>TABLE_ROWS</code> is metadata and may be estimated for
+                InnoDB; use it to understand partition shape, not as an exact
+                accounting ledger.
+              </p>
+            </section>
+            <section>
+              <h2>4. Prove pruning instead of assuming it</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    query aligned with the partitioning key
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">EXPLAIN PARTITIONS</span><span class="code-line">SELECT event_id,ticket_id,event_type</span><span class="code-line">FROM ticket_events</span><span class="code-line">WHERE event_day &gt;= '2026-08-01'</span><span class="code-line">  AND event_day &lt;  '2026-09-01';</span></code></pre>
+              </div>
+              <p>
+                The <code>partitions</code> column should identify
+                <code>p2026q3</code> for this predicate. That proves the
+                optimizer can derive the relevant range. It does not prove the
+                query is fast: index selectivity, row count inside the
+                partition, cache state, and result volume still matter.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    contrast a predicate that cannot prune by date
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">EXPLAIN PARTITIONS</span><span class="code-line">SELECT event_id,event_day,event_type</span><span class="code-line">FROM ticket_events</span><span class="code-line">WHERE event_type='created';</span></code></pre>
+              </div>
+              <p>
+                Because <code>event_type</code> does not constrain
+                <code>event_day</code>, multiple/all partitions can remain
+                candidates. Partitioning did not replace the need for suitable
+                indexes.
+              </p>
+            </section>
+            <section>
+              <h2>
+                5. Wrong approach #1: keep a primary key that omits the
+                partitioning column
+              </h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    deliberately invalid design
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">CREATE TABLE bad_events (</span><span class="code-line">  event_id BIGINT PRIMARY KEY,</span><span class="code-line">  event_day DATE NOT NULL,</span><span class="code-line">  payload VARCHAR(100)</span><span class="code-line">) ENGINE=InnoDB</span><span class="code-line">PARTITION BY RANGE COLUMNS(event_day) (</span><span class="code-line">  PARTITION p_old VALUES LESS THAN ('2026-07-01'),</span><span class="code-line">  PARTITION p_new VALUES LESS THAN (MAXVALUE)</span><span class="code-line">);</span></code></pre>
+              </div>
+              <p>
+                MariaDB rejects this design because the primary key does not
+                include <code>event_day</code>. A representative error is
+                <code
+                  >ERROR 1503 (HY000): A PRIMARY KEY must include all columns in
+                  the table's partitioning function</code
+                >. The repair is not to remove uniqueness blindly; redesign the
+                key so every unique key contains the partitioning column, and
+                verify whether that changes application lookup semantics.
+              </p>
+            </section>
+            <section>
+              <h2>
+                6. Wrong approach #2: add a foreign key to a partitioned InnoDB
+                table
+              </h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    foreign-key limitation
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">CREATE TABLE tickets (</span><span class="code-line">  ticket_id BIGINT PRIMARY KEY</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line"></span><span class="code-line">ALTER TABLE ticket_events</span><span class="code-line">  ADD CONSTRAINT fk_event_ticket</span><span class="code-line">  FOREIGN KEY (ticket_id) REFERENCES tickets(ticket_id);</span></code></pre>
+              </div>
+              <p>
+                Current MariaDB partitioning does not allow a partitioned table
+                to contain or be referenced by foreign keys. The operation fails
+                rather than quietly weakening integrity. If the domain requires
+                database-enforced referential integrity, partitioning this table
+                may be the wrong design. Application-side checks are not
+                automatically equivalent to an InnoDB foreign key.
+              </p>
+            </section>
+            <section>
+              <h2>7. Design limits that should influence the decision</h2>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Constraint</th>
+                    <th>Why it matters</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Every unique key includes partition columns</td>
+                    <td>
+                      Can widen primary/secondary indexes and change application
+                      lookup patterns.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>No foreign keys on/referencing partitioned tables</td>
+                    <td>
+                      May conflict directly with relational integrity
+                      requirements.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>All partitions use one supported engine</td>
+                    <td>
+                      You cannot treat partitions as arbitrary per-engine
+                      mini-tables.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Many partitions add metadata/operational cost</td>
+                    <td>
+                      A very high partition count can hurt management and
+                      planning.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      Cross-partition queries are not automatically parallel
+                    </td>
+                    <td>
+                      Partitioning is not a substitute for distributed
+                      execution.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Pruning depends on predicates</td>
+                    <td>Poor query shapes may still scan many partitions.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+            <section>
+              <h2>8. Production judgment and cleanup</h2>
+              <p>
+                Use partitioning when the partition key aligns with a real
+                management or access boundary—especially time-based retention,
+                archival, or predictable pruning. Do not introduce it solely
+                because a table is “large.” First prove the bottleneck, check
+                key/FK consequences, measure representative plans, and document
+                how partitions will be created, monitored, backed up, and
+                retired.
+              </p>
+              <div class="callout">
+                <strong>Prerequisites and boundaries</strong>
+                <p>
+                  Prerequisites: MariaDB Community Server 12.3.2 lab (curriculum
+                  anchor 11.8 LTS), active partitioning support, InnoDB, and a
+                  disposable account with CREATE/ALTER/DROP plus normal DML
+                  privileges. Production designs must re-check target-version
+                  partition limits and storage-engine support.
+                </p>
+              </div>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>
+                    What is the difference between partition routing and
+                    partition pruning?
+                  </li>
+                  <li>
+                    Why must event_day appear in every UNIQUE/PRIMARY key in the
+                    lab table?
+                  </li>
+                  <li>
+                    What does EXPLAIN PARTITIONS prove, and what does it not
+                    prove?
+                  </li>
+                  <li>
+                    Why can partitioning conflict with a schema that depends on
+                    foreign keys?
+                  </li>
+                  <li>
+                    When is a RANGE time partition a stronger design choice than
+                    HASH partitioning?
+                  </li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      Routing decides where a row belongs; pruning decides which
+                      partitions a read can skip. MariaDB requires all
+                      partition-expression columns in every unique key. EXPLAIN
+                      PARTITIONS proves optimizer partition selection, not
+                      end-to-end latency. Current MariaDB partitioned tables
+                      cannot participate in foreign keys. RANGE is especially
+                      useful when ordered time boundaries match pruning and
+                      lifecycle actions such as dropping old partitions.
+                    </p>
+                  </div>
+                </details>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    cleanup
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">DROP DATABASE IF EXISTS servicehub16_l1;</span></code></pre>
+              </div>
+              <section>
+                <h2>Authoritative references</h2>
+                <ul>
+                  <li>
+                    <a
+                      href="https://mariadb.com/docs/server/server-usage/partitioning-tables"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB Documentation — Partitioning Tables</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://mariadb.com/docs/server/server-usage/partitioning-tables/partitioning-limitations"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB Documentation — Partitioning Limitations</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://mariadb.com/docs/server/reference/sql-statements/data-definition/alter/alter-table"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB Documentation — ALTER TABLE</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://mariadb.com/docs/server/server-usage/partitioning-tables/partition-pruning-and-selection"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB Documentation — Partition Pruning and
+                      Selection</a
+                    >
+                  </li>
+                </ul>
+              </section>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a class="previous" href="../Chapter15/Lesson5.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Galera Security, TLS, Rolling Maintenance, Upgrades, Failure
+                Injection, and Recovery</strong
+              ></a
+            ><a class="next" href="Lesson2.html"
+              ><small>Next lesson</small
+              ><strong
+                >Hot/Cold Data, Rolling Partitions, Archiving, Retention, and
+                Bulk Loads</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://x.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >X
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only assets compatible with the Ethereum/ERC-20 network.
+                  Do not send TRC-20/TRON assets.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <div>
+          <a href="../../../index.html#roadmap">Roadmap</a
+          ><a href="../../../index.html#courses">Courses</a
+          ><a href="https://github.com/mohammadijoo/Big_Data_Academy"
+            >Repository</a
+          >
+        </div>
+        <small
+          >Created and maintained by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>

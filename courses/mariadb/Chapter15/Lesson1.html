@@ -1,0 +1,1425 @@
+<!doctype html>
+
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Understand MariaDB Galera as a wsrep-provider, write-set certification system with quorum and explicit node states, then build and verify a disposable three-node Community cluster without confusing cluster membership with client routing."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Galera Architecture, Write Sets, Certification, Quorum, and Cluster
+      Membership | MariaDB | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">MA</span>
+            <div><small>Course 06</small><strong>MariaDB</strong></div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 110 lessons..."
+            type="search"
+        /></label>
+        <nav aria-label="MariaDB curriculum" class="sidebar-curriculum">
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>MariaDB Foundations, Release Model, Editions, and
+              Lab Setup
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>What MariaDB Is: Origins, Server Architecture,
+                Ecosystem, and Common Deployment Roles</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Community Server, Enterprise Offerings,
+                Licensing, and Operational Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>LTS vs Innovation Releases, Support Horizons,
+                Upgrade Cadence, and Version Selection</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>Install MariaDB on Windows, Linux, Containers,
+                and Verify Client/Server Tooling</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Reproducible Lab with Databases,
+                Accounts, Sample Workloads, and Safe Defaults</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>MariaDB vs MySQL: Compatibility, Divergence, and
+              Migration Awareness
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>Shared Heritage vs Independent Evolution: Why
+                Syntax Compatibility Is Not Feature Parity</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>Version Numbering, Removed/Added Features,
+                Defaults, and Configuration Divergence</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Data Types, SQL Semantics, JSON Differences,
+                Generated Columns, and Compatibility Traps</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>Replication and Binary Log Compatibility
+                Boundaries Across MariaDB and MySQL</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Plan a Compatibility Assessment Before Migration
+                or Mixed-Environment Operations</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>Server Architecture, Configuration, Connections,
+              and Metadata
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>mariadbd Startup, Data Directory, Option Files,
+                and Configuration Precedence</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Threads, Sessions, Connection Limits, Thread
+                Pool Concepts, and Resource Controls</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>System/Status Variables, Dynamic Settings,
+                Persisted Configuration Patterns, and Validation</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>information_schema, performance_schema, SHOW
+                Commands, and Metadata Discovery</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Logs, Startup Failures, Time Zones, Character
+                Sets, Collations, and Baseline Configuration</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Schemas, Data Types, Keys, Constraints, and SQL
+              Modes
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Databases, Tables, Temporary Objects, Views, and
+                Namespace Conventions</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>Numeric, String, Temporal, UUID, JSON/Text,
+                Vector, Spatial, and Binary Types</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK,
+                DEFAULT, and Generated/Virtual Columns</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>AUTO_INCREMENT, Sequences, Natural vs Surrogate
+                Keys, and Identifier Strategy</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>SQL_MODE, Strictness, Implicit Conversion,
+                Oracle Mode Awareness, and Data Quality</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>SQL Querying, Joins, CTEs, Windows, and Analytical
+              SQL
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>Filtering, NULL Semantics, Ordering,
+                Expressions, and Deterministic Query Results</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>Join Types, Derived Tables, Correlated
+                Subqueries, EXISTS/IN, and Semijoin Reasoning</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>Common Table Expressions, Recursive CTEs, and
+                Hierarchical Data</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>Window Functions, Frames, Ranking, Running
+                Metrics, and Top-N per Group</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>Aggregations, ROLLUP, GROUPING Patterns, Set
+                Operations, and Reporting Workflows</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Data Modification, Transactions, Isolation, Locks,
+              and Deadlocks
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>INSERT/REPLACE/INSERT ... ON DUPLICATE KEY,
+                UPDATE, DELETE, and RETURNING Capabilities</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>Autocommit, Transactions, SAVEPOINT, Atomicity,
+                and Application Error Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>Isolation Levels, Consistent Reads, Locking
+                Reads, MVCC, and Concurrency Anomalies</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>Metadata Locks, Row Locks, Gap/Next-Key Locking,
+                and Online Change Interactions</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Deadlock Analysis, Lock Waits, Retry Policies,
+                Idempotency, and Contention Testing</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>InnoDB in MariaDB: Storage, Buffering, Redo, Undo,
+              and Recovery
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>InnoDB Tablespaces, Pages, Row Formats,
+                Clustered/Secondary Indexes, and Record Layout</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>Buffer Pool, Flushing, Dirty Pages, Read-Ahead,
+                and Cache Efficiency</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>Redo Logs, Undo, Doublewrite, Checkpoints, Crash
+                Recovery, and Durability</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Purge, History, Long Transactions, Undo Growth,
+                and Bloat-Like Operational Symptoms</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Inspect InnoDB Metrics and Tune Storage Behavior
+                for OLTP Workloads</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>MariaDB Storage Engines Beyond InnoDB
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>Aria Architecture, Crash Safety, Temporary Work,
+                and Operational Use Cases</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>MyISAM Legacy Characteristics, Table Locks,
+                FULLTEXT History, and Migration Concerns</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>MEMORY Engine, Ephemeral Data, Limits, and Safer
+                Alternatives</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>CONNECT and Other Specialized Engines: External
+                Data Access and Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Choose a Storage Engine Deliberately and Avoid
+                Cross-Engine Transaction Assumptions</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>Index Design, FULLTEXT, Spatial, Vector, and
+              Specialized Access Paths
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>B-Tree Indexes, Composite Keys, Prefix Rules,
+                Covering Indexes, and Write Costs</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>Functional/Expression and Generated-Column
+                Indexing Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>FULLTEXT Indexes, Tokenization, Boolean/Natural
+                Language Search, and Limits</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>Spatial Types and Indexes, SRIDs, Geometry
+                Functions, and GIS Workloads</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>Vector Search Capabilities, Distance Functions,
+                Vector Indexing Concepts, and AI Workloads</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>Optimizer, EXPLAIN, Statistics, Histograms, and
+              Query Tuning
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>Optimizer Architecture, Access Paths, Join
+                Orders, Costing, and Query Transformations</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>EXPLAIN, ANALYZE, FORMAT=JSON, Runtime
+                Statistics, and Reading Plans</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>Table/Index Statistics, Histograms, Cardinality,
+                and Misestimate Diagnosis</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>Join Algorithms, Subquery Optimizations, Derived
+                Tables, Semijoins, and Materialization</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Optimizer Switches, Hints, Invisible/Ignored
+                Index Concepts, and Regression Control</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>Views, Stored Programs, Triggers, Events, and
+              SQL/PSM
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>Views, Updatability, ALGORITHM, SQL SECURITY,
+                and Definer Risks</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>Stored Procedures and Functions, Parameters,
+                Handlers, Cursors, and Diagnostics</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>Triggers, OLD/NEW Rows, Ordering, Auditing, and
+                Hidden Coupling</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Event Scheduler, Recurring Jobs, Maintenance,
+                and Failure Visibility</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Server-Side Logic Testing, Deployment,
+                Privileges, and Application-Boundary Decisions</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>Accounts, Roles, Authentication, Authorization, and
+              Security Hardening
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>Accounts, Authentication Plugins, Password
+                Policy, Locking, Expiry, and Lifecycle</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>Privileges, Roles, Default Roles, Grant Design,
+                and Delegated Administration</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>Definers, SQL SECURITY, Stored Objects, Views,
+                and Privilege-Escalation Prevention</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>TLS, Certificates, Secure Transport, Network
+                Segmentation, and Secret Rotation</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>Hardening Checklist, Audit Options, Plugin Risk,
+                File Privileges, and Patch Discipline</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Backup, mariadb-backup, Restore, and Point-in-Time
+              Recovery
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>Logical Backup with mariadb-dump: Consistency,
+                Objects, Routines, and Large Databases</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Physical Backup with mariadb-backup: Prepare,
+                Copy-Back, Incrementals, and Encryption</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>Binary Logs, Retention, Coordinates/GTIDs, and
+                PITR Prerequisites</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Point-in-Time Recovery, Partial Recovery,
+                Validation, and Data-Loss Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Backup Automation, Offloading to Replicas,
+                Restore Drills, RPO/RTO, and Corruption Tests</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Asynchronous Replication, GTIDs, Parallel Apply,
+              and Topology Design
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Primary/Replica Flow, Binary Logs, Relay Logs,
+                Replication Threads, and Filters</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>MariaDB GTIDs, Domains, Positions, Strict Mode,
+                and Failover Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Parallel Replication, Commit Ordering, Worker
+                Tuning, and Replica Throughput</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Delayed Replicas, Read Scaling, Multi-Source
+                Replication, and Reporting Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Lag, Breakage, Data Drift, Rebuilds, Promotion,
+                and Replication Incident Runbooks</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>15</span>Galera Cluster: Synchronous Multi-Primary
+              Replication and High Availability
+            </summary>
+            <div>
+              <a
+                aria-current="page"
+                class="sidebar-lesson is-current"
+                href="Lesson1.html"
+                ><span>01</span>Galera Architecture, Write Sets, Certification,
+                Quorum, and Cluster Membership<i>Current</i></a
+              ><a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>Bootstrap, Join, State Snapshot Transfer,
+                Incremental State Transfer, and Donor Selection</a
+              ><a class="sidebar-lesson" href="Lesson3.html"
+                ><span>03</span>Flow Control, Certification Conflicts,
+                Auto-Increment, Hot Rows, and Workload Constraints</a
+              ><a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>Load Balancing, Primary Component, Split Brain,
+                Fencing, and Application Failover</a
+              ><a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Galera Security, TLS, Rolling Maintenance,
+                Upgrades, Failure Injection, and Recovery</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Partitioning, Large Tables, Online DDL, and Data
+              Lifecycle
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>Partitioning Strategies, Partition Pruning,
+                Keys, Constraints, and Design Limits</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Hot/Cold Data, Rolling Partitions, Archiving,
+                Retention, and Bulk Loads</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>ALTER TABLE Algorithms, Lock Levels, Online DDL,
+                and Operational Planning</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Large Delete/Update Pathologies, Chunking, Purge
+                Effects, and Storage Reclamation</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Multi-Terabyte Capacity Planning, Maintenance
+                Windows, and Growth Forecasting</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Performance Schema, sys Schema, Logs, and
+              Observability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>Performance Schema Instrumentation, Consumers,
+                Statements, Waits, and Overhead</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>sys Schema Views, User/Host Activity, I/O,
+                Statements, Memory, and Index Usage</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>Slow Query Log, General Log, Error Log, and
+                Query-Digest Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>InnoDB, Replication, Galera, Connections, Temp
+                Tables, and OS Metrics</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Build Dashboards, Baselines, SLO Alerts, and
+                Incident Timelines</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Performance Engineering: Memory, I/O, Threading,
+              and Workload Tuning
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>Buffer Pool Sizing, Dirty Pages, Flushing,
+                Read-Ahead, and Cache Hit Interpretation</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>Per-Session Memory, Sort/Join Buffers, Temp
+                Tables, and Memory Explosion Risks</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Thread Pool, Connection Concurrency, Queueing,
+                and CPU Saturation</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Redo Capacity, I/O Capacity, Flush Methods,
+                Storage Latency, and Checkpoint Behavior</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>Benchmark Design, Warmup, Concurrency,
+                Percentiles, Regression Tests, and Capacity Headroom</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>19</span>Application Integration, Connectors, ORMs, Pools,
+              and Reliability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Client Connectors, Connection Strings, TLS,
+                Timeouts, Pooling, and Session Contracts</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Prepared Statements, Parameters, Injection
+                Defense, Type Mapping, and Unicode</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>Transaction Scoping, Retryable Errors,
+                Idempotency, and Network Failure Handling</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>ORM Query Shapes, Pagination, N+1, Bulk
+                Operations, and Index Visibility</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Schema Migrations, Health Checks, Failover
+                Behavior, and Deployment Coordination</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Upgrades, Migrations, Compatibility Testing, and
+              Low-Downtime Change
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>Patch, Innovation, and LTS Upgrade Planning with
+                Release Notes and Deprecations</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>mariadb-upgrade, System Tables, Configuration
+                Drift, and Post-Upgrade Validation</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>MySQL-to-MariaDB and MariaDB-to-MySQL Migration:
+                Compatibility Matrix and Data Tests</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>Expand/Contract Schema Changes, Online DDL,
+                Backfills, and Application Compatibility</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Rolling Cluster/Replication Upgrades, Rollback
+                Plans, Canaries, and Performance Comparison</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Advanced MariaDB Features: System-Versioned Tables,
+              Oracle Mode, and Federation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>System-Versioned Tables, Temporal Queries,
+                Retention, and Audit/History Use Cases</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>Application-Time Periods, Bitemporal Modeling
+                Concepts, and Constraint Design</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>Oracle SQL_MODE / Compatibility Features,
+                PL/SQL-Like Syntax, and Migration Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Spider/Federated Data Access Concepts,
+                Distributed Queries, and Operational Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>When MariaDB-Native Features Replace—or Should
+                Not Replace—Dedicated Data Systems</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Production Capstone: Design, Cluster, Secure, Tune,
+              and Recover MariaDB
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>Define Workload, SLOs, Data Model, Engine
+                Choices, Capacity, and Architecture Record</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>Implement Schema, Indexes, Security, Application
+                Access, and Migration Automation</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>Tune SQL, InnoDB, Memory, I/O, Threading, and
+                Galera/Replication from Evidence</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>Implement Backups/PITR, HA, Monitoring, Alerts,
+                Upgrades, and Incident Runbooks</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Run Restore, Failover, Split-Brain, Performance,
+                and Corruption Drills—and Defend the Design</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 15 · Lesson 01</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">MariaDB</a><span>/</span
+            ><span>Chapter 15 · Lesson 01</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 15 · Galera Cluster: Synchronous Multi-Primary Replication
+              and High Availability
+            </p>
+            <h1>
+              Galera Architecture, Write Sets, Certification, Quorum, and
+              Cluster Membership
+            </h1>
+            <p>
+              Understand MariaDB Galera as a wsrep-provider, write-set
+              certification system with quorum and explicit node states, then
+              build and verify a disposable three-node Community cluster without
+              confusing cluster membership with client routing.
+            </p>
+            <div class="lesson-meta">
+              <span>Advanced</span><span>150–190 minutes</span
+              ><span>3-node Galera architecture + quorum lab</span
+              ><span>MariaDB Community 12.3.2 + Galera 4 baseline</span
+              ><span
+                >Curriculum anchor: 11.8 LTS · verify server/provider/SST
+                versions</span
+              ><span>Linux nodes/containers · Last reviewed: August 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                ServiceHub has outgrown a single MariaDB server. The team wants
+                a database topology that can survive one node failure without
+                waiting for an asynchronous replica to catch up, and it wants
+                more than one node capable of accepting writes. Calling that
+                requirement “multi-master” is not enough. MariaDB Galera Cluster
+                changes the commit path itself: transactions are converted into
+                <strong>write sets</strong>, globally ordered by the Galera
+                group-communication layer, checked by
+                <strong>certification</strong>, and then applied on every
+                cluster member.
+              </p>
+              <p>
+                <strong>Galera</strong> is the write-set replication provider
+                integrated with MariaDB through the
+                <strong>wsrep API</strong> (Write Set REPlication API). A
+                <strong>Primary Component</strong> is the cluster membership
+                group that has quorum and is allowed to process replicated
+                updates. <strong>Quorum</strong> is a majority decision over the
+                configured membership, not “the node with the newest timestamp.”
+                <strong>Virtually synchronous</strong> means commit
+                ordering/certification is coordinated across the active
+                component, while remote row application can complete shortly
+                after the originating node returns success.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Explain the MariaDB Server ↔ wsrep provider boundary and
+                    follow a transaction from local execution to write-set
+                    certification and remote apply.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Distinguish cluster membership, quorum, node readiness, and
+                    client routing as separate mechanisms.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Build a disposable three-node MariaDB Community 12.3.2
+                    Galera cluster with Linux containers and verify the
+                    provider/version actually loaded.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Interpret wsrep status as evidence rather than treating
+                    “three mysqld processes are running” as cluster health.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Diagnose an unsafe one-node/incorrect-quorum assumption and
+                    choose a safe three-node operating model.
+                  </p>
+                </div>
+              </div>
+              <div class="callout">
+                <strong>Platform and product boundary</strong>
+                <p>
+                  MariaDB Galera Cluster is supported on Linux, not as a native
+                  Windows server build. A Windows or macOS workstation can still
+                  run this chapter with Linux containers or Linux virtual
+                  machines. Current MariaDB Community 12.3.2 packages/images
+                  include Galera components; always verify
+                  <code>wsrep_provider_name</code> and
+                  <code>wsrep_provider_version</code> on the exact image/package
+                  you deploy. Enterprise Cluster and MaxScale provide additional
+                  supported/managed capabilities, but no paid product is
+                  required for this chapter's mandatory labs.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>
+                1. Galera is inside the commit path, not a background binlog
+                copier
+              </h2>
+              <p>
+                Chapter 14's asynchronous replica receives binary-log events
+                after the primary creates them. Galera is different. A
+                transaction executed on node n1 accumulates changes locally. At
+                commit, MariaDB exposes a write set containing the transaction's
+                relevant keys/changes to the wsrep provider. The provider
+                participates in global ordering and certification. If the
+                transaction conflicts with a concurrently ordered write set, the
+                local transaction can be rolled back even though its SQL
+                statements executed successfully before <code>COMMIT</code>.
+              </p>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Mechanism</th>
+                    <th>Async replication</th>
+                    <th>Galera</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>write authority</td>
+                    <td>normally one primary</td>
+                    <td>multiple nodes can accept writes</td>
+                  </tr>
+                  <tr>
+                    <td>transport unit</td>
+                    <td>binary-log events</td>
+                    <td>write sets through wsrep provider</td>
+                  </tr>
+                  <tr>
+                    <td>conflict detection</td>
+                    <td>usually apply-time errors/drift</td>
+                    <td>certification before successful commit</td>
+                  </tr>
+                  <tr>
+                    <td>membership safety</td>
+                    <td>external failover/control plane</td>
+                    <td>
+                      Primary Component + quorum protects replicated writes
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>client routing</td>
+                    <td>external</td>
+                    <td>still external</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p>
+                A cluster that is healthy at the wsrep layer does not
+                automatically expose a single stable client endpoint. That
+                separation becomes central in Lesson 4.
+              </p>
+            </section>
+            <section>
+              <h2>2. Certification is optimistic concurrency across nodes</h2>
+              <p>
+                Galera does not take a distributed lock before every update. Two
+                transactions can execute independently on different nodes. When
+                they reach replication, the ordered write sets are compared
+                against the certification index. If both modify keys that cannot
+                coexist in the same serial order, one transaction loses
+                certification and the client sees a retryable transactional
+                error.
+              </p>
+              <p>
+                This is why “all nodes accept writes” does not mean “writes
+                scale linearly.” Workloads with independent rows can parallelize
+                well; hot-row workloads can spend increasing time
+                aborting/retrying. The application must treat commit failure as
+                a normal distributed-database outcome.
+              </p>
+              <div class="callout warning">
+                <strong>Common wrong assumption</strong>
+                <p>
+                  “If the UPDATE returned one affected row, the transaction is
+                  safe.” In Galera, a multi-statement transaction can still fail
+                  when <code>COMMIT</code> enters certification. Correct
+                  applications check commit errors and retry only when the
+                  business operation is idempotent or safely replayable.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>3. Quorum creates one writable component</h2>
+              <p>
+                Membership changes create components. The component with quorum
+                becomes <code>Primary</code>; a minority partition becomes
+                <code>Non-Primary</code> and will normally reject replicated
+                application work rather than independently accepting divergent
+                writes. In an ordinary equally weighted three-node cluster, two
+                mutually connected nodes retain quorum if the third is isolated.
+              </p>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Variable</th>
+                    <th>Healthy evidence</th>
+                    <th>What it does not prove</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>wsrep_cluster_status</code></td>
+                    <td><code>Primary</code></td>
+                    <td>all expected members are present</td>
+                  </tr>
+                  <tr>
+                    <td><code>wsrep_cluster_size</code></td>
+                    <td>expected component size</td>
+                    <td>application is routing only to safe nodes</td>
+                  </tr>
+                  <tr>
+                    <td><code>wsrep_connected</code></td>
+                    <td><code>ON</code></td>
+                    <td>node is synced/ready</td>
+                  </tr>
+                  <tr>
+                    <td><code>wsrep_local_state_comment</code></td>
+                    <td><code>Synced</code></td>
+                    <td>no flow-control/performance problem</td>
+                  </tr>
+                  <tr>
+                    <td><code>wsrep_ready</code></td>
+                    <td><code>ON</code></td>
+                    <td>your proxy is checking the right signal</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+            <section>
+              <h2>4. Reproducible three-node Community lab</h2>
+              <p>
+                Save the following as <code>compose.yaml</code>. The official
+                MariaDB 12.3.2 image currently installs the Galera-capable
+                server package and exposes the provider at
+                <code>/usr/lib/galera/libgalera_smm.so</code>. The lab uses
+                <code>rsync</code> for State Snapshot Transfer (SST) because it
+                avoids introducing SST database credentials before Lesson 2. It
+                is intentionally a disposable local topology.
+              </p>
+              <div class="code-window" data-code-block="" data-language="yaml">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>yaml ·
+                    compose.yaml — three disposable Galera nodes
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">services:</span><span class="code-line">  n1:</span><span class="code-line">    image: mariadb:12.3.2</span><span class="code-line">    container_name: mdb15-n1</span><span class="code-line">    environment:</span><span class="code-line">      MARIADB_ROOT_PASSWORD: labroot</span><span class="code-line">    command:</span><span class="code-line">      - --bind-address=0.0.0.0</span><span class="code-line">      - --binlog-format=ROW</span><span class="code-line">      - --default-storage-engine=InnoDB</span><span class="code-line">      - --innodb-autoinc-lock-mode=2</span><span class="code-line">      - --wsrep-on=ON</span><span class="code-line">      - --wsrep-provider=/usr/lib/galera/libgalera_smm.so</span><span class="code-line">      - --wsrep-cluster-name=servicehub15</span><span class="code-line">      - --wsrep-cluster-address=gcomm://n2,n3</span><span class="code-line">      - --wsrep-node-name=n1</span><span class="code-line">      - --wsrep-sst-method=rsync</span><span class="code-line">      - --wsrep-new-cluster</span><span class="code-line">    ports:</span><span class="code-line">      - "33151:3306"</span><span class="code-line">  n2:</span><span class="code-line">    image: mariadb:12.3.2</span><span class="code-line">    container_name: mdb15-n2</span><span class="code-line">    environment:</span><span class="code-line">      MARIADB_ROOT_PASSWORD: labroot</span><span class="code-line">    command:</span><span class="code-line">      - --bind-address=0.0.0.0</span><span class="code-line">      - --binlog-format=ROW</span><span class="code-line">      - --default-storage-engine=InnoDB</span><span class="code-line">      - --innodb-autoinc-lock-mode=2</span><span class="code-line">      - --wsrep-on=ON</span><span class="code-line">      - --wsrep-provider=/usr/lib/galera/libgalera_smm.so</span><span class="code-line">      - --wsrep-cluster-name=servicehub15</span><span class="code-line">      - --wsrep-cluster-address=gcomm://n1</span><span class="code-line">      - --wsrep-node-name=n2</span><span class="code-line">      - --wsrep-sst-method=rsync</span><span class="code-line">    ports:</span><span class="code-line">      - "33152:3306"</span><span class="code-line">  n3:</span><span class="code-line">    image: mariadb:12.3.2</span><span class="code-line">    container_name: mdb15-n3</span><span class="code-line">    environment:</span><span class="code-line">      MARIADB_ROOT_PASSWORD: labroot</span><span class="code-line">    command:</span><span class="code-line">      - --bind-address=0.0.0.0</span><span class="code-line">      - --binlog-format=ROW</span><span class="code-line">      - --default-storage-engine=InnoDB</span><span class="code-line">      - --innodb-autoinc-lock-mode=2</span><span class="code-line">      - --wsrep-on=ON</span><span class="code-line">      - --wsrep-provider=/usr/lib/galera/libgalera_smm.so</span><span class="code-line">      - --wsrep-cluster-name=servicehub15</span><span class="code-line">      - --wsrep-cluster-address=gcomm://n1</span><span class="code-line">      - --wsrep-node-name=n3</span><span class="code-line">      - --wsrep-sst-method=rsync</span><span class="code-line">    ports:</span><span class="code-line">      - "33153:3306"</span></code></pre>
+              </div>
+              <div class="callout warning">
+                <strong>One-time bootstrap flag</strong>
+                <p>
+                  The <code>--wsrep-new-cluster</code> option on n1 is valid
+                  only to create this brand-new lab cluster. MariaDB explicitly
+                  warns not to leave it in normal persistent startup
+                  configuration. After the cluster reaches three Synced nodes,
+                  remove that one line from n1 before using
+                  <code>docker compose restart n1</code> or reusing the file for
+                  a persistent lab. Bootstrapping an existing member as a new
+                  cluster can create a second cluster UUID and a
+                  split-brain/data-divergence incident.
+                </p>
+              </div>
+              <div class="code-window" data-code-block="" data-language="shell">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>shell ·
+                    start in bootstrap-then-join order
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">docker compose down -v --remove-orphans</span><span class="code-line"># Bootstrap exactly one node for a brand-new disposable cluster.</span><span class="code-line">docker compose up -d n1</span><span class="code-line"># Wait until n1 reports wsrep_ready=ON, then join the other nodes.</span><span class="code-line">docker compose up -d n2 n3</span><span class="code-line"># Verify all three nodes before creating application data.</span><span class="code-line">docker exec mdb15-n1 mariadb -uroot -plabroot -e "SHOW GLOBAL STATUS LIKE 'wsrep_cluster_size'; SHOW GLOBAL STATUS LIKE 'wsrep_cluster_status';"</span><span class="code-line">docker exec mdb15-n2 mariadb -uroot -plabroot -e "SHOW GLOBAL STATUS LIKE 'wsrep_local_state_comment';"</span><span class="code-line">docker exec mdb15-n3 mariadb -uroot -plabroot -e "SHOW GLOBAL STATUS LIKE 'wsrep_local_state_comment';"</span></code></pre>
+              </div>
+              <p>Now connect to each node and run the same status query.</p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    run on n1, n2, and n3
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SHOW GLOBAL STATUS WHERE Variable_name IN (</span><span class="code-line">  'wsrep_cluster_status','wsrep_cluster_size','wsrep_cluster_state_uuid',</span><span class="code-line">  'wsrep_connected','wsrep_ready','wsrep_local_state_comment',</span><span class="code-line">  'wsrep_provider_name','wsrep_provider_version','wsrep_last_committed'</span><span class="code-line">);</span><span class="code-line">SHOW GLOBAL VARIABLES WHERE Variable_name IN (</span><span class="code-line">  'wsrep_on','wsrep_cluster_name','wsrep_cluster_address',</span><span class="code-line">  'wsrep_sst_method','binlog_format','innodb_autoinc_lock_mode'</span><span class="code-line">);</span></code></pre>
+              </div>
+              <div class="callout">
+                <strong>Expected state</strong>
+                <p>
+                  Each node should report provider <code>Galera</code>, the same
+                  cluster state UUID, <code>wsrep_cluster_status=Primary</code>,
+                  <code>wsrep_cluster_size=3</code>,
+                  <code>wsrep_connected=ON</code>, <code>wsrep_ready=ON</code>,
+                  and local state <code>Synced</code>. Provider version is an
+                  observation you record, not a value this lesson hard-codes.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>
+                5. Prove a write is replicated, then prove that routing is
+                separate
+              </h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql · n1
+                    — create the ServiceHub fixture
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">CREATE DATABASE IF NOT EXISTS servicehub_galera_lab;</span><span class="code-line">CREATE TABLE IF NOT EXISTS servicehub_galera_lab.tickets (</span><span class="code-line">  ticket_id BIGINT PRIMARY KEY AUTO_INCREMENT,</span><span class="code-line">  customer_id BIGINT NOT NULL,</span><span class="code-line">  state VARCHAR(24) NOT NULL,</span><span class="code-line">  priority INT NOT NULL DEFAULT 0,</span><span class="code-line">  updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)</span><span class="code-line">             ON UPDATE CURRENT_TIMESTAMP(6)</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line">CREATE TABLE IF NOT EXISTS servicehub_galera_lab.counters (</span><span class="code-line">  counter_name VARCHAR(64) PRIMARY KEY,</span><span class="code-line">  counter_value BIGINT NOT NULL</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line">INSERT INTO servicehub_galera_lab.counters(counter_name,counter_value)</span><span class="code-line">VALUES ('dispatch',0)</span><span class="code-line">ON DUPLICATE KEY UPDATE counter_value=VALUES(counter_value);</span><span class="code-line">INSERT INTO servicehub_galera_lab.tickets(customer_id,state,priority) VALUES (101,'open',2);</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql · n2
+                    — read the row created on n1
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT ticket_id,customer_id,state,priority</span><span class="code-line">FROM servicehub_galera_lab.tickets</span><span class="code-line">ORDER BY ticket_id;</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql · n3
+                    — write from a second primary node
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">INSERT INTO servicehub_galera_lab.tickets(customer_id,state,priority)</span><span class="code-line">VALUES (202,'assigned',4);</span><span class="code-line">SELECT LAST_INSERT_ID();</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql · n1
+                    — verify both writes are present
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT ticket_id,customer_id,state,priority</span><span class="code-line">FROM servicehub_galera_lab.tickets</span><span class="code-line">ORDER BY ticket_id;</span></code></pre>
+              </div>
+              <p>
+                The replication evidence proves cluster data flow. It does not
+                create an application endpoint. Your client still connected
+                explicitly to n1/n2/n3. A proxy, service discovery layer, DNS
+                policy, connection pool, or application retry/routing strategy
+                must decide where new connections go.
+              </p>
+            </section>
+            <section>
+              <h2>
+                6. Wrong approach: “two nodes are enough because data is
+                duplicated”
+              </h2>
+              <p>
+                A two-node cluster has two copies but awkward quorum behavior.
+                If communication between the nodes is lost, neither side can
+                safely assume the other is dead and independently continue as
+                the only writer. Operators sometimes “fix” this by manually
+                bootstrapping one side. That is dangerous because the other side
+                may still be serving clients or may later return with divergent
+                state.
+              </p>
+              <p>
+                For the lab, do not force a second bootstrap. Instead, stop n3
+                gracefully and observe the membership view on n1/n2, then start
+                n3 and verify it returns to <code>Synced</code>. The lesson is
+                that redundancy, quorum, and routing are different requirements.
+              </p>
+              <div class="code-window" data-code-block="" data-language="shell">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>shell ·
+                    safe membership observation
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">docker stop mdb15-n3</span><span class="code-line">docker exec mdb15-n1 mariadb -uroot -plabroot -e "SHOW GLOBAL STATUS WHERE Variable_name IN ('wsrep_cluster_size','wsrep_cluster_status');"</span><span class="code-line">docker start mdb15-n3</span></code></pre>
+              </div>
+              <p>
+                After n3 catches up, verify all three nodes again. A temporary
+                size of 2 is expected after a graceful leave; do not infer that
+                a permanently designed two-node cluster has the same failure
+                tolerance as three independent voting members.
+              </p>
+            </section>
+            <section>
+              <h2>7. What “virtually synchronous” does and does not promise</h2>
+              <ul>
+                <li>
+                  Successful commits are globally ordered/certified with the
+                  active Primary Component; this is much stronger than “ship the
+                  binlog later.”
+                </li>
+                <li>
+                  Remote nodes can still have receive/apply queues; successful
+                  certification does not mean every remote storage page changed
+                  before the client received success.
+                </li>
+                <li>
+                  A node that is not ready/synced must not be treated as a
+                  normal application target.
+                </li>
+                <li>
+                  Network latency becomes part of write latency because commit
+                  requires cluster communication.
+                </li>
+                <li>
+                  Galera is not a backup. Replicated mistakes and logical
+                  corruption can reach all nodes quickly.
+                </li>
+              </ul>
+            </section>
+            <section>
+              <h2>8. Production judgment</h2>
+              <p>
+                Use Galera when you need a tightly coupled, quorum-based
+                multi-primary cluster and your workload tolerates certification
+                semantics and inter-node latency. Prefer an odd number of voting
+                members placed so a majority can survive the failures you care
+                about. Keep InnoDB tables keyed, use row binlogging, verify the
+                exact server/provider combination, and design application retry
+                behavior before enabling writes on several nodes.
+              </p>
+              <p>
+                Do not choose Galera merely because “three copies are safer.”
+                Backups, disaster recovery, client routing, security,
+                schema-change policy, capacity matching, and operational drills
+                remain separate disciplines.
+              </p>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>What is a write set and when is it certified?</li>
+                  <li>
+                    Why can COMMIT fail after all SQL statements appeared to
+                    execute normally?
+                  </li>
+                  <li>
+                    Which wsrep fields prove that a node is in a writable
+                    Primary Component and ready for queries?
+                  </li>
+                  <li>
+                    Why does a three-node Galera cluster still need a proxy or
+                    application routing policy?
+                  </li>
+                  <li>
+                    What is wrong with leaving --wsrep-new-cluster in normal
+                    startup configuration?
+                  </li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      A write set is the transaction change/key payload exposed
+                      to Galera at replication/commit time; certification checks
+                      its ordered conflicts. A transaction can lose
+                      certification at commit, so execution success before
+                      COMMIT is not final success. Healthy routing gates
+                      normally include Primary component status, expected
+                      cluster size, connected/ready state, and a Synced local
+                      state. Galera manages database membership, not the client
+                      endpoint. The bootstrap flag creates a new cluster
+                      identity and can split an existing topology if reused
+                      incorrectly.
+                    </p>
+                  </div>
+                </details>
+              </div>
+              <div class="code-window" data-code-block="" data-language="shell">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>shell ·
+                    cleanup when you are done
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">docker compose down -v --remove-orphans</span></code></pre>
+              </div>
+              <section>
+                <h2>Authoritative references</h2>
+                <ul>
+                  <li>
+                    <a
+                      href="https://mariadb.com/docs/galera-cluster/readme/about-galera-replication"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB Documentation — What is Galera Replication?</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://mariadb.com/docs/galera-cluster/high-availability/monitoring-mariadb-galera-cluster"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB Documentation — Monitoring MariaDB Galera
+                      Cluster</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://mariadb.com/docs/galera-cluster/high-availability/understanding-quorum-monitoring-and-recovery"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB Documentation — Understanding Quorum, Monitoring,
+                      and Recovery</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://mariadb.com/docs/galera-cluster/galera-management/configuring-mariadb-galera-cluster"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB Documentation — Configuring MariaDB Galera
+                      Cluster</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://mariadb.com/docs/galera-cluster/reference/mariadb-galera-cluster-known-limitations"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB Documentation — Galera Known Limitations</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://mariadb.com/resources/blog/mariadb-community-server-12-3-will-include-galera-cluster/"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB — Community Server 12.3 Will Include Galera
+                      Cluster</a
+                    >
+                  </li>
+                </ul>
+              </section>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a class="previous" href="../Chapter14/Lesson5.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Lag, Breakage, Data Drift, Rebuilds, Promotion, and Replication
+                Incident Runbooks</strong
+              ></a
+            ><a class="next" href="Lesson2.html"
+              ><small>Next lesson</small
+              ><strong
+                >Bootstrap, Join, State Snapshot Transfer, Incremental State
+                Transfer, and Donor Selection</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://x.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >X
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only assets compatible with the Ethereum/ERC-20 network.
+                  Do not send TRC-20/TRON assets.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <div>
+          <a href="../../../index.html#roadmap">Roadmap</a
+          ><a href="../../../index.html#courses">Courses</a
+          ><a href="https://github.com/mohammadijoo/Big_Data_Academy"
+            >Repository</a
+          >
+        </div>
+        <small
+          >Created and maintained by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>

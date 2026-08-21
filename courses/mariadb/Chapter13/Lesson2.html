@@ -1,0 +1,1438 @@
+<!doctype html>
+
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Understand MariaDB physical backup as a version-coupled workflow of capture, prepare, chain validation, copy-back, ownership repair, encryption/compression handling, and restore verification."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Physical Backup with mariadb-backup: Prepare, Copy-Back, Incrementals, and
+      Encryption | MariaDB | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">MA</span>
+            <div><small>Course 06</small><strong>MariaDB</strong></div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 110 lessons..."
+            type="search"
+        /></label>
+        <nav aria-label="MariaDB curriculum" class="sidebar-curriculum">
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>MariaDB Foundations, Release Model, Editions, and
+              Lab Setup
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>What MariaDB Is: Origins, Server Architecture,
+                Ecosystem, and Common Deployment Roles</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Community Server, Enterprise Offerings,
+                Licensing, and Operational Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>LTS vs Innovation Releases, Support Horizons,
+                Upgrade Cadence, and Version Selection</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>Install MariaDB on Windows, Linux, Containers,
+                and Verify Client/Server Tooling</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Reproducible Lab with Databases,
+                Accounts, Sample Workloads, and Safe Defaults</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>MariaDB vs MySQL: Compatibility, Divergence, and
+              Migration Awareness
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>Shared Heritage vs Independent Evolution: Why
+                Syntax Compatibility Is Not Feature Parity</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>Version Numbering, Removed/Added Features,
+                Defaults, and Configuration Divergence</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Data Types, SQL Semantics, JSON Differences,
+                Generated Columns, and Compatibility Traps</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>Replication and Binary Log Compatibility
+                Boundaries Across MariaDB and MySQL</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Plan a Compatibility Assessment Before Migration
+                or Mixed-Environment Operations</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>Server Architecture, Configuration, Connections,
+              and Metadata
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>mariadbd Startup, Data Directory, Option Files,
+                and Configuration Precedence</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Threads, Sessions, Connection Limits, Thread
+                Pool Concepts, and Resource Controls</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>System/Status Variables, Dynamic Settings,
+                Persisted Configuration Patterns, and Validation</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>information_schema, performance_schema, SHOW
+                Commands, and Metadata Discovery</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Logs, Startup Failures, Time Zones, Character
+                Sets, Collations, and Baseline Configuration</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Schemas, Data Types, Keys, Constraints, and SQL
+              Modes
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Databases, Tables, Temporary Objects, Views, and
+                Namespace Conventions</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>Numeric, String, Temporal, UUID, JSON/Text,
+                Vector, Spatial, and Binary Types</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK,
+                DEFAULT, and Generated/Virtual Columns</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>AUTO_INCREMENT, Sequences, Natural vs Surrogate
+                Keys, and Identifier Strategy</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>SQL_MODE, Strictness, Implicit Conversion,
+                Oracle Mode Awareness, and Data Quality</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>SQL Querying, Joins, CTEs, Windows, and Analytical
+              SQL
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>Filtering, NULL Semantics, Ordering,
+                Expressions, and Deterministic Query Results</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>Join Types, Derived Tables, Correlated
+                Subqueries, EXISTS/IN, and Semijoin Reasoning</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>Common Table Expressions, Recursive CTEs, and
+                Hierarchical Data</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>Window Functions, Frames, Ranking, Running
+                Metrics, and Top-N per Group</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>Aggregations, ROLLUP, GROUPING Patterns, Set
+                Operations, and Reporting Workflows</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Data Modification, Transactions, Isolation, Locks,
+              and Deadlocks
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>INSERT/REPLACE/INSERT ... ON DUPLICATE KEY,
+                UPDATE, DELETE, and RETURNING Capabilities</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>Autocommit, Transactions, SAVEPOINT, Atomicity,
+                and Application Error Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>Isolation Levels, Consistent Reads, Locking
+                Reads, MVCC, and Concurrency Anomalies</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>Metadata Locks, Row Locks, Gap/Next-Key Locking,
+                and Online Change Interactions</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Deadlock Analysis, Lock Waits, Retry Policies,
+                Idempotency, and Contention Testing</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>InnoDB in MariaDB: Storage, Buffering, Redo, Undo,
+              and Recovery
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>InnoDB Tablespaces, Pages, Row Formats,
+                Clustered/Secondary Indexes, and Record Layout</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>Buffer Pool, Flushing, Dirty Pages, Read-Ahead,
+                and Cache Efficiency</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>Redo Logs, Undo, Doublewrite, Checkpoints, Crash
+                Recovery, and Durability</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Purge, History, Long Transactions, Undo Growth,
+                and Bloat-Like Operational Symptoms</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Inspect InnoDB Metrics and Tune Storage Behavior
+                for OLTP Workloads</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>MariaDB Storage Engines Beyond InnoDB
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>Aria Architecture, Crash Safety, Temporary Work,
+                and Operational Use Cases</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>MyISAM Legacy Characteristics, Table Locks,
+                FULLTEXT History, and Migration Concerns</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>MEMORY Engine, Ephemeral Data, Limits, and Safer
+                Alternatives</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>CONNECT and Other Specialized Engines: External
+                Data Access and Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Choose a Storage Engine Deliberately and Avoid
+                Cross-Engine Transaction Assumptions</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>Index Design, FULLTEXT, Spatial, Vector, and
+              Specialized Access Paths
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>B-Tree Indexes, Composite Keys, Prefix Rules,
+                Covering Indexes, and Write Costs</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>Functional/Expression and Generated-Column
+                Indexing Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>FULLTEXT Indexes, Tokenization, Boolean/Natural
+                Language Search, and Limits</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>Spatial Types and Indexes, SRIDs, Geometry
+                Functions, and GIS Workloads</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>Vector Search Capabilities, Distance Functions,
+                Vector Indexing Concepts, and AI Workloads</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>Optimizer, EXPLAIN, Statistics, Histograms, and
+              Query Tuning
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>Optimizer Architecture, Access Paths, Join
+                Orders, Costing, and Query Transformations</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>EXPLAIN, ANALYZE, FORMAT=JSON, Runtime
+                Statistics, and Reading Plans</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>Table/Index Statistics, Histograms, Cardinality,
+                and Misestimate Diagnosis</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>Join Algorithms, Subquery Optimizations, Derived
+                Tables, Semijoins, and Materialization</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Optimizer Switches, Hints, Invisible/Ignored
+                Index Concepts, and Regression Control</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>Views, Stored Programs, Triggers, Events, and
+              SQL/PSM
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>Views, Updatability, ALGORITHM, SQL SECURITY,
+                and Definer Risks</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>Stored Procedures and Functions, Parameters,
+                Handlers, Cursors, and Diagnostics</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>Triggers, OLD/NEW Rows, Ordering, Auditing, and
+                Hidden Coupling</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Event Scheduler, Recurring Jobs, Maintenance,
+                and Failure Visibility</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Server-Side Logic Testing, Deployment,
+                Privileges, and Application-Boundary Decisions</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>Accounts, Roles, Authentication, Authorization, and
+              Security Hardening
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>Accounts, Authentication Plugins, Password
+                Policy, Locking, Expiry, and Lifecycle</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>Privileges, Roles, Default Roles, Grant Design,
+                and Delegated Administration</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>Definers, SQL SECURITY, Stored Objects, Views,
+                and Privilege-Escalation Prevention</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>TLS, Certificates, Secure Transport, Network
+                Segmentation, and Secret Rotation</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>Hardening Checklist, Audit Options, Plugin Risk,
+                File Privileges, and Patch Discipline</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>13</span>Backup, mariadb-backup, Restore, and Point-in-Time
+              Recovery
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="Lesson1.html"
+                ><span>01</span>Logical Backup with mariadb-dump: Consistency,
+                Objects, Routines, and Large Databases</a
+              ><a class="sidebar-lesson is-current" href="Lesson2.html"
+                ><span>02</span>Physical Backup with mariadb-backup: Prepare,
+                Copy-Back, Incrementals, and Encryption<i>Current</i></a
+              ><a class="sidebar-lesson" href="Lesson3.html"
+                ><span>03</span>Binary Logs, Retention, Coordinates/GTIDs, and
+                PITR Prerequisites</a
+              ><a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>Point-in-Time Recovery, Partial Recovery,
+                Validation, and Data-Loss Boundaries</a
+              ><a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Backup Automation, Offloading to Replicas,
+                Restore Drills, RPO/RTO, and Corruption Tests</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Asynchronous Replication, GTIDs, Parallel Apply,
+              and Topology Design
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Primary/Replica Flow, Binary Logs, Relay Logs,
+                Replication Threads, and Filters</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>MariaDB GTIDs, Domains, Positions, Strict Mode,
+                and Failover Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Parallel Replication, Commit Ordering, Worker
+                Tuning, and Replica Throughput</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Delayed Replicas, Read Scaling, Multi-Source
+                Replication, and Reporting Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Lag, Breakage, Data Drift, Rebuilds, Promotion,
+                and Replication Incident Runbooks</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Galera Cluster: Synchronous Multi-Primary
+              Replication and High Availability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>Galera Architecture, Write Sets, Certification,
+                Quorum, and Cluster Membership</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Bootstrap, Join, State Snapshot Transfer,
+                Incremental State Transfer, and Donor Selection</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Flow Control, Certification Conflicts,
+                Auto-Increment, Hot Rows, and Workload Constraints</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Load Balancing, Primary Component, Split Brain,
+                Fencing, and Application Failover</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Galera Security, TLS, Rolling Maintenance,
+                Upgrades, Failure Injection, and Recovery</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Partitioning, Large Tables, Online DDL, and Data
+              Lifecycle
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>Partitioning Strategies, Partition Pruning,
+                Keys, Constraints, and Design Limits</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Hot/Cold Data, Rolling Partitions, Archiving,
+                Retention, and Bulk Loads</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>ALTER TABLE Algorithms, Lock Levels, Online DDL,
+                and Operational Planning</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Large Delete/Update Pathologies, Chunking, Purge
+                Effects, and Storage Reclamation</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Multi-Terabyte Capacity Planning, Maintenance
+                Windows, and Growth Forecasting</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Performance Schema, sys Schema, Logs, and
+              Observability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>Performance Schema Instrumentation, Consumers,
+                Statements, Waits, and Overhead</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>sys Schema Views, User/Host Activity, I/O,
+                Statements, Memory, and Index Usage</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>Slow Query Log, General Log, Error Log, and
+                Query-Digest Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>InnoDB, Replication, Galera, Connections, Temp
+                Tables, and OS Metrics</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Build Dashboards, Baselines, SLO Alerts, and
+                Incident Timelines</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Performance Engineering: Memory, I/O, Threading,
+              and Workload Tuning
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>Buffer Pool Sizing, Dirty Pages, Flushing,
+                Read-Ahead, and Cache Hit Interpretation</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>Per-Session Memory, Sort/Join Buffers, Temp
+                Tables, and Memory Explosion Risks</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Thread Pool, Connection Concurrency, Queueing,
+                and CPU Saturation</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Redo Capacity, I/O Capacity, Flush Methods,
+                Storage Latency, and Checkpoint Behavior</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>Benchmark Design, Warmup, Concurrency,
+                Percentiles, Regression Tests, and Capacity Headroom</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>19</span>Application Integration, Connectors, ORMs, Pools,
+              and Reliability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Client Connectors, Connection Strings, TLS,
+                Timeouts, Pooling, and Session Contracts</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Prepared Statements, Parameters, Injection
+                Defense, Type Mapping, and Unicode</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>Transaction Scoping, Retryable Errors,
+                Idempotency, and Network Failure Handling</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>ORM Query Shapes, Pagination, N+1, Bulk
+                Operations, and Index Visibility</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Schema Migrations, Health Checks, Failover
+                Behavior, and Deployment Coordination</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Upgrades, Migrations, Compatibility Testing, and
+              Low-Downtime Change
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>Patch, Innovation, and LTS Upgrade Planning with
+                Release Notes and Deprecations</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>mariadb-upgrade, System Tables, Configuration
+                Drift, and Post-Upgrade Validation</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>MySQL-to-MariaDB and MariaDB-to-MySQL Migration:
+                Compatibility Matrix and Data Tests</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>Expand/Contract Schema Changes, Online DDL,
+                Backfills, and Application Compatibility</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Rolling Cluster/Replication Upgrades, Rollback
+                Plans, Canaries, and Performance Comparison</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Advanced MariaDB Features: System-Versioned Tables,
+              Oracle Mode, and Federation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>System-Versioned Tables, Temporal Queries,
+                Retention, and Audit/History Use Cases</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>Application-Time Periods, Bitemporal Modeling
+                Concepts, and Constraint Design</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>Oracle SQL_MODE / Compatibility Features,
+                PL/SQL-Like Syntax, and Migration Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Spider/Federated Data Access Concepts,
+                Distributed Queries, and Operational Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>When MariaDB-Native Features Replace—or Should
+                Not Replace—Dedicated Data Systems</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Production Capstone: Design, Cluster, Secure, Tune,
+              and Recover MariaDB
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>Define Workload, SLOs, Data Model, Engine
+                Choices, Capacity, and Architecture Record</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>Implement Schema, Indexes, Security, Application
+                Access, and Migration Automation</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>Tune SQL, InnoDB, Memory, I/O, Threading, and
+                Galera/Replication from Evidence</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>Implement Backups/PITR, HA, Monitoring, Alerts,
+                Upgrades, and Incident Runbooks</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Run Restore, Failover, Split-Brain, Performance,
+                and Corruption Drills—and Defend the Design</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 13 · Lesson 02</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">MariaDB</a><span>/</span
+            ><span>Chapter 13 · Lesson 02</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 13 · Backup, mariadb-backup, Restore, and Point-in-Time
+              Recovery
+            </p>
+            <h1>
+              Physical Backup with mariadb-backup: Prepare, Copy-Back,
+              Incrementals, and Encryption
+            </h1>
+            <p>
+              Understand MariaDB physical backup as a version-coupled workflow
+              of capture, prepare, chain validation, copy-back, ownership
+              repair, encryption/compression handling, and restore verification.
+            </p>
+            <div class="lesson-meta">
+              <span>Advanced</span><span>140–175 minutes</span
+              ><span>Physical full/incremental restore lab</span
+              ><span>MariaDB Community 12.3.2 baseline</span
+              ><span>Curriculum anchor: 11.8 LTS · verify target version</span
+              ><span>Last reviewed: August 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                ServiceHub's logical restore works, but the measured import time
+                is too long for a multi-hundred-gigabyte production target. The
+                team wants a faster same-platform recovery path. Copying
+                <code>/var/lib/mysql</code> while MariaDB is running looks
+                tempting, yet live InnoDB files are not a self-consistent frozen
+                image. Pages and redo can be captured at different moments, and
+                the server may be writing while files are copied.
+              </p>
+              <p>
+                <strong>mariadb-backup</strong> is MariaDB's physical backup
+                utility. It coordinates with a running server, copies database
+                files and records recovery metadata. A raw backup is
+                intentionally not treated as ready-to-start data. The
+                <strong>prepare</strong> phase applies crash-recovery logic and,
+                for incremental chains, merges delta pages into the base. Only
+                then should a controlled <strong>copy-back</strong> populate an
+                empty restore data directory.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Match mariadb-backup to the exact MariaDB Server baseline
+                    and verify package/tool provenance.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Create a full physical backup with a dedicated
+                    least-privilege backup identity and inspect backup metadata.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Explain why --prepare is mandatory before copy-back and why
+                    file ownership matters after restore.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Build and merge an incremental chain in the correct order
+                    using LSN metadata.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Treat compression and encryption as recoverability
+                    dependencies whose keys/tools must be tested during restore.
+                  </p>
+                </div>
+              </div>
+              <div class="callout">
+                <strong>Current baseline</strong>
+                <p>
+                  MariaDB Community Server 12.3.2 packages include a matching
+                  MariaDB-backup package. Current official documentation
+                  recommends using the same mariadb-backup version as the
+                  server. For ordinary backup operations the documented global
+                  privileges are RELOAD, PROCESS, LOCK TABLES and BINLOG
+                  MONITOR; extra options such as Galera/replica metadata or
+                  killing long queries can require additional privileges. Verify
+                  the exact command and grants against your target release.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>1. Physical backup is not “copy the data directory”</h2>
+              <p>
+                InnoDB uses buffer-pool pages, redo logs, undo records and
+                background flushing. At any instant, the filesystem contains a
+                state that may require crash recovery. A naïve recursive file
+                copy can mix pages observed at incompatible moments and omit
+                coordination needed for non-InnoDB files or metadata.
+              </p>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Stage</th>
+                    <th>Purpose</th>
+                    <th>Server running?</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>--backup</code></td>
+                    <td>
+                      Capture data files plus backup metadata while coordinating
+                      with the source server.
+                    </td>
+                    <td>Normally yes.</td>
+                  </tr>
+                  <tr>
+                    <td><code>--prepare</code></td>
+                    <td>
+                      Make the captured files point-in-time consistent; merge
+                      incrementals when present.
+                    </td>
+                    <td>No source connection required.</td>
+                  </tr>
+                  <tr>
+                    <td><code>--copy-back</code></td>
+                    <td>
+                      Copy prepared files into an empty restore data directory.
+                    </td>
+                    <td>Target server stopped.</td>
+                  </tr>
+                  <tr>
+                    <td>ownership/permissions</td>
+                    <td>
+                      Ensure the MariaDB OS service account can read/write
+                      restored files.
+                    </td>
+                    <td>Target stopped.</td>
+                  </tr>
+                  <tr>
+                    <td>startup + validation</td>
+                    <td>
+                      Run crash/startup checks and application-level acceptance
+                      tests.
+                    </td>
+                    <td>Target starts only after preparation/copy-back.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+            <section>
+              <h2>2. Verify versions, engines and the backup account first</h2>
+              <div class="code-window" data-code-block="" data-language="shell">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>shell ·
+                    record source and tool compatibility evidence
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">mariadb -Nse "SELECT VERSION();"</span><span class="code-line">mariadb-backup --version</span><span class="code-line">mariadb -e "SHOW ENGINES;"</span><span class="code-line">mariadb -e "SHOW VARIABLES LIKE 'datadir';"</span></code></pre>
+              </div>
+              <p>
+                If the server reports 12.3.2, use the corresponding 12.3.2
+                backup package/tool for this lab. A tool starting successfully
+                against another release is not proof that its output is
+                restorable. Storage engines matter too:
+                <code>mariadb-backup</code> is designed around supported MariaDB
+                physical formats, with engine-specific behavior and additional
+                requirements for some engines such as MyRocks.
+              </p>
+              <p>
+                Create a dedicated local backup account on the disposable
+                server:
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    least-privilege baseline for ordinary local backups
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">CREATE USER IF NOT EXISTS 'mariadb_backup'@'localhost'</span><span class="code-line">  IDENTIFIED BY 'replace-with-lab-secret';</span><span class="code-line">GRANT RELOAD, PROCESS, LOCK TABLES, BINLOG MONITOR</span><span class="code-line">  ON *.* TO 'mariadb_backup'@'localhost';</span><span class="code-line">SHOW GRANTS FOR 'mariadb_backup'@'localhost';</span></code></pre>
+              </div>
+              <div class="callout warning">
+                <strong>Credential handling</strong>
+                <p>
+                  The literal password above is a disposable lab placeholder. In
+                  automation, place credentials in a protected option
+                  file/secret store with restrictive OS permissions, or use a
+                  supported local authentication mechanism. Do not publish
+                  backup-account passwords in scripts, shell history or CI logs.
+                </p>
+              </div>
+              <p>
+                Optional flags change privilege requirements. For example,
+                current documentation notes additional monitoring privileges for
+                certain replica/Galera metadata options and
+                <code>CONNECTION ADMIN</code> for some long-query-kill behavior.
+                Least privilege means matching the actual command, not
+                memorizing one grant list forever.
+              </p>
+            </section>
+            <section>
+              <h2>
+                3. Create independent source data for this physical-backup
+                lesson
+              </h2>
+              <p>
+                This lesson does not depend on Lesson 1 having been run. Create
+                a tiny InnoDB dataset so full and incremental backup validation
+                has a known marker.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    independent physical-backup fixture
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">DROP DATABASE IF EXISTS servicehub_physical_lab;</span><span class="code-line">CREATE DATABASE servicehub_physical_lab;</span><span class="code-line">CREATE TABLE servicehub_physical_lab.tickets (</span><span class="code-line">  ticket_id BIGINT PRIMARY KEY,</span><span class="code-line">  status VARCHAR(20) NOT NULL,</span><span class="code-line">  note VARCHAR(120) NOT NULL</span><span class="code-line">) ENGINE=InnoDB;</span><span class="code-line">INSERT INTO servicehub_physical_lab.tickets VALUES</span><span class="code-line"> (5001,'open','full-backup marker'),</span><span class="code-line"> (5002,'assigned','full-backup marker');</span><span class="code-line">SELECT * FROM servicehub_physical_lab.tickets ORDER BY ticket_id;</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>4. Take a full backup and inspect what was produced</h2>
+              <p>
+                On Linux/package installations, the OS user running
+                <code>mariadb-backup</code> needs filesystem permission to read
+                the MariaDB files and write the target directory. In a
+                disposable lab, using an administrative OS account is
+                acceptable; production should narrow this boundary.
+              </p>
+              <div class="code-window" data-code-block="" data-language="shell">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>shell ·
+                    full physical backup
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">sudo mkdir -p /var/mariadb/backups/full-001</span><span class="code-line">sudo mariadb-backup --backup \</span><span class="code-line">  --target-dir=/var/mariadb/backups/full-001 \</span><span class="code-line">  --user=mariadb_backup \</span><span class="code-line">  --password</span><span class="code-line"></span><span class="code-line">sudo ls -lah /var/mariadb/backups/full-001</span><span class="code-line">sudo cat /var/mariadb/backups/full-001/xtrabackup_checkpoints</span><span class="code-line">sudo cat /var/mariadb/backups/full-001/xtrabackup_info | head</span></code></pre>
+              </div>
+              <p>
+                If your build does not prompt safely with
+                <code>--password</code>, use a protected option file rather than
+                a command-line value. The exact metadata files vary by
+                version/features, but
+                <code>xtrabackup_checkpoints</code> exposes log sequence number
+                (LSN) boundaries and <code>xtrabackup_info</code> records
+                provenance. When binary-log metadata is captured, files such as
+                <code>xtrabackup_binlog_info</code> can bridge the physical
+                backup to PITR.
+              </p>
+              <div class="callout warning">
+                <strong
+                  >Wrong approach: archive immediately and call it ready</strong
+                >
+                <p>
+                  A raw --backup directory is not the final restore state. Files
+                  were copied while the source was changing. MariaDB
+                  documentation explicitly requires preparation before restore;
+                  an unprepared copy may fail InnoDB startup or represent an
+                  inconsistent state.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>5. Prepare the full backup, then prove it can start</h2>
+              <div class="code-window" data-code-block="" data-language="shell">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>shell ·
+                    prepare the backup
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">sudo mariadb-backup --prepare \</span><span class="code-line">  --target-dir=/var/mariadb/backups/full-001</span><span class="code-line"></span><span class="code-line">sudo cat /var/mariadb/backups/full-001/xtrabackup_checkpoints</span></code></pre>
+              </div>
+              <p>
+                The prepare phase performs recovery work against the backup
+                copy. Run it with the same backup-tool version used to capture
+                the backup. Preparation success is necessary but still not
+                sufficient: the restore data directory, OS ownership, server
+                startup and data-level validation remain untested.
+              </p>
+              <p>
+                For a destructive copy-back experiment, use a disposable second
+                MariaDB instance or volume. Stop the target, preserve/remove its
+                old data directory intentionally, make sure the target directory
+                is empty, then copy back:
+              </p>
+              <div class="code-window" data-code-block="" data-language="shell">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>shell ·
+                    copy-back into a disposable target
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">sudo systemctl stop mariadb-restore</span><span class="code-line"># Verify this is the disposable target datadir before removing anything.</span><span class="code-line">sudo find /var/lib/mysql-restore -mindepth 1 -maxdepth 1 -print</span><span class="code-line"># After independent verification/snapshot, empty the disposable target.</span><span class="code-line">sudo rm -rf /var/lib/mysql-restore/*</span><span class="code-line"></span><span class="code-line">sudo mariadb-backup --copy-back \</span><span class="code-line">  --target-dir=/var/mariadb/backups/full-001 \</span><span class="code-line">  --datadir=/var/lib/mysql-restore</span><span class="code-line">sudo chown -R mysql:mysql /var/lib/mysql-restore</span><span class="code-line">sudo systemctl start mariadb-restore</span></code></pre>
+              </div>
+              <p>
+                Service names and data-directory flags vary by package/platform.
+                Do not paste these commands into a production host. On Windows,
+                use a separate MariaDB service/data directory and its service
+                account ACLs rather than Unix <code>chown</code>. In containers,
+                use separate named volumes; MariaDB's official container
+                documentation demonstrates backup/prepare/copy-back with
+                isolated volumes.
+              </p>
+            </section>
+            <section>
+              <h2>6. Build an incremental chain and follow the LSNs</h2>
+              <p>
+                An InnoDB <strong>log sequence number (LSN)</strong> increases
+                as redo is generated. Incremental backup compares page LSNs with
+                the previous backup boundary and stores changed pages/deltas.
+                The chain is ordered: base → inc1 → inc2. Losing or corrupting
+                the middle increment can invalidate every later increment that
+                depends on it.
+              </p>
+              <div class="code-window" data-code-block="" data-language="shell">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>shell ·
+                    capture two incremental backups
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">sudo mariadb-backup --backup \</span><span class="code-line">  --target-dir=/var/mariadb/backups/inc-001 \</span><span class="code-line">  --incremental-basedir=/var/mariadb/backups/full-001 \</span><span class="code-line">  --user=mariadb_backup --password</span><span class="code-line"></span><span class="code-line"># Generate a small, known lab change before the second increment.</span><span class="code-line">mariadb -e "UPDATE servicehub_physical_lab.tickets SET status='closed', note='incremental marker' WHERE ticket_id=5001;"</span><span class="code-line"></span><span class="code-line">sudo mariadb-backup --backup \</span><span class="code-line">  --target-dir=/var/mariadb/backups/inc-002 \</span><span class="code-line">  --incremental-basedir=/var/mariadb/backups/inc-001 \</span><span class="code-line">  --user=mariadb_backup --password</span><span class="code-line"></span><span class="code-line">for d in full-001 inc-001 inc-002; do</span><span class="code-line">  echo "=== $d ==="</span><span class="code-line">  sudo cat /var/mariadb/backups/$d/xtrabackup_checkpoints</span><span class="code-line">done</span></code></pre>
+              </div>
+              <p>
+                Before applying deltas, make a separate working copy of the base
+                if you need to preserve the original artifact. Then merge each
+                increment in order:
+              </p>
+              <div class="code-window" data-code-block="" data-language="shell">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>shell ·
+                    merge the chain into the base working copy
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">sudo mariadb-backup --prepare \</span><span class="code-line">  --target-dir=/var/mariadb/backups/full-001</span><span class="code-line">sudo mariadb-backup --prepare \</span><span class="code-line">  --target-dir=/var/mariadb/backups/full-001 \</span><span class="code-line">  --incremental-dir=/var/mariadb/backups/inc-001</span><span class="code-line">sudo mariadb-backup --prepare \</span><span class="code-line">  --target-dir=/var/mariadb/backups/full-001 \</span><span class="code-line">  --incremental-dir=/var/mariadb/backups/inc-002</span></code></pre>
+              </div>
+              <p>
+                Current documentation notes that older
+                <code>--apply-log-only</code> patterns are no longer
+                needed/supported in current releases. This is exactly why a
+                course should teach the mechanism and verify current syntax
+                rather than perpetuating historical recipes.
+              </p>
+            </section>
+            <section>
+              <h2>
+                7. Compression and encryption add dependencies to the restore
+                path
+              </h2>
+              <p>
+                Physical backups are large and highly sensitive.
+                <code>mariadb-backup</code> supports streaming workflows and
+                version-specific encryption options; external
+                compression/encryption can also wrap streams. Every additional
+                transform creates a recovery dependency: decompressor,
+                decryptor, key, plugin and metadata must still exist during a
+                disaster.
+              </p>
+              <div class="code-window" data-code-block="" data-language="shell">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>shell ·
+                    streaming pattern with external compression
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">mkdir -p /var/mariadb/backups/meta-full-002</span><span class="code-line">sudo mariadb-backup --backup \</span><span class="code-line">  --stream=mbstream \</span><span class="code-line">  --extra-lsndir=/var/mariadb/backups/meta-full-002 \</span><span class="code-line">  --user=mariadb_backup --password \</span><span class="code-line">  | gzip &gt; /var/mariadb/backups/full-002.mbstream.gz</span></code></pre>
+              </div>
+              <p>
+                For encryption, first inspect
+                <code>mariadb-backup --help</code> on the exact build. If you
+                use built-in encryption, preserve the required key-management
+                material and plugin/library version. If you use an external free
+                tool such as GnuPG or age, capture its version and key
+                identifier. A backup whose decryption key is stored only on the
+                failed database host is operationally unrecoverable.
+              </p>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Artifact</th>
+                    <th>Store with backup?</th>
+                    <th>Store separately?</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Encrypted backup bytes</td>
+                    <td>Yes</td>
+                    <td>Off-site/immutable copy</td>
+                  </tr>
+                  <tr>
+                    <td>Checksum + manifest</td>
+                    <td>Yes</td>
+                    <td>Monitoring/inventory copy</td>
+                  </tr>
+                  <tr>
+                    <td>Encryption key</td>
+                    <td>No plaintext beside backup</td>
+                    <td>Controlled key store / escrow path</td>
+                  </tr>
+                  <tr>
+                    <td>Tool/server versions</td>
+                    <td>Yes</td>
+                    <td>Runbook/package repository references</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+            <section>
+              <h2>
+                8. Failure diagnosis: “backup completed” but restore fails
+              </h2>
+              <p>
+                Typical causes include version mismatch, incomplete incremental
+                chain, missing encryption key/plugin, unprepared files, nonempty
+                target datadir, wrong ownership, insufficient disk space, or a
+                backup that already contains physical corruption. Diagnose from
+                evidence rather than retrying arbitrary flags.
+              </p>
+              <div class="code-window" data-code-block="" data-language="shell">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>shell ·
+                    evidence packet before retrying a failed restore
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">mariadb-backup --version</span><span class="code-line">mariadbd --version</span><span class="code-line">cat /var/mariadb/backups/full-001/xtrabackup_checkpoints</span><span class="code-line">cat /var/mariadb/backups/full-001/xtrabackup_info | head -40</span><span class="code-line">find /var/lib/mysql-restore -maxdepth 1 -ls</span><span class="code-line"># Also inspect the target MariaDB error log for startup/recovery messages.</span></code></pre>
+              </div>
+              <p>
+                Do not use <code>--force-non-empty-directories</code> as a
+                reflex to bypass a safety failure. Understand why the directory
+                is nonempty and whether those files belong to a previous server.
+                Recovery tools are intentionally conservative around
+                data-directory replacement.
+              </p>
+            </section>
+            <section>
+              <h2>9. Production judgment, verification and cleanup</h2>
+              <p>
+                Physical backup is attractive when same-platform restore speed
+                matters and the storage engines/tool versions are supported. It
+                is less portable than logical SQL and can preserve physical
+                corruption. Pair it with logical/object-level recovery paths,
+                integrity checks and periodic clean-server restore drills.
+              </p>
+              <p>
+                After restoring the prepared full+incremental chain into the
+                disposable target, verify
+                <code>servicehub_physical_lab.tickets</code>: ticket 5001 should
+                carry the incremental marker. That database-level observation
+                proves the increment reached the restored state; it still does
+                not prove every application invariant, so add domain checks in
+                production. Drop the disposable schema/account only after the
+                restore drill is complete.
+              </p>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>
+                    Why must mariadb-backup normally match the server version?
+                  </li>
+                  <li>What does --prepare do that --backup alone does not?</li>
+                  <li>
+                    Why is an incremental chain more fragile operationally than
+                    one full backup?
+                  </li>
+                  <li>
+                    What four ordinary global privileges does current MariaDB
+                    documentation list for a basic backup user?
+                  </li>
+                  <li>
+                    Why must encryption keys and restore-tool versions be
+                    included in a disaster-recovery runbook?
+                  </li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      Physical formats and backup/recovery logic are
+                      version-coupled, so a mismatched utility can fail or
+                      produce unusable output. --prepare applies recovery and
+                      merges increments into a consistent restore candidate.
+                      Incrementals depend on every prior link. Current basic
+                      grants are RELOAD, PROCESS, LOCK TABLES and BINLOG
+                      MONITOR, with extra privileges for some options/features.
+                      Encryption and compression turn keys/tools/plugins into
+                      required recovery dependencies, so they must be available
+                      and tested independently of the failed database host.
+                    </p>
+                  </div>
+                </details>
+              </div>
+              <p>
+                Lesson 3 adds the second half of recoverability: binary logs. A
+                prepared full backup restores the past; retained transaction
+                logs determine how far forward you can safely recover.
+              </p>
+              <section>
+                <h2>Authoritative references</h2>
+                <ul>
+                  <li>
+                    <a
+                      href="https://mariadb.com/docs/server/server-usage/backup-and-restore/mariadb-backup/mariadb-backup-overview"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB Documentation — mariadb-backup Overview</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://mariadb.com/docs/server/server-usage/backup-and-restore/mariadb-backup/mariadb-backup-options"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB Documentation — mariadb-backup Options</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://mariadb.com/docs/server/server-usage/backup-and-restore/mariadb-backup/incremental-backup-and-restore-with-mariadb-backup"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB Documentation — Incremental Backup and Restore</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://mariadb.com/docs/server/server-usage/backup-and-restore/backup-and-restore-overview"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB Documentation — Backup and Restore Overview</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://mariadb.com/docs/release-notes/"
+                      rel="noopener"
+                      target="_blank"
+                      >MariaDB Release Notes</a
+                    >
+                  </li>
+                </ul>
+              </section>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a class="previous" href="Lesson1.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Logical Backup with mariadb-dump: Consistency, Objects,
+                Routines, and Large Databases</strong
+              ></a
+            ><a class="next" href="Lesson3.html"
+              ><small>Next lesson</small
+              ><strong
+                >Binary Logs, Retention, Coordinates/GTIDs, and PITR
+                Prerequisites</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://x.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >X
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only assets compatible with the Ethereum/ERC-20 network.
+                  Do not send TRC-20/TRON assets.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <div>
+          <a href="../../../index.html#roadmap">Roadmap</a
+          ><a href="../../../index.html#courses">Courses</a
+          ><a href="https://github.com/mohammadijoo/Big_Data_Academy"
+            >Repository</a
+          >
+        </div>
+        <small
+          >Created and maintained by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>
