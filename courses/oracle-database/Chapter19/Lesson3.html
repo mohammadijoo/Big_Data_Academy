@@ -1,0 +1,1468 @@
+<!doctype html>
+
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Build a rolling-window load/archive workflow around exchange partition, structural/boundary validation, Data Pump/RMAN implications and rollback, contrasting metadata exchange with row-by-row movement."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Exchange Partition, Rolling Windows, Bulk Loads, Archiving, and Lifecycle
+      Automation | Oracle Database | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">OR</span>
+            <div>
+              <small>Course 08</small><strong>Oracle Database</strong>
+            </div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 145 lessons..."
+            type="search"
+        /></label>
+        <nav aria-label="Oracle Database curriculum" class="sidebar-curriculum">
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>Oracle AI Database Foundations, Editions,
+              Deployment Models, and Lab Setup
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>Oracle Database Architecture, Converged Database
+                Model, Workloads, and Product Terminology</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Oracle AI Database 26ai LTS, Free/Developer
+                Learning Paths, Licensing Awareness, and Feature Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>On-Premises, OCI, Autonomous, Exadata, and
+                Container-Based Learning/Deployment Models</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>Install or Provision an Oracle Lab, Configure
+                Listener/Services, and Verify SQLcl/SQL*Plus Connectivity</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Safe Course Environment with Users,
+                Tablespaces, Sample Schemas, and Baseline Backups</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>Instance Architecture: SGA, PGA, Processes,
+              Sessions, and Startup/Shutdown
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>Oracle Instance vs Database, SGA Components,
+                Background Processes, and Physical Files</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>PGA, Work Areas, Session/Process Models,
+                Dedicated vs Shared Server, and Connection Lifecycle</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Parameter Files, SPFILE/PFILE, Dynamic
+                Parameters, ALTER SYSTEM, and Scope</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>STARTUP/SHUTDOWN States, Mount/Open Modes,
+                Restricted Sessions, and Recovery Context</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Alert Log, ADR, Trace Files, Dynamic Performance
+                Views, and Startup Troubleshooting</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>Physical Storage: Datafiles, Tablespaces, Blocks,
+              Segments, Extents, and ASM Concepts
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>Database Blocks, Extents, Segments, Tablespaces,
+                Datafiles, and Space Allocation</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Permanent, Temporary, Undo Tablespaces and
+                Bigfile vs Smallfile Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>Locally Managed Tablespaces, ASSM, High-Water
+                Marks, and Space Reclamation</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>Automatic Storage Management Concepts: Disk
+                Groups, Failure Groups, Striping, and Mirroring</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Design a Storage Layout for OLTP, Analytics,
+                Temp, Undo, Recovery, and Growth</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Users, Schemas, Objects, Data Types, Keys,
+              Constraints, and Sequences
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Users vs Schemas, Object Ownership, Naming,
+                Synonyms, and Namespace Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>NUMBER, Character, DATE/TIMESTAMP, INTERVAL,
+                RAW, LOB, JSON, VECTOR, and Specialized Types</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK, NOT
+                NULL, DEFERRABLE, and RELY/NOVALIDATE Concepts</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>Identity Columns, Sequences, Caching, Ordering,
+                Gaps, and Scalable Identifier Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Virtual Columns, Defaults, Invisible Columns,
+                Wide-Table Awareness, and Data-Integrity Design</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>Oracle SQL Fundamentals: Joins, Subqueries, Set
+              Operations, and Hierarchical Queries
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>SELECT Semantics, NULL, Expressions, Conversion,
+                NLS Effects, and Deterministic Ordering</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>INNER/OUTER/CROSS Joins, Legacy Join Syntax
+                Awareness, and Cardinality Reasoning</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>Scalar/Correlated Subqueries, EXISTS/IN,
+                Semijoins, Antijoins, and Subquery Factoring</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>UNION/UNION ALL/INTERSECT/MINUS, Query
+                Composition, and Duplicate Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>CONNECT BY, Recursive WITH, Hierarchical Data,
+                Cycle Handling, and Tree Traversal</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Advanced SQL: Analytic Functions, MODEL, PIVOT,
+              MATCH_RECOGNIZE, and SQL Macros
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>Analytic Functions, Partitions, Frames, Ranking,
+                Running Metrics, and Gaps-and-Islands</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>PIVOT/UNPIVOT, GROUPING SETS, CUBE, ROLLUP, and
+                Advanced Aggregation</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>MATCH_RECOGNIZE for Row Pattern Recognition and
+                Event-Sequence Analysis</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>MODEL Clause Concepts, Spreadsheet-Like
+                Calculations, and Appropriate Use Cases</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>SQL Macros and Reusable SQL Abstractions,
+                Optimizer Visibility, and Maintainability</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>DML, Transactions, Read Consistency, Undo, Locks,
+              and Concurrency
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>INSERT, Multi-Table INSERT, UPDATE, DELETE,
+                MERGE, RETURNING, and Error Logging</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>Transactions, COMMIT, ROLLBACK, SAVEPOINT,
+                Implicit Commit Boundaries, and Autonomous Transactions</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>Oracle Read Consistency, SCNs, Undo,
+                Statement-Level Snapshots, and Consistent Gets</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Row Locks, Table Locks, ITL, Enqueues, SELECT
+                FOR UPDATE, and Concurrency Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Deadlocks, Blocking Sessions, ORA-01555 Snapshot
+                Too Old, Undo Sizing, and Retry Design</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>B-Tree, Bitmap, Function-Based, Domain, and
+              Specialized Indexes
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>B-Tree Index Structure, Leaf Blocks, Branches,
+                Rowids, Selectivity, and Clustering Factor</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>Composite, Descending, Function-Based,
+                Invisible, and Compressed Indexes</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>Bitmap Indexes for Analytical Workloads, DML
+                Costs, and Concurrency Limitations</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>Index-Organized Tables, Secondary Indexes,
+                Overflow Segments, and Key-Based Access</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Domain/Spatial/Text/Vector Index Concepts and
+                Choosing Specialized Access Paths</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>Optimizer Internals, Statistics, Execution Plans,
+              and SQL Tuning
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>Cost-Based Optimizer, Query Transformation, Join
+                Order, Access Paths, and Cost Model</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>DBMS_STATS, Histograms, Column Groups,
+                Incremental Stats, and Stale Statistics</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>EXPLAIN PLAN vs Runtime Plans, DBMS_XPLAN,
+                Predicate Information, and Row-Source Metrics</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>Nested Loops, Hash Joins, Sort Merge Joins,
+                Bloom Filters, Parallel Plans, and Adaptive Features</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>Cardinality Errors, SQL
+                Profiles/Baselines/Patches, Hints, and Evidence-Driven Plan
+                Control</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>Shared Pool, Cursor Management, Bind Variables, and
+              SQL Execution Lifecycle
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>Parse, Bind, Execute, Fetch; Library Cache,
+                Shared SQL Areas, and Child Cursors</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>Hard Parse vs Soft Parse, Cursor Sharing, Bind
+                Variables, and SQL Injection Defense</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>Bind Peeking, Adaptive Cursor Sharing,
+                Histograms, and Skewed Predicates</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>Session Cursor Cache, Open Cursors, Parse
+                Storms, and Shared Pool Contention</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Diagnose Cursor Proliferation and Stabilize
+                High-Throughput OLTP SQL</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>PL/SQL Fundamentals: Blocks, Types, Procedures,
+              Functions, and Packages
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>PL/SQL Block Structure, Variables, Records,
+                Collections, Control Flow, and Scope</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>Procedures and Functions, Parameter Modes,
+                Overloading, Determinism, and SQL Integration</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>Packages, Specification vs Body, State,
+                Initialization, Encapsulation, and Editioning Awareness</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Cursors, Bulk Collect, FORALL, Context Switches,
+                and High-Performance Data Processing</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Exceptions, Error Stacks, Logging, Assertions,
+                and Testable PL/SQL Design</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>Triggers, Dynamic SQL, Scheduler, Advanced PL/SQL,
+              and Database APIs
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>Row/Statement/Compound Triggers, Mutating
+                Tables, Ordering, and Audit Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>Native Dynamic SQL, DBMS_SQL, Bind Variables,
+                Identifier Validation, and Injection Safety</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>DBMS_SCHEDULER Jobs, Programs, Chains,
+                Credentials, Windows, and Operational Observability</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>Pipelined/Polymorphic Table Functions and
+                Advanced SQL/PLSQL Integration Concepts</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>Design Server-Side APIs with Packages,
+                Privileges, Transaction Boundaries, and Deployment Discipline</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Multitenant Architecture: CDBs, PDBs, Services,
+              Cloning, and Lifecycle
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>CDB Root, PDBs, Application Containers, Common
+                vs Local Users, and Containers</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Create/Open/Close/Save State for PDBs and
+                Service-Based Connection Management</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>PDB Cloning, Snapshot/Refresh Concepts,
+                Unplug/Plug, Relocation, and Portability</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Resource Management, Isolation, Storage,
+                Security, and Operational Boundaries Across PDBs</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Patch, Upgrade, Backup, Recovery, and Monitoring
+                Considerations in Multitenant Deployments</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Redo, Undo, Control Files, Checkpoints, and
+              Instance Recovery
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Redo Log Buffer, Online Redo Logs, Log
+                Groups/Members, Log Switches, and Archiving</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Undo Segments, Retention, Read Consistency,
+                Flashback Dependencies, and Transaction Recovery</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Control Files, SCNs, Checkpoints, Datafile
+                Headers, and Recovery Metadata</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Instance Recovery, Roll Forward/Roll Back,
+                Fast-Start Recovery, and MTTR Tuning</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Diagnose Redo/Checkpoint Pressure, Log File
+                Sync, Log Switch Issues, and Recovery Risk</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>RMAN Backup, Restore, Recovery, and
+              Disaster-Recovery Engineering
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>RMAN Architecture, Repository, Channels, Backup
+                Sets vs Image Copies, and Incrementals</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Control File/SPFILE Backups, Archived Logs,
+                Retention Policies, and Recovery Catalog Concepts</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Restore and Recover Databases, Tablespaces,
+                Datafiles, PDBs, and Selected Objects</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Block Media Recovery, Validation, Corruption
+                Detection, Crosschecks, and Backup Optimization</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Point-in-Time Recovery, Duplicate Database,
+                Restore Drills, RPO/RTO, and Backup Security</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Flashback Technologies, Recycle Bin, Data Archive,
+              and Recovery Without Restore
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>Flashback Query with AS OF SCN/TIMESTAMP and
+                Undo-Dependent Historical Reads</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Flashback Version Query and Transaction Query
+                for Change Investigation</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>Flashback Table, Recycle Bin, and Safe
+                Object/Data Recovery Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Flashback Database, Flashback Logs, Guaranteed
+                Restore Points, and Operational Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Flashback Data Archive, Blockchain/History
+                Concepts, Retention, Compliance, and Auditing</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Data Guard, Standby Databases, Broker, and High
+              Availability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>Physical Standby Architecture, Redo Transport,
+                Apply, Protection Modes, and Roles</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>Data Guard Broker Configuration, Health,
+                Switchover, Failover, and Reinstate Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>Synchronous vs Asynchronous Transport, Far Sync
+                Concepts, Lag, and Network Design</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>Active Data Guard Concepts, Read-Only Workloads,
+                Backup Offload, and Licensing Awareness</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Failure Injection, Observer/Fast-Start Failover
+                Concepts, Split-Brain Avoidance, and DR Testing</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary><span>18</span>RAC and Clustered Oracle Concepts</summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>Oracle RAC Architecture, Shared Database,
+                Multiple Instances, Cache Fusion, and GCS/GES</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>Clusterware, SCAN, VIPs, Services, Instance
+                Affinity, and Client Failover Concepts</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Global Cache Waits, Hot Blocks, Sequence/Index
+                Contention, and Scale-Out Workload Design</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Rolling Maintenance, Instance Failure, Service
+                Relocation, and Operational Resilience</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>When RAC Fits vs Data Guard, Sharding, or
+                Application-Level Scaling—and Cost/Complexity Tradeoffs</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>19</span>Partitioning, Parallel Execution, Compression, and
+              Very Large Databases
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="Lesson1.html"
+                ><span>01</span>Range, List, Hash, Interval, Composite
+                Partitioning, and Partitioning-Key Design</a
+              ><a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>Partition Pruning, Partition-Wise Joins,
+                Local/Global Indexes, and Maintenance Operations</a
+              ><a class="sidebar-lesson is-current" href="Lesson3.html"
+                ><span>03</span>Exchange Partition, Rolling Windows, Bulk Loads,
+                Archiving, and Lifecycle Automation<i>Current</i></a
+              ><a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>Parallel Query/DML/DDL, Degree of Parallelism,
+                PX Servers, Skew, and Resource Consumption</a
+              ><a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Table/Index Compression Concepts, Heat Map/ILM
+                Awareness, and Multi-Terabyte Design</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Security: Privileges, Roles, Profiles, Unified
+              Auditing, VPD, and Encryption
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>System/Object Privileges, Roles, Administrative
+                Privileges, Definer/Invoker Rights, and Least Privilege</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>Profiles, Password Policy, Resource Limits,
+                Proxy Authentication, and Account Lifecycle</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>Unified Auditing, Audit Policies, Fine-Grained
+                Auditing, and Forensic Design</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>Virtual Private Database, Fine-Grained Access
+                Control, Redaction Concepts, and Tenant Isolation</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>TLS/Native Network Encryption, TDE
+                Wallet/Keystore Concepts, Backup Encryption, and Key
+                Governance</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Resource Manager, Workload Governance, Services,
+              and Capacity Control
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>Database Resource Manager Plans, Consumer
+                Groups, Directives, and CPU/Parallel Limits</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>Mapping Sessions to Consumer Groups by Service,
+                User, Module, and Workload Class</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>Active Session Pool, Queueing, Undo/Execution
+                Limits, and Runaway Query Control</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Services as Workload Boundaries for RAC/Data
+                Guard/Applications and Operational Routing</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>Design Governance for OLTP, Batch, Analytics,
+                Maintenance, and Administrative Workloads</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Observability and Diagnostics: AWR, ASH, ADDM, Wait
+              Events, and Tracing
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>Dynamic Performance Views for Sessions, SQL,
+                Locks, I/O, Memory, and Instance Health</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>Wait Interface, Time Model Statistics, DB Time,
+                DB CPU, and Bottleneck Classification</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>AWR Snapshots/Reports, Baselines, Top SQL, Load
+                Profile, and Licensing Awareness</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>ASH, Session-Level History, Blocking Chains,
+                Time-Series Diagnosis, and Incident Reconstruction</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>SQL Trace/TKPROF, Real-Time SQL Monitoring
+                Concepts, ADDM, and Evidence-Based Troubleshooting</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>23</span>Performance Engineering: Memory, I/O, SQL,
+              Parallelism, and Contention
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter23/Lesson1.html"
+                ><span>01</span>SGA/PGA Sizing, Buffer Cache, Shared Pool, Large
+                Pool, Result Cache, and Memory Advisors</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson2.html"
+                ><span>02</span>Physical/Logical I/O, Direct Path, Smart Scan
+                Awareness, Storage Latency, and I/O Calibration</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson3.html"
+                ><span>03</span>Latch/Mutex/Enqueue Contention, Hot Blocks,
+                Sequences, ITL, and Concurrency Hotspots</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson4.html"
+                ><span>04</span>Temp Usage, Sorts, Hashes, Spill Behavior, PGA
+                Work Areas, and Parallel Execution Pressure</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson5.html"
+                ><span>05</span>Benchmarking, Baselines, Capacity Planning, Load
+                Profiles, and Performance Regression Testing</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>JSON, XML, Spatial, Graph, and Converged Data
+              Capabilities
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter24/Lesson1.html"
+                ><span>01</span>Native JSON Storage, SQL/JSON Queries, JSON
+                Relational Duality Concepts, and Indexing</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson2.html"
+                ><span>02</span>XMLType/XML DB Awareness, Legacy XML Workloads,
+                and Migration Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson3.html"
+                ><span>03</span>Spatial Data Types, Indexing, Geospatial
+                Queries, and Location Analytics</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson4.html"
+                ><span>04</span>Graph Modeling/Analytics Concepts and
+                Integrating Graph with Relational Data</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson5.html"
+                ><span>05</span>Choose Oracle Converged Features vs Specialized
+                External Platforms Based on Workload Evidence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>25</span>AI Vector Search, VECTOR Data, Select AI, and
+              AI-Enabled Database Workloads
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter25/Lesson1.html"
+                ><span>01</span>Vector Data Type, Embeddings, Distance Metrics,
+                Similarity Search, and Relational Filtering</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson2.html"
+                ><span>02</span>Vector Index Concepts, Approximate vs Exact
+                Search, Recall/Latency Tradeoffs, and Evaluation</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson3.html"
+                ><span>03</span>Hybrid Search Architectures Combining Relational
+                Predicates, Text, JSON, and Vectors</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson4.html"
+                ><span>04</span>Select AI / Natural-Language-to-SQL Concepts,
+                Governance, Validation, and Prompt/Data Security</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson5.html"
+                ><span>05</span>Production AI Database Design: Embedding
+                Pipelines, Model Drift, Access Control, Cost, and
+                Observability</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>26</span>Sharding, Distributed Database Concepts, and Global
+              Data Placement
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter26/Lesson1.html"
+                ><span>01</span>Oracle Sharding Architecture, Shard Catalog,
+                Shard Directors, and Sharded Tables</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson2.html"
+                ><span>02</span>Sharding Keys, Data Distribution, Duplicated
+                Tables, Locality, and Query Routing</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson3.html"
+                ><span>03</span>Cross-Shard Queries/Transactions, Consistency,
+                Failure Domains, and Application Design</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson4.html"
+                ><span>04</span>Resharding, Scaling, Deployment Topology, Data
+                Sovereignty, and Operational Complexity</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson5.html"
+                ><span>05</span>Compare Sharding with RAC, Data Guard,
+                Partitioning, and Application-Level Distribution</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>27</span>Application Integration: Drivers, Pools, Session
+              State, Transactions, and Resilience
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter27/Lesson1.html"
+                ><span>01</span>JDBC, ODP.NET, Python/Node Drivers, Connection
+                Descriptors, Services, and TLS</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson2.html"
+                ><span>02</span>Connection Pooling, DRCP Concepts,
+                FAN/Application Continuity Awareness, and Session
+                Initialization</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson3.html"
+                ><span>03</span>Bind Variables, Array/Bulk Operations, Type
+                Mapping, LOB Streaming, and Injection Defense</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson4.html"
+                ><span>04</span>Transaction Boundaries, Retries, Idempotency,
+                Distributed Transaction Awareness, and Failure Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson5.html"
+                ><span>05</span>ORMs, SQL Visibility, N+1, Pagination, Schema
+                Migrations, and Deployment Coordination</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>28</span>Upgrades, Patching, Data Pump, Migration, and
+              Zero/Low-Downtime Change
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter28/Lesson1.html"
+                ><span>01</span>Release Update Patching, OPatch/Datapatch
+                Concepts, Fleet Consistency, and Rollback Planning</a
+              ><a class="sidebar-lesson" href="../Chapter28/Lesson2.html"
+                ><span>02</span>Database Upgrade Planning, Compatibility
+                Parameters, Prechecks, Deprecated Features, and Validation</a
+              ><a class="sidebar-lesson" href="../Chapter28/Lesson3.html"
+                ><span>03</span>Data Pump Export/Import, Transportable
+                Tablespaces, Network Import, and Migration Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter28/Lesson4.html"
+                ><span>04</span>Online Redefinition, Edition-Based Redefinition
+                Concepts, Expand/Contract, and Lock-Aware DDL</a
+              ><a class="sidebar-lesson" href="../Chapter28/Lesson5.html"
+                ><span>05</span>Cross-Platform/Cloud Migration, GoldenGate
+                Awareness, Cutover Rehearsal, and Post-Migration Verification</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>29</span>Production Capstone: Architect, Secure, Tune,
+              Protect, and Operate Oracle
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter29/Lesson1.html"
+                ><span>01</span>Define SLOs, Workload Classes, Data Model,
+                Multitenant/HA Choices, Capacity, and Architecture Record</a
+              ><a class="sidebar-lesson" href="../Chapter29/Lesson2.html"
+                ><span>02</span>Implement Schema, PL/SQL APIs,
+                Partitioning/Indexes, Security, Services, and Change
+                Automation</a
+              ><a class="sidebar-lesson" href="../Chapter29/Lesson3.html"
+                ><span>03</span>Tune SQL, Optimizer Statistics, Memory, I/O,
+                Parallelism, and Contention from Diagnostic Evidence</a
+              ><a class="sidebar-lesson" href="../Chapter29/Lesson4.html"
+                ><span>04</span>Implement RMAN/PITR, Data Guard, Monitoring,
+                Auditing, Patching, and Incident Runbooks</a
+              ><a class="sidebar-lesson" href="../Chapter29/Lesson5.html"
+                ><span>05</span>Run Restore, Switchover/Failover, Corruption,
+                Performance, Security, and Upgrade Drills—and Defend the
+                Design</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 19 · Lesson 03</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">Oracle Database</a><span>/</span
+            ><span>Chapter 19 · Lesson 03</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 19 · Partitioning, Parallel Execution, Compression, and
+              Very Large Databases
+            </p>
+            <h1>
+              Exchange Partition, Rolling Windows, Bulk Loads, Archiving, and
+              Lifecycle Automation
+            </h1>
+            <p>
+              Build a rolling-window load/archive workflow around exchange
+              partition, structural/boundary validation, Data Pump/RMAN
+              implications and rollback, contrasting metadata exchange with
+              row-by-row movement.
+            </p>
+            <div class="lesson-meta">
+              <span>Advanced</span><span>125–145 minutes</span
+              ><span>Exchange-partition rolling-window lab</span
+              ><span>FOR EXCHANGE WITH TABLE + validation</span
+              ><span>Data Pump export path remains serial on Free</span
+              ><span>Last reviewed: August 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                ServiceHub receives 20 million September event rows from a
+                staging pipeline. Row-by-row insert into the live partition
+                generates a long load window and makes rollback awkward. The
+                data lifecycle also needs to remove July as an archive unit.
+                <strong>Partition exchange</strong> swaps segment metadata
+                between a partition and a structurally compatible nonpartitioned
+                table, letting a prepared segment enter or leave the live table
+                quickly.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Create an exchange-compatible staging table with CREATE
+                    TABLE ... FOR EXCHANGE WITH TABLE.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Reproduce structural mismatch and boundary-validation
+                    failures before changing live partition metadata.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Exchange a validated load into a partition and exchange an
+                    old partition out for archive/export.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Explain index/constraint/statistics implications and when
+                    UPDATE INDEXES changes exchange cost.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Build rollback/backup/export checkpoints around a
+                    rolling-window automation.
+                  </p>
+                </div>
+              </div>
+              <div class="callout">
+                <strong
+                  >Generation-time baseline, compatibility, licensing, and
+                  safety boundary</strong
+                >
+                <p>
+                  Mandatory examples target Oracle AI Database Free 26ai and
+                  were reviewed against RU 23.26.3, SQL Developer 26.2, and
+                  SQLcl 26.2.1. Free is limited to 2 foreground CPU cores, 2 GB
+                  combined SGA/PGA memory, 12 GB user data, and one installation
+                  per logical environment; Oracle supplies no patches or Support
+                  service requests for Free. Current 26ai licensing includes
+                  Oracle Partitioning, Basic Table Compression, and Oracle
+                  Advanced Compression in Free, so the hands-on partitioning and
+                  basic/advanced-row compression exercises are valid there.
+                  Parallel query/DML, Heat Map, and Automatic Data Optimization
+                  are not licensed in Free; those parts use Free design/serial
+                  evidence plus clearly separated entitled commands. Hybrid
+                  Columnar Compression is not available in Free and remains
+                  storage/offering-specific. No Chapter 19 lab raises
+                  COMPATIBLE; query the actual setting first. The
+                  partitioning/compression mechanisms used here are
+                  long-standing and need no chapter-specific COMPATIBLE increase
+                  on a supported 26ai database.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>1. Build a monthly rolling table</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    setup
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">BEGIN</span><span class="code-line">  EXECUTE IMMEDIATE 'DROP TABLE servicehub_events_roll PURGE';</span><span class="code-line">EXCEPTION WHEN OTHERS THEN</span><span class="code-line">  IF SQLCODE != -942 THEN RAISE; END IF;</span><span class="code-line">END;</span><span class="code-line">/</span><span class="code-line"></span><span class="code-line">CREATE TABLE servicehub_events_roll (</span><span class="code-line">  event_id NUMBER NOT NULL,</span><span class="code-line">  event_ts DATE NOT NULL,</span><span class="code-line">  region_code VARCHAR2(8) NOT NULL,</span><span class="code-line">  event_type VARCHAR2(20) NOT NULL,</span><span class="code-line">  payload VARCHAR2(200),</span><span class="code-line">  CONSTRAINT sh19_roll_pk PRIMARY KEY(event_id,event_ts)</span><span class="code-line">)</span><span class="code-line">PARTITION BY RANGE(event_ts) (</span><span class="code-line">  PARTITION p2026m07 VALUES LESS THAN (DATE '2026-08-01'),</span><span class="code-line">  PARTITION p2026m08 VALUES LESS THAN (DATE '2026-09-01'),</span><span class="code-line">  PARTITION p2026m09 VALUES LESS THAN (DATE '2026-10-01'),</span><span class="code-line">  PARTITION p_future VALUES LESS THAN (MAXVALUE)</span><span class="code-line">);</span><span class="code-line"></span><span class="code-line">INSERT INTO servicehub_events_roll</span><span class="code-line">SELECT</span><span class="code-line">  700000+LEVEL,</span><span class="code-line">  DATE '2026-07-01' + MOD(LEVEL,31),</span><span class="code-line">  CASE MOD(LEVEL,2) WHEN 0 THEN 'AZ-N' ELSE 'AZ-S' END,</span><span class="code-line">  'CLOSED',</span><span class="code-line">  RPAD('archive',20,'x')</span><span class="code-line">FROM dual</span><span class="code-line">CONNECT BY LEVEL &lt;= 5000;</span><span class="code-line">COMMIT;</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>
+                2. Deliberately wrong: hand-create a staging table with a subtle
+                mismatch
+              </h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    mismatched payload width
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">CREATE TABLE servicehub_events_stage_bad (</span><span class="code-line">  event_id NUMBER NOT NULL,</span><span class="code-line">  event_ts DATE NOT NULL,</span><span class="code-line">  region_code VARCHAR2(8) NOT NULL,</span><span class="code-line">  event_type VARCHAR2(20) NOT NULL,</span><span class="code-line">  payload VARCHAR2(100)</span><span class="code-line">);</span><span class="code-line"></span><span class="code-line">ALTER TABLE servicehub_events_roll</span><span class="code-line">  EXCHANGE PARTITION p2026m09</span><span class="code-line">  WITH TABLE servicehub_events_stage_bad</span><span class="code-line">  WITH VALIDATION;</span><span class="code-line"></span><span class="code-line">-- Expected structural exchange error such as:</span><span class="code-line">-- ORA-14097: column type or size mismatch in ALTER TABLE EXCHANGE PARTITION</span></code></pre>
+              </div>
+              <p>
+                Exchange compares physical column shape/properties more strictly
+                than an ordinary insert-select. Manually duplicating DDL is
+                brittle when invisible/virtual/unused/internal column attributes
+                evolve.
+              </p>
+            </section>
+            <section>
+              <h2>3. FOR EXCHANGE WITH TABLE creates the exact column shape</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    safe metadata clone
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">DROP TABLE servicehub_events_stage_bad PURGE;</span><span class="code-line"></span><span class="code-line">CREATE TABLE servicehub_events_stage</span><span class="code-line">FOR EXCHANGE WITH TABLE servicehub_events_roll;</span><span class="code-line"></span><span class="code-line">SELECT column_id,column_name,data_type,data_length,nullable</span><span class="code-line">FROM user_tab_columns</span><span class="code-line">WHERE table_name IN (</span><span class="code-line">  'SERVICEHUB_EVENTS_ROLL',</span><span class="code-line">  'SERVICEHUB_EVENTS_STAGE'</span><span class="code-line">)</span><span class="code-line">ORDER BY table_name,column_id;</span></code></pre>
+              </div>
+              <p>
+                <code>FOR EXCHANGE WITH TABLE</code> creates no data and no
+                indexes, but it copies the column ordering/properties needed for
+                exchange. Constraints/indexes/stats still require lifecycle
+                design.
+              </p>
+            </section>
+            <section>
+              <h2>
+                4. Boundary validation prevents the wrong month entering the
+                partition
+              </h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    load September plus one invalid October row
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">INSERT INTO servicehub_events_stage</span><span class="code-line">SELECT</span><span class="code-line">  900000+LEVEL,</span><span class="code-line">  DATE '2026-09-01' + MOD(LEVEL,30),</span><span class="code-line">  'AZ-N',</span><span class="code-line">  'ASSIGNED',</span><span class="code-line">  RPAD('load',30,'l')</span><span class="code-line">FROM dual</span><span class="code-line">CONNECT BY LEVEL &lt;= 3000;</span><span class="code-line"></span><span class="code-line">INSERT INTO servicehub_events_stage</span><span class="code-line">VALUES(999999,DATE '2026-10-05','AZ-S','OPEN','wrong month');</span><span class="code-line"></span><span class="code-line">COMMIT;</span><span class="code-line"></span><span class="code-line">ALTER TABLE servicehub_events_roll</span><span class="code-line">  EXCHANGE PARTITION p2026m09</span><span class="code-line">  WITH TABLE servicehub_events_stage</span><span class="code-line">  WITH VALIDATION;</span><span class="code-line"></span><span class="code-line">-- Expected:</span><span class="code-line">-- ORA-14099: all rows in table do not qualify for specified partition</span></code></pre>
+              </div>
+              <p>
+                <code>WITHOUT VALIDATION</code> is tempting because it is
+                faster, but it trusts the staging data. If out-of-bound rows
+                enter a partition, optimizer pruning can make them effectively
+                invisible to predicates that assume valid partition boundaries.
+                Use <code>WITHOUT VALIDATION</code> only when an upstream
+                constraint/process proves the boundary.
+              </p>
+            </section>
+            <section>
+              <h2>5. Repair the staging data and exchange the load</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    clean, validate, exchange
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">DELETE FROM servicehub_events_stage</span><span class="code-line">WHERE event_ts &gt;= DATE '2026-10-01';</span><span class="code-line">COMMIT;</span><span class="code-line"></span><span class="code-line">SELECT MIN(event_ts),MAX(event_ts),COUNT(*)</span><span class="code-line">FROM servicehub_events_stage;</span><span class="code-line"></span><span class="code-line">ALTER TABLE servicehub_events_roll</span><span class="code-line">  EXCHANGE PARTITION p2026m09</span><span class="code-line">  WITH TABLE servicehub_events_stage</span><span class="code-line">  WITH VALIDATION;</span><span class="code-line"></span><span class="code-line">SELECT COUNT(*) AS live_september_rows</span><span class="code-line">FROM servicehub_events_roll</span><span class="code-line">PARTITION(p2026m09);</span><span class="code-line"></span><span class="code-line">SELECT COUNT(*) AS old_partition_rows_now_in_stage</span><span class="code-line">FROM servicehub_events_stage;</span></code></pre>
+              </div>
+              <p>
+                The exchange is primarily metadata movement between segments.
+                The formerly live partition's contents move into the staging
+                table and the prepared staging segment becomes the partition. On
+                an empty target partition, the stage table becomes empty.
+              </p>
+            </section>
+            <section>
+              <h2>
+                6. Indexes, constraints and statistics need an explicit contract
+              </h2>
+              <p>
+                Local indexes are partition-aligned, but
+                <code>FOR EXCHANGE WITH TABLE</code> does not create matching
+                staging indexes. <code>INCLUDING INDEXES</code> requires
+                compatible index structures. Global indexes can be marked
+                unusable by exchange unless maintained;
+                <code>UPDATE INDEXES</code> preserves availability but can turn
+                an otherwise fast exchange into heavier logged index
+                maintenance.
+              </p>
+              <p>
+                Statistics can be gathered on staging before exchange when the
+                workflow supports it, but verify table/partition statistics
+                after exchange and publish/pending-statistics policy if
+                production plan stability matters.
+              </p>
+            </section>
+            <section>
+              <h2>7. Exchange an old month out before archival</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    create archive receiver and exchange July out
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">CREATE TABLE servicehub_events_archive</span><span class="code-line">FOR EXCHANGE WITH TABLE servicehub_events_roll;</span><span class="code-line"></span><span class="code-line">ALTER TABLE servicehub_events_roll</span><span class="code-line">  EXCHANGE PARTITION p2026m07</span><span class="code-line">  WITH TABLE servicehub_events_archive</span><span class="code-line">  WITH VALIDATION;</span><span class="code-line"></span><span class="code-line">SELECT COUNT(*) AS archived_rows</span><span class="code-line">FROM servicehub_events_archive;</span><span class="code-line"></span><span class="code-line">SELECT COUNT(*) AS remaining_july_partition_rows</span><span class="code-line">FROM servicehub_events_roll PARTITION(p2026m07);</span></code></pre>
+              </div>
+              <p>
+                Now the archive data is a normal nonpartitioned table that can
+                be validated/exported before the empty partition is
+                truncated/dropped. This gives a clean rollback point: exchange
+                it back if validation fails and the live partition has not been
+                repopulated.
+              </p>
+            </section>
+            <section>
+              <h2>8. Export before destruction</h2>
+              <div class="code-window" data-code-block="" data-language="text">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>text ·
+                    Data Pump — password is prompted; serial Free-compatible
+                    export
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">expdp system@//localhost:1521/FREEPDB1   tables=SERVICEHUB_OWNER.SERVICEHUB_EVENTS_ARCHIVE   directory=DATA_PUMP_DIR   dumpfile=servicehub_2026m07.dmp   logfile=servicehub_2026m07.log</span></code></pre>
+              </div>
+              <p>
+                Data Pump is a logical export, not an RMAN backup. Verify the
+                log, dump storage, encryption/security policy and import
+                rehearsal before treating the file as an archive. Parallel Data
+                Pump is not licensed in Free under the current matrix, so the
+                mandatory command is intentionally serial.
+              </p>
+            </section>
+            <section>
+              <h2>9. Rolling-window closeout</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    after archive verification only
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">ALTER TABLE servicehub_events_roll</span><span class="code-line">  DROP PARTITION p2026m07</span><span class="code-line">  UPDATE INDEXES;</span><span class="code-line"></span><span class="code-line">SELECT partition_name,partition_position</span><span class="code-line">FROM user_tab_partitions</span><span class="code-line">WHERE table_name='SERVICEHUB_EVENTS_ROLL'</span><span class="code-line">ORDER BY partition_position;</span></code></pre>
+              </div>
+              <p>
+                Dropping a partition is immediate DDL and bypasses the recycle
+                bin. Your real rollback is the exported/exchanged copy plus
+                tested backup/recovery—not an assumption that DROP can be
+                undone.
+              </p>
+            </section>
+            <section>
+              <h2>10. Row-by-row movement versus exchange</h2>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Approach</th>
+                    <th>Strength</th>
+                    <th>Cost/risk</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>INSERT/DELETE rows</td>
+                    <td>Fine-grained transactional filtering/transform</td>
+                    <td>Large undo/redo/index work; long transaction window</td>
+                  </tr>
+                  <tr>
+                    <td>Partition exchange</td>
+                    <td>Fast segment-level publish/unpublish</td>
+                    <td>Strict shape/boundary/index/statistics discipline</td>
+                  </tr>
+                  <tr>
+                    <td>CTAS + exchange</td>
+                    <td>Bulk transform/load before publish</td>
+                    <td>Need exact exchange shape and validation</td>
+                  </tr>
+                  <tr>
+                    <td>Transportable tablespace</td>
+                    <td>Move very large self-contained storage units</td>
+                    <td>
+                      Tablespace/platform/self-containment/recovery operational
+                      complexity
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+            <section>
+              <h2>11. Cleanup</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    cleanup
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">DROP TABLE servicehub_events_stage PURGE;</span><span class="code-line">DROP TABLE servicehub_events_archive PURGE;</span><span class="code-line">DROP TABLE servicehub_events_roll PURGE;</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>12. Production judgment</h2>
+              <p>
+                Exchange partition is ideal when ingestion/archive units align
+                with partition boundaries and staging can be structurally and
+                semantically validated before publication. Build automation
+                around row-count/hash/business checks, index usability,
+                statistics, export/backup evidence and a defined exchange-back
+                rollback point.
+              </p>
+              <p>
+                Oracle Partitioning is included in Free but is an extra-cost
+                option on EE/EE-ES. Parallel Data Pump is not part of the Free
+                path. Lesson 4 turns to throughput inside one statement—and why
+                parallel execution can improve elapsed time while consuming
+                enough CPU/I/O/PX servers to hurt everyone else.
+              </p>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>What does FOR EXCHANGE WITH TABLE solve?</li>
+                  <li>
+                    What error can WITH VALIDATION raise when staging rows fall
+                    outside the target boundary?
+                  </li>
+                  <li>
+                    Why is WITHOUT VALIDATION dangerous on untrusted staging
+                    data?
+                  </li>
+                  <li>
+                    Does partition exchange automatically create compatible
+                    staging indexes?
+                  </li>
+                  <li>
+                    Why should old data be exchanged/exported before DROP
+                    PARTITION?
+                  </li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      It creates a metadata clone with matching column
+                      ordering/properties, avoiding hand-built structural
+                      mismatch.
+                    </p>
+                    <p>
+                      ORA-14099: all rows in table do not qualify for specified
+                      partition.
+                    </p>
+                    <p>
+                      It can place out-of-bound rows into a partition while the
+                      optimizer assumes valid partition boundaries.
+                    </p>
+                    <p>
+                      No. Indexes are not created by FOR EXCHANGE WITH TABLE;
+                      index exchange/maintenance needs separate design.
+                    </p>
+                    <p>
+                      It creates a verifiable archive/rollback artifact before
+                      irreversible partition DDL removes the live unit.
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <ul class="reference-list">
+                <li>
+                  <a
+                    href="https://docs.oracle.com/en/database/oracle/oracle-database/26/vldbg/partition-admin.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Partition Administration — Exchange</a
+                  >
+                  — exchange workflows and validation
+                </li>
+                <li>
+                  <a
+                    href="https://docs.oracle.com/en/database/oracle/oracle-database/26/sqlrf/CREATE-TABLE.html"
+                    rel="noopener"
+                    target="_blank"
+                    >CREATE TABLE</a
+                  >
+                  — FOR EXCHANGE WITH TABLE
+                </li>
+                <li>
+                  <a
+                    href="https://docs.oracle.com/en/database/oracle/oracle-database/26/sqlrf/ALTER-TABLE.html"
+                    rel="noopener"
+                    target="_blank"
+                    >ALTER TABLE</a
+                  >
+                  — EXCHANGE/UPDATE INDEXES syntax
+                </li>
+                <li>
+                  <a
+                    href="https://docs.oracle.com/en/database/oracle/oracle-database/26/sutil/oracle-data-pump-export-utility.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Data Pump Export</a
+                  >
+                  — logical export behavior
+                </li>
+                <li>
+                  <a
+                    href="https://docs.oracle.com/en/database/oracle/oracle-database/26/vldbg/"
+                    rel="noopener"
+                    target="_blank"
+                    >VLDB and Partitioning Guide</a
+                  >
+                  — rolling-window/VLDB patterns
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a class="previous" href="Lesson2.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Partition Pruning, Partition-Wise Joins, Local/Global Indexes,
+                and Maintenance Operations</strong
+              ></a
+            ><a class="next" href="Lesson4.html"
+              ><small>Next lesson</small
+              ><strong
+                >Parallel Query/DML/DDL, Degree of Parallelism, PX Servers,
+                Skew, and Resource Consumption</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <small
+          >Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>

@@ -1,0 +1,1483 @@
+<!doctype html>
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Understand locally managed extents, ASSM, high-water marks, and why row deletion does not equal file shrink; then reclaim a disposable segment safely."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Locally Managed Tablespaces, ASSM, High-Water Marks, and Space Reclamation
+      | Oracle Database | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewBox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">OR</span>
+            <div>
+              <small>Course 08</small><strong>Oracle Database</strong>
+            </div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 145 lessons..."
+            type="search"
+        /></label>
+        <nav aria-label="Oracle Database curriculum" class="sidebar-curriculum">
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>Oracle AI Database Foundations, Editions,
+              Deployment Models, and Lab Setup
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>Oracle Database Architecture, Converged Database
+                Model, Workloads, and Product Terminology</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Oracle AI Database 26ai LTS, Free/Developer
+                Learning Paths, Licensing Awareness, and Feature Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>On-Premises, OCI, Autonomous, Exadata, and
+                Container-Based Learning/Deployment Models</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>Install or Provision an Oracle Lab, Configure
+                Listener/Services, and Verify SQLcl/SQL*Plus Connectivity</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Safe Course Environment with Users,
+                Tablespaces, Sample Schemas, and Baseline Backups</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>Instance Architecture: SGA, PGA, Processes,
+              Sessions, and Startup/Shutdown
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>Oracle Instance vs Database, SGA Components,
+                Background Processes, and Physical Files</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>PGA, Work Areas, Session/Process Models,
+                Dedicated vs Shared Server, and Connection Lifecycle</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Parameter Files, SPFILE/PFILE, Dynamic
+                Parameters, ALTER SYSTEM, and Scope</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>STARTUP/SHUTDOWN States, Mount/Open Modes,
+                Restricted Sessions, and Recovery Context</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Alert Log, ADR, Trace Files, Dynamic Performance
+                Views, and Startup Troubleshooting</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>03</span>Physical Storage: Datafiles, Tablespaces, Blocks,
+              Segments, Extents, and ASM Concepts
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="Lesson1.html"
+                ><span>01</span>Database Blocks, Extents, Segments, Tablespaces,
+                Datafiles, and Space Allocation</a
+              ><a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>Permanent, Temporary, Undo Tablespaces and
+                Bigfile vs Smallfile Tradeoffs</a
+              ><a class="sidebar-lesson is-current" href="Lesson3.html"
+                ><span>03</span>Locally Managed Tablespaces, ASSM, High-Water
+                Marks, and Space Reclamation<i>Current</i></a
+              ><a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>Automatic Storage Management Concepts: Disk
+                Groups, Failure Groups, Striping, and Mirroring</a
+              ><a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Design a Storage Layout for OLTP, Analytics,
+                Temp, Undo, Recovery, and Growth</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Users, Schemas, Objects, Data Types, Keys,
+              Constraints, and Sequences
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Users vs Schemas, Object Ownership, Naming,
+                Synonyms, and Namespace Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>NUMBER, Character, DATE/TIMESTAMP, INTERVAL,
+                RAW, LOB, JSON, VECTOR, and Specialized Types</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK, NOT
+                NULL, DEFERRABLE, and RELY/NOVALIDATE Concepts</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>Identity Columns, Sequences, Caching, Ordering,
+                Gaps, and Scalable Identifier Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Virtual Columns, Defaults, Invisible Columns,
+                Wide-Table Awareness, and Data-Integrity Design</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>Oracle SQL Fundamentals: Joins, Subqueries, Set
+              Operations, and Hierarchical Queries
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>SELECT Semantics, NULL, Expressions, Conversion,
+                NLS Effects, and Deterministic Ordering</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>INNER/OUTER/CROSS Joins, Legacy Join Syntax
+                Awareness, and Cardinality Reasoning</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>Scalar/Correlated Subqueries, EXISTS/IN,
+                Semijoins, Antijoins, and Subquery Factoring</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>UNION/UNION ALL/INTERSECT/MINUS, Query
+                Composition, and Duplicate Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>CONNECT BY, Recursive WITH, Hierarchical Data,
+                Cycle Handling, and Tree Traversal</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Advanced SQL: Analytic Functions, MODEL, PIVOT,
+              MATCH_RECOGNIZE, and SQL Macros
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>Analytic Functions, Partitions, Frames, Ranking,
+                Running Metrics, and Gaps-and-Islands</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>PIVOT/UNPIVOT, GROUPING SETS, CUBE, ROLLUP, and
+                Advanced Aggregation</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>MATCH_RECOGNIZE for Row Pattern Recognition and
+                Event-Sequence Analysis</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>MODEL Clause Concepts, Spreadsheet-Like
+                Calculations, and Appropriate Use Cases</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>SQL Macros and Reusable SQL Abstractions,
+                Optimizer Visibility, and Maintainability</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>DML, Transactions, Read Consistency, Undo, Locks,
+              and Concurrency
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>INSERT, Multi-Table INSERT, UPDATE, DELETE,
+                MERGE, RETURNING, and Error Logging</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>Transactions, COMMIT, ROLLBACK, SAVEPOINT,
+                Implicit Commit Boundaries, and Autonomous Transactions</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>Oracle Read Consistency, SCNs, Undo,
+                Statement-Level Snapshots, and Consistent Gets</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Row Locks, Table Locks, ITL, Enqueues, SELECT
+                FOR UPDATE, and Concurrency Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Deadlocks, Blocking Sessions, ORA-01555 Snapshot
+                Too Old, Undo Sizing, and Retry Design</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>B-Tree, Bitmap, Function-Based, Domain, and
+              Specialized Indexes
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>B-Tree Index Structure, Leaf Blocks, Branches,
+                Rowids, Selectivity, and Clustering Factor</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>Composite, Descending, Function-Based,
+                Invisible, and Compressed Indexes</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>Bitmap Indexes for Analytical Workloads, DML
+                Costs, and Concurrency Limitations</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>Index-Organized Tables, Secondary Indexes,
+                Overflow Segments, and Key-Based Access</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Domain/Spatial/Text/Vector Index Concepts and
+                Choosing Specialized Access Paths</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>Optimizer Internals, Statistics, Execution Plans,
+              and SQL Tuning
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>Cost-Based Optimizer, Query Transformation, Join
+                Order, Access Paths, and Cost Model</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>DBMS_STATS, Histograms, Column Groups,
+                Incremental Stats, and Stale Statistics</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>EXPLAIN PLAN vs Runtime Plans, DBMS_XPLAN,
+                Predicate Information, and Row-Source Metrics</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>Nested Loops, Hash Joins, Sort Merge Joins,
+                Bloom Filters, Parallel Plans, and Adaptive Features</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>Cardinality Errors, SQL
+                Profiles/Baselines/Patches, Hints, and Evidence-Driven Plan
+                Control</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>Shared Pool, Cursor Management, Bind Variables, and
+              SQL Execution Lifecycle
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>Parse, Bind, Execute, Fetch; Library Cache,
+                Shared SQL Areas, and Child Cursors</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>Hard Parse vs Soft Parse, Cursor Sharing, Bind
+                Variables, and SQL Injection Defense</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>Bind Peeking, Adaptive Cursor Sharing,
+                Histograms, and Skewed Predicates</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>Session Cursor Cache, Open Cursors, Parse
+                Storms, and Shared Pool Contention</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Diagnose Cursor Proliferation and Stabilize
+                High-Throughput OLTP SQL</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>PL/SQL Fundamentals: Blocks, Types, Procedures,
+              Functions, and Packages
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>PL/SQL Block Structure, Variables, Records,
+                Collections, Control Flow, and Scope</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>Procedures and Functions, Parameter Modes,
+                Overloading, Determinism, and SQL Integration</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>Packages, Specification vs Body, State,
+                Initialization, Encapsulation, and Editioning Awareness</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Cursors, Bulk Collect, FORALL, Context Switches,
+                and High-Performance Data Processing</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Exceptions, Error Stacks, Logging, Assertions,
+                and Testable PL/SQL Design</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>Triggers, Dynamic SQL, Scheduler, Advanced PL/SQL,
+              and Database APIs
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>Row/Statement/Compound Triggers, Mutating
+                Tables, Ordering, and Audit Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>Native Dynamic SQL, DBMS_SQL, Bind Variables,
+                Identifier Validation, and Injection Safety</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>DBMS_SCHEDULER Jobs, Programs, Chains,
+                Credentials, Windows, and Operational Observability</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>Pipelined/Polymorphic Table Functions and
+                Advanced SQL/PLSQL Integration Concepts</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>Design Server-Side APIs with Packages,
+                Privileges, Transaction Boundaries, and Deployment Discipline</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Multitenant Architecture: CDBs, PDBs, Services,
+              Cloning, and Lifecycle
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>CDB Root, PDBs, Application Containers, Common
+                vs Local Users, and Containers</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Create/Open/Close/Save State for PDBs and
+                Service-Based Connection Management</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>PDB Cloning, Snapshot/Refresh Concepts,
+                Unplug/Plug, Relocation, and Portability</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Resource Management, Isolation, Storage,
+                Security, and Operational Boundaries Across PDBs</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Patch, Upgrade, Backup, Recovery, and Monitoring
+                Considerations in Multitenant Deployments</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Redo, Undo, Control Files, Checkpoints, and
+              Instance Recovery
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Redo Log Buffer, Online Redo Logs, Log
+                Groups/Members, Log Switches, and Archiving</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Undo Segments, Retention, Read Consistency,
+                Flashback Dependencies, and Transaction Recovery</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Control Files, SCNs, Checkpoints, Datafile
+                Headers, and Recovery Metadata</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Instance Recovery, Roll Forward/Roll Back,
+                Fast-Start Recovery, and MTTR Tuning</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Diagnose Redo/Checkpoint Pressure, Log File
+                Sync, Log Switch Issues, and Recovery Risk</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>RMAN Backup, Restore, Recovery, and
+              Disaster-Recovery Engineering
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>RMAN Architecture, Repository, Channels, Backup
+                Sets vs Image Copies, and Incrementals</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Control File/SPFILE Backups, Archived Logs,
+                Retention Policies, and Recovery Catalog Concepts</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Restore and Recover Databases, Tablespaces,
+                Datafiles, PDBs, and Selected Objects</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Block Media Recovery, Validation, Corruption
+                Detection, Crosschecks, and Backup Optimization</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Point-in-Time Recovery, Duplicate Database,
+                Restore Drills, RPO/RTO, and Backup Security</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Flashback Technologies, Recycle Bin, Data Archive,
+              and Recovery Without Restore
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>Flashback Query with AS OF SCN/TIMESTAMP and
+                Undo-Dependent Historical Reads</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Flashback Version Query and Transaction Query
+                for Change Investigation</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>Flashback Table, Recycle Bin, and Safe
+                Object/Data Recovery Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Flashback Database, Flashback Logs, Guaranteed
+                Restore Points, and Operational Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Flashback Data Archive, Blockchain/History
+                Concepts, Retention, Compliance, and Auditing</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Data Guard, Standby Databases, Broker, and High
+              Availability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>Physical Standby Architecture, Redo Transport,
+                Apply, Protection Modes, and Roles</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>Data Guard Broker Configuration, Health,
+                Switchover, Failover, and Reinstate Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>Synchronous vs Asynchronous Transport, Far Sync
+                Concepts, Lag, and Network Design</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>Active Data Guard Concepts, Read-Only Workloads,
+                Backup Offload, and Licensing Awareness</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Failure Injection, Observer/Fast-Start Failover
+                Concepts, Split-Brain Avoidance, and DR Testing</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary><span>18</span>RAC and Clustered Oracle Concepts</summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>Oracle RAC Architecture, Shared Database,
+                Multiple Instances, Cache Fusion, and GCS/GES</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>Clusterware, SCAN, VIPs, Services, Instance
+                Affinity, and Client Failover Concepts</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Global Cache Waits, Hot Blocks, Sequence/Index
+                Contention, and Scale-Out Workload Design</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Rolling Maintenance, Instance Failure, Service
+                Relocation, and Operational Resilience</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>When RAC Fits vs Data Guard, Sharding, or
+                Application-Level Scaling—and Cost/Complexity Tradeoffs</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>19</span>Partitioning, Parallel Execution, Compression, and
+              Very Large Databases
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Range, List, Hash, Interval, Composite
+                Partitioning, and Partitioning-Key Design</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Partition Pruning, Partition-Wise Joins,
+                Local/Global Indexes, and Maintenance Operations</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>Exchange Partition, Rolling Windows, Bulk Loads,
+                Archiving, and Lifecycle Automation</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>Parallel Query/DML/DDL, Degree of Parallelism,
+                PX Servers, Skew, and Resource Consumption</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Table/Index Compression Concepts, Heat Map/ILM
+                Awareness, and Multi-Terabyte Design</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Security: Privileges, Roles, Profiles, Unified
+              Auditing, VPD, and Encryption
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>System/Object Privileges, Roles, Administrative
+                Privileges, Definer/Invoker Rights, and Least Privilege</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>Profiles, Password Policy, Resource Limits,
+                Proxy Authentication, and Account Lifecycle</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>Unified Auditing, Audit Policies, Fine-Grained
+                Auditing, and Forensic Design</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>Virtual Private Database, Fine-Grained Access
+                Control, Redaction Concepts, and Tenant Isolation</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>TLS/Native Network Encryption, TDE
+                Wallet/Keystore Concepts, Backup Encryption, and Key
+                Governance</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Resource Manager, Workload Governance, Services,
+              and Capacity Control
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>Database Resource Manager Plans, Consumer
+                Groups, Directives, and CPU/Parallel Limits</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>Mapping Sessions to Consumer Groups by Service,
+                User, Module, and Workload Class</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>Active Session Pool, Queueing, Undo/Execution
+                Limits, and Runaway Query Control</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Services as Workload Boundaries for RAC/Data
+                Guard/Applications and Operational Routing</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>Design Governance for OLTP, Batch, Analytics,
+                Maintenance, and Administrative Workloads</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Observability and Diagnostics: AWR, ASH, ADDM, Wait
+              Events, and Tracing
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>Dynamic Performance Views for Sessions, SQL,
+                Locks, I/O, Memory, and Instance Health</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>Wait Interface, Time Model Statistics, DB Time,
+                DB CPU, and Bottleneck Classification</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>AWR Snapshots/Reports, Baselines, Top SQL, Load
+                Profile, and Licensing Awareness</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>ASH, Session-Level History, Blocking Chains,
+                Time-Series Diagnosis, and Incident Reconstruction</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>SQL Trace/TKPROF, Real-Time SQL Monitoring
+                Concepts, ADDM, and Evidence-Based Troubleshooting</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>23</span>Performance Engineering: Memory, I/O, SQL,
+              Parallelism, and Contention
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter23/Lesson1.html"
+                ><span>01</span>SGA/PGA Sizing, Buffer Cache, Shared Pool, Large
+                Pool, Result Cache, and Memory Advisors</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson2.html"
+                ><span>02</span>Physical/Logical I/O, Direct Path, Smart Scan
+                Awareness, Storage Latency, and I/O Calibration</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson3.html"
+                ><span>03</span>Latch/Mutex/Enqueue Contention, Hot Blocks,
+                Sequences, ITL, and Concurrency Hotspots</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson4.html"
+                ><span>04</span>Temp Usage, Sorts, Hashes, Spill Behavior, PGA
+                Work Areas, and Parallel Execution Pressure</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson5.html"
+                ><span>05</span>Benchmarking, Baselines, Capacity Planning, Load
+                Profiles, and Performance Regression Testing</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>JSON, XML, Spatial, Graph, and Converged Data
+              Capabilities
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter24/Lesson1.html"
+                ><span>01</span>Native JSON Storage, SQL/JSON Queries, JSON
+                Relational Duality Concepts, and Indexing</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson2.html"
+                ><span>02</span>XMLType/XML DB Awareness, Legacy XML Workloads,
+                and Migration Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson3.html"
+                ><span>03</span>Spatial Data Types, Indexing, Geospatial
+                Queries, and Location Analytics</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson4.html"
+                ><span>04</span>Graph Modeling/Analytics Concepts and
+                Integrating Graph with Relational Data</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson5.html"
+                ><span>05</span>Choose Oracle Converged Features vs Specialized
+                External Platforms Based on Workload Evidence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>25</span>AI Vector Search, VECTOR Data, Select AI, and
+              AI-Enabled Database Workloads
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter25/Lesson1.html"
+                ><span>01</span>Vector Data Type, Embeddings, Distance Metrics,
+                Similarity Search, and Relational Filtering</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson2.html"
+                ><span>02</span>Vector Index Concepts, Approximate vs Exact
+                Search, Recall/Latency Tradeoffs, and Evaluation</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson3.html"
+                ><span>03</span>Hybrid Search Architectures Combining Relational
+                Predicates, Text, JSON, and Vectors</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson4.html"
+                ><span>04</span>Select AI / Natural-Language-to-SQL Concepts,
+                Governance, Validation, and Prompt/Data Security</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson5.html"
+                ><span>05</span>Production AI Database Design: Embedding
+                Pipelines, Model Drift, Access Control, Cost, and
+                Observability</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>26</span>Sharding, Distributed Database Concepts, and Global
+              Data Placement
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter26/Lesson1.html"
+                ><span>01</span>Oracle Sharding Architecture, Shard Catalog,
+                Shard Directors, and Sharded Tables</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson2.html"
+                ><span>02</span>Sharding Keys, Data Distribution, Duplicated
+                Tables, Locality, and Query Routing</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson3.html"
+                ><span>03</span>Cross-Shard Queries/Transactions, Consistency,
+                Failure Domains, and Application Design</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson4.html"
+                ><span>04</span>Resharding, Scaling, Deployment Topology, Data
+                Sovereignty, and Operational Complexity</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson5.html"
+                ><span>05</span>Compare Sharding with RAC, Data Guard,
+                Partitioning, and Application-Level Distribution</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>27</span>Application Integration: Drivers, Pools, Session
+              State, Transactions, and Resilience
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter27/Lesson1.html"
+                ><span>01</span>JDBC, ODP.NET, Python/Node Drivers, Connection
+                Descriptors, Services, and TLS</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson2.html"
+                ><span>02</span>Connection Pooling, DRCP Concepts,
+                FAN/Application Continuity Awareness, and Session
+                Initialization</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson3.html"
+                ><span>03</span>Bind Variables, Array/Bulk Operations, Type
+                Mapping, LOB Streaming, and Injection Defense</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson4.html"
+                ><span>04</span>Transaction Boundaries, Retries, Idempotency,
+                Distributed Transaction Awareness, and Failure Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson5.html"
+                ><span>05</span>ORMs, SQL Visibility, N+1, Pagination, Schema
+                Migrations, and Deployment Coordination</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>28</span>Upgrades, Patching, Data Pump, Migration, and
+              Zero/Low-Downtime Change
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter28/Lesson1.html"
+                ><span>01</span>Release Update Patching, OPatch/Datapatch
+                Concepts, Fleet Consistency, and Rollback Planning</a
+              ><a class="sidebar-lesson" href="../Chapter28/Lesson2.html"
+                ><span>02</span>Database Upgrade Planning, Compatibility
+                Parameters, Prechecks, Deprecated Features, and Validation</a
+              ><a class="sidebar-lesson" href="../Chapter28/Lesson3.html"
+                ><span>03</span>Data Pump Export/Import, Transportable
+                Tablespaces, Network Import, and Migration Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter28/Lesson4.html"
+                ><span>04</span>Online Redefinition, Edition-Based Redefinition
+                Concepts, Expand/Contract, and Lock-Aware DDL</a
+              ><a class="sidebar-lesson" href="../Chapter28/Lesson5.html"
+                ><span>05</span>Cross-Platform/Cloud Migration, GoldenGate
+                Awareness, Cutover Rehearsal, and Post-Migration Verification</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>29</span>Production Capstone: Architect, Secure, Tune,
+              Protect, and Operate Oracle
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter29/Lesson1.html"
+                ><span>01</span>Define SLOs, Workload Classes, Data Model,
+                Multitenant/HA Choices, Capacity, and Architecture Record</a
+              ><a class="sidebar-lesson" href="../Chapter29/Lesson2.html"
+                ><span>02</span>Implement Schema, PL/SQL APIs,
+                Partitioning/Indexes, Security, Services, and Change
+                Automation</a
+              ><a class="sidebar-lesson" href="../Chapter29/Lesson3.html"
+                ><span>03</span>Tune SQL, Optimizer Statistics, Memory, I/O,
+                Parallelism, and Contention from Diagnostic Evidence</a
+              ><a class="sidebar-lesson" href="../Chapter29/Lesson4.html"
+                ><span>04</span>Implement RMAN/PITR, Data Guard, Monitoring,
+                Auditing, Patching, and Incident Runbooks</a
+              ><a class="sidebar-lesson" href="../Chapter29/Lesson5.html"
+                ><span>05</span>Run Restore, Switchover/Failover, Corruption,
+                Performance, Security, and Upgrade Drills—and Defend the
+                Design</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 03 · Lesson 03</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">Oracle Database</a><span>/</span
+            ><span>Chapter 03 · Lesson 03</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 03 · Physical Storage: Datafiles, Tablespaces, Blocks,
+              Segments, Extents, and ASM Concepts
+            </p>
+            <h1>
+              Locally Managed Tablespaces, ASSM, High-Water Marks, and Space
+              Reclamation
+            </h1>
+            <p>
+              Understand locally managed extents, ASSM, high-water marks, and
+              why row deletion does not equal file shrink; then reclaim a
+              disposable segment safely.
+            </p>
+            <div class="lesson-meta">
+              <span>Advanced</span><span>105–125 minutes</span
+              ><span>HWM + segment-shrink lab</span
+              ><span>Oracle AI Database 26ai · RU 23.26.3 baseline</span
+              ><span>SERVICEHUB_OWNER on disposable Free lab</span
+              ><span>Last reviewed: August 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                ServiceHub deletes a large batch of old probe rows, yet the
+                datafile size on disk does not fall. Someone concludes that
+                Oracle “forgot to free space” and proposes shrinking every file
+                nightly. The mechanism is different: row deletion frees
+                row/block space for reuse, but segment extents and the datafile
+                remain allocated until specific segment/tablespace/file
+                operations release or move that allocation. This lesson
+                separates locally managed extent tracking, Automatic Segment
+                Space Management (ASSM), the high-water mark, and actual
+                reclamation.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Explain locally managed tablespaces and bitmap extent
+                    tracking without confusing extent management with row/block
+                    free-space management.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Explain ASSM and distinguish free space inside blocks from
+                    free extents in the tablespace.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Define the segment high-water mark and show why deleting
+                    rows does not normally lower it or shrink a datafile.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Use DBMS_SPACE and segment metadata to observe allocated
+                    versus unused blocks before and after a controlled delete.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Perform a safe segment-shrink lab with row movement, verify
+                    the result, and explain when MOVE/rebuild/tablespace shrink
+                    are different operations.
+                  </p>
+                </div>
+              </div>
+              <div class="callout warning">
+                <strong>Lab safety</strong>
+                <p>
+                  Use only SERVICEHUB_OWNER.SERVICEHUB_SPACE_PROBE in FREEPDB1.
+                  The lab never shrinks an existing ServiceHub business table or
+                  resizes an existing datafile. Segment shrink moves rows and
+                  can change rowids; that matters to rowid-based consumers and
+                  therefore belongs in a maintenance plan in production.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>1. Locally managed tablespaces track extents with bitmaps</h2>
+              <p>
+                Modern Oracle tablespaces are <strong>locally managed</strong>:
+                allocation metadata for extents is represented with bitmaps in
+                the tablespace rather than dictionary-managed free-space
+                bookkeeping. <code>AUTOALLOCATE</code> lets Oracle choose extent
+                sizes; <code>UNIFORM</code> uses a fixed extent size. This
+                policy answers “how are extents allocated?” It does not answer
+                “how is free room inside each data block managed?”
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    observe extent and segment space management policies
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT tablespace_name, extent_management, allocation_type,</span><span class="code-line">       segment_space_management, bigfile</span><span class="code-line">FROM   dba_tablespaces</span><span class="code-line">WHERE  contents = &#x27;PERMANENT&#x27;</span><span class="code-line">ORDER  BY tablespace_name;</span></code></pre>
+              </div>
+              <p>
+                <strong>Automatic Segment Space Management (ASSM)</strong> is
+                the block-level free-space management mechanism typically used
+                with locally managed tablespaces. ASSM uses bitmap structures to
+                track blocks by available-space categories and reduces the need
+                for manual free-list management. Do not conflate ASSM with ASM:
+                ASSM manages free space inside database segments; Oracle ASM
+                manages storage devices/disk groups below database files.
+              </p>
+            </section>
+            <section>
+              <h2>
+                2. The high-water mark describes how far the segment has used
+                blocks
+              </h2>
+              <p>
+                The <strong>high-water mark (HWM)</strong> identifies the
+                boundary below which blocks have been formatted/used by a
+                segment. A full table scan can need to examine blocks up to the
+                relevant high-water boundary even after many rows are deleted.
+                Deleting rows frees row space for reuse, but it does not
+                normally deallocate every extent or move the HWM downward.
+              </p>
+              <p>
+                That is why two statements can both be true: “the table contains
+                far fewer rows” and “the segment still has roughly the same
+                allocated bytes.” Reusable space inside the segment is
+                valuable—it can absorb future inserts—but it is different from
+                releasing extents back to the tablespace or reducing the
+                datafile size.
+              </p>
+            </section>
+            <section>
+              <h2>3. Build a controlled probe and measure its allocation</h2>
+              <p>
+                As <code>SERVICEHUB_OWNER</code>, first confirm the target
+                tablespace uses ASSM. Then create a moderate probe table and
+                gather its segment allocation. The probe is intentionally
+                isolated from course business tables.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    create a probe segment
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT tablespace_name, segment_space_management</span><span class="code-line">FROM   user_tablespaces</span><span class="code-line">WHERE  tablespace_name = (</span><span class="code-line">  SELECT default_tablespace</span><span class="code-line">  FROM   user_users</span><span class="code-line">);</span><span class="code-line"></span><span class="code-line">CREATE TABLE servicehub_space_probe AS</span><span class="code-line">SELECT LEVEL AS probe_id,</span><span class="code-line">       RPAD(&#x27;z&#x27;, 240, &#x27;z&#x27;) AS payload</span><span class="code-line">FROM   dual</span><span class="code-line">CONNECT BY LEVEL &lt;= 40000;</span><span class="code-line"></span><span class="code-line">SELECT segment_name, tablespace_name, bytes, blocks, extents</span><span class="code-line">FROM   user_segments</span><span class="code-line">WHERE  segment_name=&#x27;SERVICEHUB_SPACE_PROBE&#x27;;</span></code></pre>
+              </div>
+              <p>
+                If the default tablespace reports <code>MANUAL</code> instead of
+                <code>AUTO</code>, do not run the shrink portion as written. The
+                current Free/DBCA path should use ASSM, but the lesson verifies
+                rather than assumes.
+              </p>
+            </section>
+            <section>
+              <h2>4. DBMS_SPACE makes the HWM boundary observable</h2>
+              <p>
+                <code>DBMS_SPACE.UNUSED_SPACE</code> reports total segment
+                allocation and unused space above the high-water boundary for
+                supported segment types. The values are not the same as “rows
+                that could fit in partially empty blocks.” Use them to
+                understand the segment boundary, not as a replacement for
+                application data-volume metrics.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="pl/sql"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>pl/sql ·
+                    measure segment unused space with DBMS_SPACE
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SET SERVEROUTPUT ON</span><span class="code-line">DECLARE</span><span class="code-line">  l_total_blocks NUMBER;</span><span class="code-line">  l_total_bytes NUMBER;</span><span class="code-line">  l_unused_blocks NUMBER;</span><span class="code-line">  l_unused_bytes NUMBER;</span><span class="code-line">  l_last_file_id NUMBER;</span><span class="code-line">  l_last_block_id NUMBER;</span><span class="code-line">  l_last_block NUMBER;</span><span class="code-line">BEGIN</span><span class="code-line">  DBMS_SPACE.UNUSED_SPACE(</span><span class="code-line">    segment_owner             =&gt; USER,</span><span class="code-line">    segment_name              =&gt; &#x27;SERVICEHUB_SPACE_PROBE&#x27;,</span><span class="code-line">    segment_type              =&gt; &#x27;TABLE&#x27;,</span><span class="code-line">    total_blocks              =&gt; l_total_blocks,</span><span class="code-line">    total_bytes               =&gt; l_total_bytes,</span><span class="code-line">    unused_blocks             =&gt; l_unused_blocks,</span><span class="code-line">    unused_bytes              =&gt; l_unused_bytes,</span><span class="code-line">    last_used_extent_file_id  =&gt; l_last_file_id,</span><span class="code-line">    last_used_extent_block_id =&gt; l_last_block_id,</span><span class="code-line">    last_used_block           =&gt; l_last_block</span><span class="code-line">  );</span><span class="code-line">  DBMS_OUTPUT.PUT_LINE(&#x27;total blocks=&#x27; || l_total_blocks);</span><span class="code-line">  DBMS_OUTPUT.PUT_LINE(&#x27;unused blocks above HWM=&#x27; || l_unused_blocks);</span><span class="code-line">  DBMS_OUTPUT.PUT_LINE(&#x27;last used file=&#x27; || l_last_file_id || &#x27;, block=&#x27; || l_last_block);</span><span class="code-line">END;</span><span class="code-line">/</span></code></pre>
+              </div>
+              <p>
+                Run the measurement before deletion and save it. Exact numbers
+                vary with block size, extent allocation, row format, and the
+                Free image. Do not publish the sample’s local block counts as a
+                universal Oracle benchmark.
+              </p>
+            </section>
+            <section>
+              <h2>5. Delete rows and watch the segment stay allocated</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    delete most rows, then compare row count and segment size
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">DELETE FROM servicehub_space_probe</span><span class="code-line">WHERE  probe_id &lt;= 35000;</span><span class="code-line">COMMIT;</span><span class="code-line"></span><span class="code-line">SELECT COUNT(*) AS rows_remaining</span><span class="code-line">FROM   servicehub_space_probe;</span><span class="code-line"></span><span class="code-line">SELECT bytes, blocks, extents</span><span class="code-line">FROM   user_segments</span><span class="code-line">WHERE  segment_name=&#x27;SERVICEHUB_SPACE_PROBE&#x27;;</span></code></pre>
+              </div>
+              <p>
+                The row count drops dramatically. Segment bytes commonly remain
+                allocated because the extents are still owned by the segment and
+                can be reused. The containing datafile size also remains
+                unchanged. This is expected behavior, not evidence of corruption
+                or a “leak.”
+              </p>
+            </section>
+            <section>
+              <h2>
+                6. Deliberate failure: shrink without enabling row movement
+              </h2>
+              <p>
+                Online segment shrink compacts rows, lowers the HWM, and can
+                release space. Because rows may move to different rowids, Oracle
+                requires row movement for ordinary heap-table shrink. The safe
+                teaching failure is to try the shrink on the disposable probe
+                before enabling row movement.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    intentional error, then supported repair
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">-- Expected to fail for a heap table when row movement is disabled.</span><span class="code-line">ALTER TABLE servicehub_space_probe SHRINK SPACE;</span><span class="code-line"></span><span class="code-line">-- Repair on the disposable lab table only.</span><span class="code-line">ALTER TABLE servicehub_space_probe ENABLE ROW MOVEMENT;</span><span class="code-line">ALTER TABLE servicehub_space_probe SHRINK SPACE COMPACT;</span><span class="code-line">ALTER TABLE servicehub_space_probe SHRINK SPACE;</span><span class="code-line"></span><span class="code-line">SELECT bytes, blocks, extents</span><span class="code-line">FROM   user_segments</span><span class="code-line">WHERE  segment_name=&#x27;SERVICEHUB_SPACE_PROBE&#x27;;</span></code></pre>
+              </div>
+              <p>
+                The first statement should produce the documented row-movement
+                requirement error in this scenario. The repair is not “grant
+                more privileges” or “resize the file.” It is to acknowledge that
+                rowids can change, enable row movement on an object where that
+                is acceptable, compact the segment, and then release reclaimable
+                extents.
+              </p>
+            </section>
+            <section>
+              <h2>
+                7. Shrink, MOVE, index rebuild, and tablespace shrink solve
+                different problems
+              </h2>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Operation</th>
+                    <th>What it changes</th>
+                    <th>Operational consequence</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>ALTER TABLE ... SHRINK SPACE</code></td>
+                    <td>
+                      Compacts an eligible ASSM segment and lowers HWM/reclaims
+                      space
+                    </td>
+                    <td>
+                      Moves rows; requires row movement; object eligibility
+                      matters.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>ALTER TABLE ... MOVE</code></td>
+                    <td>
+                      Creates/moves the table segment to new storage/placement
+                    </td>
+                    <td>
+                      Can change rowids and affect indexes/availability
+                      depending on syntax/version/options.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>ALTER INDEX ... REBUILD</code></td>
+                    <td>Rebuilds an index segment</td>
+                    <td>
+                      Not a generic fix for table free space; generates
+                      work/redo and needs capacity.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>DBMS_SPACE.SHRINK_TABLESPACE</code></td>
+                    <td>
+                      Can reorganize objects and resize tablespace datafiles
+                    </td>
+                    <td>
+                      Broad administrative operation; requires careful
+                      eligibility, privileges, and maintenance planning.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>ALTER DATABASE DATAFILE ... RESIZE</code></td>
+                    <td>Changes a datafile’s physical size</td>
+                    <td>
+                      Cannot resize below allocated extents; does not
+                      compact/move objects by itself.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <p>
+                Current 26ai documentation includes
+                <code>DBMS_SPACE.SHRINK_TABLESPACE</code> for tablespace-level
+                reorganization and file reduction. That does not make nightly
+                global shrink a good policy. Moving objects creates I/O, redo,
+                rowid/index/availability considerations, and may simply cause
+                future regrowth.
+              </p>
+            </section>
+            <section>
+              <h2>
+                8. Reclaimable inside Oracle is not automatically reclaimable by
+                the OS
+              </h2>
+              <p>
+                After segment shrink, released extents become free inside the
+                tablespace. To return disk space to a filesystem, the relevant
+                free region must allow the datafile to be resized or a
+                tablespace-level operation must move/reorganize allocations.
+                Free extents scattered below the physical end of a file do not
+                guarantee that the file can be shortened to the sum of used
+                bytes.
+              </p>
+              <p>
+                That is why “datafile is 10 GB and segments total 3 GB,
+                therefore resize to 3 GB” is unsafe. The highest allocated block
+                matters. In production, use supported space-analysis APIs/views
+                and a tested rollback/recovery plan before resizing.
+              </p>
+            </section>
+            <section>
+              <h2>9. Hands-on cleanup and verification</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    capture final state and remove only the probe
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT COUNT(*) AS rows_remaining</span><span class="code-line">FROM   servicehub_space_probe;</span><span class="code-line"></span><span class="code-line">SELECT bytes, blocks, extents</span><span class="code-line">FROM   user_segments</span><span class="code-line">WHERE  segment_name=&#x27;SERVICEHUB_SPACE_PROBE&#x27;;</span><span class="code-line"></span><span class="code-line">DROP TABLE servicehub_space_probe PURGE;</span><span class="code-line"></span><span class="code-line">SELECT COUNT(*) AS segment_rows_after_drop</span><span class="code-line">FROM   user_segments</span><span class="code-line">WHERE  segment_name=&#x27;SERVICEHUB_SPACE_PROBE&#x27;;</span></code></pre>
+              </div>
+              <p>
+                After the drop, the probe segment disappears. The datafile still
+                need not shrink. That final observation is the core lesson:
+                object deletion releases database allocation for reuse;
+                lower-layer capacity reclamation is a separate administrative
+                decision.
+              </p>
+            </section>
+            <section>
+              <h2>10. Production judgment and bridge</h2>
+              <p>
+                Do not schedule shrink because a dashboard shows “unused bytes.”
+                Ask whether the application will reuse the space, whether scan
+                cost or backup/storage capacity is actually impaired, whether
+                row movement is safe, whether indexes/LOBs/partitions need
+                separate treatment, and whether the operation’s I/O/redo/locking
+                window is acceptable. Measure before and after with object-,
+                tablespace-, file-, and storage-level evidence.
+              </p>
+              <p>
+                Lesson 4 moves one layer lower. Oracle ASM can replace
+                filesystem-style placement decisions with disk groups,
+                allocation units, striping, mirroring, failure groups, and
+                rebalancing—but it is a separate Grid Infrastructure storage
+                layer, not another name for ASSM or a feature a single Free
+                container can meaningfully simulate.
+              </p>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>
+                    Why can DELETE reduce row count without reducing
+                    USER_SEGMENTS.BYTES?
+                  </li>
+                  <li>What is the key difference between ASSM and ASM?</li>
+                  <li>
+                    Why does segment shrink require row movement for ordinary
+                    heap tables?
+                  </li>
+                  <li>
+                    Why can free space inside a tablespace fail to translate
+                    into a smaller datafile?
+                  </li>
+                  <li>
+                    When is keeping free space inside a segment/tablespace
+                    preferable to returning it to the OS?
+                  </li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      DELETE frees row/block space for reuse but normally leaves
+                      extents allocated to the segment.
+                    </p>
+                    <p>
+                      ASSM manages free space inside database segments; ASM
+                      manages lower-level storage disks/disk groups for Oracle
+                      files.
+                    </p>
+                    <p>
+                      Shrink compacts rows and can change their physical rowids,
+                      so Oracle requires the table to allow row movement.
+                    </p>
+                    <p>
+                      Allocated extents can exist near the physical end of the
+                      file. A simple resize cannot cut through allocated blocks,
+                      and free extents can be fragmented throughout the file.
+                    </p>
+                    <p>
+                      When the workload is expected to regrow, keeping reusable
+                      allocated space can avoid churn and expensive
+                      shrink/regrow cycles.
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <ul class="reference-list">
+                <li>
+                  <a
+                    href="https://docs.oracle.com/en/database/oracle/oracle-database/26/admin/managing-space-for-schema-objects.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Oracle AI Database Administrator’s Guide — Managing Space
+                    for Schema Objects</a
+                  >
+                  — ASSM, high-water marks, segment shrink, and row movement
+                </li>
+                <li>
+                  <a
+                    href="https://docs.oracle.com/en/database/oracle/oracle-database/26/admin/managing-tablespaces.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Oracle AI Database Administrator’s Guide — Managing
+                    Tablespaces</a
+                  >
+                  — locally managed tablespaces and tablespace shrink
+                </li>
+                <li>
+                  <a
+                    href="https://docs.oracle.com/en/database/oracle/oracle-database/26/arpls/DBMS_SPACE.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Oracle AI Database PL/SQL Packages — DBMS_SPACE</a
+                  >
+                  — UNUSED_SPACE and space-analysis APIs
+                </li>
+                <li>
+                  <a
+                    href="https://docs.oracle.com/en/database/oracle/oracle-database/26/sqlrf/ALTER-TABLE.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Oracle AI Database SQL Language Reference — ALTER TABLE</a
+                  >
+                  — row movement and segment shrink syntax
+                </li>
+                <li>
+                  <a
+                    href="https://docs.oracle.com/en/database/oracle/oracle-database/26/cncpt/logical-storage-structures.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Oracle AI Database Concepts — Logical Storage Structures</a
+                  >
+                  — extent/segment/block space model
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a href="Lesson2.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Permanent, Temporary, Undo Tablespaces and Bigfile vs Smallfile
+                Tradeoffs</strong
+              ></a
+            ><a class="next" href="Lesson4.html"
+              ><small>Next lesson</small
+              ><strong
+                >Automatic Storage Management Concepts: Disk Groups, Failure
+                Groups, Striping, and Mirroring</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewBox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <small
+          >Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>
