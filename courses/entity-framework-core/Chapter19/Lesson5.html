@@ -1,0 +1,1583 @@
+<!doctype html>
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Read SQL Server-specific translations for pagination, text/date operations, JSON, APPLY, set operations, null semantics, and DML, then isolate provider extensions behind an intentional boundary so portability failures are visible in tests rather than production."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Provider-Specific SQL Inspection: When EF Abstractions Leak and How to
+      Keep Them Intentional | Entity Framework Core | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  
+    <!-- BDA course-local Highlight.js token theme: reuses academy syntax variables. -->
+</head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">EF</span>
+            <div>
+              <small>Course 09</small><strong>Entity Framework Core</strong>
+            </div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 125 lessons..."
+            type="search"
+        /></label>
+        <nav
+          aria-label="Entity Framework Core curriculum"
+          class="sidebar-curriculum"
+        >
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>EF Core Foundations, .NET Integration, Providers,
+              and the First Lab
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>Where EF Core Fits: ORM Responsibilities,
+                Relational Boundaries, and When Direct SQL Still Matters</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>EF Core 10 and .NET 10: LTS Baseline, Package
+                Compatibility, and Upgrade Discipline</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>Install the CLI and Packages, Choose a Database
+                Provider, and Verify the Toolchain</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>Create the First DbContext, Entity, Database
+                Connection, and End-to-End Query</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Reproducible Course Lab with Logging,
+                Sample Data, Configuration, and Safe Secrets</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>DbContext Lifecycle, Configuration, Dependency
+              Injection, Factories, and Pooling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>DbContext as Unit of Work: Lifetime,
+                Thread-Safety, Disposal, and Async Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>Configure Providers with DbContextOptions,
+                OnConfiguring, and External Configuration</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>AddDbContext, Scoped Lifetimes, Dependency
+                Injection, and Request-Oriented Applications</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>IDbContextFactory, Design-Time Factories,
+                Background Workers, and Blazor-Style Lifetimes</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>DbContext Pooling: State Reset, Tenant-Sensitive
+                State, Benchmarks, and When Pooling Backfires</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>Model Building: Conventions, Data Annotations,
+              Fluent API, and Metadata
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>How EF Builds the Model: Conventions, Discovery,
+                Finalization, and Model Metadata</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Configure Entity Types, Properties, Tables,
+                Schemas, Columns, and Facets with Fluent API</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>Data Annotations vs Fluent Configuration:
+                Precedence, Maintainability, and Team Conventions</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>Ignore Types and Properties, Configure Backing
+                Fields, and Control Property Access Modes</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Organize Large Models with
+                IEntityTypeConfiguration, Assembly Scanning, and Validation</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Keys, Indexes, Property Semantics, Value
+              Generation, and Shadow State
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Primary, Alternate, Composite, and Foreign Keys:
+                Identity and Relationship Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>Configure Indexes, Uniqueness, Sort Order,
+                Filters, Included Columns, and Provider Differences</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>Generated Values, Identity/Sequences, Default
+                Values, Computed Columns, and Temporary Keys</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>Shadow Properties, Indexer Properties, Property
+                Bags, and Infrastructure Metadata</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Concurrency Tokens, Store-Generated Values, and
+                Mapping Decisions that Affect Updates</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>Relationships, Navigations, Cascade Behavior, and
+              Many-to-Many Modeling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>One-to-Many Relationships: Principal/Dependent
+                Roles, Requiredness, and Foreign Keys</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>One-to-One Relationships: Uniqueness, Shared
+                Keys, and Ambiguous Relationship Resolution</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>Many-to-Many Relationships: Skip Navigations,
+                Join Entities, Payload Columns, and Ordering</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>Cascade Delete, ClientCascade,
+                Restrict/NoAction, Orphans, and Database Constraint Behavior</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>Navigation Fixup, Relationship State Changes,
+                Disconnected Graphs, and Modeling Pitfalls</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Complex Types, Owned Types, JSON Mapping,
+              Conversions, Comparers, and Encapsulation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>Complex Types vs Entity Types: Value-Object
+                Semantics and EF Core 10 Modeling Choices</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>Owned Entity Types and Aggregate Boundaries:
+                OwnsOne, OwnsMany, and Table Mapping</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>Map Structured Data to Relational JSON Columns
+                and Reason About Partial Updates</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>Value Converters and Value Comparers for Domain
+                Types, Enums, Strong IDs, and Collections</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Encapsulated Models with Constructors, Private
+                Setters, Fields, and Domain-Friendly Persistence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>Inheritance, Table Splitting, Entity Splitting, and
+              Advanced Relational Mapping
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>TPH Inheritance: Discriminators, Completeness,
+                Query Shape, and Index Design</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>TPT Inheritance: Join Costs, Schema Clarity, and
+                Workload Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>TPC Inheritance: Duplicated Columns, Key
+                Generation, and Query Performance</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Table Splitting and Entity Splitting for Legacy
+                Schemas and Bounded Object Models</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Choose Mapping Strategies with Measured SQL
+                Plans Instead of Object-Oriented Preference</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>LINQ Query Fundamentals and the EF Translation
+              Pipeline
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>IQueryable, Deferred Execution, Expression
+                Trees, and Where Database Work Actually Happens</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>Projection, Filtering, Ordering, Pagination,
+                Distinctness, and NULL Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>Parameterization, Query Compilation, Server
+                Evaluation, and Unsupported Expressions</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>Async Query Execution, Streaming vs Buffering,
+                Cancellation, and Connection Lifetimes</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Read Generated SQL with ToQueryString and Verify
+                Translation Before Performance Tuning</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>Advanced LINQ: Joins, Grouping, Subqueries, Set
+              Operations, and Raw SQL Composition
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Inner, Left, Right, Cross, and Correlated Joins
+                with Cardinality-Aware LINQ</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>GroupBy Translation, Aggregates, HAVING-Like
+                Filters, and Common Translation Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>EXISTS, Any, All, Contains, Correlated
+                Subqueries, and Efficient Membership Tests</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Union, Concat, Intersect, Except, Distinct, and
+                Shape Compatibility Across Set Operations</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>FromSql, SqlQuery, Stored Procedures,
+                Composability, and Safe Escape Hatches for Handwritten SQL</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>Loading Related Data: Eager, Explicit, Lazy,
+              Filtered Include, and Split Queries
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Include and ThenInclude: Loading Graphs Without
+                Losing Sight of Result Cardinality</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Filtered Include, Navigation Fixup, Tracking
+                Side Effects, and Predictable Result Shapes</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Single vs Split Queries: Cartesian Explosion,
+                Round Trips, Ordering, and Consistency Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Explicit Loading and Targeted Relationship
+                Queries for Conditional Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Lazy Loading Proxies and ILazyLoader: N+1 Risk,
+                Serialization Problems, and When to Avoid Them</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>Change Tracking, Entity States, Identity
+              Resolution, and Disconnected Graphs
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Unchanged, Added, Modified, Deleted, and
+                Detached: The Entity-State Machine</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Snapshot Change Detection, DetectChanges,
+                AutoDetectChangesEnabled, and Cost Control</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Identity Resolution, Tracking vs No-Tracking,
+                and AsNoTrackingWithIdentityResolution</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Attach, Update, Entry, TrackGraph, and Selective
+                Changes in Disconnected Applications</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Original/Current/Database Values, DebugView, and
+                Diagnosing Unexpected Updates</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>Saving Data: Insert, Update, Delete, Batching,
+              ExecuteUpdate, and ExecuteDelete
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>SaveChanges Pipeline, Command Ordering,
+                Generated Keys, AcceptAllChanges, and Failure Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Batching Inserts and Updates, Parameter Limits,
+                Round Trips, and Provider Thresholds</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>ExecuteUpdate and ExecuteDelete: Set-Based DML
+                Without Loading or Tracking Entities</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Bulk-Operation Boundaries: EF APIs, Third-Party
+                Libraries, COPY/BulkCopy, and Correctness</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Interceptors and SaveChanges Overrides for
+                Auditing, Timestamps, Domain Events, and Outbox Hooks</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Optimistic Concurrency and Conflict Resolution
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Concurrency Tokens: Application-Managed
+                Versions, rowversion, xmin, and Provider Options</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>How EF Detects Lost Updates and Builds
+                Concurrency-Sensitive UPDATE/DELETE Predicates</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Resolve DbUpdateConcurrencyException with Client
+                Wins, Store Wins, or Field-Level Merge</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Concurrency Across Aggregate Boundaries, APIs,
+                Background Jobs, and Offline Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Test Races Deterministically and Distinguish
+                Concurrency Conflicts from Transient Failures</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Transactions, Savepoints, Execution Strategies, and
+              Cross-Context Coordination
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Default SaveChanges Transactions, Explicit
+                Transactions, Isolation Levels, and Scope</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Savepoints and Automatic Rollback Inside
+                Existing Transactions</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Resilient Execution Strategies: Retryable
+                Failures, Idempotency, and Transaction Delegates</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Share DbConnection/DbTransaction Across Contexts
+                and Coordinate EF with ADO.NET</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Ambient/System.Transactions Boundaries,
+                Distributed Transactions, and Safer Architectural
+                Alternatives</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Migrations, Model Snapshots, Seeding, Scripts,
+              Bundles, and Deployment
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>How Migrations Diff Models: Snapshot Semantics,
+                Operations, and Migration History</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Create, Review, Rename, Reorder, and Repair
+                Migrations Without Losing Data</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Generate Idempotent SQL Scripts and Separate
+                Build-Time Migration Authoring from Deployment</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Migration Bundles, Runtime Migration Risks,
+                Permissions, Locking, and Multi-Instance Deployments</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Deterministic Data Seeding, Environment-Specific
+                Data, Rollback Strategy, and Zero-Downtime Thinking</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Reverse Engineering and Database-First Workflows
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>Scaffold DbContext and Entities from Existing
+                Schemas with Provider Tooling</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Control Tables, Schemas, Naming, Data
+                Annotations, Connection Strings, and Generated Output</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>Preserve Custom Code with Partial Classes,
+                Partial Methods, Separate Configurations, and Templates</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Re-Scaffolding, Schema Drift, Handwritten
+                Changes, and Sustainable Database-First Ownership</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Map Stored Procedures, Views, Keyless Types,
+                Legacy Constraints, and Imperfect Schemas Pragmatically</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Performance Engineering: Query Shape, Compiled
+              Artifacts, Pooling, and Database Evidence
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>Project Only Needed Columns, Avoid Accidental
+                Client Work, and Bound Result Sets</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>Compiled Queries, EF Query Cache Behavior, and
+                When Compilation Helps</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>Compiled Models, Startup Cost, Large Model
+                Optimization, and NativeAOT Considerations</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>DbContext Pooling, Connection Pooling, Batching,
+                and the Difference Between ORM and Driver Pools</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Benchmark with Database Execution Plans, Query
+                Tags, Realistic Data Volumes, and End-to-End Latency</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Diagnostics, Logging, Interceptors, Metrics, and
+              Observability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>Configure Structured Logging, Sensitive-Data
+                Logging, Detailed Errors, and Environment Safety</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>DiagnosticSource, EventCounters,
+                Activity/OpenTelemetry Integration, and Correlation</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Command, Connection, Transaction, SaveChanges,
+                and Materialization Interceptors</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Query Tags, Command Timeouts, Slow-Query
+                Correlation, and Mapping ORM Events to Database Plans</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>Build an EF Core Production Dashboard with Error
+                Rates, Latency, Pool Pressure, and Migration State<i
+                  >Current</i
+                ></a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>19</span>SQL Server and Azure SQL Provider Deep Dive
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="Lesson1.html"
+                ><span>01</span>Identity, Sequences, rowversion, Computed
+                Columns, Collations, and SQL Server Type Mapping</a
+              ><a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>Temporal Tables, JSON Columns, Sparse/Provider
+                Features, and Query Translation</a
+              ><a class="sidebar-lesson" href="Lesson3.html"
+                ><span>03</span>Execution Strategies, Connection Resiliency,
+                Azure SQL Transient Faults, and Retry Semantics</a
+              ><a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>Indexes, Include Properties, Filtered Indexes,
+                Migrations, and SQL Server DDL Behavior</a
+              ><a
+                aria-current="page"
+                class="sidebar-lesson is-current"
+                href="Lesson5.html"
+                ><span>05</span>Provider-Specific SQL Inspection: When EF
+                Abstractions Leak and How to Keep Them Intentional</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>SQLite Provider Deep Dive and Embedded-Database
+              Constraints
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>SQLite Type Affinity vs CLR Types: Mappings,
+                Conversions, Precision, and Unsupported Operations</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>SQLite Migrations and Table Rebuilds: DDL
+                Limitations, Idempotency Boundaries, and Testing</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>Concurrency Without rowversion: Application
+                Tokens, Locking Behavior, WAL Awareness, and Retries</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>JSON, Date/Time, Decimal, Collation, Foreign
+                Key, and Function Translation Differences</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Use SQLite for Production Embedded Workloads vs
+                Using It Only as a Test Substitute</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>PostgreSQL, MySQL, and Cross-Provider Portability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>Provider Ecosystem Awareness: Npgsql,
+                MySQL/MariaDB Providers, Versions, and Compatibility
+                Contracts</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>Identity/Sequence Strategies, Case Sensitivity,
+                Types, JSON, Arrays, and Database-Specific Extensions</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>LINQ Translation Differences, Function Mapping,
+                Generated SQL, and Provider Test Matrices</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Migration Portability: Why One EF Model Does Not
+                Guarantee One Portable Schema</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>Design a Provider-Abstraction Boundary Without
+                Falling into Lowest-Common-Denominator Data Modeling</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Global Query Filters, Multi-Tenancy, Soft Delete,
+              and Data Partitioning
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>Global Query Filters for Soft Delete, Tenant
+                Scope, Active Rows, and Security-Sensitive Predicates</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>Named Query Filters in EF Core 10: Selective
+                Disabling and Composable Policy Layers</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>Single Database, Schema-per-Tenant, and
+                Database-per-Tenant Tradeoffs with DbContext Configuration</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>Model Caching, Tenant-Specific State, DbContext
+                Pooling, and Avoiding Cross-Tenant Leakage</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Enforce Tenant Isolation in Tests, Database
+                Constraints, Authorization, and Operational Tooling</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>23</span>Testing EF Core Correctly: Unit, Integration,
+              Containers, and Migration Verification
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter23/Lesson1.html"
+                ><span>01</span>What to Unit Test Around EF and What Requires a
+                Real Database</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson2.html"
+                ><span>02</span>Why the InMemory Provider Is Not a Relational
+                Database and Where It Misleads Tests</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson3.html"
+                ><span>03</span>Use SQLite Intentionally for Lightweight Tests
+                and Understand Provider-Behavior Differences</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson4.html"
+                ><span>04</span>Run Integration Tests Against Production-Like
+                Engines with Containers and Isolated Databases</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson5.html"
+                ><span>05</span>Test Migrations, Concurrency, Transactions,
+                Failure Retries, Query Counts, and Performance Regressions</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>Security, Raw SQL, Secrets, Authorization
+              Boundaries, and Abuse Resistance
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter24/Lesson1.html"
+                ><span>01</span>Parameterization by Default: LINQ Safety,
+                FromSql Variants, SqlQuery, and Injection Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson2.html"
+                ><span>02</span>Dynamic SQL Identifiers, Sorting/Filtering APIs,
+                Allow-Lists, and Query-Shape Abuse</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson3.html"
+                ><span>03</span>Protect Connection Strings and Credentials with
+                Environment Configuration and Secret Stores</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson4.html"
+                ><span>04</span>Least-Privilege Database Accounts, Migration
+                Permissions, Row-Level Security, and Tenant Defense in Depth</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson5.html"
+                ><span>05</span>Sensitive Data in Logs, Error Messages, Traces,
+                Backups, and Development Diagnostics</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>25</span>Production Architecture, DDD/CQRS Integration,
+              Reliability, and Capstone
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter25/Lesson1.html"
+                ><span>01</span>DbContext vs Repository/Unit-of-Work
+                Abstractions: Avoid Redundant Layers and Preserve Testable
+                Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson2.html"
+                ><span>02</span>Aggregate Persistence, Owned/Complex Types,
+                Value Objects, Domain Events, and Transactional Outbox Design</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson3.html"
+                ><span>03</span>CQRS Read Models, Raw SQL/Dapper Interop, Bulk
+                Workloads, and Choosing the Right Data-Access Tool per Path</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson4.html"
+                ><span>04</span>Production Deployment: Migrations, Health
+                Checks, Retries, Pool Sizing, Observability, and Incident
+                Runbooks</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson5.html"
+                ><span>05</span>Capstone: Design, Implement, Test, Tune, Secure,
+                Deploy, and Defend a Production EF Core Data Layer</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 18 · Lesson 05</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">Entity Framework Core</a><span>/</span
+            ><span>Chapter 19 · Lesson 05</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 19 · SQL Server and Azure SQL Provider Deep Dive
+            </p>
+            <h1>
+              Provider-Specific SQL Inspection: When EF Abstractions Leak and
+              How to Keep Them Intentional
+            </h1>
+            <p>
+              Read SQL Server-specific translations for pagination, text/date
+              operations, JSON, APPLY, set operations, null semantics, and DML,
+              then isolate provider extensions behind an intentional boundary so
+              portability failures are visible in tests rather than production.
+            </p>
+            <div class="lesson-meta">
+              <span>Advanced</span><span>160–210 minutes</span
+              ><span>translation-boundary lab</span
+              ><span
+                >EF Core 10.0.11 · SQL Server provider 10.0.11 · .NET 10.0.11 ·
+                SDK 10.0.400</span
+              ><span
+                >SQL Server 2025 Developer free local path · Azure SQL
+                optional</span
+              ><span>Provider deep-dive reviewed: August 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <div class="objective-grid objectives">
+                <article class="objective">
+                  <span>01</span>
+                  <p>
+                    Inspect SQL Server translations for pagination, string/date
+                    operations, APPLY, JSON, set operations, null behavior, and
+                    set-based DML.
+                  </p>
+                </article>
+                <article class="objective">
+                  <span>02</span>
+                  <p>
+                    Distinguish stable relational LINQ intent from SQL
+                    Server-specific extensions/functions and compatibility-level
+                    behavior.
+                  </p>
+                </article>
+                <article class="objective">
+                  <span>03</span>
+                  <p>
+                    Use ToQueryString, command logs, query tags, and SQL Server
+                    plans as complementary evidence rather than interchangeable
+                    tools.
+                  </p>
+                </article>
+                <article class="objective">
+                  <span>04</span>
+                  <p>
+                    Create a dedicated provider boundary for SQL Server-specific
+                    queries so portability tradeoffs are visible and testable.
+                  </p>
+                </article>
+                <article class="objective">
+                  <span>05</span>
+                  <p>
+                    Reproduce a portability failure by running a SQL Server-only
+                    function against the SQLite baseline and repair the
+                    architecture.
+                  </p>
+                </article>
+                <article class="objective">
+                  <span>06</span>
+                  <p>
+                    Decide intentionally when provider-specific SQL is the
+                    correct engineering choice instead of treating it as an ORM
+                    failure.
+                  </p>
+                </article>
+              </div>
+            </section>
+            <section>
+              <h2>
+                1. The problem: “portable LINQ” ends where database semantics
+                begin
+              </h2>
+              <p>
+                EF Core gives ServiceHub one LINQ programming model, but
+                providers translate expression trees into different SQL dialects
+                and capabilities. SQL Server has <code>APPLY</code>, collations,
+                temporal operators, full-text search, <code>OFFSET/FETCH</code>,
+                SQL Server date functions, native JSON on newer compatibility
+                levels, and provider-specific DML shapes. The goal is not to
+                avoid those features; it is to keep the dependency intentional
+                and observable.
+              </p>
+              <div class="callout">
+                <strong>Provider boundary rule</strong>
+                <p>
+                  A SQL Server-specific query may be the best solution. Put it
+                  behind a name/API that says “SQL Server,” keep a
+                  provider-specific integration test, and preserve a simpler
+                  portable path only where the product actually needs
+                  portability.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>
+                2. Pagination becomes OFFSET/FETCH and still needs deterministic
+                ordering
+              </h2>
+              <p>
+                <code>Skip/Take</code> with ordering normally becomes SQL Server
+                <code>OFFSET ... FETCH</code>. The relational cost of deep
+                offset pagination remains: SQL Server still has to
+                navigate/order rows before discarding earlier ones. Chapter 08
+                keyset-pagination guidance still applies.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="csharp"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>csharp ·
+                    offset page
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-csharp"><span class="code-line"><span class="token-keyword">var</span> <span class="token-name">page</span> <span class="token-operator">=</span> <span class="token-keyword">await</span> <span class="token-name">db</span><span class="token-operator">.</span><span class="token-name">SqlServerWorkOrders</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">OrderByDescending</span><span class="token-operator">(</span><span class="token-name">w</span> <span class="token-operator">=&gt;</span> <span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">OpenedUtc</span><span class="token-operator">)</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">ThenByDescending</span><span class="token-operator">(</span><span class="token-name">w</span> <span class="token-operator">=&gt;</span> <span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">Id</span><span class="token-operator">)</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">Skip</span><span class="token-operator">(</span><span class="token-name">offset</span><span class="token-operator">)</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">Take</span><span class="token-operator">(</span><span class="token-name">pageSize</span><span class="token-operator">)</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">Select</span><span class="token-operator">(</span><span class="token-name">w</span> <span class="token-operator">=&gt;</span> <span class="token-keyword">new</span> <span class="token-operator">{</span> <span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">Id</span><span class="token-operator">,</span> <span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">WorkOrderNumber</span><span class="token-operator">,</span> <span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">OpenedUtc</span> <span class="token-operator">}</span><span class="token-operator">)</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">ToListAsync</span><span class="token-operator">(</span><span class="token-name">ct</span><span class="token-operator">)</span><span class="token-operator">;</span></span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    representative SQL Server shape
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">ORDER BY [w].[OpenedUtc] DESC, [w].[work_order_id] DESC</span><span class="code-line">OFFSET @__offset ROWS FETCH NEXT @__pageSize ROWS ONLY</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>
+                3. String and collation semantics leak through equality and LIKE
+              </h2>
+              <p>
+                SQL Server comparisons follow database/column collation.
+                <code>EF.Functions.Like</code> produces SQL <code>LIKE</code>;
+                <code>EF.Functions.Collate</code> emits <code>COLLATE</code>. A
+                C# string comparison therefore does not magically retain .NET
+                ordinal semantics. Query-level collation can also change index
+                eligibility.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="csharp"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>csharp ·
+                    provider-visible text predicate
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-csharp"><span class="code-line"><span class="token-keyword">var</span> <span class="token-name">results</span> <span class="token-operator">=</span> <span class="token-keyword">await</span> <span class="token-name">db</span><span class="token-operator">.</span><span class="token-name">SqlServerWorkOrders</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">Where</span><span class="token-operator">(</span><span class="token-name">w</span> <span class="token-operator">=&gt;</span> <span class="token-name">EF</span><span class="token-operator">.</span><span class="token-name">Functions</span><span class="token-operator">.</span><span class="token-name">Like</span><span class="token-operator">(</span><span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">CustomerName</span><span class="token-operator">,</span> <span class="token-name">prefix</span> <span class="token-operator">+</span> <span class="token-string">"%"</span><span class="token-operator">)</span><span class="token-operator">)</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">Where</span><span class="token-operator">(</span><span class="token-name">w</span> <span class="token-operator">=&gt;</span> <span class="token-name">EF</span><span class="token-operator">.</span><span class="token-name">Functions</span><span class="token-operator">.</span><span class="token-name">Collate</span><span class="token-operator">(</span></span><span class="code-line">        <span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">WorkOrderNumber</span><span class="token-operator">,</span></span><span class="code-line">        <span class="token-string">"Latin1_General_100_BIN2"</span><span class="token-operator">)</span> <span class="token-operator">==</span> <span class="token-name">exactNumber</span><span class="token-operator">)</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">ToListAsync</span><span class="token-operator">(</span><span class="token-name">ct</span><span class="token-operator">)</span><span class="token-operator">;</span></span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    representative fragment
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">WHERE [w].[CustomerName] LIKE @__pattern</span><span class="code-line">  AND [w].[WorkOrderNumber] COLLATE Latin1_General_100_BIN2 = @__exactNumber</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>4. Date/time members translate to SQL Server functions</h2>
+              <p>
+                Provider function mappings are versioned. For example,
+                <code>DateTime.UtcNow</code> maps to SQL Server UTC time
+                functions, and EF Core 10 added translations for
+                microsecond/nanosecond members. Use these translations only when
+                the database-side clock/precision is the intended semantic.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="csharp"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>csharp ·
+                    database-evaluated age predicate
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-csharp"><span class="code-line"><span class="token-keyword">var</span> <span class="token-name">stale</span> <span class="token-operator">=</span> <span class="token-keyword">await</span> <span class="token-name">db</span><span class="token-operator">.</span><span class="token-name">SqlServerWorkOrders</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">Where</span><span class="token-operator">(</span><span class="token-name">w</span> <span class="token-operator">=&gt;</span> <span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">OpenedUtc</span> <span class="token-operator">&lt;</span> <span class="token-name">DateTimeOffset</span><span class="token-operator">.</span><span class="token-name">UtcNow</span><span class="token-operator">.</span><span class="token-name">AddHours</span><span class="token-operator">(</span><span class="token-operator">-</span><span class="token-number">4</span><span class="token-operator">)</span><span class="token-operator">)</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">ToListAsync</span><span class="token-operator">(</span><span class="token-name">ct</span><span class="token-operator">)</span><span class="token-operator">;</span></span></code></pre>
+              </div>
+              <p>
+                If the domain needs one authoritative “now” across multiple
+                operations, capture it once or use a transaction/database
+                expression deliberately. Repeated server-function calls and
+                application clocks are not automatically identical.
+              </p>
+            </section>
+            <section>
+              <h2>
+                5. Correlated collection selectors can become CROSS APPLY or
+                OUTER APPLY
+              </h2>
+              <p>
+                Some LINQ shapes reference the outer element inside a collection
+                selector rather than a simple join predicate. SQL Server can
+                translate these with <code>CROSS APPLY</code> or
+                <code>OUTER APPLY</code>. SQLite does not support APPLY, which
+                is why Chapter 09 treated this translation as
+                provider-dependent.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="csharp"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>csharp ·
+                    correlated projection
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-csharp"><span class="code-line"><span class="token-keyword">var</span> <span class="token-name">labels</span> <span class="token-operator">=</span> <span class="token-keyword">await</span> <span class="token-name">db</span><span class="token-operator">.</span><span class="token-name">SqlServerWorkOrders</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">SelectMany</span><span class="token-operator">(</span></span><span class="code-line">        <span class="token-name">w</span> <span class="token-operator">=&gt;</span> <span class="token-name">db</span><span class="token-operator">.</span><span class="token-name">Technicians</span><span class="token-operator">.</span><span class="token-name">Select</span><span class="token-operator">(</span><span class="token-name">t</span> <span class="token-operator">=&gt;</span> <span class="token-keyword">new</span></span><span class="code-line">        <span class="token-operator">{</span></span><span class="code-line">            <span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">Id</span><span class="token-operator">,</span></span><span class="code-line">            <span class="token-name">Label</span> <span class="token-operator">=</span> <span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">WorkOrderNumber</span> <span class="token-operator">+</span> <span class="token-string">":"</span> <span class="token-operator">+</span> <span class="token-name">t</span><span class="token-operator">.</span><span class="token-name">DisplayName</span></span><span class="code-line">        <span class="token-operator">}</span><span class="token-operator">)</span><span class="token-operator">)</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">Take</span><span class="token-operator">(</span><span class="token-number">20</span><span class="token-operator">)</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">ToListAsync</span><span class="token-operator">(</span><span class="token-name">ct</span><span class="token-operator">)</span><span class="token-operator">;</span></span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    representative shape
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT TOP(@__p_0) ...</span><span class="code-line">FROM [work_orders] AS [w]</span><span class="code-line">CROSS APPLY (</span><span class="code-line">    SELECT [w].[WorkOrderNumber] + N':' + [t].[DisplayName] AS [Label]</span><span class="code-line">    FROM [technicians] AS [t]</span><span class="code-line">) AS [x]</span></code></pre>
+              </div>
+              <p>
+                Do not use APPLY because it is “advanced.” Inspect cardinality
+                and plan shape; a simpler join or projection may be clearer and
+                cheaper.
+              </p>
+            </section>
+            <section>
+              <h2>6. JSON translation depends on storage and compatibility</h2>
+              <p>
+                EF Core 10 can translate member access inside mapped JSON
+                complex values. On SQL Server 2025/compatibility 170 native
+                JSON, typed <code>JSON_VALUE(... RETURNING ...)</code> forms
+                become available. Text-backed JSON on older compatibility uses
+                different expressions/casts. JSON indexes modeled by EF belong
+                to EF Core 11, not this baseline.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="csharp"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>csharp ·
+                    JSON member filter
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-csharp"><span class="code-line"><span class="token-keyword">var</span> <span class="token-name">priorityDispatch</span> <span class="token-operator">=</span> <span class="token-keyword">await</span> <span class="token-name">db</span><span class="token-operator">.</span><span class="token-name">SqlServerWorkOrders</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">Where</span><span class="token-operator">(</span><span class="token-name">w</span> <span class="token-operator">=&gt;</span> <span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">Dispatch</span><span class="token-operator">.</span><span class="token-name">ServiceTier</span> <span class="token-operator">&gt;=</span> <span class="token-number">3</span><span class="token-operator">)</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">Select</span><span class="token-operator">(</span><span class="token-name">w</span> <span class="token-operator">=&gt;</span> <span class="token-keyword">new</span> <span class="token-operator">{</span> <span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">Id</span><span class="token-operator">,</span> <span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">Dispatch</span><span class="token-operator">.</span><span class="token-name">Region</span><span class="token-operator">,</span> <span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">Dispatch</span><span class="token-operator">.</span><span class="token-name">Address</span><span class="token-operator">.</span><span class="token-name">City</span> <span class="token-operator">}</span><span class="token-operator">)</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">ToListAsync</span><span class="token-operator">(</span><span class="token-name">ct</span><span class="token-operator">)</span><span class="token-operator">;</span></span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    native-json representative predicate
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">WHERE JSON_VALUE([w].[Dispatch], '$.ServiceTier' RETURNING int) &gt;= 3</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>7. Set operations preserve SQL bag/set semantics</h2>
+              <p>
+                <code>Concat</code> maps to <code>UNION ALL</code> semantics,
+                while <code>Union</code> removes duplicates.
+                <code>Intersect</code> and <code>Except</code> rely on SQL
+                Server set semantics, type coercion and collation. Normalize
+                compatible projection shapes before combining them, as taught in
+                Chapter 09.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="csharp"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>csharp ·
+                    two compatible read-model sources
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-csharp"><span class="code-line"><span class="token-keyword">var</span> <span class="token-name">urgent</span> <span class="token-operator">=</span> <span class="token-name">db</span><span class="token-operator">.</span><span class="token-name">SqlServerWorkOrders</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">Where</span><span class="token-operator">(</span><span class="token-name">w</span> <span class="token-operator">=&gt;</span> <span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">Priority</span> <span class="token-operator">&gt;=</span> <span class="token-number">4</span><span class="token-operator">)</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">Select</span><span class="token-operator">(</span><span class="token-name">w</span> <span class="token-operator">=&gt;</span> <span class="token-keyword">new</span> <span class="token-operator">{</span> <span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">Id</span><span class="token-operator">,</span> <span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">WorkOrderNumber</span> <span class="token-operator">}</span><span class="token-operator">)</span><span class="token-operator">;</span></span><span class="code-line"></span><span class="code-line"><span class="token-keyword">var</span> <span class="token-name">escalated</span> <span class="token-operator">=</span> <span class="token-name">db</span><span class="token-operator">.</span><span class="token-name">SqlServerWorkOrders</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">Where</span><span class="token-operator">(</span><span class="token-name">w</span> <span class="token-operator">=&gt;</span> <span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">ProviderEscalationNote</span> <span class="token-operator">!=</span> <span class="token-keyword">null</span><span class="token-operator">)</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">Select</span><span class="token-operator">(</span><span class="token-name">w</span> <span class="token-operator">=&gt;</span> <span class="token-keyword">new</span> <span class="token-operator">{</span> <span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">Id</span><span class="token-operator">,</span> <span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">WorkOrderNumber</span> <span class="token-operator">}</span><span class="token-operator">)</span><span class="token-operator">;</span></span><span class="code-line"></span><span class="code-line"><span class="token-keyword">var</span> <span class="token-name">combined</span> <span class="token-operator">=</span> <span class="token-keyword">await</span> <span class="token-name">urgent</span><span class="token-operator">.</span><span class="token-name">Union</span><span class="token-operator">(</span><span class="token-name">escalated</span><span class="token-operator">)</span><span class="token-operator">.</span><span class="token-name">ToListAsync</span><span class="token-operator">(</span><span class="token-name">ct</span><span class="token-operator">)</span><span class="token-operator">;</span></span></code></pre>
+              </div>
+              <p>
+                Use <code>ToQueryString()</code> to confirm
+                <code>UNION</code> versus <code>UNION ALL</code>, then inspect
+                the plan if duplicate elimination becomes expensive.
+              </p>
+            </section>
+            <section>
+              <h2>8. Set-based DML exposes SQL Server update/delete shape</h2>
+              <p>
+                <code>ExecuteUpdate</code> and <code>ExecuteDelete</code> bypass
+                normal change-tracker synchronization and execute immediately,
+                as Chapter 12 established. SQL Server typically emits direct
+                set-based DML. Provider capability still determines which
+                setters/joins can translate.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="csharp"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>csharp ·
+                    close stale lab work orders in one command
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-csharp"><span class="code-line"><span class="token-keyword">var</span> <span class="token-name">affected</span> <span class="token-operator">=</span> <span class="token-keyword">await</span> <span class="token-name">db</span><span class="token-operator">.</span><span class="token-name">SqlServerWorkOrders</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">Where</span><span class="token-operator">(</span><span class="token-name">w</span> <span class="token-operator">=&gt;</span> <span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">Status</span> <span class="token-operator">==</span> <span class="token-name">WorkOrderStatus</span><span class="token-operator">.</span><span class="token-name">Open</span> <span class="token-operator">&amp;&amp;</span> <span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">OpenedUtc</span> <span class="token-operator">&lt;</span> <span class="token-name">cutoff</span><span class="token-operator">)</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">ExecuteUpdateAsync</span><span class="token-operator">(</span><span class="token-name">setters</span> <span class="token-operator">=&gt;</span> <span class="token-name">setters</span></span><span class="code-line">        <span class="token-operator">.</span><span class="token-name">SetProperty</span><span class="token-operator">(</span><span class="token-name">w</span> <span class="token-operator">=&gt;</span> <span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">Status</span><span class="token-operator">,</span> <span class="token-name">WorkOrderStatus</span><span class="token-operator">.</span><span class="token-name">Closed</span><span class="token-operator">)</span><span class="token-operator">,</span> <span class="token-name">ct</span><span class="token-operator">)</span><span class="token-operator">;</span></span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    representative SQL Server DML shape
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">UPDATE [w]</span><span class="code-line">SET [w].[Status] = @__Closed</span><span class="code-line">FROM [work_orders] AS [w]</span><span class="code-line">WHERE [w].[Status] = @__Open AND [w].[OpenedUtc] &lt; @__cutoff;</span></code></pre>
+              </div>
+              <p>
+                If rowversion business concurrency must be enforced for a bulk
+                update, include the token predicate yourself and inspect
+                <code>affected</code>; ExecuteUpdate does not automatically
+                perform tracked-entity concurrency conflict detection for a
+                whole set.
+              </p>
+            </section>
+            <section>
+              <h2>
+                9. Failure case: SQL Server full-text extension leaks into the
+                SQLite path
+              </h2>
+              <p>
+                A shared repository method adds
+                <code>EF.Functions.FreeText</code> because it works well on SQL
+                Server. The same method is then exercised by the course SQLite
+                test provider. The SQLite provider cannot translate the SQL
+                Server-specific function, so the “portable repository” was never
+                portable.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="csharp"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>csharp ·
+                    provider-specific query—name it accordingly
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-csharp"><span class="code-line"><span class="token-keyword">public</span> <span class="token-name">IQueryable</span><span class="token-operator">&lt;</span><span class="token-name">SqlServerWorkOrder</span><span class="token-operator">&gt;</span> <span class="token-name">SearchWithSqlServerFullText</span><span class="token-operator">(</span></span><span class="code-line">    <span class="token-name">SqlServerServiceHubContext</span> <span class="token-name">db</span><span class="token-operator">,</span></span><span class="code-line">    <span class="token-keyword">string</span> <span class="token-name">term</span><span class="token-operator">)</span></span><span class="code-line"><span class="token-operator">{</span></span><span class="code-line">    <span class="token-keyword">return</span> <span class="token-name">db</span><span class="token-operator">.</span><span class="token-name">SqlServerWorkOrders</span></span><span class="code-line">        <span class="token-operator">.</span><span class="token-name">Where</span><span class="token-operator">(</span><span class="token-name">w</span> <span class="token-operator">=&gt;</span> <span class="token-name">EF</span><span class="token-operator">.</span><span class="token-name">Functions</span><span class="token-operator">.</span><span class="token-name">FreeText</span><span class="token-operator">(</span><span class="token-name">w</span><span class="token-operator">.</span><span class="token-name">CustomerName</span><span class="token-operator">,</span> <span class="token-name">term</span><span class="token-operator">)</span><span class="token-operator">)</span><span class="token-operator">;</span></span><span class="code-line"><span class="token-operator">}</span></span></code></pre>
+              </div>
+              <p>
+                <strong>Repair:</strong> move the method behind an explicitly
+                SQL Server-specific query service/provider adapter and keep an
+                integration test against SQL Server. Provide a separate portable
+                fallback only if the product requirement needs one; do not
+                silently degrade a full-text search into a different semantic.
+              </p>
+            </section>
+            <section>
+              <h2>
+                10. Evidence stack: ToQueryString is necessary but not
+                sufficient
+              </h2>
+              <p>
+                For each provider-specific query, collect evidence at multiple
+                layers:
+              </p>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Layer</th>
+                      <th>Evidence</th>
+                      <th>Question answered</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>LINQ/expression</td>
+                      <td>review + tests</td>
+                      <td>Is application intent correct?</td>
+                    </tr>
+                    <tr>
+                      <td>EF translation</td>
+                      <td>ToQueryString + command logs</td>
+                      <td>What SQL/parameters did provider generate?</td>
+                    </tr>
+                    <tr>
+                      <td>Database</td>
+                      <td>actual plan, reads, waits</td>
+                      <td>How did SQL Server execute it?</td>
+                    </tr>
+                    <tr>
+                      <td>Application trace</td>
+                      <td>Activity/log duration</td>
+                      <td>Where did end-to-end time go?</td>
+                    </tr>
+                    <tr>
+                      <td>Cross-provider test</td>
+                      <td>SQL Server + SQLite/PostgreSQL where required</td>
+                      <td>Is portability real or accidental?</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p>
+                Never conclude that “EF is slow” from SQL text alone. Never
+                conclude that a provider-specific query is wrong solely because
+                another provider cannot translate it. The architecture question
+                is whether the dependency is intentional, isolated, tested, and
+                operationally understood.
+              </p>
+            </section>
+            <section>
+              <h2>
+                11. Mandatory lab: build a SQL Server translation notebook
+              </h2>
+              <ol>
+                <li>
+                  Use the disposable SQL Server provider database and seed the
+                  same deterministic ServiceHub rows used in earlier chapters.
+                </li>
+                <li>
+                  For one pagination, collation, date, APPLY, JSON,
+                  set-operation, and ExecuteUpdate query, save the LINQ
+                  expression and <code>ToQueryString()</code> output.
+                </li>
+                <li>
+                  Run each query with a
+                  <code>TagWith("ServiceHub:SqlServerDeepDive:...")</code> tag
+                  and capture the real command log.
+                </li>
+                <li>
+                  For two performance-relevant queries, capture actual SQL
+                  Server plans and logical reads; note parameter
+                  values/distribution without storing sensitive data.
+                </li>
+                <li>
+                  Run the SQL Server full-text example only after
+                  creating/validating the required full-text infrastructure;
+                  otherwise keep it as a translation-boundary observation.
+                </li>
+                <li>
+                  Execute the SQL Server-only method under the SQLite
+                  integration provider and record the translation failure as an
+                  expected architectural test.
+                </li>
+                <li>
+                  Document which methods stay in the portable query layer and
+                  which live in <code>SqlServerServiceHubQueries</code>.
+                </li>
+              </ol>
+            </section>
+            <section>
+              <h2>12. Production judgment and bridge to Chapter 20</h2>
+              <p>
+                EF Core abstractions are most valuable when they make intent
+                clear while keeping provider behavior inspectable. Use SQL
+                Server-specific capabilities when they solve a measured
+                product/database problem, but isolate them, pin provider
+                compatibility, inspect SQL/plans, and test failure modes. Do not
+                promise identical null/collation/JSON/function/DDL behavior
+                across providers. Chapter 20 now applies the same discipline to
+                SQLite, including its type, concurrency, DDL, locking and
+                translation constraints.
+              </p>
+            </section>
+            <section>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>What does Skip/Take typically become on SQL Server?</li>
+                  <li>Why is EF.Functions.Collate provider-visible?</li>
+                  <li>Why can APPLY be a portability boundary?</li>
+                  <li>
+                    What is the EF Core 10 limitation around SQL Server JSON
+                    indexes?
+                  </li>
+                  <li>
+                    Does ExecuteUpdate automatically synchronize tracked
+                    entities or raise tracked concurrency conflicts?
+                  </li>
+                  <li>When is a SQL Server-specific query acceptable?</li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      <strong>1.</strong> An ordered OFFSET/FETCH query;
+                      deterministic ordering and deep-offset cost still matter.
+                    </p>
+                    <p>
+                      <strong>2.</strong> It emits a database COLLATE operation
+                      whose semantics and index compatibility are defined by SQL
+                      Server.
+                    </p>
+                    <p>
+                      <strong>3.</strong> SQL Server supports CROSS/OUTER APPLY
+                      for correlated collection selectors, while providers such
+                      as SQLite do not support APPLY.
+                    </p>
+                    <p>
+                      <strong>4.</strong> EF Core 10 does not model SQL Server
+                      JSON indexes; that support starts in EF Core 11.
+                    </p>
+                    <p>
+                      <strong>5.</strong> No. It executes immediately outside
+                      normal tracker synchronization; concurrency
+                      predicates/affected-row policy must be deliberate.
+                    </p>
+                    <p>
+                      <strong>6.</strong> When the provider dependency is
+                      intentional, isolated, integration-tested, observable, and
+                      justified by product/workload requirements.
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <p>
+                SQL translation is versioned behavior. Re-check the provider
+                function mapping and query documentation when upgrading EF Core
+                or SQL Server compatibility.
+              </p>
+              <ul>
+                <li>
+                  <a
+                    href="https://learn.microsoft.com/en-us/ef/core/providers/sql-server/functions"
+                    rel="noreferrer"
+                    target="_blank"
+                    >SQL Server function mappings - EF Core</a
+                  >
+                  — provider translations for strings, dates, aggregates and SQL
+                  Server functions
+                </li>
+                <li>
+                  <a
+                    href="https://learn.microsoft.com/en-us/ef/core/providers/sql-server/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >SQL Server provider - EF Core</a
+                  >
+                  — compatibility levels, Azure SQL and provider feature
+                  boundary
+                </li>
+                <li>
+                  <a
+                    href="https://learn.microsoft.com/en-us/ef/core/querying/complex-query-operators"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Complex query operators - EF Core</a
+                  >
+                  — JOIN/APPLY/grouping translation patterns
+                </li>
+                <li>
+                  <a
+                    href="https://learn.microsoft.com/en-us/ef/core/querying/pagination"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Pagination - EF Core</a
+                  >
+                  — offset/keyset pagination and ordering
+                </li>
+                <li>
+                  <a
+                    href="https://learn.microsoft.com/en-us/ef/core/performance/efficient-querying"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Efficient querying - EF Core</a
+                  >
+                  — projection, indexes and database plan evidence
+                </li>
+                <li>
+                  <a
+                    href="https://learn.microsoft.com/en-us/ef/core/querying/sql-queries"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Executing raw SQL - EF Core</a
+                  >
+                  — explicit SQL escape hatches and parameterization boundaries
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav class="lesson-nav">
+            <a class="prev" href="Lesson4.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Indexes, Include Properties, Filtered Indexes, Migrations, and
+                SQL Server DDL Behavior</strong
+              ></a
+            ><a class="next" href="../Chapter20/Lesson1.html"
+              ><small>Next lesson</small
+              ><strong
+                >SQLite Type Affinity vs CLR Types: Mappings, Conversions,
+                Precision, and Unsupported Operations</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <small
+          >Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+\n
+  </body>
+</html>

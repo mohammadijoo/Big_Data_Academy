@@ -1,0 +1,1403 @@
+<!doctype html>
+
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Compare discriminator-column, schema-per-tenant, and database-per-tenant designs by EF support, migrations, pooling, backup/restore, noisy-neighbor behavior, and operational ownership rather than tenancy slogans."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Single Database, Schema-per-Tenant, and Database-per-Tenant Tradeoffs with
+      DbContext Configuration | Entity Framework Core | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  
+    <!-- BDA course-local Highlight.js token theme: reuses academy syntax variables. -->
+</head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">EF</span>
+            <div>
+              <small>Course 09</small><strong>Entity Framework Core</strong>
+            </div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 125 lessons..."
+            type="search"
+        /></label>
+        <nav
+          aria-label="Entity Framework Core curriculum"
+          class="sidebar-curriculum"
+        >
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>EF Core Foundations, .NET Integration, Providers,
+              and the First Lab
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>Where EF Core Fits: ORM Responsibilities,
+                Relational Boundaries, and When Direct SQL Still Matters</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>EF Core 10 and .NET 10: LTS Baseline, Package
+                Compatibility, and Upgrade Discipline</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>Install the CLI and Packages, Choose a Database
+                Provider, and Verify the Toolchain</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>Create the First DbContext, Entity, Database
+                Connection, and End-to-End Query</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Reproducible Course Lab with Logging,
+                Sample Data, Configuration, and Safe Secrets</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>DbContext Lifecycle, Configuration, Dependency
+              Injection, Factories, and Pooling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>DbContext as Unit of Work: Lifetime,
+                Thread-Safety, Disposal, and Async Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>Configure Providers with DbContextOptions,
+                OnConfiguring, and External Configuration</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>AddDbContext, Scoped Lifetimes, Dependency
+                Injection, and Request-Oriented Applications</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>IDbContextFactory, Design-Time Factories,
+                Background Workers, and Blazor-Style Lifetimes</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>DbContext Pooling: State Reset, Tenant-Sensitive
+                State, Benchmarks, and When Pooling Backfires</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>Model Building: Conventions, Data Annotations,
+              Fluent API, and Metadata
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>How EF Builds the Model: Conventions, Discovery,
+                Finalization, and Model Metadata</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Configure Entity Types, Properties, Tables,
+                Schemas, Columns, and Facets with Fluent API</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>Data Annotations vs Fluent Configuration:
+                Precedence, Maintainability, and Team Conventions</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>Ignore Types and Properties, Configure Backing
+                Fields, and Control Property Access Modes</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Organize Large Models with
+                IEntityTypeConfiguration, Assembly Scanning, and Validation</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Keys, Indexes, Property Semantics, Value
+              Generation, and Shadow State
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Primary, Alternate, Composite, and Foreign Keys:
+                Identity and Relationship Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>Configure Indexes, Uniqueness, Sort Order,
+                Filters, Included Columns, and Provider Differences</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>Generated Values, Identity/Sequences, Default
+                Values, Computed Columns, and Temporary Keys</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>Shadow Properties, Indexer Properties, Property
+                Bags, and Infrastructure Metadata</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Concurrency Tokens, Store-Generated Values, and
+                Mapping Decisions that Affect Updates</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>Relationships, Navigations, Cascade Behavior, and
+              Many-to-Many Modeling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>One-to-Many Relationships: Principal/Dependent
+                Roles, Requiredness, and Foreign Keys</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>One-to-One Relationships: Uniqueness, Shared
+                Keys, and Ambiguous Relationship Resolution</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>Many-to-Many Relationships: Skip Navigations,
+                Join Entities, Payload Columns, and Ordering</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>Cascade Delete, ClientCascade,
+                Restrict/NoAction, Orphans, and Database Constraint Behavior</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>Navigation Fixup, Relationship State Changes,
+                Disconnected Graphs, and Modeling Pitfalls</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Complex Types, Owned Types, JSON Mapping,
+              Conversions, Comparers, and Encapsulation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>Complex Types vs Entity Types: Value-Object
+                Semantics and EF Core 10 Modeling Choices</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>Owned Entity Types and Aggregate Boundaries:
+                OwnsOne, OwnsMany, and Table Mapping</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>Map Structured Data to Relational JSON Columns
+                and Reason About Partial Updates</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>Value Converters and Value Comparers for Domain
+                Types, Enums, Strong IDs, and Collections</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Encapsulated Models with Constructors, Private
+                Setters, Fields, and Domain-Friendly Persistence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>Inheritance, Table Splitting, Entity Splitting, and
+              Advanced Relational Mapping
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>TPH Inheritance: Discriminators, Completeness,
+                Query Shape, and Index Design</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>TPT Inheritance: Join Costs, Schema Clarity, and
+                Workload Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>TPC Inheritance: Duplicated Columns, Key
+                Generation, and Query Performance</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Table Splitting and Entity Splitting for Legacy
+                Schemas and Bounded Object Models</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Choose Mapping Strategies with Measured SQL
+                Plans Instead of Object-Oriented Preference</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>LINQ Query Fundamentals and the EF Translation
+              Pipeline
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>IQueryable, Deferred Execution, Expression
+                Trees, and Where Database Work Actually Happens</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>Projection, Filtering, Ordering, Pagination,
+                Distinctness, and NULL Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>Parameterization, Query Compilation, Server
+                Evaluation, and Unsupported Expressions</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>Async Query Execution, Streaming vs Buffering,
+                Cancellation, and Connection Lifetimes</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Read Generated SQL with ToQueryString and Verify
+                Translation Before Performance Tuning</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>Advanced LINQ: Joins, Grouping, Subqueries, Set
+              Operations, and Raw SQL Composition
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Inner, Left, Right, Cross, and Correlated Joins
+                with Cardinality-Aware LINQ</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>GroupBy Translation, Aggregates, HAVING-Like
+                Filters, and Common Translation Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>EXISTS, Any, All, Contains, Correlated
+                Subqueries, and Efficient Membership Tests</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Union, Concat, Intersect, Except, Distinct, and
+                Shape Compatibility Across Set Operations</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>FromSql, SqlQuery, Stored Procedures,
+                Composability, and Safe Escape Hatches for Handwritten SQL</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>Loading Related Data: Eager, Explicit, Lazy,
+              Filtered Include, and Split Queries
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Include and ThenInclude: Loading Graphs Without
+                Losing Sight of Result Cardinality</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Filtered Include, Navigation Fixup, Tracking
+                Side Effects, and Predictable Result Shapes</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Single vs Split Queries: Cartesian Explosion,
+                Round Trips, Ordering, and Consistency Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Explicit Loading and Targeted Relationship
+                Queries for Conditional Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Lazy Loading Proxies and ILazyLoader: N+1 Risk,
+                Serialization Problems, and When to Avoid Them</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>Change Tracking, Entity States, Identity
+              Resolution, and Disconnected Graphs
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Unchanged, Added, Modified, Deleted, and
+                Detached: The Entity-State Machine</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Snapshot Change Detection, DetectChanges,
+                AutoDetectChangesEnabled, and Cost Control</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Identity Resolution, Tracking vs No-Tracking,
+                and AsNoTrackingWithIdentityResolution</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Attach, Update, Entry, TrackGraph, and Selective
+                Changes in Disconnected Applications</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Original/Current/Database Values, DebugView, and
+                Diagnosing Unexpected Updates</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>Saving Data: Insert, Update, Delete, Batching,
+              ExecuteUpdate, and ExecuteDelete
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>SaveChanges Pipeline, Command Ordering,
+                Generated Keys, AcceptAllChanges, and Failure Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Batching Inserts and Updates, Parameter Limits,
+                Round Trips, and Provider Thresholds</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>ExecuteUpdate and ExecuteDelete: Set-Based DML
+                Without Loading or Tracking Entities</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Bulk-Operation Boundaries: EF APIs, Third-Party
+                Libraries, COPY/BulkCopy, and Correctness</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Interceptors and SaveChanges Overrides for
+                Auditing, Timestamps, Domain Events, and Outbox Hooks</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Optimistic Concurrency and Conflict Resolution
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Concurrency Tokens: Application-Managed
+                Versions, rowversion, xmin, and Provider Options</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>How EF Detects Lost Updates and Builds
+                Concurrency-Sensitive UPDATE/DELETE Predicates</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Resolve DbUpdateConcurrencyException with Client
+                Wins, Store Wins, or Field-Level Merge</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Concurrency Across Aggregate Boundaries, APIs,
+                Background Jobs, and Offline Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Test Races Deterministically and Distinguish
+                Concurrency Conflicts from Transient Failures</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Transactions, Savepoints, Execution Strategies, and
+              Cross-Context Coordination
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Default SaveChanges Transactions, Explicit
+                Transactions, Isolation Levels, and Scope</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Savepoints and Automatic Rollback Inside
+                Existing Transactions</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Resilient Execution Strategies: Retryable
+                Failures, Idempotency, and Transaction Delegates</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Share DbConnection/DbTransaction Across Contexts
+                and Coordinate EF with ADO.NET</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Ambient/System.Transactions Boundaries,
+                Distributed Transactions, and Safer Architectural
+                Alternatives</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Migrations, Model Snapshots, Seeding, Scripts,
+              Bundles, and Deployment
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>How Migrations Diff Models: Snapshot Semantics,
+                Operations, and Migration History</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Create, Review, Rename, Reorder, and Repair
+                Migrations Without Losing Data</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Generate Idempotent SQL Scripts and Separate
+                Build-Time Migration Authoring from Deployment</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Migration Bundles, Runtime Migration Risks,
+                Permissions, Locking, and Multi-Instance Deployments</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Deterministic Data Seeding, Environment-Specific
+                Data, Rollback Strategy, and Zero-Downtime Thinking</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Reverse Engineering and Database-First Workflows
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>Scaffold DbContext and Entities from Existing
+                Schemas with Provider Tooling</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Control Tables, Schemas, Naming, Data
+                Annotations, Connection Strings, and Generated Output</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>Preserve Custom Code with Partial Classes,
+                Partial Methods, Separate Configurations, and Templates</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Re-Scaffolding, Schema Drift, Handwritten
+                Changes, and Sustainable Database-First Ownership</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Map Stored Procedures, Views, Keyless Types,
+                Legacy Constraints, and Imperfect Schemas Pragmatically</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Performance Engineering: Query Shape, Compiled
+              Artifacts, Pooling, and Database Evidence
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>Project Only Needed Columns, Avoid Accidental
+                Client Work, and Bound Result Sets</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>Compiled Queries, EF Query Cache Behavior, and
+                When Compilation Helps</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>Compiled Models, Startup Cost, Large Model
+                Optimization, and NativeAOT Considerations</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>DbContext Pooling, Connection Pooling, Batching,
+                and the Difference Between ORM and Driver Pools</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Benchmark with Database Execution Plans, Query
+                Tags, Realistic Data Volumes, and End-to-End Latency</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Diagnostics, Logging, Interceptors, Metrics, and
+              Observability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>Configure Structured Logging, Sensitive-Data
+                Logging, Detailed Errors, and Environment Safety<i
+                  >Current</i
+                ></a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>DiagnosticSource, EventCounters,
+                Activity/OpenTelemetry Integration, and Correlation</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Command, Connection, Transaction, SaveChanges,
+                and Materialization Interceptors</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Query Tags, Command Timeouts, Slow-Query
+                Correlation, and Mapping ORM Events to Database Plans</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>Build an EF Core Production Dashboard with Error
+                Rates, Latency, Pool Pressure, and Migration State</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>19</span>SQL Server and Azure SQL Provider Deep Dive
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Identity, Sequences, rowversion, Computed
+                Columns, Collations, and SQL Server Type Mapping</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Temporal Tables, JSON Columns, Sparse/Provider
+                Features, and Query Translation</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>Execution Strategies, Connection Resiliency,
+                Azure SQL Transient Faults, and Retry Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>Indexes, Include Properties, Filtered Indexes,
+                Migrations, and SQL Server DDL Behavior</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Provider-Specific SQL Inspection: When EF
+                Abstractions Leak and How to Keep Them Intentional</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>SQLite Provider Deep Dive and Embedded-Database
+              Constraints
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>SQLite Type Affinity vs CLR Types: Mappings,
+                Conversions, Precision, and Unsupported Operations</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>SQLite Migrations and Table Rebuilds: DDL
+                Limitations, Idempotency Boundaries, and Testing</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>Concurrency Without rowversion: Application
+                Tokens, Locking Behavior, WAL Awareness, and Retries</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>JSON, Date/Time, Decimal, Collation, Foreign
+                Key, and Function Translation Differences</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Use SQLite for Production Embedded Workloads vs
+                Using It Only as a Test Substitute</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>PostgreSQL, MySQL, and Cross-Provider Portability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="Lesson1.html"
+                ><span>01</span>Provider Ecosystem Awareness: Npgsql,
+                MySQL/MariaDB Providers, Versions, and Compatibility
+                Contracts</a
+              ><a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>Identity/Sequence Strategies, Case Sensitivity,
+                Types, JSON, Arrays, and Database-Specific Extensions</a
+              ><a class="sidebar-lesson" href="Lesson3.html"
+                ><span>03</span>LINQ Translation Differences, Function Mapping,
+                Generated SQL, and Provider Test Matrices</a
+              ><a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>Migration Portability: Why One EF Model Does Not
+                Guarantee One Portable Schema</a
+              ><a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Design a Provider-Abstraction Boundary Without
+                Falling into Lowest-Common-Denominator Data Modeling</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>22</span>Global Query Filters, Multi-Tenancy, Soft Delete,
+              and Data Partitioning
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="Lesson1.html"
+                ><span>01</span>Global Query Filters for Soft Delete, Tenant
+                Scope, Active Rows, and Security-Sensitive Predicates</a
+              ><a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>Named Query Filters in EF Core 10: Selective
+                Disabling and Composable Policy Layers</a
+              ><a
+                aria-current="page"
+                class="sidebar-lesson is-current"
+                href="Lesson3.html"
+                ><span>03</span>Single Database, Schema-per-Tenant, and
+                Database-per-Tenant Tradeoffs with DbContext Configuration</a
+              ><a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>Model Caching, Tenant-Specific State, DbContext
+                Pooling, and Avoiding Cross-Tenant Leakage</a
+              ><a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Enforce Tenant Isolation in Tests, Database
+                Constraints, Authorization, and Operational Tooling</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>23</span>Testing EF Core Correctly: Unit, Integration,
+              Containers, and Migration Verification
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter23/Lesson1.html"
+                ><span>01</span>What to Unit Test Around EF and What Requires a
+                Real Database</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson2.html"
+                ><span>02</span>Why the InMemory Provider Is Not a Relational
+                Database and Where It Misleads Tests</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson3.html"
+                ><span>03</span>Use SQLite Intentionally for Lightweight Tests
+                and Understand Provider-Behavior Differences</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson4.html"
+                ><span>04</span>Run Integration Tests Against Production-Like
+                Engines with Containers and Isolated Databases</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson5.html"
+                ><span>05</span>Test Migrations, Concurrency, Transactions,
+                Failure Retries, Query Counts, and Performance Regressions</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>Security, Raw SQL, Secrets, Authorization
+              Boundaries, and Abuse Resistance
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter24/Lesson1.html"
+                ><span>01</span>Parameterization by Default: LINQ Safety,
+                FromSql Variants, SqlQuery, and Injection Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson2.html"
+                ><span>02</span>Dynamic SQL Identifiers, Sorting/Filtering APIs,
+                Allow-Lists, and Query-Shape Abuse</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson3.html"
+                ><span>03</span>Protect Connection Strings and Credentials with
+                Environment Configuration and Secret Stores</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson4.html"
+                ><span>04</span>Least-Privilege Database Accounts, Migration
+                Permissions, Row-Level Security, and Tenant Defense in Depth</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson5.html"
+                ><span>05</span>Sensitive Data in Logs, Error Messages, Traces,
+                Backups, and Development Diagnostics</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>25</span>Production Architecture, DDD/CQRS Integration,
+              Reliability, and Capstone
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter25/Lesson1.html"
+                ><span>01</span>DbContext vs Repository/Unit-of-Work
+                Abstractions: Avoid Redundant Layers and Preserve Testable
+                Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson2.html"
+                ><span>02</span>Aggregate Persistence, Owned/Complex Types,
+                Value Objects, Domain Events, and Transactional Outbox Design</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson3.html"
+                ><span>03</span>CQRS Read Models, Raw SQL/Dapper Interop, Bulk
+                Workloads, and Choosing the Right Data-Access Tool per Path</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson4.html"
+                ><span>04</span>Production Deployment: Migrations, Health
+                Checks, Retries, Pool Sizing, Observability, and Incident
+                Runbooks</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson5.html"
+                ><span>05</span>Capstone: Design, Implement, Test, Tune, Secure,
+                Deploy, and Defend a Production EF Core Data Layer</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 18 · Lesson 01</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">Entity Framework Core</a><span>/</span
+            ><span>Chapter 22 · Lesson 03</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 22 · Global Query Filters, Multi-Tenancy, Soft Delete, and
+              Data Partitioning
+            </p>
+            <h1>
+              Single Database, Schema-per-Tenant, and Database-per-Tenant
+              Tradeoffs with DbContext Configuration
+            </h1>
+            <p>
+              Compare discriminator-column, schema-per-tenant, and
+              database-per-tenant designs by EF support, migrations, pooling,
+              backup/restore, noisy-neighbor behavior, and operational ownership
+              rather than tenancy slogans.
+            </p>
+            <div class="lesson-meta">
+              <span>Advanced</span><span>180–240 minutes</span
+              ><span>tenancy topology lab</span
+              ><span
+                >EF Core 10.0.11 · Microsoft.EntityFrameworkCore.Sqlite 10.0.11
+                · dotnet-ef 10.0.11 · .NET 10.0.11 · SDK 10.0.400</span
+              ><span
+                >Mandatory free local SQLite path · SQL Server RLS optional in
+                Lesson 5</span
+              ><span>Tenancy/security behavior reviewed: August 27, 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <div class="objectives-grid objectives">
+                <div class="objective-card objective">
+                  <span>01</span>
+                  <p>
+                    Compare discriminator-column, schema-per-tenant, and
+                    database-per-tenant topologies using EF support and
+                    operational evidence.
+                  </p>
+                </div>
+                <div class="objective-card objective">
+                  <span>02</span>
+                  <p>
+                    Explain why schema-per-tenant is not directly supported by
+                    EF Core and is impossible on SQLite.
+                  </p>
+                </div>
+                <div class="objective-card objective">
+                  <span>03</span>
+                  <p>
+                    Configure a database-per-tenant context without mutating one
+                    live context’s connection target.
+                  </p>
+                </div>
+                <div class="objective-card objective">
+                  <span>04</span>
+                  <p>
+                    Reason about migration ownership, connection pools,
+                    backup/restore, noisy neighbors, and tenant movement.
+                  </p>
+                </div>
+                <div class="objective-card objective">
+                  <span>05</span>
+                  <p>
+                    Choose a topology from requirements for isolation, scale,
+                    operations, and provider support—not a generic maturity
+                    ladder.
+                  </p>
+                </div>
+                <div class="objective-card objective">
+                  <span>06</span>
+                  <p>
+                    Keep the free mandatory lab reproducible with SQLite files
+                    while clearly separating server-provider behavior.
+                  </p>
+                </div>
+              </div>
+            </section>
+            <section>
+              <h2>
+                1. Tenancy topology is an operational architecture decision
+              </h2>
+              <p>
+                Global filters solve one important problem: default row scoping
+                inside a shared model. They do not answer whether every tenant
+                should share the same physical database. ServiceHub now needs an
+                explicit topology contract because backup/restore, maintenance
+                windows, noisy-neighbor risk, connection pools, migrations, and
+                incident blast radius differ more than the LINQ surface
+                suggests.
+              </p>
+            </section>
+            <section>
+              <h2>2. Three common shapes and EF Core support</h2>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Topology</th>
+                      <th>EF Core support</th>
+                      <th>Isolation/operations</th>
+                      <th>ServiceHub use</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>One database + TenantId discriminator</td>
+                      <td>Direct via global filters</td>
+                      <td>
+                        Lowest operational overhead; shared blast radius and
+                        capacity
+                      </td>
+                      <td>Mandatory free lab</td>
+                    </tr>
+                    <tr>
+                      <td>Schema per tenant</td>
+                      <td>Not directly supported by EF Core</td>
+                      <td>
+                        Many schemas/migration targets; model-shape/cache
+                        complexity
+                      </td>
+                      <td>Discuss/avoid by default</td>
+                    </tr>
+                    <tr>
+                      <td>Database per tenant</td>
+                      <td>
+                        Direct via per-tenant configuration/connection string
+                      </td>
+                      <td>
+                        Strong backup/restore and blast-radius isolation; many
+                        DBs/pools/migrations
+                      </td>
+                      <td>Free SQLite-file lab + server variant</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p>
+                EF’s own multi-tenancy guidance explicitly marks
+                schema-per-tenant as not supported. SQLite has no schemas at
+                all, which makes the limitation even more concrete for the
+                course baseline.
+              </p>
+            </section>
+            <section>
+              <h2>
+                3. Shared database: simple model, hard security discipline
+              </h2>
+              <p>
+                In the discriminator approach, all work-order rows share one
+                table and every tenant-aware key/index/query must include tenant
+                semantics where required. The database has one migration history
+                and one backup unit. This is operationally efficient but
+                tenant-specific restore is an application/data-recovery exercise
+                rather than a simple database restore.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>SQLite ·
+                    shared-table evidence
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">SELECT tenant_id, COUNT(*)</span><span class="code-line">FROM work_orders</span><span class="code-line">WHERE is_deleted = 0</span><span class="code-line">GROUP BY tenant_id;</span><span class="code-line"></span><span class="code-line">-- One table, one file/database, multiple tenants.</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>
+                4. Schema per tenant: why “just change ToTable schema” is
+                fragile
+              </h2>
+              <p>
+                Changing
+                <code>ToTable("work_orders", TenantSchema)</code> changes the EF
+                model shape. EF normally caches one model per context type, so
+                dynamic schemas imply model-cache-key customization, separate
+                migration targeting, and potentially unbounded cached models.
+                More importantly, EF Core’s multi-tenancy documentation does not
+                directly support this topology. Do not introduce it just to
+                avoid a tenant column.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="csharp"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>C# ·
+                    illustrative only, not the recommended ServiceHub path
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-csharp"><span class="code-line"><span class="token-keyword">protected</span> <span class="token-keyword">override</span> <span class="token-keyword">void</span> <span class="token-function">OnModelCreating</span><span class="token-operator">(</span><span class="token-name">ModelBuilder</span> <span class="token-name">modelBuilder</span><span class="token-operator">)</span></span><span class="code-line"><span class="token-operator">{</span></span><span class="code-line">    <span class="token-name">modelBuilder</span><span class="token-operator">.</span><span class="token-name">Entity</span><span class="token-operator">&lt;</span><span class="token-name">WorkOrder</span><span class="token-operator">&gt;</span><span class="token-operator">(</span><span class="token-operator">)</span></span><span class="code-line">        <span class="token-operator">.</span><span class="token-name">ToTable</span><span class="token-operator">(</span><span class="token-string">"work_orders"</span><span class="token-operator">,</span> <span class="token-name">TenantSchema</span><span class="token-operator">)</span><span class="token-operator">;</span> <span class="token-comment">// model shape now varies</span></span><span class="code-line"><span class="token-operator">}</span></span></code></pre>
+              </div>
+              <div class="callout warning">
+                <strong>Provider boundary</strong>
+                <p>
+                  SQLite cannot reproduce schema-per-tenant because SQLite has
+                  no schemas. SQL Server/PostgreSQL can have schemas, but
+                  provider capability does not make EF migration/model lifecycle
+                  simple.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>
+                5. Database per tenant: choose the database before creating the
+                context
+              </h2>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="csharp"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>C# ·
+                    safe database-per-tenant factory
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-csharp"><span class="code-line"><span class="token-keyword">public</span> <span class="token-keyword">sealed</span> <span class="token-keyword">class</span> <span class="token-function">TenantDbContextFactory</span><span class="token-operator">(</span></span><span class="code-line">    <span class="token-name">ITenantCatalog</span> <span class="token-name">catalog</span><span class="token-operator">,</span></span><span class="code-line">    <span class="token-name">ILoggerFactory</span> <span class="token-name">logging</span><span class="token-operator">)</span></span><span class="code-line"><span class="token-operator">{</span></span><span class="code-line">    <span class="token-keyword">public</span> <span class="token-name">ServiceHubContext</span> <span class="token-function">Create</span><span class="token-operator">(</span><span class="token-keyword">string</span> <span class="token-name">authorizedTenantId</span><span class="token-operator">)</span></span><span class="code-line">    <span class="token-operator">{</span></span><span class="code-line">        <span class="token-keyword">var</span> <span class="token-name">target</span> <span class="token-operator">=</span> <span class="token-name">catalog</span><span class="token-operator">.</span><span class="token-name">ResolveRequired</span><span class="token-operator">(</span><span class="token-name">authorizedTenantId</span><span class="token-operator">)</span><span class="token-operator">;</span></span><span class="code-line"></span><span class="code-line">        <span class="token-keyword">var</span> <span class="token-name">options</span> <span class="token-operator">=</span> <span class="token-keyword">new</span> <span class="token-name">DbContextOptionsBuilder</span><span class="token-operator">&lt;</span><span class="token-name">ServiceHubContext</span><span class="token-operator">&gt;</span><span class="token-operator">(</span><span class="token-operator">)</span></span><span class="code-line">            <span class="token-operator">.</span><span class="token-name">UseSqlite</span><span class="token-operator">(</span><span class="token-name">target</span><span class="token-operator">.</span><span class="token-name">ConnectionString</span><span class="token-operator">)</span></span><span class="code-line">            <span class="token-operator">.</span><span class="token-name">UseLoggerFactory</span><span class="token-operator">(</span><span class="token-name">logging</span><span class="token-operator">)</span></span><span class="code-line">            <span class="token-operator">.</span><span class="token-name">Options</span><span class="token-operator">;</span></span><span class="code-line"></span><span class="code-line">        <span class="token-keyword">return</span> <span class="token-keyword">new</span> <span class="token-function">ServiceHubContext</span><span class="token-operator">(</span><span class="token-name">options</span><span class="token-operator">,</span> <span class="token-keyword">new</span> <span class="token-name">FixedTenantContext</span><span class="token-operator">(</span><span class="token-name">authorizedTenantId</span><span class="token-operator">)</span><span class="token-operator">)</span><span class="token-operator">;</span></span><span class="code-line">    <span class="token-operator">}</span></span><span class="code-line"><span class="token-operator">}</span></span></code></pre>
+              </div>
+              <p>
+                Do not create a shared context and call
+                <code>Database.SetConnectionString</code> while it is in use.
+                Contexts are short-lived units of work; resolve the authorized
+                target first and construct the context for that target.
+              </p>
+            </section>
+            <section>
+              <h2>6. Connection pools and database fan-out</h2>
+              <p>
+                On server providers, connection pools are typically partitioned
+                by connection string. A database-per-tenant estate can therefore
+                create many pools and server sessions, especially when each
+                tenant gets a distinct database/catalog in the connection
+                string. Capacity planning must include number of active tenants,
+                pool limits, failover behavior, credentials, and idle
+                connections. <code>DbContext</code> pooling is a separate
+                mechanism and does not merge driver connection pools.
+              </p>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Concern</th>
+                      <th>Shared DB</th>
+                      <th>DB per tenant</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Migrations</td>
+                      <td>One coordinated target</td>
+                      <td>N targets; rollout/health state per DB</td>
+                    </tr>
+                    <tr>
+                      <td>Backup/restore</td>
+                      <td>Whole shared DB; tenant restore is selective</td>
+                      <td>Natural per-tenant backup/restore unit</td>
+                    </tr>
+                    <tr>
+                      <td>Noisy neighbor</td>
+                      <td>Shared CPU/I/O/log/locks</td>
+                      <td>
+                        Better isolation, still shared server if co-hosted
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Connection pools</td>
+                      <td>Usually fewer pool keys</td>
+                      <td>Potentially many pools/credentials</td>
+                    </tr>
+                    <tr>
+                      <td>Tenant move</td>
+                      <td>Data copy/partition operation</td>
+                      <td>Move/restore database and update catalog</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section>
+              <h2>
+                7. Deliberate failure: connection string from untrusted tenant
+                input
+              </h2>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="csharp"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>C# ·
+                    WRONG: request controls physical database
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-csharp"><span class="code-line"><span class="token-keyword">var</span> <span class="token-name">tenant</span> <span class="token-operator">=</span> <span class="token-name">request</span><span class="token-operator">.</span><span class="token-name">Query</span><span class="token-operator">[</span><span class="token-string">"tenant"</span><span class="token-operator">]</span><span class="token-operator">;</span></span><span class="code-line"><span class="token-keyword">var</span> <span class="token-name">cs</span> <span class="token-operator">=</span> <span class="token-string">$"Data Source=servicehub-{tenant}.db"</span><span class="token-operator">;</span></span><span class="code-line"><span class="token-keyword">var</span> <span class="token-name">options</span> <span class="token-operator">=</span> <span class="token-keyword">new</span> <span class="token-name">DbContextOptionsBuilder</span><span class="token-operator">&lt;</span><span class="token-name">ServiceHubContext</span><span class="token-operator">&gt;</span><span class="token-operator">(</span><span class="token-operator">)</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">UseSqlite</span><span class="token-operator">(</span><span class="token-name">cs</span><span class="token-operator">)</span></span><span class="code-line">    <span class="token-operator">.</span><span class="token-name">Options</span><span class="token-operator">;</span></span></code></pre>
+              </div>
+              <p>
+                Even with sanitized filenames, this lets the request choose a
+                data partition. The repair is an authorization-derived tenant
+                identity plus a server-owned tenant catalog mapping identity to
+                a known connection target. Treat the catalog as
+                security-critical configuration and audit changes to it.
+              </p>
+            </section>
+            <section>
+              <h2>8. Migrations are part of the topology contract</h2>
+              <p>
+                A shared database has one migration history. Database-per-tenant
+                requires a fleet migration strategy: inventory target versions,
+                migrate one coordinated owner, canary a subset, observe,
+                continue, and record failures. Do not run migrations
+                concurrently from every application instance. Schema-per-tenant
+                multiplies this complexity further and is one reason it is not
+                the default EF tenancy pattern.
+              </p>
+              <div class="code-window" data-code-block="" data-language="text">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >Deployment manifest · example evidence
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">tenant-a  servicehub-a.db  schemaVersion=2026082701  status=ready</span><span class="code-line">tenant-b  servicehub-b.db  schemaVersion=2026082701  status=ready</span><span class="code-line">tenant-c  servicehub-c.db  schemaVersion=2026082604  status=blocked-review</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>
+                9. Mandatory free lab: compare shared-file and per-tenant-file
+                SQLite
+              </h2>
+              <ol>
+                <li>
+                  Create <code>shared.db</code> containing tenants A/B and apply
+                  the global filters from Lessons 1–2.
+                </li>
+                <li>
+                  Create <code>tenant-a.db</code> and
+                  <code>tenant-b.db</code> with identical schema but only one
+                  tenant each.
+                </li>
+                <li>
+                  Record file sizes, migration histories, and backup/restore
+                  steps for both shapes.
+                </li>
+                <li>
+                  Demonstrate that a tenant-specific restore is trivial for the
+                  per-tenant file and a selective data operation for the shared
+                  file.
+                </li>
+                <li>
+                  Record that schema-per-tenant is not reproducible on SQLite
+                  and is not directly supported by EF Core.
+                </li>
+                <li>Delete all disposable files after the lab.</li>
+              </ol>
+            </section>
+            <section>
+              <h2>10. Production judgment and bridge</h2>
+              <p>
+                Choose a shared discriminator database when operational
+                simplicity and shared infrastructure dominate and the
+                application/database defenses are strong. Choose
+                database-per-tenant when isolation, tenant-specific restore,
+                regulatory boundaries, or independently scalable storage justify
+                the fleet-management cost. Do not choose schema-per-tenant
+                merely because the engine supports schemas; EF model/migration
+                lifecycle matters. Lesson 4 turns from physical topology to the
+                subtler runtime risk: cached models and pooled contexts carrying
+                tenant-sensitive state.
+              </p>
+            </section>
+            <section>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>
+                    Which multi-tenancy topologies does EF Core directly
+                    support?
+                  </li>
+                  <li>Why is schema-per-tenant problematic in EF Core?</li>
+                  <li>
+                    Why must database target selection happen before creating a
+                    context?
+                  </li>
+                  <li>
+                    How does database-per-tenant affect connection pooling?
+                  </li>
+                  <li>Which topology makes per-tenant restore simplest?</li>
+                  <li>Why is SQLite useful in this topology lab?</li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      <strong>1.</strong> Discriminator-column tenancy via
+                      global query filters and database-per-tenant via
+                      configuration/connection selection.
+                    </p>
+                    <p>
+                      <strong>2.</strong> It changes model shape per tenant,
+                      complicates model caching/migrations, and EF documentation
+                      marks it as not directly supported.
+                    </p>
+                    <p>
+                      <strong>3.</strong> A DbContext is a unit of work bound to
+                      its configured provider/connection; mutating shared live
+                      context configuration risks cross-tenant use and
+                      thread-safety failures.
+                    </p>
+                    <p>
+                      <strong>4.</strong> Distinct connection strings can create
+                      distinct driver pools, increasing pool/session capacity
+                      requirements.
+                    </p>
+                    <p>
+                      <strong>5.</strong> Database per tenant, because the
+                      database itself is the recovery boundary.
+                    </p>
+                    <p>
+                      <strong>6.</strong> Separate files model
+                      database-per-tenant cheaply and repeatably, while also
+                      proving SQLite has no schema-per-tenant feature.
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <ul>
+                <li>
+                  <a
+                    href="https://learn.microsoft.com/en-us/ef/core/miscellaneous/multitenancy"
+                    rel="noreferrer"
+                    target="_blank"
+                    >EF Core multi-tenancy</a
+                  >
+                  — official support table for discriminator, schema, and
+                  database-per-tenant patterns
+                </li>
+                <li>
+                  <a
+                    href="https://learn.microsoft.com/en-us/ef/core/dbcontext-configuration/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >DbContext configuration</a
+                  >
+                  — context construction/lifetime and connection configuration
+                </li>
+                <li>
+                  <a
+                    href="https://learn.microsoft.com/en-us/ef/core/performance/advanced-performance-topics"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Advanced performance topics</a
+                  >
+                  — DbContext pooling versus driver connection pooling
+                </li>
+                <li>
+                  <a
+                    href="https://learn.microsoft.com/en-us/ef/core/modeling/dynamic-model"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Dynamic models</a
+                  >
+                  — model caching when model shape varies
+                </li>
+                <li>
+                  <a
+                    href="https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >EF Core migrations</a
+                  >
+                  — migration lifecycle that multiplies across tenant databases
+                </li>
+                <li>
+                  <a
+                    href="https://learn.microsoft.com/en-us/ef/core/providers/sqlite/limitations"
+                    rel="noreferrer"
+                    target="_blank"
+                    >SQLite limitations</a
+                  >
+                  — no schemas/sequences and provider DDL boundaries
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav class="lesson-nav">
+            <a class="prev" href="Lesson2.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Named Query Filters in EF Core 10: Selective Disabling and
+                Composable Policy Layers</strong
+              ></a
+            ><a class="next" href="Lesson4.html"
+              ><small>Next lesson</small
+              ><strong
+                >Model Caching, Tenant-Specific State, DbContext Pooling, and
+                Avoiding Cross-Tenant Leakage</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <small
+          >Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+\n
+  </body>
+</html>

@@ -1,0 +1,1451 @@
+<!doctype html>
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Configure SQL Server and Azure SQL retry strategies without confusing transient infrastructure faults with business concurrency conflicts, and make retry scope, transaction delegates, idempotency, and ambiguous commit outcomes explicit."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Execution Strategies, Connection Resiliency, Azure SQL Transient Faults,
+      and Retry Semantics | Entity Framework Core | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  
+    <!-- BDA course-local Highlight.js token theme: reuses academy syntax variables. -->
+</head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">EF</span>
+            <div>
+              <small>Course 09</small><strong>Entity Framework Core</strong>
+            </div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 125 lessons..."
+            type="search"
+        /></label>
+        <nav
+          aria-label="Entity Framework Core curriculum"
+          class="sidebar-curriculum"
+        >
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>EF Core Foundations, .NET Integration, Providers,
+              and the First Lab
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>Where EF Core Fits: ORM Responsibilities,
+                Relational Boundaries, and When Direct SQL Still Matters</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>EF Core 10 and .NET 10: LTS Baseline, Package
+                Compatibility, and Upgrade Discipline</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>Install the CLI and Packages, Choose a Database
+                Provider, and Verify the Toolchain</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>Create the First DbContext, Entity, Database
+                Connection, and End-to-End Query</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Reproducible Course Lab with Logging,
+                Sample Data, Configuration, and Safe Secrets</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>DbContext Lifecycle, Configuration, Dependency
+              Injection, Factories, and Pooling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>DbContext as Unit of Work: Lifetime,
+                Thread-Safety, Disposal, and Async Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>Configure Providers with DbContextOptions,
+                OnConfiguring, and External Configuration</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>AddDbContext, Scoped Lifetimes, Dependency
+                Injection, and Request-Oriented Applications</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>IDbContextFactory, Design-Time Factories,
+                Background Workers, and Blazor-Style Lifetimes</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>DbContext Pooling: State Reset, Tenant-Sensitive
+                State, Benchmarks, and When Pooling Backfires</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>Model Building: Conventions, Data Annotations,
+              Fluent API, and Metadata
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>How EF Builds the Model: Conventions, Discovery,
+                Finalization, and Model Metadata</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Configure Entity Types, Properties, Tables,
+                Schemas, Columns, and Facets with Fluent API</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>Data Annotations vs Fluent Configuration:
+                Precedence, Maintainability, and Team Conventions</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>Ignore Types and Properties, Configure Backing
+                Fields, and Control Property Access Modes</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Organize Large Models with
+                IEntityTypeConfiguration, Assembly Scanning, and Validation</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Keys, Indexes, Property Semantics, Value
+              Generation, and Shadow State
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Primary, Alternate, Composite, and Foreign Keys:
+                Identity and Relationship Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>Configure Indexes, Uniqueness, Sort Order,
+                Filters, Included Columns, and Provider Differences</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>Generated Values, Identity/Sequences, Default
+                Values, Computed Columns, and Temporary Keys</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>Shadow Properties, Indexer Properties, Property
+                Bags, and Infrastructure Metadata</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Concurrency Tokens, Store-Generated Values, and
+                Mapping Decisions that Affect Updates</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>Relationships, Navigations, Cascade Behavior, and
+              Many-to-Many Modeling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>One-to-Many Relationships: Principal/Dependent
+                Roles, Requiredness, and Foreign Keys</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>One-to-One Relationships: Uniqueness, Shared
+                Keys, and Ambiguous Relationship Resolution</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>Many-to-Many Relationships: Skip Navigations,
+                Join Entities, Payload Columns, and Ordering</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>Cascade Delete, ClientCascade,
+                Restrict/NoAction, Orphans, and Database Constraint Behavior</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>Navigation Fixup, Relationship State Changes,
+                Disconnected Graphs, and Modeling Pitfalls</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Complex Types, Owned Types, JSON Mapping,
+              Conversions, Comparers, and Encapsulation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>Complex Types vs Entity Types: Value-Object
+                Semantics and EF Core 10 Modeling Choices</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>Owned Entity Types and Aggregate Boundaries:
+                OwnsOne, OwnsMany, and Table Mapping</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>Map Structured Data to Relational JSON Columns
+                and Reason About Partial Updates</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>Value Converters and Value Comparers for Domain
+                Types, Enums, Strong IDs, and Collections</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Encapsulated Models with Constructors, Private
+                Setters, Fields, and Domain-Friendly Persistence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>Inheritance, Table Splitting, Entity Splitting, and
+              Advanced Relational Mapping
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>TPH Inheritance: Discriminators, Completeness,
+                Query Shape, and Index Design</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>TPT Inheritance: Join Costs, Schema Clarity, and
+                Workload Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>TPC Inheritance: Duplicated Columns, Key
+                Generation, and Query Performance</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Table Splitting and Entity Splitting for Legacy
+                Schemas and Bounded Object Models</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Choose Mapping Strategies with Measured SQL
+                Plans Instead of Object-Oriented Preference</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>LINQ Query Fundamentals and the EF Translation
+              Pipeline
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>IQueryable, Deferred Execution, Expression
+                Trees, and Where Database Work Actually Happens</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>Projection, Filtering, Ordering, Pagination,
+                Distinctness, and NULL Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>Parameterization, Query Compilation, Server
+                Evaluation, and Unsupported Expressions</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>Async Query Execution, Streaming vs Buffering,
+                Cancellation, and Connection Lifetimes</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Read Generated SQL with ToQueryString and Verify
+                Translation Before Performance Tuning</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>Advanced LINQ: Joins, Grouping, Subqueries, Set
+              Operations, and Raw SQL Composition
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Inner, Left, Right, Cross, and Correlated Joins
+                with Cardinality-Aware LINQ</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>GroupBy Translation, Aggregates, HAVING-Like
+                Filters, and Common Translation Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>EXISTS, Any, All, Contains, Correlated
+                Subqueries, and Efficient Membership Tests</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Union, Concat, Intersect, Except, Distinct, and
+                Shape Compatibility Across Set Operations</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>FromSql, SqlQuery, Stored Procedures,
+                Composability, and Safe Escape Hatches for Handwritten SQL</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>Loading Related Data: Eager, Explicit, Lazy,
+              Filtered Include, and Split Queries
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Include and ThenInclude: Loading Graphs Without
+                Losing Sight of Result Cardinality</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Filtered Include, Navigation Fixup, Tracking
+                Side Effects, and Predictable Result Shapes</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Single vs Split Queries: Cartesian Explosion,
+                Round Trips, Ordering, and Consistency Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Explicit Loading and Targeted Relationship
+                Queries for Conditional Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Lazy Loading Proxies and ILazyLoader: N+1 Risk,
+                Serialization Problems, and When to Avoid Them</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>Change Tracking, Entity States, Identity
+              Resolution, and Disconnected Graphs
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Unchanged, Added, Modified, Deleted, and
+                Detached: The Entity-State Machine</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Snapshot Change Detection, DetectChanges,
+                AutoDetectChangesEnabled, and Cost Control</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Identity Resolution, Tracking vs No-Tracking,
+                and AsNoTrackingWithIdentityResolution</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Attach, Update, Entry, TrackGraph, and Selective
+                Changes in Disconnected Applications</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Original/Current/Database Values, DebugView, and
+                Diagnosing Unexpected Updates</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>Saving Data: Insert, Update, Delete, Batching,
+              ExecuteUpdate, and ExecuteDelete
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>SaveChanges Pipeline, Command Ordering,
+                Generated Keys, AcceptAllChanges, and Failure Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Batching Inserts and Updates, Parameter Limits,
+                Round Trips, and Provider Thresholds</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>ExecuteUpdate and ExecuteDelete: Set-Based DML
+                Without Loading or Tracking Entities</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Bulk-Operation Boundaries: EF APIs, Third-Party
+                Libraries, COPY/BulkCopy, and Correctness</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Interceptors and SaveChanges Overrides for
+                Auditing, Timestamps, Domain Events, and Outbox Hooks</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Optimistic Concurrency and Conflict Resolution
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Concurrency Tokens: Application-Managed
+                Versions, rowversion, xmin, and Provider Options</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>How EF Detects Lost Updates and Builds
+                Concurrency-Sensitive UPDATE/DELETE Predicates</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Resolve DbUpdateConcurrencyException with Client
+                Wins, Store Wins, or Field-Level Merge</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Concurrency Across Aggregate Boundaries, APIs,
+                Background Jobs, and Offline Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Test Races Deterministically and Distinguish
+                Concurrency Conflicts from Transient Failures</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Transactions, Savepoints, Execution Strategies, and
+              Cross-Context Coordination
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Default SaveChanges Transactions, Explicit
+                Transactions, Isolation Levels, and Scope</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Savepoints and Automatic Rollback Inside
+                Existing Transactions</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Resilient Execution Strategies: Retryable
+                Failures, Idempotency, and Transaction Delegates</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Share DbConnection/DbTransaction Across Contexts
+                and Coordinate EF with ADO.NET</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Ambient/System.Transactions Boundaries,
+                Distributed Transactions, and Safer Architectural
+                Alternatives</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Migrations, Model Snapshots, Seeding, Scripts,
+              Bundles, and Deployment
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>How Migrations Diff Models: Snapshot Semantics,
+                Operations, and Migration History</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Create, Review, Rename, Reorder, and Repair
+                Migrations Without Losing Data</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Generate Idempotent SQL Scripts and Separate
+                Build-Time Migration Authoring from Deployment</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Migration Bundles, Runtime Migration Risks,
+                Permissions, Locking, and Multi-Instance Deployments</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Deterministic Data Seeding, Environment-Specific
+                Data, Rollback Strategy, and Zero-Downtime Thinking</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Reverse Engineering and Database-First Workflows
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>Scaffold DbContext and Entities from Existing
+                Schemas with Provider Tooling</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Control Tables, Schemas, Naming, Data
+                Annotations, Connection Strings, and Generated Output</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>Preserve Custom Code with Partial Classes,
+                Partial Methods, Separate Configurations, and Templates</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Re-Scaffolding, Schema Drift, Handwritten
+                Changes, and Sustainable Database-First Ownership</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Map Stored Procedures, Views, Keyless Types,
+                Legacy Constraints, and Imperfect Schemas Pragmatically</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Performance Engineering: Query Shape, Compiled
+              Artifacts, Pooling, and Database Evidence
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>Project Only Needed Columns, Avoid Accidental
+                Client Work, and Bound Result Sets</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>Compiled Queries, EF Query Cache Behavior, and
+                When Compilation Helps</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>Compiled Models, Startup Cost, Large Model
+                Optimization, and NativeAOT Considerations</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>DbContext Pooling, Connection Pooling, Batching,
+                and the Difference Between ORM and Driver Pools</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Benchmark with Database Execution Plans, Query
+                Tags, Realistic Data Volumes, and End-to-End Latency</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Diagnostics, Logging, Interceptors, Metrics, and
+              Observability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>Configure Structured Logging, Sensitive-Data
+                Logging, Detailed Errors, and Environment Safety</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>DiagnosticSource, EventCounters,
+                Activity/OpenTelemetry Integration, and Correlation</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Command, Connection, Transaction, SaveChanges,
+                and Materialization Interceptors<i>Current</i></a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Query Tags, Command Timeouts, Slow-Query
+                Correlation, and Mapping ORM Events to Database Plans</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>Build an EF Core Production Dashboard with Error
+                Rates, Latency, Pool Pressure, and Migration State</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>19</span>SQL Server and Azure SQL Provider Deep Dive
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="Lesson1.html"
+                ><span>01</span>Identity, Sequences, rowversion, Computed
+                Columns, Collations, and SQL Server Type Mapping</a
+              ><a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>Temporal Tables, JSON Columns, Sparse/Provider
+                Features, and Query Translation</a
+              ><a
+                aria-current="page"
+                class="sidebar-lesson is-current"
+                href="Lesson3.html"
+                ><span>03</span>Execution Strategies, Connection Resiliency,
+                Azure SQL Transient Faults, and Retry Semantics</a
+              ><a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>Indexes, Include Properties, Filtered Indexes,
+                Migrations, and SQL Server DDL Behavior</a
+              ><a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Provider-Specific SQL Inspection: When EF
+                Abstractions Leak and How to Keep Them Intentional</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>SQLite Provider Deep Dive and Embedded-Database
+              Constraints
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>SQLite Type Affinity vs CLR Types: Mappings,
+                Conversions, Precision, and Unsupported Operations</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>SQLite Migrations and Table Rebuilds: DDL
+                Limitations, Idempotency Boundaries, and Testing</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>Concurrency Without rowversion: Application
+                Tokens, Locking Behavior, WAL Awareness, and Retries</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>JSON, Date/Time, Decimal, Collation, Foreign
+                Key, and Function Translation Differences</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Use SQLite for Production Embedded Workloads vs
+                Using It Only as a Test Substitute</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>PostgreSQL, MySQL, and Cross-Provider Portability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>Provider Ecosystem Awareness: Npgsql,
+                MySQL/MariaDB Providers, Versions, and Compatibility
+                Contracts</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>Identity/Sequence Strategies, Case Sensitivity,
+                Types, JSON, Arrays, and Database-Specific Extensions</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>LINQ Translation Differences, Function Mapping,
+                Generated SQL, and Provider Test Matrices</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Migration Portability: Why One EF Model Does Not
+                Guarantee One Portable Schema</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>Design a Provider-Abstraction Boundary Without
+                Falling into Lowest-Common-Denominator Data Modeling</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Global Query Filters, Multi-Tenancy, Soft Delete,
+              and Data Partitioning
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>Global Query Filters for Soft Delete, Tenant
+                Scope, Active Rows, and Security-Sensitive Predicates</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>Named Query Filters in EF Core 10: Selective
+                Disabling and Composable Policy Layers</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>Single Database, Schema-per-Tenant, and
+                Database-per-Tenant Tradeoffs with DbContext Configuration</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>Model Caching, Tenant-Specific State, DbContext
+                Pooling, and Avoiding Cross-Tenant Leakage</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Enforce Tenant Isolation in Tests, Database
+                Constraints, Authorization, and Operational Tooling</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>23</span>Testing EF Core Correctly: Unit, Integration,
+              Containers, and Migration Verification
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter23/Lesson1.html"
+                ><span>01</span>What to Unit Test Around EF and What Requires a
+                Real Database</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson2.html"
+                ><span>02</span>Why the InMemory Provider Is Not a Relational
+                Database and Where It Misleads Tests</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson3.html"
+                ><span>03</span>Use SQLite Intentionally for Lightweight Tests
+                and Understand Provider-Behavior Differences</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson4.html"
+                ><span>04</span>Run Integration Tests Against Production-Like
+                Engines with Containers and Isolated Databases</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson5.html"
+                ><span>05</span>Test Migrations, Concurrency, Transactions,
+                Failure Retries, Query Counts, and Performance Regressions</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>Security, Raw SQL, Secrets, Authorization
+              Boundaries, and Abuse Resistance
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter24/Lesson1.html"
+                ><span>01</span>Parameterization by Default: LINQ Safety,
+                FromSql Variants, SqlQuery, and Injection Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson2.html"
+                ><span>02</span>Dynamic SQL Identifiers, Sorting/Filtering APIs,
+                Allow-Lists, and Query-Shape Abuse</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson3.html"
+                ><span>03</span>Protect Connection Strings and Credentials with
+                Environment Configuration and Secret Stores</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson4.html"
+                ><span>04</span>Least-Privilege Database Accounts, Migration
+                Permissions, Row-Level Security, and Tenant Defense in Depth</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson5.html"
+                ><span>05</span>Sensitive Data in Logs, Error Messages, Traces,
+                Backups, and Development Diagnostics</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>25</span>Production Architecture, DDD/CQRS Integration,
+              Reliability, and Capstone
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter25/Lesson1.html"
+                ><span>01</span>DbContext vs Repository/Unit-of-Work
+                Abstractions: Avoid Redundant Layers and Preserve Testable
+                Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson2.html"
+                ><span>02</span>Aggregate Persistence, Owned/Complex Types,
+                Value Objects, Domain Events, and Transactional Outbox Design</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson3.html"
+                ><span>03</span>CQRS Read Models, Raw SQL/Dapper Interop, Bulk
+                Workloads, and Choosing the Right Data-Access Tool per Path</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson4.html"
+                ><span>04</span>Production Deployment: Migrations, Health
+                Checks, Retries, Pool Sizing, Observability, and Incident
+                Runbooks</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson5.html"
+                ><span>05</span>Capstone: Design, Implement, Test, Tune, Secure,
+                Deploy, and Defend a Production EF Core Data Layer</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 18 · Lesson 03</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">Entity Framework Core</a><span>/</span
+            ><span>Chapter 19 · Lesson 03</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 19 · SQL Server and Azure SQL Provider Deep Dive
+            </p>
+            <h1>
+              Execution Strategies, Connection Resiliency, Azure SQL Transient
+              Faults, and Retry Semantics
+            </h1>
+            <p>
+              Configure SQL Server and Azure SQL retry strategies without
+              confusing transient infrastructure faults with business
+              concurrency conflicts, and make retry scope, transaction
+              delegates, idempotency, and ambiguous commit outcomes explicit.
+            </p>
+            <div class="lesson-meta">
+              <span>Advanced</span><span>160–210 minutes</span
+              ><span>retry + transaction-delegate lab</span
+              ><span
+                >EF Core 10.0.11 · SQL Server provider 10.0.11 · .NET 10.0.11 ·
+                SDK 10.0.400</span
+              ><span
+                >SQL Server 2025 Developer free local path · Azure SQL
+                optional</span
+              ><span>Provider deep-dive reviewed: August 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <div class="objective-grid objectives">
+                <article class="objective">
+                  <span>01</span>
+                  <p>
+                    Explain what a SQL Server execution strategy retries and how
+                    transient error classification differs from optimistic
+                    concurrency.
+                  </p>
+                </article>
+                <article class="objective">
+                  <span>02</span>
+                  <p>
+                    Configure EnableRetryOnFailure for SQL Server and understand
+                    the Azure SQL UseAzureSql resiliency defaults.
+                  </p>
+                </article>
+                <article class="objective">
+                  <span>03</span>
+                  <p>
+                    Run explicit transactions through the execution-strategy
+                    delegate instead of creating an unretryable transaction
+                    scope.
+                  </p>
+                </article>
+                <article class="objective">
+                  <span>04</span>
+                  <p>
+                    Design idempotent operations and client-generated
+                    identifiers for ambiguous-commit scenarios.
+                  </p>
+                </article>
+                <article class="objective">
+                  <span>05</span>
+                  <p>
+                    Simulate one provider-classified transient failure in a
+                    disposable SQL Server lab and inspect retry logs.
+                  </p>
+                </article>
+                <article class="objective">
+                  <span>06</span>
+                  <p>
+                    Reject retries for permanent schema, authorization,
+                    validation, or deterministic query failures.
+                  </p>
+                </article>
+              </div>
+            </section>
+            <section>
+              <h2>
+                1. The problem: a cloud database can be healthy and still reject
+                one attempt
+              </h2>
+              <p>
+                Azure SQL and remote SQL Server deployments can experience brief
+                connection resets, throttling, failovers, or other transient
+                conditions. Retrying can improve availability only if the error
+                is actually transient and replaying the operation is safe. A
+                <code>DbUpdateConcurrencyException</code> caused by a rowversion
+                mismatch is not transient infrastructure; it is a business-state
+                conflict from Chapter 13.
+              </p>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Failure</th>
+                      <th>Typical policy</th>
+                      <th>Why</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Azure SQL transient SqlException</td>
+                      <td>Execution strategy may retry</td>
+                      <td>Condition may disappear on a later attempt</td>
+                    </tr>
+                    <tr>
+                      <td>DbUpdateConcurrencyException</td>
+                      <td>Merge/store-wins/client-wins/business policy</td>
+                      <td>Database state has legitimately changed</td>
+                    </tr>
+                    <tr>
+                      <td>Invalid object/column</td>
+                      <td>Fix deployment/schema</td>
+                      <td>Retry repeats deterministic failure</td>
+                    </tr>
+                    <tr>
+                      <td>Login denied</td>
+                      <td>Fix identity/permissions</td>
+                      <td>Retrying bad credentials increases noise</td>
+                    </tr>
+                    <tr>
+                      <td>Unique constraint violation</td>
+                      <td>Domain/idempotency decision</td>
+                      <td>The write conflicts with durable data</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section>
+              <h2>2. Enable the SQL Server execution strategy intentionally</h2>
+              <p>
+                <code>EnableRetryOnFailure</code> configures SQL Server's
+                provider execution strategy with known transient error numbers
+                and optional additional ones. Do not copy retry counts/delays as
+                universal tuning. Start from the provider defaults, observe the
+                environment, and coordinate with request/job deadlines.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="csharp"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>csharp ·
+                    SQL Server configuration
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-csharp"><span class="code-line"><span class="token-name">services</span><span class="token-operator">.</span><span class="token-name">AddDbContext</span><span class="token-operator">&lt;</span><span class="token-name">SqlServerServiceHubContext</span><span class="token-operator">&gt;</span><span class="token-operator">(</span><span class="token-name">options</span> <span class="token-operator">=&gt;</span></span><span class="code-line">    <span class="token-name">options</span><span class="token-operator">.</span><span class="token-name">UseSqlServer</span><span class="token-operator">(</span><span class="token-name">connectionString</span><span class="token-operator">,</span> <span class="token-name">sql</span> <span class="token-operator">=&gt;</span></span><span class="code-line">        <span class="token-name">sql</span><span class="token-operator">.</span><span class="token-name">EnableRetryOnFailure</span><span class="token-operator">(</span><span class="token-operator">)</span><span class="token-operator">)</span><span class="token-operator">)</span><span class="token-operator">;</span></span></code></pre>
+              </div>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="csharp"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>csharp ·
+                    Azure SQL provider configuration
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-csharp"><span class="code-line"><span class="token-name">services</span><span class="token-operator">.</span><span class="token-name">AddDbContext</span><span class="token-operator">&lt;</span><span class="token-name">SqlServerServiceHubContext</span><span class="token-operator">&gt;</span><span class="token-operator">(</span><span class="token-name">options</span> <span class="token-operator">=&gt;</span></span><span class="code-line">    <span class="token-name">options</span><span class="token-operator">.</span><span class="token-name">UseAzureSql</span><span class="token-operator">(</span><span class="token-name">azureSqlConnectionString</span><span class="token-operator">)</span><span class="token-operator">)</span><span class="token-operator">;</span></span></code></pre>
+              </div>
+              <p>
+                Current EF guidance configures appropriate resiliency
+                automatically with
+                <code>UseAzureSql</code>/<code>UseAzureSynapse</code>. With
+                ordinary <code>UseSqlServer</code>, enable retries deliberately
+                when the deployment needs them.
+              </p>
+            </section>
+            <section>
+              <h2>3. A retrying strategy changes the unit of replay</h2>
+              <p>
+                When retries are enabled, each EF query and each
+                <code>SaveChanges</code> call is normally an independently
+                retriable unit. Starting a user transaction outside the
+                execution strategy creates a unit EF cannot safely replay by
+                itself. EF therefore requires the whole transaction block to
+                execute inside
+                <code>CreateExecutionStrategy().ExecuteAsync</code>.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="csharp"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>csharp ·
+                    wrong: transaction opened outside the retry delegate
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-csharp"><span class="code-line"><span class="token-keyword">await</span> <span class="token-keyword">using</span> <span class="token-name">var</span> <span class="token-name">tx</span> <span class="token-operator">=</span> <span class="token-keyword">await</span> <span class="token-name">db</span><span class="token-operator">.</span><span class="token-name">Database</span><span class="token-operator">.</span><span class="token-name">BeginTransactionAsync</span><span class="token-operator">(</span><span class="token-name">ct</span><span class="token-operator">)</span><span class="token-operator">;</span></span><span class="code-line"><span class="token-keyword">await</span> <span class="token-name">db</span><span class="token-operator">.</span><span class="token-name">SaveChangesAsync</span><span class="token-operator">(</span><span class="token-name">ct</span><span class="token-operator">)</span><span class="token-operator">;</span> <span class="token-comment">// can throw when retry strategy is enabled</span></span><span class="code-line"><span class="token-keyword">await</span> <span class="token-name">tx</span><span class="token-operator">.</span><span class="token-name">CommitAsync</span><span class="token-operator">(</span><span class="token-name">ct</span><span class="token-operator">)</span><span class="token-operator">;</span></span></code></pre>
+              </div>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="csharp"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>csharp ·
+                    repair: replay the complete transaction unit
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-csharp"><span class="code-line"><span class="token-keyword">var</span> <span class="token-name">strategy</span> <span class="token-operator">=</span> <span class="token-name">db</span><span class="token-operator">.</span><span class="token-name">Database</span><span class="token-operator">.</span><span class="token-name">CreateExecutionStrategy</span><span class="token-operator">(</span><span class="token-operator">)</span><span class="token-operator">;</span></span><span class="code-line"></span><span class="code-line"><span class="token-keyword">await</span> <span class="token-name">strategy</span><span class="token-operator">.</span><span class="token-name">ExecuteAsync</span><span class="token-operator">(</span><span class="token-keyword">async</span> <span class="token-operator">(</span><span class="token-operator">)</span> <span class="token-operator">=&gt;</span></span><span class="code-line"><span class="token-operator">{</span></span><span class="code-line">    <span class="token-keyword">await</span> <span class="token-keyword">using</span> <span class="token-name">var</span> <span class="token-name">db</span> <span class="token-operator">=</span> <span class="token-name">factory</span><span class="token-operator">.</span><span class="token-name">CreateDbContext</span><span class="token-operator">(</span><span class="token-operator">)</span><span class="token-operator">;</span></span><span class="code-line">    <span class="token-keyword">await</span> <span class="token-keyword">using</span> <span class="token-name">var</span> <span class="token-name">tx</span> <span class="token-operator">=</span> <span class="token-keyword">await</span> <span class="token-name">db</span><span class="token-operator">.</span><span class="token-name">Database</span><span class="token-operator">.</span><span class="token-name">BeginTransactionAsync</span><span class="token-operator">(</span><span class="token-name">ct</span><span class="token-operator">)</span><span class="token-operator">;</span></span><span class="code-line"></span><span class="code-line">    <span class="token-comment">// all commands that must commit together are inside this delegate</span></span><span class="code-line">    <span class="token-keyword">await</span> <span class="token-function">ApplyServiceHubChangesAsync</span><span class="token-operator">(</span><span class="token-name">db</span><span class="token-operator">,</span> <span class="token-name">ct</span><span class="token-operator">)</span><span class="token-operator">;</span></span><span class="code-line">    <span class="token-keyword">await</span> <span class="token-name">db</span><span class="token-operator">.</span><span class="token-name">SaveChangesAsync</span><span class="token-operator">(</span><span class="token-name">ct</span><span class="token-operator">)</span><span class="token-operator">;</span></span><span class="code-line"></span><span class="code-line">    <span class="token-keyword">await</span> <span class="token-name">tx</span><span class="token-operator">.</span><span class="token-name">CommitAsync</span><span class="token-operator">(</span><span class="token-name">ct</span><span class="token-operator">)</span><span class="token-operator">;</span></span><span class="code-line"><span class="token-operator">}</span><span class="token-operator">)</span><span class="token-operator">;</span></span></code></pre>
+              </div>
+              <p>
+                The delegate may run more than once. Anything inside
+                it—including custom SQL, side effects, and ID allocation—must be
+                replay-safe or explicitly guarded.
+              </p>
+            </section>
+            <section>
+              <h2>
+                4. Controlled retry lab: add one fake SQL error number, then
+                fail once
+              </h2>
+              <p>
+                For a deterministic local demonstration, configure a
+                user-defined SQL error number as transient
+                <em>only in the disposable lab</em>. A small table stores a
+                fail-once marker. The first execution deletes the marker and
+                throws error 50001; the provider execution strategy sees 50001
+                in the added transient list and retries; the second execution
+                succeeds.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="csharp"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>csharp ·
+                    lab-only strategy classification
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-csharp"><span class="code-line"><span class="token-name">options</span><span class="token-operator">.</span><span class="token-name">UseSqlServer</span><span class="token-operator">(</span><span class="token-name">connectionString</span><span class="token-operator">,</span> <span class="token-name">sql</span> <span class="token-operator">=&gt;</span></span><span class="code-line">    <span class="token-name">sql</span><span class="token-operator">.</span><span class="token-name">EnableRetryOnFailure</span><span class="token-operator">(</span></span><span class="code-line">        <span class="token-name">maxRetryCount</span><span class="token-operator">:</span> <span class="token-number">3</span><span class="token-operator">,</span></span><span class="code-line">        <span class="token-name">maxRetryDelay</span><span class="token-operator">:</span> <span class="token-name">TimeSpan</span><span class="token-operator">.</span><span class="token-name">FromSeconds</span><span class="token-operator">(</span><span class="token-number">2</span><span class="token-operator">)</span><span class="token-operator">,</span></span><span class="code-line">        <span class="token-name">errorNumbersToAdd</span><span class="token-operator">:</span> <span class="token-keyword">new</span><span class="token-operator">[</span><span class="token-operator">]</span> <span class="token-operator">{</span> <span class="token-number">50001</span> <span class="token-operator">}</span><span class="token-operator">)</span><span class="token-operator">)</span><span class="token-operator">;</span></span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>sql ·
+                    lab SQL: fail the first attempt only
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">IF OBJECT_ID(N'dbo.RetryLab', N'U') IS NULL</span><span class="code-line">    CREATE TABLE dbo.RetryLab (Id int NOT NULL PRIMARY KEY);</span><span class="code-line"></span><span class="code-line">IF NOT EXISTS (SELECT 1 FROM dbo.RetryLab WHERE Id = 1)</span><span class="code-line">    INSERT dbo.RetryLab(Id) VALUES (1);</span><span class="code-line"></span><span class="code-line">-- Run the following inside the execution-strategy delegate:</span><span class="code-line">IF EXISTS (SELECT 1 FROM dbo.RetryLab WHERE Id = 1)</span><span class="code-line">BEGIN</span><span class="code-line">    DELETE dbo.RetryLab WHERE Id = 1;</span><span class="code-line">    THROW 50001, 'ServiceHub retry lab transient fault', 1;</span><span class="code-line">END;</span><span class="code-line">SELECT 1;</span></code></pre>
+              </div>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="csharp"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>csharp ·
+                    execute provider command through the EF strategy
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-csharp"><span class="code-line"><span class="token-keyword">var</span> <span class="token-name">strategy</span> <span class="token-operator">=</span> <span class="token-name">db</span><span class="token-operator">.</span><span class="token-name">Database</span><span class="token-operator">.</span><span class="token-name">CreateExecutionStrategy</span><span class="token-operator">(</span><span class="token-operator">)</span><span class="token-operator">;</span></span><span class="code-line"></span><span class="code-line"><span class="token-keyword">await</span> <span class="token-name">strategy</span><span class="token-operator">.</span><span class="token-name">ExecuteAsync</span><span class="token-operator">(</span><span class="token-keyword">async</span> <span class="token-operator">(</span><span class="token-operator">)</span> <span class="token-operator">=&gt;</span></span><span class="code-line"><span class="token-operator">{</span></span><span class="code-line">    <span class="token-keyword">var</span> <span class="token-name">connection</span> <span class="token-operator">=</span> <span class="token-name">db</span><span class="token-operator">.</span><span class="token-name">Database</span><span class="token-operator">.</span><span class="token-name">GetDbConnection</span><span class="token-operator">(</span><span class="token-operator">)</span><span class="token-operator">;</span></span><span class="code-line">    <span class="token-keyword">if</span> <span class="token-operator">(</span><span class="token-name">connection</span><span class="token-operator">.</span><span class="token-name">State</span> <span class="token-operator">!=</span> <span class="token-name">ConnectionState</span><span class="token-operator">.</span><span class="token-name">Open</span><span class="token-operator">)</span></span><span class="code-line">        <span class="token-keyword">await</span> <span class="token-name">db</span><span class="token-operator">.</span><span class="token-name">Database</span><span class="token-operator">.</span><span class="token-name">OpenConnectionAsync</span><span class="token-operator">(</span><span class="token-name">ct</span><span class="token-operator">)</span><span class="token-operator">;</span></span><span class="code-line"></span><span class="code-line">    <span class="token-keyword">await</span> <span class="token-keyword">using</span> <span class="token-name">var</span> <span class="token-name">command</span> <span class="token-operator">=</span> <span class="token-name">connection</span><span class="token-operator">.</span><span class="token-name">CreateCommand</span><span class="token-operator">(</span><span class="token-operator">)</span><span class="token-operator">;</span></span><span class="code-line">    <span class="token-name">command</span><span class="token-operator">.</span><span class="token-name">CommandText</span> <span class="token-operator">=</span> <span class="token-name">labSql</span><span class="token-operator">;</span></span><span class="code-line">    <span class="token-keyword">await</span> <span class="token-name">command</span><span class="token-operator">.</span><span class="token-name">ExecuteNonQueryAsync</span><span class="token-operator">(</span><span class="token-name">ct</span><span class="token-operator">)</span><span class="token-operator">;</span></span><span class="code-line"><span class="token-operator">}</span><span class="token-operator">)</span><span class="token-operator">;</span></span></code></pre>
+              </div>
+              <div class="callout warning">
+                <strong
+                  >Never add arbitrary production errors to the transient
+                  list</strong
+                >
+                <p>
+                  The lab proves mechanics, not that error 50001 should be
+                  retried in production. Production error classification must
+                  come from documented SQL Server/Azure SQL behavior and
+                  observed failure modes.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>
+                5. Ambiguous commit is different from a failed command before
+                commit
+              </h2>
+              <p>
+                If the connection drops while a transaction is being committed,
+                the client may not know whether the database committed. Blindly
+                retrying an INSERT with a store-generated identity can create a
+                duplicate logical operation. Idempotency therefore needs a
+                durable application key or a verification step.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="csharp"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>csharp ·
+                    client-generated operation identity
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-csharp"><span class="code-line"><span class="token-keyword">public</span> <span class="token-keyword">sealed</span> <span class="token-keyword">class</span> <span class="token-name">DispatchCommand</span></span><span class="code-line"><span class="token-operator">{</span></span><span class="code-line">    <span class="token-keyword">public</span> <span class="token-name">Guid</span> <span class="token-name">OperationId</span> <span class="token-operator">{</span> <span class="token-keyword">get</span><span class="token-operator">;</span> <span class="token-keyword">init</span><span class="token-operator">;</span> <span class="token-operator">}</span> <span class="token-operator">=</span> <span class="token-name">Guid</span><span class="token-operator">.</span><span class="token-name">NewGuid</span><span class="token-operator">(</span><span class="token-operator">)</span><span class="token-operator">;</span></span><span class="code-line">    <span class="token-keyword">public</span> <span class="token-name">required</span> <span class="token-keyword">string</span> <span class="token-name">WorkOrderNumber</span> <span class="token-operator">{</span> <span class="token-keyword">get</span><span class="token-operator">;</span> <span class="token-keyword">init</span><span class="token-operator">;</span> <span class="token-operator">}</span></span><span class="code-line"><span class="token-operator">}</span></span><span class="code-line"></span><span class="code-line"><span class="token-comment">// Persist OperationId under a UNIQUE constraint in the same local transaction.</span></span><span class="code-line"><span class="token-comment">// A replay can detect the already-committed operation instead of duplicating it.</span></span></code></pre>
+              </div>
+              <p>
+                For ServiceHub, the transactional outbox introduced earlier is a
+                stronger boundary than “send message then retry DB write.”
+                Database state and outbox record commit together; message
+                delivery is replayable/idempotent later.
+              </p>
+            </section>
+            <section>
+              <h2>6. Retries and transactions increase memory/time cost</h2>
+              <p>
+                Execution strategies may buffer result sets so a query can be
+                replayed, increasing memory for large queries. Retries also
+                extend tail latency. Combine Chapter 17 result
+                bounding/projection with retry configuration, and include retry
+                count/delay in request or job SLO analysis.
+              </p>
+              <div class="callout">
+                <strong>Observability</strong>
+                <p>
+                  Log retry attempt, provider error number, delay, operation
+                  name, trace ID, and final outcome. Do not log connection
+                  passwords or parameter payloads. Correlate Azure SQL
+                  metrics/failover events with EF retry telemetry before tuning.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>7. Failure case: retrying a concurrency conflict</h2>
+              <p>
+                A generic “retry on any exception” policy catches
+                <code>DbUpdateConcurrencyException</code> and immediately calls
+                <code>SaveChanges</code> again with the same original
+                rowversion. Every attempt correctly affects zero rows. The loop
+                adds load but never resolves the changed business state.
+              </p>
+              <p>
+                <strong>Repair:</strong> handle concurrency conflicts with the
+                domain-specific merge/store-wins/client-wins workflow from
+                Chapter 13. Keep provider transient retries at the
+                connection/execution-strategy layer. The two policies may both
+                exist in one application, but they answer different questions.
+              </p>
+            </section>
+            <section>
+              <h2>8. Mandatory lab: distinguish retryable from permanent</h2>
+              <ol>
+                <li>
+                  Use a disposable SQL Server 2025 Developer database and
+                  configure the lab-only additional transient error 50001.
+                </li>
+                <li>
+                  Subscribe to normal EF logging and capture execution-strategy
+                  retry events without sensitive parameter values.
+                </li>
+                <li>
+                  Create/reset <code>dbo.RetryLab</code>, run the fail-once
+                  delegate, and verify one failure followed by success.
+                </li>
+                <li>
+                  Run a deliberately invalid SQL query such as selecting a
+                  nonexistent column and verify it is <strong>not</strong> made
+                  successful by the retry policy.
+                </li>
+                <li>
+                  Reproduce the Chapter 13 rowversion conflict and prove it
+                  surfaces as <code>DbUpdateConcurrencyException</code>, not as
+                  a provider transient retry.
+                </li>
+                <li>
+                  Wrap two dependent writes in an explicit transaction inside
+                  <code>CreateExecutionStrategy().ExecuteAsync</code> and verify
+                  both commit together.
+                </li>
+                <li>
+                  Record retry count, elapsed time, SQL error number,
+                  transaction scope, and final database state.
+                </li>
+              </ol>
+            </section>
+            <section>
+              <h2>9. Production judgment and bridge</h2>
+              <p>
+                Enable connection resiliency for environments that actually
+                exhibit transient SQL Server/Azure SQL failures, but keep retry
+                scope bounded and observable. Never assume retries make
+                non-idempotent side effects safe. Run user transactions inside
+                the strategy delegate, use durable operation IDs where commit
+                ambiguity matters, and keep business concurrency policy
+                separate. The next lesson turns from runtime resilience to SQL
+                Server physical design: indexes and migration DDL.
+              </p>
+            </section>
+            <section>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>
+                    Is DbUpdateConcurrencyException a transient SQL Server
+                    fault?
+                  </li>
+                  <li>
+                    Why must a user transaction run inside the
+                    execution-strategy delegate?
+                  </li>
+                  <li>
+                    What can make an ambiguous commit dangerous with identity
+                    keys?
+                  </li>
+                  <li>Why is a client-generated operation ID useful?</li>
+                  <li>
+                    Should maxRetryCount be copied from a tutorial into every
+                    service?
+                  </li>
+                  <li>What does the fail-once 50001 lab prove?</li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      <strong>1.</strong> No. It represents a business-state
+                      concurrency conflict detected through a zero-row
+                      concurrency predicate.
+                    </p>
+                    <p>
+                      <strong>2.</strong> Because the strategy must be able to
+                      replay the complete atomic unit if a transient failure
+                      occurs.
+                    </p>
+                    <p>
+                      <strong>3.</strong> The database may have committed even
+                      though the client did not receive confirmation; replay can
+                      insert a duplicate logical operation.
+                    </p>
+                    <p>
+                      <strong>4.</strong> It gives a stable idempotency key that
+                      can be constrained and checked across retries.
+                    </p>
+                    <p>
+                      <strong>5.</strong> No. Retry policy must fit provider
+                      guidance, observed faults and the operation/request
+                      latency budget.
+                    </p>
+                    <p>
+                      <strong>6.</strong> Execution-strategy mechanics and
+                      classification extensibility only; it does not make 50001
+                      a valid production transient error.
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <p>
+                Retry behavior is provider- and topology-specific. Re-check SQL
+                Server/Azure SQL guidance and your incident data before changing
+                production policy.
+              </p>
+              <ul>
+                <li>
+                  <a
+                    href="https://learn.microsoft.com/en-us/ef/core/providers/sql-server/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >SQL Server provider - EF Core</a
+                  >
+                  — UseSqlServer/UseAzureSql and resiliency guidance
+                </li>
+                <li>
+                  <a
+                    href="https://learn.microsoft.com/en-us/ef/core/miscellaneous/connection-resiliency"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Connection resiliency - EF Core</a
+                  >
+                  — execution strategies, transaction delegates and buffering
+                </li>
+                <li>
+                  <a
+                    href="https://learn.microsoft.com/en-us/dotnet/api/microsoft.entityframeworkcore.infrastructure.sqlenginedbcontextoptionsbuilder.enableretryonfailure?view=efcore-10.0"
+                    rel="noreferrer"
+                    target="_blank"
+                    >EnableRetryOnFailure API - EF Core 10</a
+                  >
+                  — retry count/delay and additional SQL error numbers
+                </li>
+                <li>
+                  <a
+                    href="https://learn.microsoft.com/en-us/ef/core/saving/transactions"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Transactions - EF Core</a
+                  >
+                  — explicit transactions and execution-strategy interaction
+                </li>
+                <li>
+                  <a
+                    href="https://learn.microsoft.com/en-us/ef/core/saving/concurrency"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Concurrency conflicts - EF Core</a
+                  >
+                  — business conflict detection and resolution
+                </li>
+                <li>
+                  <a
+                    href="https://learn.microsoft.com/en-us/azure/azure-sql/database/troubleshoot-common-connectivity-issues"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Azure SQL transient errors</a
+                  >
+                  — Azure SQL connectivity/transient-fault operational context
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav class="lesson-nav">
+            <a class="prev" href="Lesson2.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Temporal Tables, JSON Columns, Sparse/Provider Features, and
+                Query Translation</strong
+              ></a
+            ><a class="next" href="Lesson4.html"
+              ><small>Next lesson</small
+              ><strong
+                >Indexes, Include Properties, Filtered Indexes, Migrations, and
+                SQL Server DDL Behavior</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <small
+          >Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+\n
+  </body>
+</html>
