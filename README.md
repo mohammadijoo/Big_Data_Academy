@@ -3,10 +3,11 @@
 [![Big Data Academy](https://img.shields.io/badge/Big%20Data%20Academy-08111f?style=for-the-badge&logo=databricks&logoColor=white)](https://mohammadijoo.github.io/Big_Data_Academy/)
 [![Courses](https://img.shields.io/badge/Courses-44-06b6d4?style=flat-square)](https://mohammadijoo.github.io/Big_Data_Academy/#courses)
 [![Learning Stages](https://img.shields.io/badge/Learning%20Stages-12-8b5cf6?style=flat-square)](https://mohammadijoo.github.io/Big_Data_Academy/#roadmap)
+[![Available Courses](https://img.shields.io/badge/Available%20Courses-9-059669?style=flat-square)](https://mohammadijoo.github.io/Big_Data_Academy/#courses)
 
 Big Data Academy is a browser-native learning platform for databases, SQL, data engineering, distributed systems, data processing, event streaming, lakehouse architecture, cloud analytics, and data visualization. The academy organizes 44 database and big-data technologies into a prerequisite-aware path that progresses from database fundamentals and relational systems to NoSQL, Hadoop, Spark, Kafka, Flink, orchestration, lakehouse table formats, and managed analytical platforms.
 
-The website is implemented as a static GitHub Pages project. Lessons can be studied online or downloaded and opened locally without a server, database, account, or learning-management platform.
+The website is implemented as a static GitHub Pages project. Lessons can be studied online or downloaded and opened locally without a server, database, account, or learning-management platform. The academy currently includes 9 fully available courses spanning 203 chapters and 1,015 published lessons, while all 44 course tracks retain permanent curriculum URLs across the complete roadmap.
 
 ## Website
 
@@ -35,13 +36,23 @@ The curriculum is organized into 12 sequential stages:
 
 ### Available
 
-- **SQL and Database Fundamentals** — 18 chapters, 90 stable lesson paths, and 90 published lessons across Chapters 1–18
+The academy currently has **9 fully available courses with 203 chapters and 1,015 published lessons**:
 
-All 18 chapters and all 90 lessons are fully published. The course progresses from database and SQL foundations through relational modeling, querying, schema design, normalization, transactions, indexing, reusable database logic, security, application access, migrations, and a complete requirements-to-operations capstone. Every permanent lesson path is now active.
+- **[SQL and Database Fundamentals](https://mohammadijoo.github.io/Big_Data_Academy/courses/sql-database-fundamentals/)** — 18 chapters · 90 lessons published
+- **[Data Modeling and Database Design](https://mohammadijoo.github.io/Big_Data_Academy/courses/data-modeling-design/)** — 18 chapters · 90 lessons published
+- **[SQLite](https://mohammadijoo.github.io/Big_Data_Academy/courses/sqlite/)** — 20 chapters · 100 lessons published
+- **[MySQL](https://mohammadijoo.github.io/Big_Data_Academy/courses/mysql/)** — 22 chapters · 110 lessons published
+- **[PostgreSQL](https://mohammadijoo.github.io/Big_Data_Academy/courses/postgresql/)** — 24 chapters · 120 lessons published
+- **[MariaDB](https://mohammadijoo.github.io/Big_Data_Academy/courses/mariadb/)** — 22 chapters · 110 lessons published
+- **[Microsoft SQL Server](https://mohammadijoo.github.io/Big_Data_Academy/courses/sql-server/)** — 25 chapters · 125 lessons published
+- **[Oracle Database](https://mohammadijoo.github.io/Big_Data_Academy/courses/oracle-database/)** — 29 chapters · 145 lessons published
+- **[Entity Framework Core](https://mohammadijoo.github.io/Big_Data_Academy/courses/entity-framework-core/)** — 25 chapters · 125 lessons published
+
+These published courses cover the academy's full first two learning stages: data/SQL foundations and relational databases. They use stable curriculum paths and the shared academy lesson experience, including responsive navigation, curriculum search, generated on-page tables of contents, reading progress, code-copy controls, MathJax support, data visualizations, previous/next navigation, references, and support sections.
 
 ### Planned
 
-The other 43 courses are displayed in their correct learning stages and marked as planned. They will be activated as their curricula and lesson content are completed.
+The remaining **35 courses** are displayed in their correct learning stages with permanent curriculum landing pages and planned lesson paths. They will be activated as their full lesson content is completed.
 
 ## Platform Features
 
@@ -49,7 +60,7 @@ The other 43 courses are displayed in their correct learning stages and marked a
 - Light and dark themes with persistent user preference
 - Searchable and filterable 44-course catalogue
 - Sequential learning path with clear categories and prerequisites
-- Dedicated SQL and database fundamentals curriculum page
+- Dedicated curriculum pages and complete lesson sets for the 9 available courses, with permanent curriculum landing pages for all remaining planned courses
 - Responsive lesson sidebar with curriculum search
 - Generated table of contents and reading-progress indicator
 - Custom theme-aware code windows with line numbers and copy controls
@@ -87,10 +98,29 @@ Big_Data_Academy/
 │       ├── lesson.js
 │       └── main.js
 ├── courses/
-│   └── sql-database-fundamentals/
-│       ├── index.html
-│       ├── curriculum.json
-│       └── Chapter01 ... Chapter18/
+│   ├── sql-database-fundamentals/
+│   │   ├── index.html
+│   │   ├── curriculum.json
+│   │   └── Chapter01 ... Chapter18/
+│   ├── data-modeling-design/
+│   │   ├── index.html
+│   │   ├── curriculum.json
+│   │   └── Chapter01 ... Chapter18/
+│   ├── sqlite/
+│   │   └── Chapter01 ... Chapter20/
+│   ├── mysql/
+│   │   └── Chapter01 ... Chapter22/
+│   ├── postgresql/
+│   │   └── Chapter01 ... Chapter24/
+│   ├── mariadb/
+│   │   └── Chapter01 ... Chapter22/
+│   ├── sql-server/
+│   │   └── Chapter01 ... Chapter25/
+│   ├── oracle-database/
+│   │   └── Chapter01 ... Chapter29/
+│   ├── entity-framework-core/
+│   │   └── Chapter01 ... Chapter25/
+│   └── ... 35 additional planned course directories
 ├── templates/
 │   └── lesson-template.html
 └── tools/
