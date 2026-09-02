@@ -1,0 +1,1259 @@
+<!doctype html>
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Compare range and hash partitioning with the same keys to make locality, skew, monotonic hot spots, and routing fan-out observable."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Range Partitioning vs Hash Partitioning: Locality, Skew, and Query Routing
+      | NoSQL and Distributed Database Fundamentals | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+    <!-- BDA course-local Highlight.js token theme: reuses academy syntax variables. -->
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">ND</span>
+            <div>
+              <small>Course 10</small
+              ><strong>NoSQL and Distributed Database Fundamentals</strong>
+            </div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 125 lessons..."
+            type="search"
+        /></label>
+        <nav
+          aria-label="NoSQL and Distributed Database Fundamentals curriculum"
+          class="sidebar-curriculum"
+        >
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>Why NoSQL Exists: Workloads, Scale, Flexibility,
+              and Polyglot Persistence
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>Relational Databases vs NoSQL: Different
+                Optimization Targets, Not Competing Religions</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Horizontal Scale, Global Distribution, Flexible
+                Schemas, High Write Rates, and Low-Latency Access</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>Operational vs Analytical Workloads and Why One
+                Database Rarely Optimizes Every Access Pattern</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>Polyglot Persistence: Assigning Systems by
+                Invariant, Query Shape, Latency, and Ownership</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Decision Notebook: Workload, Data
+                Volume, Consistency, Availability, Recovery, and Cost
+                Requirements</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>Distributed Systems Foundations: Nodes, Networks,
+              Failure, and State
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>Processes, Nodes, Clusters, Partitions,
+                Replicas, Coordinators, and Client Routing</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>Partial Failure: Why a Distributed System Can Be
+                Both Working and Broken at the Same Time</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Latency, Timeouts, Retries, Duplicate Work,
+                Backpressure, and the Fallacy of a Reliable Network</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>Failure Domains: Process, Host, Rack, Zone,
+                Region, Provider, and Human Operations</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Define SLOs for Reads, Writes, Freshness,
+                Durability, Recovery, and Availability</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>CAP, PACELC, and Consistency/Availability Tradeoffs
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>CAP Precisely: Network Partitions Force a
+                Consistency-or-Availability Choice for Conflicting Operations</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Why CAP Does Not Mean Pick Two During Normal
+                Operation</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>PACELC: Latency vs Consistency Tradeoffs Even
+                When the Network Is Healthy</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>Strong, Eventual, Bounded-Staleness, Session,
+                and Tunable Consistency Models</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Map Business Invariants to the Weakest
+                Consistency Model That Still Preserves Correctness</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Time, Ordering, Logical Clocks, and Versioning
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Why Wall Clocks Are Dangerous: Drift, Skew, NTP,
+                and Cross-Node Ordering</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>Lamport Clocks and Happens-Before Reasoning</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>Vector Clocks/Version Vectors and Detecting
+                Concurrent Updates</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>Hybrid Logical Clocks and Practical Time-Aware
+                Ordering</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Use Versions, ETags, Timestamps, and Idempotency
+                Keys Without Pretending Time Is Perfect</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>Replication Patterns: Leaders, Multi-Leader, and
+              Leaderless Systems
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>Single-Leader Replication: Logs, Followers,
+                Failover, and Read Scaling</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>Synchronous vs Asynchronous Replication:
+                Latency, Durability, and Data-Loss Windows</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>Multi-Leader Replication: Geographic Writes,
+                Conflict Risk, and Topology Complexity</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>Leaderless/Dynamo-Style Replication:
+                Coordinators, Replica Sets, Sloppy Quorums, and Hinted
+                Handoff</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>Choose a Replication Pattern from Write
+                Locality, Failure Tolerance, and Conflict Semantics</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Quorums, Consistency Levels, Read Repair, and
+              Anti-Entropy
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>Replication Factor, Read Quorum, Write Quorum,
+                and the Meaning of R + W &gt; N</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>Tunable Consistency: Per-Operation Choices and
+                Their Failure/Latency Consequences</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>Read Repair, Merkle Trees, Anti-Entropy, and
+                Convergence After Missed Writes</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>Quorum Edge Cases: Network Partitions, Stale
+                Replicas, Failed Coordinators, and Timeouts</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Measure Staleness and Correctness Instead of
+                Treating Consistency Labels as Guarantees</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>07</span>Partitioning and Sharding: Range, Hash, Directory,
+              and Consistent Hashing
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="Lesson1.html"
+                ><span>01</span>Why Partition Data: Capacity, Throughput,
+                Parallelism, and Failure Isolation</a
+              ><a class="sidebar-lesson is-current" href="Lesson2.html"
+                ><span>02</span>Range Partitioning vs Hash Partitioning:
+                Locality, Skew, and Query Routing<i>Current</i></a
+              ><a class="sidebar-lesson" href="Lesson3.html"
+                ><span>03</span>Consistent Hashing, Token Rings, Virtual Nodes,
+                and Rebalancing</a
+              ><a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>Hot Partitions, Hot Keys, Monotonic Identifiers,
+                Celebrity Data, and Write Concentration</a
+              ><a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Resharding, Split/Merge Operations, Online
+                Rebalancing, and Capacity Headroom</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>Membership, Failure Detection, Gossip, and Cluster
+              Coordination
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>Static Membership vs Dynamic Discovery and
+                Service Registration</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>Heartbeats, Phi Accrual and Other Failure
+                Detectors: Suspicion Is Not Proof</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>Gossip Protocols: Epidemic Membership and
+                Metadata Dissemination</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>Split Brain, Fencing, Leases, Epochs/Terms, and
+                Avoiding Two Active Owners</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Operational Coordination: Topology Changes,
+                Rolling Maintenance, and Convergence Windows</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>Storage Engines: WAL, B-Trees, LSM Trees,
+              Memtables, SSTables, and Compaction
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>Write-Ahead Logs and Durability Before Mutating
+                Indexed State</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>B-Tree/B+Tree Storage: Read Locality, In-Place
+                Updates, and Page Management</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>LSM Trees: Memtables, Immutable Sorted Files,
+                Write Amplification, and Read Amplification</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>Compaction Strategies, Tombstones, Bloom
+                Filters, Caches, and Space Amplification</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>Choose Storage Behavior by Write Rate, Read
+                Pattern, SSD Characteristics, and Retention</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>Key-Value Databases and Data-Structure Stores
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>Keys as the API: Lookup Semantics, Namespaces,
+                Prefixes, and Atomic Single-Key Operations</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>Values as Bytes, Documents, or Data Structures:
+                Modeling Beyond Simple Strings</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>TTL, Expiration, Eviction, Counters, Conditional
+                Writes, and Compare-and-Set</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>Caching vs System-of-Record Usage: Durability,
+                Recovery, and Source-of-Truth Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Use Cases: Sessions, Caches, Feature State, Rate
+                Limits, Idempotency, and Coordination</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>Document Databases and Aggregate-Oriented Modeling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>Documents, Nested Objects, Arrays, Dynamic
+                Fields, and BSON/JSON-Like Representations</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>Embed vs Reference: Aggregate Boundaries,
+                Duplication, Update Frequency, and Read Locality</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>Document Growth, Size Limits, Large Arrays,
+                Bucketing, and Schema Versioning</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Querying Nested Structures, Multikey Indexing,
+                Aggregation Pipelines, and Denormalized Reads</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Model One-to-One, One-to-Many, Many-to-Many, and
+                Event Data with Workload Evidence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>Wide-Column Databases and Query-First Partition
+              Design
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>Partitions, Rows, Clustering Columns, Column
+                Families/Tables, and Sparse Data</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>Partition Key Design: Distribution, Bounded
+                Partitions, and Single-Partition Queries</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>Clustering Order, Time Bucketing, Denormalized
+                Tables, and Query-First Modeling</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>Tombstones, TTL, Compaction, Repair, and Why
+                Deletes Can Be Operationally Expensive</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>Use Cases: Telemetry, Time-Ordered Events,
+                High-Write Services, and Multi-Region Workloads</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Graph Databases: Property Graphs, Relationships,
+              Traversal, and Path Queries
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>Nodes, Relationships/Edges, Labels, Properties,
+                and Graph Schema Choices</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Adjacency, Index-Free Traversal Concepts, and
+                When Relationships Are First-Class Data</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>Path, Neighborhood, Reachability, Pattern
+                Matching, and Variable-Length Traversal</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Supernodes, Dense Graphs, Partitioning
+                Challenges, and Distributed Graph Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Use Cases: Identity, Fraud, Recommendations,
+                Networks, Knowledge Graphs, and Dependency Analysis</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Search, Secondary Indexes, Inverted Indexes, and
+              Vector Retrieval
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Primary Access Paths vs Secondary Indexes and
+                the Cost of Maintaining Alternate Views</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Inverted Indexes, Tokens, Analyzers, Relevance,
+                Filters, Facets, and Aggregations</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Local vs Global Secondary Indexes in Distributed
+                Databases</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Vector Embeddings, Approximate Nearest Neighbor
+                Search, HNSW, and Hybrid Retrieval</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Choose Database-Native Search vs Dedicated
+                Search/Vector Infrastructure</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Access-Pattern-Driven Modeling, Denormalization,
+              and Materialized Views
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>Start from Queries, Commands, Invariants,
+                Cardinalities, and Change Rates</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Denormalization as Precomputed Work: Duplicated
+                Data, Write Fan-Out, and Repair Strategies</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Aggregate Boundaries, Bounded Contexts, and Data
+                Ownership Across Services</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Materialized Views, Projection Tables, CQRS Read
+                Models, and Eventually Consistent Derived Data</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Review a Relational Schema and Redesign It for
+                Document, Wide-Column, and Key-Value Workloads</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Transactions Beyond One Record: Atomicity, 2PC,
+              Sagas, and Compensation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>Single-Key/Single-Document Atomicity and Why It
+                Is So Valuable</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Optimistic Concurrency, Compare-and-Set,
+                Lightweight Transactions, and Conditional Mutations</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>Two-Phase Commit: Coordinator State, Blocking
+                Failure Modes, and Recovery Complexity</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Sagas: Orchestration vs Choreography,
+                Compensating Actions, and Business-Level Atomicity</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Design Invariants to Minimize Distributed
+                Transactions Without Pretending They Never Matter</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Consensus: Raft, Paxos, Quorums, Terms, Logs, and
+              Linearizable Decisions
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>What Consensus Solves: Agreement Despite
+                Failures Under Specific Assumptions</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>Raft Mental Model: Leaders, Terms, Log
+                Replication, Commit Index, and Elections</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>Paxos Mental Model: Proposers, Acceptors,
+                Ballots, Quorums, and Chosen Values</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>Linearizability, Leader Leases, Fencing Tokens,
+                and Metadata/Control-Plane Consensus</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Distinguish Consensus for Cluster Metadata from
+                Replication of Application Data</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Conflict Detection and Resolution: LWW, Merge
+              Logic, CRDTs, and Idempotency
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>Lost Updates, Concurrent Writes, Duplicate
+                Events, and Retry-Induced Conflicts</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>Last-Write-Wins: Simple Semantics, Clock
+                Dependence, and Silent Data Loss</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Application-Level Merge: Domain Rules, Versions,
+                and Human Resolution</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>CRDT Foundations: Counters, Sets, Registers,
+                Monotonic State, and Convergence</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>Idempotent Commands, Deduplication Windows,
+                Request IDs, and Exactly-Once Illusions</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>19</span>TTL, Caching, Eviction, Expiration, and Ephemeral
+              Data
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Expiration Semantics: Lazy vs Active Expiry and
+                What TTL Means Under Replication</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Cache-Aside, Read-Through, Write-Through,
+                Write-Behind, and Refresh-Ahead Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>LRU, LFU, Random, TTL-Aware Eviction, and Memory
+                Pressure</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>Cache Stampedes, Thundering Herds, Hot Keys,
+                Negative Caching, and Jittered Expiry</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Decide What May Disappear, What Must Survive,
+                and How to Reconstruct Ephemeral State</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Events, CDC, Streams, and Data Synchronization
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>Change Data Capture from Logs vs
+                Application-Published Events</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>Outbox Pattern, Dual-Write Failure, Idempotent
+                Consumers, and Ordering Keys</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>Event Streams, Consumer Groups, Replay,
+                Retention, and Backpressure</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>Build Search Indexes, Caches, Warehouses, and
+                Read Models from Change Streams</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Reconciliation Jobs and Anti-Corruption Layers
+                for Long-Lived Data Synchronization</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Security, Identity, Encryption, Multi-Tenancy, and
+              Data Governance
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>Authentication, Authorization, Roles, Service
+                Identities, and Least Privilege</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>TLS in Transit, Encryption at Rest, Key
+                Management, and Client-Side/Field-Level Encryption</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>Tenant Isolation by Key, Collection/Table,
+                Database, Cluster, or Account</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Auditing, Data Classification, Retention, Legal
+                Holds, Deletion, and Backup Governance</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>Protect Administrative Interfaces, Cluster
+                Metadata, Network Paths, and Secrets</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Backup, Restore, Repair, Disaster Recovery, and
+              Durability Engineering
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>Logical vs Physical Backups, Snapshots,
+                Continuous Backups, and Change-Log Archiving</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>Replication Is Not Backup: Operator Error,
+                Corruption, Bad Deployments, and Ransomware</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>RPO/RTO, Regional Failure, Quorum Loss, Restore
+                Ordering, and Dependency Recovery</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>Test Restores, Integrity Checks, Reconciliation,
+                and Repair After Partial Recovery</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Write a Disaster-Recovery Runbook and Prove It
+                with Game-Day Exercises</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>23</span>Observability, Capacity, Benchmarking, and
+              Performance Engineering
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter23/Lesson1.html"
+                ><span>01</span>Golden Signals for Databases: Latency,
+                Throughput, Errors, Saturation, and Freshness</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson2.html"
+                ><span>02</span>Per-Partition/Shard Metrics, Replication Lag,
+                Queue Depth, Compaction, Cache, and Storage Signals</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson3.html"
+                ><span>03</span>Benchmark Workload Shapes, Not Marketing
+                Numbers: Keys, Values, Zipf Skew, Concurrency, and Durability</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson4.html"
+                ><span>04</span>Tail Latency, Coordinated Omission, Warmup, GC,
+                Network, Disk, and Client-Pool Effects</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson5.html"
+                ><span>05</span>Capacity Models for Data Size, Replication,
+                Indexes, Headroom, Growth, and Failure Scenarios</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>Cloud and Managed NoSQL: Autoscaling, Serverless,
+              Global Tables, and Cost
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter24/Lesson1.html"
+                ><span>01</span>Managed Control Planes vs Self-Managed Data
+                Planes: Responsibility Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson2.html"
+                ><span>02</span>Provisioned Throughput, Autoscaling, Serverless
+                Billing, Storage, Egress, and Request Pricing</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson3.html"
+                ><span>03</span>Global Replication, Multi-Region Writes,
+                Conflict Semantics, and Regulatory Data Residency</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson4.html"
+                ><span>04</span>Backups, Upgrades, Observability, Private
+                Networking, and Vendor-Specific Failure Modes</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson5.html"
+                ><span>05</span>Model Total Cost of Ownership Including
+                Operations, Lock-In, Migration, and Developer Time</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>25</span>Technology Selection, Migration, Polyglot
+              Architecture, and Capstone
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter25/Lesson1.html"
+                ><span>01</span>Build a Database Selection Matrix from Queries,
+                Invariants, Latency, Scale, Operations, and Skills</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson2.html"
+                ><span>02</span>Avoid Cargo-Cult NoSQL: Recognize Workloads
+                Better Served by Relational Databases</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson3.html"
+                ><span>03</span>Migrate Safely with Dual Reads/Writes,
+                Backfills, CDC, Verification, Cutover, and Rollback</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson4.html"
+                ><span>04</span>Design a Polyglot Architecture with Explicit
+                Ownership, Synchronization, SLOs, and Failure Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson5.html"
+                ><span>05</span>Capstone: Defend a Distributed Data Architecture
+                Under Partitions, Growth, Incidents, and Cost Constraints</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 07 · Lesson 02</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html"
+              >NoSQL and Distributed Database Fundamentals</a
+            ><span>/</span><span>Chapter 07 · Lesson 02</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 07 · Partitioning and Sharding: Range, Hash, Directory,
+              and Consistent Hashing
+            </p>
+            <h1>
+              Range Partitioning vs Hash Partitioning: Locality, Skew, and Query
+              Routing
+            </h1>
+            <p>
+              Compare range and hash partitioning with the same keys to make
+              locality, skew, monotonic hot spots, and routing fan-out
+              observable.
+            </p>
+            <div class="lesson-meta">
+              <span>Beginner → Advanced</span><span>90–110 minutes</span
+              ><span>range-vs-hash simulation</span
+              ><span>Vendor-neutral · Python 3.13.5 simulator</span
+              ><span>Free/local · no database or cloud required</span
+              ><span>Last reviewed: August 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                AtlasMart now has a partitioned order stream, but the first key
+                design question is not “range or hash?” in isolation. The choice
+                changes <strong>locality</strong>, <strong>skew</strong>,
+                routing precision, split behavior, and the number of partitions
+                touched by a query. This lesson compares both mechanisms with
+                one key set so the tradeoff is observable rather than memorized.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Route identical keys through ordered ranges and a stable
+                    hash and compare resulting ownership.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Explain why range partitioning preserves ordered locality
+                    but can create monotonic hot spots.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Explain why hash partitioning tends to spread keys while
+                    forcing ordered/range queries to scatter.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Use routing metadata to reason about targeted queries, split
+                    points, and stale-route failures.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Diagnose a monotonic-key hotspot and choose a partition
+                    strategy based on access patterns rather than evenness
+                    alone.
+                  </p>
+                </div>
+              </div>
+            </section>
+            <section>
+              <h2>1. Range partitioning: preserve order, expose boundaries</h2>
+              <p>
+                <strong>Range partitioning</strong> assigns intervals of an
+                ordered key space to partitions—for example, order IDs 1000–1009
+                to R0 and 1010–1019 to R1. A range query can often be routed to
+                one or a few adjacent partitions because order is preserved.
+                Splitting is conceptually direct: choose a boundary within an
+                overloaded range and create two ownership intervals.
+              </p>
+              <p>
+                The danger is <strong>monotonic growth</strong>. If new order
+                IDs always increase and the final open-ended range owns all
+                future IDs, every new write targets the same partition until the
+                system splits or changes the key design. Range systems can
+                automate splits, but the hotspot exists between detection and
+                successful movement.
+              </p>
+            </section>
+            <section>
+              <h2>
+                2. Hash partitioning: spread values, give up natural order
+              </h2>
+              <p>
+                <strong>Hash partitioning</strong> transforms the partition key
+                through a deterministic hash before assigning ownership. Good
+                hashes make nearby input values land far apart, which reduces
+                dependence on the input distribution and helps spread
+                monotonically increasing IDs. But a business query such as
+                “orders 1012 through 1018” no longer corresponds to one
+                contiguous ownership interval; it may require fan-out or a
+                separate index/materialized view.
+              </p>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Property</th>
+                    <th>Range partitioning</th>
+                    <th>Hash partitioning</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Point lookup</td>
+                    <td>Targeted if boundary map is known</td>
+                    <td>Targeted if hash + token/slot map is known</td>
+                  </tr>
+                  <tr>
+                    <td>Ordered range scan</td>
+                    <td>Usually local to one/few adjacent partitions</td>
+                    <td>Often scatter-gather without another access path</td>
+                  </tr>
+                  <tr>
+                    <td>Monotonic key writes</td>
+                    <td>Can concentrate at the newest range</td>
+                    <td>Usually spread by hash</td>
+                  </tr>
+                  <tr>
+                    <td>Skew from one hot key</td>
+                    <td>Still hot on one owner</td>
+                    <td>Still hot on one owner</td>
+                  </tr>
+                  <tr>
+                    <td>Split decision</td>
+                    <td>Choose key boundary / split range</td>
+                    <td>
+                      Move hash slots/token ranges or add ownership points
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+            <section>
+              <h2>3. Routing metadata is part of correctness</h2>
+              <p>
+                A range router needs ordered boundaries and owners; a hash
+                router needs the hash algorithm plus slot/token ownership. Both
+                need a versioned metadata view. If a client uses an old map
+                after a split, a correct system must reject/redirect or safely
+                forward the request rather than silently accepting ownership
+                under conflicting maps.
+              </p>
+              <div class="code-window" data-code-block="" data-language="text">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>text ·
+                    illustrative range-routing epochs
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-text">epoch=12
+range=[1000,1020) -&gt; shard-a
+range=[1020,1040) -&gt; shard-b
+
+# after split
+epoch=13
+range=[1000,1010) -&gt; shard-a
+range=[1010,1020) -&gt; shard-c
+range=[1020,1040) -&gt; shard-b</code></pre>
+              </div>
+              <p>
+                The map says <em>where</em> a request should go, not whether the
+                chosen key is semantically good. A perfectly consistent routing
+                table can still create a disastrous hotspot.
+              </p>
+            </section>
+            <section>
+              <h2>4. AtlasMart lab — same keys, different locality</h2>
+              <p>
+                <strong>Environment:</strong> Python 3.13.5 standard library,
+                deterministic SHA-256 hashing, four logical range partitions and
+                four logical hash partitions. No product-specific defaults are
+                implied.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="python"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>python ·
+                    range-versus-hash routing simulator
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-python">import hashlib
+from collections import Counter
+
+keys = list(range(1000, 1040))
+RANGES = [
+    (1000, 1010, "R0"),
+    (1010, 1020, "R1"),
+    (1020, 1030, "R2"),
+    (1030, 2000, "R3"),
+]
+
+
+def range_route(k):
+    for lo, hi, name in RANGES:
+        if lo &lt;= k &lt; hi:
+            return name
+    raise KeyError(k)
+
+
+def hash_route(k):
+    h = int.from_bytes(hashlib.sha256(str(k).encode()).digest()[:8], "big")
+    return f"H{h % 4}"
+
+range_counts = Counter(range_route(k) for k in keys)
+hash_counts = Counter(hash_route(k) for k in keys)
+print("INITIAL KEYS")
+print("range counts:", dict(sorted(range_counts.items())))
+print("hash counts:", dict(sorted(hash_counts.items())))
+
+scan = list(range(1012, 1019))
+print("\nRANGE SCAN 1012..1018")
+print("range partitions touched:", sorted({range_route(k) for k in scan}))
+print("hash partitions touched:", sorted({hash_route(k) for k in scan}))
+
+new_monotonic = list(range(1040, 1080))
+print("\nMONOTONIC INSERT BURST")
+print("range target counts:", dict(Counter(range_route(k) for k in new_monotonic)))
+print("hash target counts:", dict(sorted(Counter(hash_route(k) for k in new_monotonic).items())))
+print("wrong assumption: 'ordered keys are automatically balanced' -&gt; all new range writes hit R3")
+print("tradeoff: hashing improves distribution but destroys simple ordered locality")</code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="text">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>text ·
+                    verified output from the simulator
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-text">INITIAL KEYS
+range counts: {'R0': 10, 'R1': 10, 'R2': 10, 'R3': 10}
+hash counts: {'H0': 12, 'H1': 10, 'H2': 5, 'H3': 13}
+
+RANGE SCAN 1012..1018
+range partitions touched: ['R1']
+hash partitions touched: ['H0', 'H1', 'H2', 'H3']
+
+MONOTONIC INSERT BURST
+range target counts: {'R3': 40}
+hash target counts: {'H0': 9, 'H1': 16, 'H2': 8, 'H3': 7}
+wrong assumption: 'ordered keys are automatically balanced' -&gt; all new range writes hit R3
+tradeoff: hashing improves distribution but destroys simple ordered locality</code></pre>
+              </div>
+              <h3>Diagnosis</h3>
+              <p>
+                The ordered scan touches one range partition but several hash
+                partitions. The monotonic burst routes every new key to R3 under
+                the intentionally static range map, while the hash scheme
+                spreads the burst. That is not evidence that hashing is
+                universally better; it is evidence that the access pattern and
+                update distribution differ.
+              </p>
+              <div class="callout">
+                <strong>Wrong fix</strong>
+                <p>
+                  Choosing a hashed key solely because it “looks balanced” can
+                  turn formerly local business queries into scatter-gather
+                  requests. The safer process is to list the point lookups,
+                  ordered scans, aggregations, write concentration, cardinality,
+                  and growth pattern first; then choose or compose keys that
+                  optimize the dominant paths.
+                </p>
+              </div>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>Why do range partitions help ordered scans?</li>
+                  <li>Why can increasing IDs create a hot range?</li>
+                  <li>What does hashing sacrifice?</li>
+                  <li>Does hashing eliminate hot keys?</li>
+                  <li>What must be versioned during range splits?</li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      <strong>1.</strong> Because ordered key intervals map to
+                      adjacent ownership ranges, so a bounded scan can often
+                      target one or a small number of partitions.
+                    </p>
+                    <p>
+                      <strong>2.</strong> All new values fall into the
+                      highest/open-ended interval until that range is split or
+                      the key strategy changes.
+                    </p>
+                    <p>
+                      <strong>3.</strong> Natural adjacency/order in the
+                      original key space, so ordered range queries often need
+                      fan-out or a secondary access path.
+                    </p>
+                    <p>
+                      <strong>4.</strong> No. One identical hot key hashes to
+                      one routing unit unless the application deliberately
+                      shards/decomposes that key.
+                    </p>
+                    <p>
+                      <strong>5.</strong> The routing/boundary metadata so stale
+                      clients can be detected, redirected, or forwarded safely
+                      during ownership changes.
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section>
+              <h2>5. Production judgment</h2>
+              <p>
+                Use ranges when locality and ordered access dominate and you can
+                manage split/hot-range behavior. Use hashing when point access
+                and even distribution dominate and range locality is less
+                important or provided by another view. Composite strategies are
+                common—for example, tenant hash plus time bucket—but every added
+                component changes routing and query fan-out.
+              </p>
+              <p>
+                Monitor per-range write rate, key-cardinality growth, split
+                backlog, scatter-gather count, per-shard tail latency, and
+                routing redirects. Do not publish raw tenant or customer
+                identifiers in diagnostic labels. The next lesson replaces fixed
+                modulo hashing with consistent hashing so adding/removing nodes
+                does not remap most keys.
+              </p>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <ul class="reference-list">
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/manual/core/sharding-choose-a-shard-key/"
+                    rel="noopener"
+                    target="_blank"
+                    >MongoDB 8.3.8 — Choose a Shard Key</a
+                  >
+                  — current implementation example emphasizing cardinality,
+                  frequency, monotonic growth, and query patterns
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/manual/core/sharding-shard-key/"
+                    rel="noopener"
+                    target="_blank"
+                    >MongoDB 8.3.8 — Shard Keys</a
+                  >
+                  — implementation example of range and hashed shard-key value
+                  spaces
+                </li>
+                <li>
+                  <a
+                    href="https://research.google/pubs/bigtable-a-distributed-storage-system-for-structured-data/"
+                    rel="noopener"
+                    target="_blank"
+                    >Google Bigtable</a
+                  >
+                  — primary ordered-range/tablet design reference
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a href="Lesson1.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Why Partition Data: Capacity, Throughput, Parallelism, and
+                Failure Isolation</strong
+              ></a
+            ><a class="next" href="Lesson3.html"
+              ><small>Next lesson</small
+              ><strong
+                >Consistent Hashing, Token Rings, Virtual Nodes, and
+                Rebalancing</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <small
+          >Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>

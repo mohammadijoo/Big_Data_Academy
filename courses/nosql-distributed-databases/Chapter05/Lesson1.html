@@ -1,0 +1,1343 @@
+<!doctype html>
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Trace an AtlasMart order write through a single leader, replication log, follower durability/apply, stale follower reads, and safe failover."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Single-Leader Replication: Logs, Followers, Failover, and Read Scaling |
+      NoSQL and Distributed Database Fundamentals | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+    <!-- BDA course-local Highlight.js token theme: reuses academy syntax variables. -->
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">NOSQL</span>
+            <div>
+              <small>Course 10</small
+              ><strong>NoSQL and Distributed Database Fundamentals</strong>
+            </div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 125 lessons..."
+            type="search"
+        /></label>
+        <nav
+          aria-label="NoSQL and Distributed Database Fundamentals curriculum"
+          class="sidebar-curriculum"
+        >
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>Why NoSQL Exists: Workloads, Scale, Flexibility,
+              and Polyglot Persistence
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>Relational Databases vs NoSQL: Different
+                Optimization Targets, Not Competing Religions</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Horizontal Scale, Global Distribution, Flexible
+                Schemas, High Write Rates, and Low-Latency Access</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>Operational vs Analytical Workloads and Why One
+                Database Rarely Optimizes Every Access Pattern</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>Polyglot Persistence: Assigning Systems by
+                Invariant, Query Shape, Latency, and Ownership</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Decision Notebook: Workload, Data
+                Volume, Consistency, Availability, Recovery, and Cost
+                Requirements</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>Distributed Systems Foundations: Nodes, Networks,
+              Failure, and State
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>Processes, Nodes, Clusters, Partitions,
+                Replicas, Coordinators, and Client Routing</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>Partial Failure: Why a Distributed System Can Be
+                Both Working and Broken at the Same Time</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Latency, Timeouts, Retries, Duplicate Work,
+                Backpressure, and the Fallacy of a Reliable Network</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>Failure Domains: Process, Host, Rack, Zone,
+                Region, Provider, and Human Operations</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Define SLOs for Reads, Writes, Freshness,
+                Durability, Recovery, and Availability</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>CAP, PACELC, and Consistency/Availability Tradeoffs
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>CAP Precisely: Network Partitions Force a
+                Consistency-or-Availability Choice for Conflicting Operations</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Why CAP Does Not Mean Pick Two During Normal
+                Operation</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>PACELC: Latency vs Consistency Tradeoffs Even
+                When the Network Is Healthy</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>Strong, Eventual, Bounded-Staleness, Session,
+                and Tunable Consistency Models</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Map Business Invariants to the Weakest
+                Consistency Model That Still Preserves Correctness</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Time, Ordering, Logical Clocks, and Versioning
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Why Wall Clocks Are Dangerous: Drift, Skew, NTP,
+                and Cross-Node Ordering</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>Lamport Clocks and Happens-Before Reasoning</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>Vector Clocks/Version Vectors and Detecting
+                Concurrent Updates</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>Hybrid Logical Clocks and Practical Time-Aware
+                Ordering</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Use Versions, ETags, Timestamps, and Idempotency
+                Keys Without Pretending Time Is Perfect</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>05</span>Replication Patterns: Leaders, Multi-Leader, and
+              Leaderless Systems
+            </summary>
+            <div>
+              <a class="sidebar-lesson is-current" href="Lesson1.html"
+                ><span>01</span>Single-Leader Replication: Logs, Followers,
+                Failover, and Read Scaling<i>Current</i></a
+              ><a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>Synchronous vs Asynchronous Replication:
+                Latency, Durability, and Data-Loss Windows</a
+              ><a class="sidebar-lesson" href="Lesson3.html"
+                ><span>03</span>Multi-Leader Replication: Geographic Writes,
+                Conflict Risk, and Topology Complexity</a
+              ><a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>Leaderless/Dynamo-Style Replication:
+                Coordinators, Replica Sets, Sloppy Quorums, and Hinted
+                Handoff</a
+              ><a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Choose a Replication Pattern from Write
+                Locality, Failure Tolerance, and Conflict Semantics</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Quorums, Consistency Levels, Read Repair, and
+              Anti-Entropy
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>Replication Factor, Read Quorum, Write Quorum,
+                and the Meaning of R + W &gt; N</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>Tunable Consistency: Per-Operation Choices and
+                Their Failure/Latency Consequences</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>Read Repair, Merkle Trees, Anti-Entropy, and
+                Convergence After Missed Writes</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>Quorum Edge Cases: Network Partitions, Stale
+                Replicas, Failed Coordinators, and Timeouts</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Measure Staleness and Correctness Instead of
+                Treating Consistency Labels as Guarantees</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>Partitioning and Sharding: Range, Hash, Directory,
+              and Consistent Hashing
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>Why Partition Data: Capacity, Throughput,
+                Parallelism, and Failure Isolation</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>Range Partitioning vs Hash Partitioning:
+                Locality, Skew, and Query Routing</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>Consistent Hashing, Token Rings, Virtual Nodes,
+                and Rebalancing</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Hot Partitions, Hot Keys, Monotonic Identifiers,
+                Celebrity Data, and Write Concentration</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Resharding, Split/Merge Operations, Online
+                Rebalancing, and Capacity Headroom</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>Membership, Failure Detection, Gossip, and Cluster
+              Coordination
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>Static Membership vs Dynamic Discovery and
+                Service Registration</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>Heartbeats, Phi Accrual and Other Failure
+                Detectors: Suspicion Is Not Proof</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>Gossip Protocols: Epidemic Membership and
+                Metadata Dissemination</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>Split Brain, Fencing, Leases, Epochs/Terms, and
+                Avoiding Two Active Owners</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Operational Coordination: Topology Changes,
+                Rolling Maintenance, and Convergence Windows</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>Storage Engines: WAL, B-Trees, LSM Trees,
+              Memtables, SSTables, and Compaction
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>Write-Ahead Logs and Durability Before Mutating
+                Indexed State</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>B-Tree/B+Tree Storage: Read Locality, In-Place
+                Updates, and Page Management</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>LSM Trees: Memtables, Immutable Sorted Files,
+                Write Amplification, and Read Amplification</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>Compaction Strategies, Tombstones, Bloom
+                Filters, Caches, and Space Amplification</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>Choose Storage Behavior by Write Rate, Read
+                Pattern, SSD Characteristics, and Retention</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>Key-Value Databases and Data-Structure Stores
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>Keys as the API: Lookup Semantics, Namespaces,
+                Prefixes, and Atomic Single-Key Operations</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>Values as Bytes, Documents, or Data Structures:
+                Modeling Beyond Simple Strings</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>TTL, Expiration, Eviction, Counters, Conditional
+                Writes, and Compare-and-Set</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>Caching vs System-of-Record Usage: Durability,
+                Recovery, and Source-of-Truth Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Use Cases: Sessions, Caches, Feature State, Rate
+                Limits, Idempotency, and Coordination</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>Document Databases and Aggregate-Oriented Modeling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>Documents, Nested Objects, Arrays, Dynamic
+                Fields, and BSON/JSON-Like Representations</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>Embed vs Reference: Aggregate Boundaries,
+                Duplication, Update Frequency, and Read Locality</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>Document Growth, Size Limits, Large Arrays,
+                Bucketing, and Schema Versioning</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Querying Nested Structures, Multikey Indexing,
+                Aggregation Pipelines, and Denormalized Reads</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Model One-to-One, One-to-Many, Many-to-Many, and
+                Event Data with Workload Evidence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>Wide-Column Databases and Query-First Partition
+              Design
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>Partitions, Rows, Clustering Columns, Column
+                Families/Tables, and Sparse Data</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>Partition Key Design: Distribution, Bounded
+                Partitions, and Single-Partition Queries</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>Clustering Order, Time Bucketing, Denormalized
+                Tables, and Query-First Modeling</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>Tombstones, TTL, Compaction, Repair, and Why
+                Deletes Can Be Operationally Expensive</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>Use Cases: Telemetry, Time-Ordered Events,
+                High-Write Services, and Multi-Region Workloads</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Graph Databases: Property Graphs, Relationships,
+              Traversal, and Path Queries
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>Nodes, Relationships/Edges, Labels, Properties,
+                and Graph Schema Choices</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Adjacency, Index-Free Traversal Concepts, and
+                When Relationships Are First-Class Data</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>Path, Neighborhood, Reachability, Pattern
+                Matching, and Variable-Length Traversal</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Supernodes, Dense Graphs, Partitioning
+                Challenges, and Distributed Graph Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Use Cases: Identity, Fraud, Recommendations,
+                Networks, Knowledge Graphs, and Dependency Analysis</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Search, Secondary Indexes, Inverted Indexes, and
+              Vector Retrieval
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Primary Access Paths vs Secondary Indexes and
+                the Cost of Maintaining Alternate Views</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Inverted Indexes, Tokens, Analyzers, Relevance,
+                Filters, Facets, and Aggregations</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Local vs Global Secondary Indexes in Distributed
+                Databases</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Vector Embeddings, Approximate Nearest Neighbor
+                Search, HNSW, and Hybrid Retrieval</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Choose Database-Native Search vs Dedicated
+                Search/Vector Infrastructure</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Access-Pattern-Driven Modeling, Denormalization,
+              and Materialized Views
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>Start from Queries, Commands, Invariants,
+                Cardinalities, and Change Rates</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Denormalization as Precomputed Work: Duplicated
+                Data, Write Fan-Out, and Repair Strategies</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Aggregate Boundaries, Bounded Contexts, and Data
+                Ownership Across Services</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Materialized Views, Projection Tables, CQRS Read
+                Models, and Eventually Consistent Derived Data</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Review a Relational Schema and Redesign It for
+                Document, Wide-Column, and Key-Value Workloads</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Transactions Beyond One Record: Atomicity, 2PC,
+              Sagas, and Compensation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>Single-Key/Single-Document Atomicity and Why It
+                Is So Valuable</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Optimistic Concurrency, Compare-and-Set,
+                Lightweight Transactions, and Conditional Mutations</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>Two-Phase Commit: Coordinator State, Blocking
+                Failure Modes, and Recovery Complexity</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Sagas: Orchestration vs Choreography,
+                Compensating Actions, and Business-Level Atomicity</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Design Invariants to Minimize Distributed
+                Transactions Without Pretending They Never Matter</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Consensus: Raft, Paxos, Quorums, Terms, Logs, and
+              Linearizable Decisions
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>What Consensus Solves: Agreement Despite
+                Failures Under Specific Assumptions</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>Raft Mental Model: Leaders, Terms, Log
+                Replication, Commit Index, and Elections</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>Paxos Mental Model: Proposers, Acceptors,
+                Ballots, Quorums, and Chosen Values</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>Linearizability, Leader Leases, Fencing Tokens,
+                and Metadata/Control-Plane Consensus</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Distinguish Consensus for Cluster Metadata from
+                Replication of Application Data</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Conflict Detection and Resolution: LWW, Merge
+              Logic, CRDTs, and Idempotency
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>Lost Updates, Concurrent Writes, Duplicate
+                Events, and Retry-Induced Conflicts</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>Last-Write-Wins: Simple Semantics, Clock
+                Dependence, and Silent Data Loss</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Application-Level Merge: Domain Rules, Versions,
+                and Human Resolution</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>CRDT Foundations: Counters, Sets, Registers,
+                Monotonic State, and Convergence</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>Idempotent Commands, Deduplication Windows,
+                Request IDs, and Exactly-Once Illusions</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>19</span>TTL, Caching, Eviction, Expiration, and Ephemeral
+              Data
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Expiration Semantics: Lazy vs Active Expiry and
+                What TTL Means Under Replication</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Cache-Aside, Read-Through, Write-Through,
+                Write-Behind, and Refresh-Ahead Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>LRU, LFU, Random, TTL-Aware Eviction, and Memory
+                Pressure</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>Cache Stampedes, Thundering Herds, Hot Keys,
+                Negative Caching, and Jittered Expiry</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Decide What May Disappear, What Must Survive,
+                and How to Reconstruct Ephemeral State</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Events, CDC, Streams, and Data Synchronization
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>Change Data Capture from Logs vs
+                Application-Published Events</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>Outbox Pattern, Dual-Write Failure, Idempotent
+                Consumers, and Ordering Keys</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>Event Streams, Consumer Groups, Replay,
+                Retention, and Backpressure</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>Build Search Indexes, Caches, Warehouses, and
+                Read Models from Change Streams</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Reconciliation Jobs and Anti-Corruption Layers
+                for Long-Lived Data Synchronization</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Security, Identity, Encryption, Multi-Tenancy, and
+              Data Governance
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>Authentication, Authorization, Roles, Service
+                Identities, and Least Privilege</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>TLS in Transit, Encryption at Rest, Key
+                Management, and Client-Side/Field-Level Encryption</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>Tenant Isolation by Key, Collection/Table,
+                Database, Cluster, or Account</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Auditing, Data Classification, Retention, Legal
+                Holds, Deletion, and Backup Governance</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>Protect Administrative Interfaces, Cluster
+                Metadata, Network Paths, and Secrets</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Backup, Restore, Repair, Disaster Recovery, and
+              Durability Engineering
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>Logical vs Physical Backups, Snapshots,
+                Continuous Backups, and Change-Log Archiving</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>Replication Is Not Backup: Operator Error,
+                Corruption, Bad Deployments, and Ransomware</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>RPO/RTO, Regional Failure, Quorum Loss, Restore
+                Ordering, and Dependency Recovery</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>Test Restores, Integrity Checks, Reconciliation,
+                and Repair After Partial Recovery</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Write a Disaster-Recovery Runbook and Prove It
+                with Game-Day Exercises</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>23</span>Observability, Capacity, Benchmarking, and
+              Performance Engineering
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter23/Lesson1.html"
+                ><span>01</span>Golden Signals for Databases: Latency,
+                Throughput, Errors, Saturation, and Freshness</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson2.html"
+                ><span>02</span>Per-Partition/Shard Metrics, Replication Lag,
+                Queue Depth, Compaction, Cache, and Storage Signals</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson3.html"
+                ><span>03</span>Benchmark Workload Shapes, Not Marketing
+                Numbers: Keys, Values, Zipf Skew, Concurrency, and Durability</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson4.html"
+                ><span>04</span>Tail Latency, Coordinated Omission, Warmup, GC,
+                Network, Disk, and Client-Pool Effects</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson5.html"
+                ><span>05</span>Capacity Models for Data Size, Replication,
+                Indexes, Headroom, Growth, and Failure Scenarios</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>Cloud and Managed NoSQL: Autoscaling, Serverless,
+              Global Tables, and Cost
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter24/Lesson1.html"
+                ><span>01</span>Managed Control Planes vs Self-Managed Data
+                Planes: Responsibility Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson2.html"
+                ><span>02</span>Provisioned Throughput, Autoscaling, Serverless
+                Billing, Storage, Egress, and Request Pricing</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson3.html"
+                ><span>03</span>Global Replication, Multi-Region Writes,
+                Conflict Semantics, and Regulatory Data Residency</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson4.html"
+                ><span>04</span>Backups, Upgrades, Observability, Private
+                Networking, and Vendor-Specific Failure Modes</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson5.html"
+                ><span>05</span>Model Total Cost of Ownership Including
+                Operations, Lock-In, Migration, and Developer Time</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>25</span>Technology Selection, Migration, Polyglot
+              Architecture, and Capstone
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter25/Lesson1.html"
+                ><span>01</span>Build a Database Selection Matrix from Queries,
+                Invariants, Latency, Scale, Operations, and Skills</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson2.html"
+                ><span>02</span>Avoid Cargo-Cult NoSQL: Recognize Workloads
+                Better Served by Relational Databases</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson3.html"
+                ><span>03</span>Migrate Safely with Dual Reads/Writes,
+                Backfills, CDC, Verification, Cutover, and Rollback</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson4.html"
+                ><span>04</span>Design a Polyglot Architecture with Explicit
+                Ownership, Synchronization, SLOs, and Failure Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson5.html"
+                ><span>05</span>Capstone: Defend a Distributed Data Architecture
+                Under Partitions, Growth, Incidents, and Cost Constraints</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 05 · Lesson 01</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html"
+              >NoSQL and Distributed Database Fundamentals</a
+            ><span>/</span><span>Chapter 05 · Lesson 01</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 05 · Replication Patterns: Leaders, Multi-Leader, and
+              Leaderless Systems
+            </p>
+            <h1>
+              Single-Leader Replication: Logs, Followers, Failover, and Read
+              Scaling
+            </h1>
+            <p>
+              Trace an AtlasMart order write through a single leader,
+              replication log, follower durability/apply, stale follower reads,
+              and safe failover.
+            </p>
+            <div class="lesson-meta">
+              <span>Beginner → Advanced</span><span>90–110 minutes</span
+              ><span>single-leader log/failover simulation</span
+              ><span>Vendor-neutral · Python 3.13.5 simulator</span
+              ><span>Free/local · no database or cloud required</span
+              ><span>Last reviewed: August 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                AtlasMart has reached the point where a single database process
+                is no longer the only copy of important state. The replication
+                decision now determines who may accept a write, when the client
+                can be told “success,” which copies may serve reads, and what
+                can disappear during failover. This lesson starts with the most
+                common ownership model: one writable leader and one or more
+                followers.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Explain leader, follower, replication log, durable
+                    acknowledgement, apply/replay, replica lag, failover, and
+                    promotion before using those terms operationally.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Trace one AtlasMart order transition from client request to
+                    leader log, follower durability, follower apply, and client
+                    acknowledgement.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Distinguish a stale follower read from a lost acknowledged
+                    write and connect each symptom to a different control.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Explain why promotion safety depends on the
+                    acknowledgement/commit rule rather than on the mere
+                    existence of replicas.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Use observable log positions and replica state to decide
+                    whether a candidate follower is safe to promote.
+                  </p>
+                </div>
+              </div>
+              <div class="callout">
+                <strong>Connection to Chapter 04</strong>
+                <p>
+                  Logical versions and conditional updates answer “which state
+                  am I changing?” Replication adds a different question: “which
+                  machines have durably received that state, and which one owns
+                  future writes?” A version token does not make a lagging
+                  follower current, and a replica count does not define a commit
+                  rule.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>
+                1. Single-leader replication gives write ownership a single
+                address
+              </h2>
+              <p>
+                In a <strong>single-leader</strong> topology, one replica owns
+                ordinary writes for a replication group. Followers receive an
+                ordered stream of changes from that leader. The exact log may be
+                a write-ahead log (WAL), operation log, logical change stream,
+                or another database-specific representation; the architectural
+                point is that followers learn an ordered sequence and advance
+                through it.
+              </p>
+              <p>
+                The leader is not “the only durable server.” It is the current
+                write owner. A follower can be durable yet behind. A follower
+                can have received log bytes but not yet applied them to a
+                queryable state. A replica can also be fully caught up and still
+                not be eligible for promotion because membership, term/epoch,
+                fencing, or topology policy says otherwise.
+              </p>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>State</th>
+                      <th>Meaning</th>
+                      <th>Evidence</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>leader accepted</td>
+                      <td>
+                        current write owner validated/accepted the operation
+                      </td>
+                      <td>leader log position, request trace</td>
+                    </tr>
+                    <tr>
+                      <td>leader durable</td>
+                      <td>
+                        leader persisted the relevant log/state according to its
+                        durability contract
+                      </td>
+                      <td>WAL/fsync acknowledgement, commit LSN/offset</td>
+                    </tr>
+                    <tr>
+                      <td>follower received</td>
+                      <td>replication transport delivered the record</td>
+                      <td>receive offset</td>
+                    </tr>
+                    <tr>
+                      <td>follower durable</td>
+                      <td>follower persisted it</td>
+                      <td>flush/durable offset</td>
+                    </tr>
+                    <tr>
+                      <td>follower applied</td>
+                      <td>readable state reflects it</td>
+                      <td>replay/apply offset, visible version</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section>
+              <h2>2. One AtlasMart order write, end to end</h2>
+              <p>
+                Suppose order <code>order-841</code> moves from
+                <code>AUTHORIZED</code> to <code>PAID</code>. The client sends
+                the command to the current leader. The leader validates the
+                version/invariant, appends the new state to durable local
+                history, streams it to followers, waits for whatever
+                acknowledgements the configured policy requires, and then
+                replies. Followers later apply the log record to their local
+                queryable state.
+              </p>
+              <p>
+                If AtlasMart allows reads from followers, the client may observe
+                a time window where the leader has acknowledged
+                <code>PAID</code> but one follower still returns
+                <code>AUTHORIZED</code>. That is <strong>replica lag</strong>.
+                It is a freshness problem, not proof that the acknowledged write
+                was lost.
+              </p>
+              <div class="callout">
+                <strong>Concrete mapping, not a universal definition</strong>
+                <p>
+                  PostgreSQL 18 streaming replication sends WAL records from
+                  primary to standby and is asynchronous by default. Its
+                  synchronous replication options can make commits wait for
+                  standby feedback. MongoDB replica sets similarly distinguish
+                  primary ownership, secondary replication, read concern, and
+                  write concern. Their exact semantics differ; the
+                  mechanism-first lesson is to inspect the acknowledgement and
+                  read contracts rather than infer them from the word “replica.”
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>
+                3. Failover is a state transfer decision, not merely “pick a
+                live follower”
+              </h2>
+              <p>
+                When the leader is unreachable, a control plane or election
+                mechanism may choose a new leader. A safe promotion process
+                needs to know which candidate has sufficiently complete
+                authoritative history, and it needs a way to prevent the old
+                leader from continuing to accept writes after a newer owner
+                exists. Later chapters cover terms, epochs, leases, consensus,
+                and fencing in depth.
+              </p>
+              <p>
+                A lagging follower can be a dangerous promotion target if the
+                old acknowledgement policy allowed the client to receive success
+                before that follower received the write. If the old leader is
+                permanently lost, the new leader cannot invent a record it never
+                received. This is why “three replicas” is not, by itself, a
+                durability statement.
+              </p>
+            </section>
+            <section>
+              <h2>
+                4. Read scaling buys capacity by exposing freshness choices
+              </h2>
+              <p>
+                Followers are attractive read targets because they can spread
+                query load. That benefit comes with a contract question: may the
+                read be stale? A product page description may tolerate a short
+                delay; a just-completed payment confirmation often cannot.
+                Routing every read to “nearest replica” without session or
+                freshness rules can violate read-your-writes expectations even
+                though replication is healthy.
+              </p>
+              <p>
+                Production routing should therefore identify which reads may use
+                followers, what maximum lag is acceptable, how lag is observed,
+                and what the fallback is when followers exceed that threshold.
+                “Read scaling” is an application contract, not a free
+                consequence of adding replicas.
+              </p>
+            </section>
+            <section>
+              <h2>
+                5. Deliberately wrong approach — acknowledge after leader-local
+                durability and promote any live follower
+              </h2>
+              <p>
+                This combination creates a concrete data-loss window. The client
+                receives success after the leader persists locally. Before
+                replication reaches a follower, the leader is destroyed. An
+                arbitrary follower is promoted. The new leader lacks the
+                acknowledged update, so AtlasMart has converted a successful
+                payment/order transition into missing state.
+              </p>
+              <p>
+                The repair is not “always wait for every replica.” The repair is
+                to define the failure domains you must survive and make the
+                acknowledgement rule match that durability requirement. Then
+                promote only candidates consistent with that rule and use
+                ownership fencing so the old leader cannot reappear as a second
+                writer.
+              </p>
+            </section>
+            <section>
+              <h2>
+                6. AtlasMart lab — observe leader WAL, follower lag, and
+                failover safety
+              </h2>
+              <p>
+                This deterministic simulator models durable log receipt
+                separately from apply. It also contrasts a safer
+                leader-plus-one-follower acknowledgement with a leader-only
+                acknowledgement. It does not model a specific database election
+                algorithm.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="python"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>python ·
+                    single_leader_replication.py
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-python">from dataclasses import dataclass, field
+
+@dataclass
+class Replica:
+    name: str
+    log: list[str] = field(default_factory=list)
+    applied: list[str] = field(default_factory=list)
+    alive: bool = True
+
+    def persist(self, entry: str):
+        if self.alive:
+            self.log.append(entry)
+
+    def apply_all(self):
+        if self.alive:
+            self.applied = list(self.log)
+
+leader = Replica("L-eu-a")
+f1 = Replica("F-eu-b")
+f2 = Replica("F-eu-c")
+entry = "v41 order-841 status=PAID"
+
+print("WRITE PATH")
+leader.persist(entry)
+print("t1 leader WAL:", leader.log)
+f1.persist(entry)
+print("t2 follower F1 durable:", f1.log)
+print("t3 client ACK policy=leader+one-follower -&gt; ACK")
+# F2 is lagging: it has not received the entry yet.
+print("t4 follower F2 lagging:", f2.log)
+
+leader.apply_all(); f1.apply_all(); f2.apply_all()
+print("\nREAD STATE before catch-up")
+for r in (leader, f1, f2):
+    print(r.name, "applied", r.applied)
+
+print("\nFAILOVER")
+leader.alive = False
+promoted = f1
+print("leader failed; promote", promoted.name)
+print("promoted log contains acknowledged entry?", entry in promoted.log)
+print("F2 stale read contains entry?", entry in f2.applied)
+
+print("\nCATCH-UP")
+f2.persist(entry); f2.apply_all()
+print("F2 after catch-up:", f2.applied)
+
+print("\nUNSAFE COUNTERFACTUAL")
+leader_only = Replica("L2")
+standby = Replica("F2")
+leader_only.persist("v42 order-842 status=PAID")
+print("client ACK after leader-only durability")
+leader_only.alive = False
+print("leader dies before replication; promotable standby log:", standby.log)
+print("acknowledged write survives?", bool(standby.log))</code></pre>
+              </div>
+              <h3>Verification checklist</h3>
+              <ul>
+                <li>
+                  The acknowledged <code>v41</code> record exists on follower F1
+                  before the simulated leader failure.
+                </li>
+                <li>
+                  F2 can return stale state before catch-up without implying
+                  that F1 lost the record.
+                </li>
+                <li>
+                  Promoting F1 preserves the acknowledged record under the
+                  simulator's stated policy.
+                </li>
+                <li>
+                  The leader-only counterfactual demonstrates an acknowledged
+                  record disappearing when the sole durable copy is lost.
+                </li>
+                <li>
+                  You can state exactly what evidence would be required before
+                  promoting a real follower.
+                </li>
+              </ul>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>
+                    Why does three replicas not automatically mean an
+                    acknowledged write survives one failure?
+                  </li>
+                  <li>
+                    What is the difference between follower receive/flush and
+                    apply?
+                  </li>
+                  <li>
+                    Why can follower reads be stale even when replication is
+                    working correctly?
+                  </li>
+                  <li>What makes failover unsafe besides missing data?</li>
+                  <li>When is follower read scaling appropriate?</li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      <strong>1.</strong> Because survival depends on which
+                      replicas durably received the write before acknowledgement
+                      and which replica is promoted after failure. Replica count
+                      alone does not define that set.
+                    </p>
+                    <p>
+                      <strong>2.</strong> Receive/flush means replication data
+                      arrived and was persisted; apply means local queryable
+                      state has replayed it. A follower may be durable but not
+                      yet current for reads.
+                    </p>
+                    <p>
+                      <strong>3.</strong> Asynchronous transport and apply
+                      create lag. The follower may simply not have reached the
+                      leader's latest acknowledged position yet.
+                    </p>
+                    <p>
+                      <strong>4.</strong> Two owners can accept writes if the
+                      old leader is not fenced or does not learn that a newer
+                      term/epoch exists.
+                    </p>
+                    <p>
+                      <strong>5.</strong> When the application explicitly
+                      tolerates the measured freshness window or uses a stronger
+                      routing/session rule for reads that require recent writes.
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section>
+              <h2>7. Production judgment and next bridge</h2>
+              <p>
+                Single-leader replication is often attractive when AtlasMart
+                needs simple write ordering, centralized conflict avoidance,
+                mature failover tooling, and many read replicas. Its costs are
+                leader write concentration, failover complexity, cross-region
+                write latency when the leader is remote, and explicit freshness
+                management for followers.
+              </p>
+              <p>
+                Monitor replication receive/flush/apply positions, lag
+                distributions, follower eligibility, failed
+                elections/promotions, read routing, and the number of durable
+                copies per failure domain. Test leader loss before and after
+                each acknowledgement stage. Chapter 05 Lesson 2 now isolates
+                that acknowledgement choice and asks how much latency AtlasMart
+                should pay for durability across zones or regions.
+              </p>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <ul class="reference-list">
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/current/high-availability.html"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL 18 — High Availability, Load Balancing, and
+                    Replication</a
+                  >
+                  — current official documentation for primary/standby
+                  replication patterns and tradeoffs
+                </li>
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/current/warm-standby.html"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL 18 — Log-Shipping Standby Servers</a
+                  >
+                  — streaming replication, asynchronous default, synchronous
+                  replication, failover, and standby behavior
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/manual/replication/"
+                    rel="noopener"
+                    target="_blank"
+                    >MongoDB — Replication</a
+                  >
+                  — official replica-set behavior and read/write semantics; used
+                  only as a concrete mapping
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/manual/core/replica-set-write-concern/"
+                    rel="noopener"
+                    target="_blank"
+                    >MongoDB — Write Concern for Replica Sets</a
+                  >
+                  — acknowledgement-count semantics and rollback risk under
+                  weaker write concern
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a href="../Chapter04/Lesson5.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Use Versions, ETags, Timestamps, and Idempotency Keys Without
+                Pretending Time Is Perfect</strong
+              ></a
+            ><a class="next" href="Lesson2.html"
+              ><small>Next lesson</small
+              ><strong
+                >Synchronous vs Asynchronous Replication: Latency, Durability,
+                and Data-Loss Windows</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <small
+          >Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>

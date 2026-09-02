@@ -1,0 +1,1336 @@
+<!doctype html>
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Design polyglot persistence around explicit ownership, demonstrate a concrete dual-write failure, and repair it with an atomic outbox, idempotent projection, replay, rebuild, and reconciliation reasoning."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Polyglot Persistence: Assigning Systems by Invariant, Query Shape,
+      Latency, and Ownership | NoSQL and Distributed Database Fundamentals | Big
+      Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+    <!-- BDA course-local Highlight.js token theme: reuses academy syntax variables. -->
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewBox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">NOSQL</span>
+            <div>
+              <small>Course 10</small
+              ><strong>NoSQL and Distributed Database Fundamentals</strong>
+            </div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 125 lessons..."
+            type="search"
+        /></label>
+        <nav
+          aria-label="NoSQL and Distributed Database Fundamentals curriculum"
+          class="sidebar-curriculum"
+        >
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>01</span>Why NoSQL Exists: Workloads, Scale, Flexibility,
+              and Polyglot Persistence
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="Lesson1.html"
+                ><span>01</span>Relational Databases vs NoSQL: Different
+                Optimization Targets, Not Competing Religions</a
+              ><a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>Horizontal Scale, Global Distribution, Flexible
+                Schemas, High Write Rates, and Low-Latency Access</a
+              ><a class="sidebar-lesson" href="Lesson3.html"
+                ><span>03</span>Operational vs Analytical Workloads and Why One
+                Database Rarely Optimizes Every Access Pattern</a
+              ><a class="sidebar-lesson is-current" href="Lesson4.html"
+                ><span>04</span>Polyglot Persistence: Assigning Systems by
+                Invariant, Query Shape, Latency, and Ownership<i>Current</i></a
+              ><a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Build a Decision Notebook: Workload, Data
+                Volume, Consistency, Availability, Recovery, and Cost
+                Requirements</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>Distributed Systems Foundations: Nodes, Networks,
+              Failure, and State
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>Processes, Nodes, Clusters, Partitions,
+                Replicas, Coordinators, and Client Routing</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>Partial Failure: Why a Distributed System Can Be
+                Both Working and Broken at the Same Time</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Latency, Timeouts, Retries, Duplicate Work,
+                Backpressure, and the Fallacy of a Reliable Network</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>Failure Domains: Process, Host, Rack, Zone,
+                Region, Provider, and Human Operations</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Define SLOs for Reads, Writes, Freshness,
+                Durability, Recovery, and Availability</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>CAP, PACELC, and Consistency/Availability Tradeoffs
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>CAP Precisely: Network Partitions Force a
+                Consistency-or-Availability Choice for Conflicting Operations</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Why CAP Does Not Mean Pick Two During Normal
+                Operation</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>PACELC: Latency vs Consistency Tradeoffs Even
+                When the Network Is Healthy</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>Strong, Eventual, Bounded-Staleness, Session,
+                and Tunable Consistency Models</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Map Business Invariants to the Weakest
+                Consistency Model That Still Preserves Correctness</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Time, Ordering, Logical Clocks, and Versioning
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Why Wall Clocks Are Dangerous: Drift, Skew, NTP,
+                and Cross-Node Ordering</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>Lamport Clocks and Happens-Before Reasoning</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>Vector Clocks/Version Vectors and Detecting
+                Concurrent Updates</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>Hybrid Logical Clocks and Practical Time-Aware
+                Ordering</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Use Versions, ETags, Timestamps, and Idempotency
+                Keys Without Pretending Time Is Perfect</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>Replication Patterns: Leaders, Multi-Leader, and
+              Leaderless Systems
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>Single-Leader Replication: Logs, Followers,
+                Failover, and Read Scaling</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>Synchronous vs Asynchronous Replication:
+                Latency, Durability, and Data-Loss Windows</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>Multi-Leader Replication: Geographic Writes,
+                Conflict Risk, and Topology Complexity</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>Leaderless/Dynamo-Style Replication:
+                Coordinators, Replica Sets, Sloppy Quorums, and Hinted
+                Handoff</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>Choose a Replication Pattern from Write
+                Locality, Failure Tolerance, and Conflict Semantics</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Quorums, Consistency Levels, Read Repair, and
+              Anti-Entropy
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>Replication Factor, Read Quorum, Write Quorum,
+                and the Meaning of R + W &gt; N</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>Tunable Consistency: Per-Operation Choices and
+                Their Failure/Latency Consequences</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>Read Repair, Merkle Trees, Anti-Entropy, and
+                Convergence After Missed Writes</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>Quorum Edge Cases: Network Partitions, Stale
+                Replicas, Failed Coordinators, and Timeouts</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Measure Staleness and Correctness Instead of
+                Treating Consistency Labels as Guarantees</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>Partitioning and Sharding: Range, Hash, Directory,
+              and Consistent Hashing
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>Why Partition Data: Capacity, Throughput,
+                Parallelism, and Failure Isolation</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>Range Partitioning vs Hash Partitioning:
+                Locality, Skew, and Query Routing</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>Consistent Hashing, Token Rings, Virtual Nodes,
+                and Rebalancing</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Hot Partitions, Hot Keys, Monotonic Identifiers,
+                Celebrity Data, and Write Concentration</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Resharding, Split/Merge Operations, Online
+                Rebalancing, and Capacity Headroom</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>Membership, Failure Detection, Gossip, and Cluster
+              Coordination
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>Static Membership vs Dynamic Discovery and
+                Service Registration</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>Heartbeats, Phi Accrual and Other Failure
+                Detectors: Suspicion Is Not Proof</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>Gossip Protocols: Epidemic Membership and
+                Metadata Dissemination</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>Split Brain, Fencing, Leases, Epochs/Terms, and
+                Avoiding Two Active Owners</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Operational Coordination: Topology Changes,
+                Rolling Maintenance, and Convergence Windows</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>Storage Engines: WAL, B-Trees, LSM Trees,
+              Memtables, SSTables, and Compaction
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>Write-Ahead Logs and Durability Before Mutating
+                Indexed State</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>B-Tree/B+Tree Storage: Read Locality, In-Place
+                Updates, and Page Management</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>LSM Trees: Memtables, Immutable Sorted Files,
+                Write Amplification, and Read Amplification</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>Compaction Strategies, Tombstones, Bloom
+                Filters, Caches, and Space Amplification</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>Choose Storage Behavior by Write Rate, Read
+                Pattern, SSD Characteristics, and Retention</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>Key-Value Databases and Data-Structure Stores
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>Keys as the API: Lookup Semantics, Namespaces,
+                Prefixes, and Atomic Single-Key Operations</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>Values as Bytes, Documents, or Data Structures:
+                Modeling Beyond Simple Strings</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>TTL, Expiration, Eviction, Counters, Conditional
+                Writes, and Compare-and-Set</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>Caching vs System-of-Record Usage: Durability,
+                Recovery, and Source-of-Truth Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Use Cases: Sessions, Caches, Feature State, Rate
+                Limits, Idempotency, and Coordination</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>Document Databases and Aggregate-Oriented Modeling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>Documents, Nested Objects, Arrays, Dynamic
+                Fields, and BSON/JSON-Like Representations</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>Embed vs Reference: Aggregate Boundaries,
+                Duplication, Update Frequency, and Read Locality</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>Document Growth, Size Limits, Large Arrays,
+                Bucketing, and Schema Versioning</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Querying Nested Structures, Multikey Indexing,
+                Aggregation Pipelines, and Denormalized Reads</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Model One-to-One, One-to-Many, Many-to-Many, and
+                Event Data with Workload Evidence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>Wide-Column Databases and Query-First Partition
+              Design
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>Partitions, Rows, Clustering Columns, Column
+                Families/Tables, and Sparse Data</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>Partition Key Design: Distribution, Bounded
+                Partitions, and Single-Partition Queries</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>Clustering Order, Time Bucketing, Denormalized
+                Tables, and Query-First Modeling</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>Tombstones, TTL, Compaction, Repair, and Why
+                Deletes Can Be Operationally Expensive</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>Use Cases: Telemetry, Time-Ordered Events,
+                High-Write Services, and Multi-Region Workloads</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Graph Databases: Property Graphs, Relationships,
+              Traversal, and Path Queries
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>Nodes, Relationships/Edges, Labels, Properties,
+                and Graph Schema Choices</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Adjacency, Index-Free Traversal Concepts, and
+                When Relationships Are First-Class Data</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>Path, Neighborhood, Reachability, Pattern
+                Matching, and Variable-Length Traversal</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Supernodes, Dense Graphs, Partitioning
+                Challenges, and Distributed Graph Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Use Cases: Identity, Fraud, Recommendations,
+                Networks, Knowledge Graphs, and Dependency Analysis</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Search, Secondary Indexes, Inverted Indexes, and
+              Vector Retrieval
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Primary Access Paths vs Secondary Indexes and
+                the Cost of Maintaining Alternate Views</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Inverted Indexes, Tokens, Analyzers, Relevance,
+                Filters, Facets, and Aggregations</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Local vs Global Secondary Indexes in Distributed
+                Databases</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Vector Embeddings, Approximate Nearest Neighbor
+                Search, HNSW, and Hybrid Retrieval</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Choose Database-Native Search vs Dedicated
+                Search/Vector Infrastructure</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Access-Pattern-Driven Modeling, Denormalization,
+              and Materialized Views
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>Start from Queries, Commands, Invariants,
+                Cardinalities, and Change Rates</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Denormalization as Precomputed Work: Duplicated
+                Data, Write Fan-Out, and Repair Strategies</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Aggregate Boundaries, Bounded Contexts, and Data
+                Ownership Across Services</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Materialized Views, Projection Tables, CQRS Read
+                Models, and Eventually Consistent Derived Data</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Review a Relational Schema and Redesign It for
+                Document, Wide-Column, and Key-Value Workloads</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Transactions Beyond One Record: Atomicity, 2PC,
+              Sagas, and Compensation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>Single-Key/Single-Document Atomicity and Why It
+                Is So Valuable</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Optimistic Concurrency, Compare-and-Set,
+                Lightweight Transactions, and Conditional Mutations</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>Two-Phase Commit: Coordinator State, Blocking
+                Failure Modes, and Recovery Complexity</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Sagas: Orchestration vs Choreography,
+                Compensating Actions, and Business-Level Atomicity</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Design Invariants to Minimize Distributed
+                Transactions Without Pretending They Never Matter</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Consensus: Raft, Paxos, Quorums, Terms, Logs, and
+              Linearizable Decisions
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>What Consensus Solves: Agreement Despite
+                Failures Under Specific Assumptions</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>Raft Mental Model: Leaders, Terms, Log
+                Replication, Commit Index, and Elections</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>Paxos Mental Model: Proposers, Acceptors,
+                Ballots, Quorums, and Chosen Values</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>Linearizability, Leader Leases, Fencing Tokens,
+                and Metadata/Control-Plane Consensus</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Distinguish Consensus for Cluster Metadata from
+                Replication of Application Data</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Conflict Detection and Resolution: LWW, Merge
+              Logic, CRDTs, and Idempotency
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>Lost Updates, Concurrent Writes, Duplicate
+                Events, and Retry-Induced Conflicts</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>Last-Write-Wins: Simple Semantics, Clock
+                Dependence, and Silent Data Loss</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Application-Level Merge: Domain Rules, Versions,
+                and Human Resolution</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>CRDT Foundations: Counters, Sets, Registers,
+                Monotonic State, and Convergence</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>Idempotent Commands, Deduplication Windows,
+                Request IDs, and Exactly-Once Illusions</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>19</span>TTL, Caching, Eviction, Expiration, and Ephemeral
+              Data
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Expiration Semantics: Lazy vs Active Expiry and
+                What TTL Means Under Replication</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Cache-Aside, Read-Through, Write-Through,
+                Write-Behind, and Refresh-Ahead Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>LRU, LFU, Random, TTL-Aware Eviction, and Memory
+                Pressure</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>Cache Stampedes, Thundering Herds, Hot Keys,
+                Negative Caching, and Jittered Expiry</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Decide What May Disappear, What Must Survive,
+                and How to Reconstruct Ephemeral State</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Events, CDC, Streams, and Data Synchronization
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>Change Data Capture from Logs vs
+                Application-Published Events</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>Outbox Pattern, Dual-Write Failure, Idempotent
+                Consumers, and Ordering Keys</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>Event Streams, Consumer Groups, Replay,
+                Retention, and Backpressure</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>Build Search Indexes, Caches, Warehouses, and
+                Read Models from Change Streams</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Reconciliation Jobs and Anti-Corruption Layers
+                for Long-Lived Data Synchronization</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Security, Identity, Encryption, Multi-Tenancy, and
+              Data Governance
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>Authentication, Authorization, Roles, Service
+                Identities, and Least Privilege</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>TLS in Transit, Encryption at Rest, Key
+                Management, and Client-Side/Field-Level Encryption</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>Tenant Isolation by Key, Collection/Table,
+                Database, Cluster, or Account</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Auditing, Data Classification, Retention, Legal
+                Holds, Deletion, and Backup Governance</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>Protect Administrative Interfaces, Cluster
+                Metadata, Network Paths, and Secrets</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Backup, Restore, Repair, Disaster Recovery, and
+              Durability Engineering
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>Logical vs Physical Backups, Snapshots,
+                Continuous Backups, and Change-Log Archiving</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>Replication Is Not Backup: Operator Error,
+                Corruption, Bad Deployments, and Ransomware</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>RPO/RTO, Regional Failure, Quorum Loss, Restore
+                Ordering, and Dependency Recovery</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>Test Restores, Integrity Checks, Reconciliation,
+                and Repair After Partial Recovery</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Write a Disaster-Recovery Runbook and Prove It
+                with Game-Day Exercises</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>23</span>Observability, Capacity, Benchmarking, and
+              Performance Engineering
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter23/Lesson1.html"
+                ><span>01</span>Golden Signals for Databases: Latency,
+                Throughput, Errors, Saturation, and Freshness</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson2.html"
+                ><span>02</span>Per-Partition/Shard Metrics, Replication Lag,
+                Queue Depth, Compaction, Cache, and Storage Signals</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson3.html"
+                ><span>03</span>Benchmark Workload Shapes, Not Marketing
+                Numbers: Keys, Values, Zipf Skew, Concurrency, and Durability</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson4.html"
+                ><span>04</span>Tail Latency, Coordinated Omission, Warmup, GC,
+                Network, Disk, and Client-Pool Effects</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson5.html"
+                ><span>05</span>Capacity Models for Data Size, Replication,
+                Indexes, Headroom, Growth, and Failure Scenarios</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>Cloud and Managed NoSQL: Autoscaling, Serverless,
+              Global Tables, and Cost
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter24/Lesson1.html"
+                ><span>01</span>Managed Control Planes vs Self-Managed Data
+                Planes: Responsibility Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson2.html"
+                ><span>02</span>Provisioned Throughput, Autoscaling, Serverless
+                Billing, Storage, Egress, and Request Pricing</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson3.html"
+                ><span>03</span>Global Replication, Multi-Region Writes,
+                Conflict Semantics, and Regulatory Data Residency</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson4.html"
+                ><span>04</span>Backups, Upgrades, Observability, Private
+                Networking, and Vendor-Specific Failure Modes</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson5.html"
+                ><span>05</span>Model Total Cost of Ownership Including
+                Operations, Lock-In, Migration, and Developer Time</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>25</span>Technology Selection, Migration, Polyglot
+              Architecture, and Capstone
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter25/Lesson1.html"
+                ><span>01</span>Build a Database Selection Matrix from Queries,
+                Invariants, Latency, Scale, Operations, and Skills</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson2.html"
+                ><span>02</span>Avoid Cargo-Cult NoSQL: Recognize Workloads
+                Better Served by Relational Databases</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson3.html"
+                ><span>03</span>Migrate Safely with Dual Reads/Writes,
+                Backfills, CDC, Verification, Cutover, and Rollback</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson4.html"
+                ><span>04</span>Design a Polyglot Architecture with Explicit
+                Ownership, Synchronization, SLOs, and Failure Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson5.html"
+                ><span>05</span>Capstone: Defend a Distributed Data Architecture
+                Under Partitions, Growth, Incidents, and Cost Constraints</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 01 · Lesson 04</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html"
+              >NoSQL and Distributed Database Fundamentals</a
+            ><span>/</span><span>Chapter 01 · Lesson 04</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 01 · Why NoSQL Exists: Workloads, Scale, Flexibility, and
+              Polyglot Persistence
+            </p>
+            <h1>
+              Polyglot Persistence: Assigning Systems by Invariant, Query Shape,
+              Latency, and Ownership
+            </h1>
+            <p>
+              Design polyglot persistence around explicit ownership, demonstrate
+              a concrete dual-write failure, and repair it with an atomic
+              outbox, idempotent projection, replay, rebuild, and reconciliation
+              reasoning.
+            </p>
+            <div class="lesson-meta">
+              <span>Beginner</span><span>100–120 minutes</span
+              ><span>Dual-write failure + outbox/replay lab</span
+              ><span>Python stdlib · temporary SQLite/JSON state</span
+              ><span>Last reviewed: August 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                Polyglot persistence means using more than one data technology
+                because different data paths have different invariants and
+                access patterns. It does <strong>not</strong> mean every service
+                gets its favorite database. Every added store creates a second
+                question:
+                <em
+                  >how does it stay correct enough when the source changes or
+                  failures interrupt synchronization?</em
+                >
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Define system of record, derived read model, cache, search
+                    index, and ownership boundary precisely.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Explain why writing a source database and a second store in
+                    two independent operations creates a dual-write failure
+                    window.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Use an outbox record committed with source state to make
+                    change publication replayable without claiming magical
+                    exactly-once delivery.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Design a derived view that is idempotent, rebuildable,
+                    observable, and never mistaken for an authorization source.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Account for the operational cost of every additional
+                    database before approving polyglot architecture.
+                  </p>
+                </div>
+              </div>
+              <div class="callout">
+                <strong>Lab safety and scope</strong>
+                <p>
+                  The lab creates a temporary SQLite database and JSON file
+                  under the operating system’s temporary directory. It
+                  intentionally simulates a process crash by skipping one write;
+                  it does not kill processes, change firewall rules, alter the
+                  host clock, or require Docker.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>
+                1. Ownership first: source of truth versus derived purpose
+              </h2>
+              <p>
+                A <strong>system of record</strong> is the authoritative owner
+                for a fact or invariant. A <strong>derived view</strong> is a
+                representation computed from source data to serve a different
+                access pattern. A cache is usually reconstructable temporary
+                state. A search index is usually a derived retrieval view. A
+                graph projection may derive edges from transactional records.
+                These labels are responsibilities, not product types.
+              </p>
+              <p>
+                For AtlasMart, payment and order acceptance remain authoritative
+                in one transactional path. Search can receive an eventually
+                updated order or product projection. If the search index
+                disappears, AtlasMart should be able to rebuild it from
+                authoritative data and retained change history. If the order
+                database disappears, rebuilding from search is not an acceptable
+                recovery plan.
+              </p>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Component</th>
+                    <th>Authority</th>
+                    <th>Freshness expectation</th>
+                    <th>Recovery expectation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Order/payment store</td>
+                    <td>Authoritative</td>
+                    <td>Synchronous for checkout invariants</td>
+                    <td>
+                      Backups + transaction/change history + tested restore
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Search index</td>
+                    <td>Derived</td>
+                    <td>Bounded lag, for example tens of seconds</td>
+                    <td>Rebuild/replay from source/change log</td>
+                  </tr>
+                  <tr>
+                    <td>Session cache</td>
+                    <td>Ephemeral/derived</td>
+                    <td>Very fresh while present</td>
+                    <td>
+                      Expire/recreate; do not make unique durable facts live
+                      only here
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Fraud graph</td>
+                    <td>Derived analytical/serving view</td>
+                    <td>Defined per detection use case</td>
+                    <td>Replay/backfill plus reconciliation</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+            <section>
+              <h2>2. The dual-write trap</h2>
+              <p>
+                The naive workflow is:
+                <strong
+                  >commit order → update search index → return success</strong
+                >. If the process crashes after the database commit but before
+                the index update, the order exists but the derived view does
+                not. Reversing the order is not safer: the index can expose data
+                whose source transaction later fails. Retries can create
+                duplicate side effects unless each operation is idempotent.
+              </p>
+              <p>
+                A distributed transaction protocol can coordinate some
+                resources, but that introduces availability, blocking, topology,
+                and product-support constraints and is not a universal answer. A
+                common alternative is a <strong>transactional outbox</strong>:
+                commit the business state and an event/outbox row in the same
+                local transaction. A separate projector publishes or applies
+                those events and can retry after failure.
+              </p>
+              <div class="callout">
+                <strong>Important non-guarantee</strong>
+                <p>
+                  An outbox does not create end-to-end exactly-once delivery.
+                  The projector can crash after applying a change but before
+                  marking an event processed. Correct consumers therefore use
+                  idempotent operations, deduplication keys, or version checks
+                  and support replay.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>3. Run the broken path and repaired path</h2>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="python"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>python ·
+                    dual-write failure, transactional outbox, idempotent replay,
+                    rebuild
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-python"><span class="code-line">import json, sqlite3, tempfile</span><span class="code-line">from pathlib import Path</span><span class="code-line"></span><span class="code-line">root=Path(tempfile.mkdtemp(prefix=&#x27;atlasmart-polyglot-&#x27;))</span><span class="code-line">db=root/&#x27;atlasmart.db&#x27;; view=root/&#x27;search_view.json&#x27;</span><span class="code-line">print(&#x27;AtlasMart Lesson 4 — system of record + replayable derived view&#x27;)</span><span class="code-line">print(&#x27;workspace:&#x27;, root)</span><span class="code-line"></span><span class="code-line">con=sqlite3.connect(db)</span><span class="code-line">con.execute(&#x27;PRAGMA journal_mode=WAL&#x27;)</span><span class="code-line">con.executescript(&#x27;&#x27;&#x27;</span><span class="code-line">CREATE TABLE orders(id TEXT PRIMARY KEY, customer_id TEXT NOT NULL, status TEXT NOT NULL, total_cents INTEGER NOT NULL);</span><span class="code-line">CREATE TABLE outbox(event_id TEXT PRIMARY KEY, event_type TEXT NOT NULL, payload TEXT NOT NULL, processed INTEGER NOT NULL DEFAULT 0);</span><span class="code-line">&#x27;&#x27;&#x27;)</span><span class="code-line"></span><span class="code-line">def load_view():</span><span class="code-line">    return json.loads(view.read_text()) if view.exists() else {}</span><span class="code-line">def save_view(v): view.write_text(json.dumps(v, indent=2, sort_keys=True))</span><span class="code-line"></span><span class="code-line"># WRONG: dual write. Database commit succeeds, process &#x27;crashes&#x27; before derived view write.</span><span class="code-line">with con:</span><span class="code-line">    con.execute(&#x27;INSERT INTO orders VALUES (?,?,?,?)&#x27;,(&#x27;o-bad&#x27;,&#x27;c-1&#x27;,&#x27;paid&#x27;,4200))</span><span class="code-line">print(&#x27;\nWrong dual-write state after simulated crash:&#x27;)</span><span class="code-line">print(&#x27;system of record has o-bad =&#x27;, bool(con.execute(&quot;SELECT 1 FROM orders WHERE id=&#x27;o-bad&#x27;&quot;).fetchone()))</span><span class="code-line">print(&#x27;derived view has o-bad =&#x27;, &#x27;o-bad&#x27; in load_view())</span><span class="code-line"></span><span class="code-line"># REPAIR: order + outbox event commit atomically.</span><span class="code-line">payload={&#x27;order_id&#x27;:&#x27;o-good&#x27;,&#x27;customer_id&#x27;:&#x27;c-2&#x27;,&#x27;status&#x27;:&#x27;paid&#x27;,&#x27;total_cents&#x27;:9900}</span><span class="code-line">with con:</span><span class="code-line">    con.execute(&#x27;INSERT INTO orders VALUES (?,?,?,?)&#x27;, tuple(payload.values()))</span><span class="code-line">    con.execute(&#x27;INSERT INTO outbox(event_id,event_type,payload) VALUES (?,?,?)&#x27;,(&#x27;evt-1001&#x27;,&#x27;OrderPaid&#x27;,json.dumps(payload)))</span><span class="code-line">print(&#x27;\nAtomic source transaction committed order + outbox event.&#x27;)</span><span class="code-line"></span><span class="code-line"># Idempotent projector: replaying same event overwrites same key instead of duplicating side effects.</span><span class="code-line">def project_pending():</span><span class="code-line">    v=load_view()</span><span class="code-line">    rows=con.execute(&#x27;SELECT event_id,payload FROM outbox WHERE processed=0 ORDER BY event_id&#x27;).fetchall()</span><span class="code-line">    for event_id,payload_json in rows:</span><span class="code-line">        p=json.loads(payload_json)</span><span class="code-line">        v[p[&#x27;order_id&#x27;]]={&#x27;customer_id&#x27;:p[&#x27;customer_id&#x27;],&#x27;status&#x27;:p[&#x27;status&#x27;],&#x27;total_cents&#x27;:p[&#x27;total_cents&#x27;],&#x27;source_event&#x27;:event_id}</span><span class="code-line">        save_view(v)</span><span class="code-line">        with con: con.execute(&#x27;UPDATE outbox SET processed=1 WHERE event_id=?&#x27;,(event_id,))</span><span class="code-line">    return len(rows)</span><span class="code-line"></span><span class="code-line">print(&#x27;projected events =&#x27;, project_pending())</span><span class="code-line">print(&#x27;projected events on replay =&#x27;, project_pending())</span><span class="code-line">print(&#x27;derived view:&#x27;, json.dumps(load_view(), indent=2, sort_keys=True))</span><span class="code-line"></span><span class="code-line"># Rebuild proves derived data is disposable when source + event history are retained.</span><span class="code-line">view.unlink()</span><span class="code-line">with con: con.execute(&#x27;UPDATE outbox SET processed=0&#x27;)</span><span class="code-line">print(&#x27;\nRebuild after deleting derived view: projected events =&#x27;, project_pending())</span><span class="code-line">print(&#x27;recovered o-good =&#x27;, load_view().get(&#x27;o-good&#x27;))</span><span class="code-line">print(&#x27;Note: o-bad cannot be reconstructed from the outbox because the wrong path never emitted an event. Reconciliation would be required.&#x27;)</span></code></pre>
+              </div>
+              <h3>Verified generation-time output</h3>
+              <div class="code-window" data-code-block="" data-language="text">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>text ·
+                    temporary local lab output; temporary path changes each run
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-text"><span class="code-line">AtlasMart Lesson 4 — system of record + replayable derived view</span><span class="code-line">workspace: /tmp/atlasmart-polyglot-xykkxcku</span><span class="code-line"></span><span class="code-line">Wrong dual-write state after simulated crash:</span><span class="code-line">system of record has o-bad = True</span><span class="code-line">derived view has o-bad = False</span><span class="code-line"></span><span class="code-line">Atomic source transaction committed order + outbox event.</span><span class="code-line">projected events = 1</span><span class="code-line">projected events on replay = 0</span><span class="code-line">derived view: {</span><span class="code-line">  &quot;o-good&quot;: {</span><span class="code-line">    &quot;customer_id&quot;: &quot;c-2&quot;,</span><span class="code-line">    &quot;source_event&quot;: &quot;evt-1001&quot;,</span><span class="code-line">    &quot;status&quot;: &quot;paid&quot;,</span><span class="code-line">    &quot;total_cents&quot;: 9900</span><span class="code-line">  }</span><span class="code-line">}</span><span class="code-line"></span><span class="code-line">Rebuild after deleting derived view: projected events = 1</span><span class="code-line">recovered o-good = {&#x27;customer_id&#x27;: &#x27;c-2&#x27;, &#x27;source_event&#x27;: &#x27;evt-1001&#x27;, &#x27;status&#x27;: &#x27;paid&#x27;, &#x27;total_cents&#x27;: 9900}</span><span class="code-line">Note: o-bad cannot be reconstructed from the outbox because the wrong path never emitted an event. Reconciliation would be required.</span></code></pre>
+              </div>
+              <p>
+                The first state is intentionally inconsistent:
+                <code>o-bad</code> exists in the source but not the derived
+                view. That is the exact failure window a two-step dual write
+                creates. The repaired path commits <code>o-good</code> and
+                <code>evt-1001</code> together. The projector can run later, and
+                running it again produces zero new work because processed events
+                are tracked.
+              </p>
+              <p>
+                Then the lab deletes the derived JSON file and resets the outbox
+                processed flags. Replaying reconstructs <code>o-good</code>. It
+                cannot reconstruct <code>o-bad</code> because the broken path
+                never recorded an event. This is why production designs also
+                need reconciliation: compare source state with derived state and
+                repair historical gaps that predate the reliable publication
+                mechanism.
+              </p>
+            </section>
+            <section>
+              <h2>4. Every additional store adds a failure matrix</h2>
+              <p>
+                Adding search, cache, graph, or analytical stores expands the
+                architecture. Now an incident can affect the source, the change
+                capture mechanism, the queue or outbox reader, the projector,
+                the derived store, or the network between them. Monitoring only
+                “database is up” is insufficient.
+              </p>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Signal</th>
+                    <th>What it tells you</th>
+                    <th>Failure it can reveal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Oldest unprocessed outbox age</td>
+                    <td>Publication lag</td>
+                    <td>Projector stopped or downstream unavailable</td>
+                  </tr>
+                  <tr>
+                    <td>Projection apply error rate</td>
+                    <td>Transformation/schema compatibility</td>
+                    <td>Poison event or incompatible deployment</td>
+                  </tr>
+                  <tr>
+                    <td>Source vs derived sampled checksum/count</td>
+                    <td>Convergence</td>
+                    <td>Dropped events or projector bug</td>
+                  </tr>
+                  <tr>
+                    <td>Replay throughput and remaining backlog</td>
+                    <td>Recovery capacity</td>
+                    <td>
+                      Whether the system can catch up before freshness SLO is
+                      violated
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Derived-store authorization tests</td>
+                    <td>Security boundary</td>
+                    <td>
+                      Accidental exposure of fields/tenants in a convenience
+                      index
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+            <section>
+              <h2>
+                5. Deliberately wrong approach: let the derived store become
+                authoritative
+              </h2>
+              <p>
+                A team may discover that search is easier to query than the
+                transactional source and begin reading authorization,
+                availability, or payment state from it. That silently changes
+                the architecture: a view with allowed lag is now making
+                correctness decisions. During projector delay, a revoked tenant
+                permission could remain visible or an out-of-stock product could
+                remain purchasable.
+              </p>
+              <p>
+                The repair is explicit <strong>read-model scope</strong>. Search
+                may answer “which products match these words?” Checkout must
+                revalidate current price, inventory, tenant authorization, and
+                payment rules against the authoritative owners before committing
+                a purchase. A derived view can accelerate discovery without
+                owning the invariant.
+              </p>
+            </section>
+            <section>
+              <h2>
+                6. Production judgment: polyglot architecture is a budgeted
+                dependency
+              </h2>
+              <p>
+                Add a store only when the requirement justifies its
+                synchronization and operations tax. Record the owner team,
+                source of record, data classification, publication mechanism,
+                ordering scope, idempotency key, allowed lag, retention, replay
+                capacity, rebuild steps, backup policy, access control, metrics,
+                incident runbook, cost, and decommission plan. If those fields
+                are unknown, the architecture is not ready.
+              </p>
+              <p>
+                The next lesson turns this chapter’s reasoning into a reusable
+                <strong>decision notebook</strong>. Instead of choosing MongoDB,
+                Redis, Cassandra, Neo4j, or a search engine by reputation,
+                AtlasMart will first write down volumes, key distributions,
+                latency percentiles, invariants, availability, recovery,
+                compliance, skills, and cost constraints.
+              </p>
+              <h3>Verification checklist</h3>
+              <ul>
+                <li>
+                  The wrong path visibly leaves source and derived state
+                  inconsistent.
+                </li>
+                <li>
+                  The source business row and outbox event share one local
+                  transaction.
+                </li>
+                <li>
+                  The projector is replayable and its update is idempotent for
+                  the same order key/event.
+                </li>
+                <li>Deleting the derived view demonstrates rebuildability.</li>
+                <li>
+                  The lesson explicitly states that outbox/replay does not
+                  guarantee magical exactly-once delivery.
+                </li>
+              </ul>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>
+                    What makes a store a system of record rather than simply
+                    “the main database”?
+                  </li>
+                  <li>
+                    Why can neither ordering of two independent writes eliminate
+                    the dual-write failure window?
+                  </li>
+                  <li>What property does the outbox transaction provide?</li>
+                  <li>
+                    Why must a projector be idempotent even when events have
+                    unique IDs?
+                  </li>
+                  <li>
+                    Why should checkout revalidate data that was discovered
+                    through a search index?
+                  </li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      It owns the authoritative fact/invariant and has the
+                      recovery/security responsibilities for that fact. Product
+                      type or query popularity does not define authority.
+                    </p>
+                    <p>
+                      If source is first, a crash can omit the derived write; if
+                      derived is first, the source transaction can fail after
+                      the derived state appears. Without shared atomic
+                      coordination, a failure can split the outcome.
+                    </p>
+                    <p>
+                      It makes the source mutation and intent-to-publish one
+                      atomic local commit, so a later worker can discover/retry
+                      publication after process failure.
+                    </p>
+                    <p>
+                      The worker may apply an event and crash before recording
+                      completion, causing the same event to be delivered/applied
+                      again. The effect must therefore tolerate replay.
+                    </p>
+                    <p>
+                      The index is a derived view with bounded freshness and
+                      should not silently own inventory, payment, or
+                      authorization invariants. Checkout must confirm current
+                      authoritative state.
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <ul class="reference-list">
+                <li>
+                  <a
+                    href="https://www.sqlite.org/atomiccommit.html"
+                    rel="noopener"
+                    target="_blank"
+                    >SQLite atomic commit</a
+                  >
+                  — Official description of SQLite’s transactional
+                  durability/atomic-commit mechanisms used as the local
+                  source-of-record lab.
+                </li>
+                <li>
+                  <a
+                    href="https://www.sqlite.org/wal.html"
+                    rel="noopener"
+                    target="_blank"
+                    >SQLite write-ahead logging</a
+                  >
+                  — Official WAL documentation; the lab enables WAL for the
+                  temporary database while remaining single-process.
+                </li>
+                <li>
+                  <a
+                    href="https://debezium.io/documentation/reference/stable/transformations/outbox-event-router.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Debezium outbox event router</a
+                  >
+                  — Official implementation documentation for the transactional
+                  outbox pattern in CDC-based architectures.
+                </li>
+                <li>
+                  <a
+                    href="https://martinfowler.com/bliki/PolyglotPersistence.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Polyglot Persistence</a
+                  >
+                  — Widely cited architecture framing for choosing different
+                  persistence technologies by data/workload need; use as design
+                  context rather than protocol specification.
+                </li>
+                <li>
+                  <a
+                    href="https://www.allthingsdistributed.com/2007/10/amazons_dynamo.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Dynamo: Amazon’s Highly Available Key-value Store</a
+                  >
+                  — Primary example of explicit application-visible tradeoffs
+                  and ownership semantics in a distributed store.
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a href="Lesson3.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Operational vs Analytical Workloads and Why One Database Rarely
+                Optimizes Every Access Pattern</strong
+              ></a
+            ><a class="next" href="Lesson5.html"
+              ><small>Next lesson</small
+              ><strong
+                >Build a Decision Notebook: Workload, Data Volume, Consistency,
+                Availability, Recovery, and Cost Requirements</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewBox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <small
+          >Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>
