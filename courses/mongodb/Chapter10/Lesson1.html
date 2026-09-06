@@ -1,0 +1,1510 @@
+<!doctype html>
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Build an exact mental model of ordered MongoDB indexes by tracing equality, range, sort, coverage, explain evidence, and write/storage cost on AtlasMart orders."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      How B-Tree-Like Indexes Support Equality, Range, Sort, and Covered Queries
+      | MongoDB | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">MDB</span>
+            <div><small>Course 11</small><strong>MongoDB</strong></div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 135 lessons..."
+            type="search"
+        /></label>
+        <nav aria-label="MongoDB curriculum" class="sidebar-curriculum">
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>MongoDB Foundations, Editions, Deployment Models,
+              mongosh, and Lab Setup
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>What MongoDB Is: Document Database Architecture,
+                Common Workloads, and Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Self-Managed MongoDB vs Atlas: Responsibility
+                Boundaries, Features, and Cost Awareness</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>Install MongoDB and mongosh or Provision a Free
+                Learning Environment</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>Processes, Ports, Data Directories, Connection
+                Strings, Databases, and Collections</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Reproducible Lab with Sample Data,
+                Configuration, Logging, and Safe Administrative Accounts</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>BSON, Documents, Collections, Flexible Schema, and
+              Data Types
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>BSON vs JSON: Binary Representation, Type
+                Fidelity, Size, and Driver Mapping</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>_id, ObjectId, Field Names, Embedded Documents,
+                Arrays, and Document Size Limits</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Numeric, Date, Timestamp, Decimal128, Binary,
+                Regex, ObjectId, and Null Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>Flexible Schema Does Not Mean No Schema:
+                Implicit Contracts and Application Evolution</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Inspect Documents and Collection Metadata with
+                mongosh and Database Commands</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>CRUD Fundamentals: Insert, Find, Projection, Sort,
+              Limit, and Delete
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>InsertOne/InsertMany, Generated _id Values,
+                Ordered Writes, and Error Handling</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Find Filters, Comparison/Logical Operators,
+                Projection, Sorting, Skipping, and Limiting</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>Cursor Behavior, Batch Size, Iteration,
+                Exhaustion, and Client-Side Resource Management</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>DeleteOne/DeleteMany, Precise Predicates, Safety
+                Checks, and Observable Change Counts</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Build a CRUD Lab and Verify Every Operation with
+                Deterministic Queries</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Query Operators, Arrays, Nested Fields,
+              Null/Missing Semantics, and Expressions
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Dot Notation, Embedded-Document Matching,
+                Arrays, $elemMatch, and Positional Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>$in, $nin, $all, $size, $exists, $type, $regex,
+                and Expression-Based Filtering</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>Null vs Missing Fields: Query Semantics, Index
+                Behavior, and Data-Quality Consequences</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>$expr and Computed Predicates: Comparing Fields
+                and Reusing Aggregation Expressions</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Query Anti-Patterns: Unbounded Regex, Huge $in
+                Lists, Client Filtering, and Accidental Collection Scans</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>Updates, Array Mutations, Upserts, findAndModify,
+              and Bulk Writes
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>$set, $unset, $inc, $mul, $min, $max, $rename,
+                and Replacement Updates</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>Array Updates with $, $[], $[identifier],
+                arrayFilters, $push, $addToSet, and $pull</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>Upserts, Equality Predicates, Generated
+                Documents, and Race-Safe Expectations</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>findOneAndUpdate/Replace/Delete: Atomic
+                Read-Modify-Write and Return Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>Bulk Writes Across Operations and Namespaces:
+                Ordered vs Unordered Execution and Error Analysis</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Document Modeling: Embedding, References,
+              Cardinality, and Aggregate Boundaries
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>Start from Workload: Queries, Updates,
+                Atomicity, Cardinality, Growth, and Retention</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>Embed vs Reference: Read Locality, Duplication,
+                Independent Lifecycles, and Fan-Out</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>One-to-One, One-to-Many, Many-to-Many,
+                Parent/Child, and Extended Reference Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>Document Growth, Large Arrays,
+                Bucket/Subset/Computed Patterns, and Bounded Aggregates</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Design a Schema for a Real Application and
+                Defend Every Duplication Decision</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>Schema Validation, Evolution, Versioning, and Data
+              Quality
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>JSON Schema Validation with $jsonSchema:
+                Required Fields, Types, Ranges, and Nested Rules</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>Validation Levels and Actions: strict/moderate,
+                error/warn, and Safe Rollout of New Rules</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>Schema Version Fields, Lazy Migration, Eager
+                Backfills, and Mixed-Version Readers</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Defaults, Missing Fields, Derived Data, and
+                Repairing Historical Documents</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Test Validators and Migration Scripts Against
+                Production-Like Samples Before Enforcement</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary><span>08</span>Aggregation Pipeline Fundamentals</summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>Pipeline Mental Model: Documents Flow Through
+                Ordered Stages</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>$match, $project/$set, $unset, $sort, $limit,
+                $skip, and Early-Reduction Strategy</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>$group, Accumulators, Distinct-Like Analysis,
+                and Correct Aggregation Keys</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>$unwind Arrays Without Losing Empty/Missing
+                Cases</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Explain Aggregation Pipelines and Push Selective
+                Work Toward Indexed Stages</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>Advanced Aggregation: Joins, Facets, Windows,
+              Reshaping, and Write-Back
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>$lookup Joins, Correlated Pipelines,
+                Indexability, and When References Become Expensive</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>$graphLookup for Recursive Relationships and
+                Traversal Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>$facet, $bucket/$bucketAuto, Multi-Dimensional
+                Analysis, and Memory Considerations</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>$setWindowFields, Ranking, Moving Windows,
+                Time-Based Analytics, and Partitioning</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>$merge and $out for Materialized Views, ETL,
+                Rebuilds, and Operational Safety</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>10</span>Index Fundamentals: Single, Compound, Multikey,
+              Unique, and Index Prefixes
+            </summary>
+            <div>
+              <a class="sidebar-lesson is-current" href="Lesson1.html"
+                ><span>01</span>How B-Tree-Like Indexes Support Equality, Range,
+                Sort, and Covered Queries<i>Current</i></a
+              ><a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>Single-Field and Compound Indexes: ESR-Style
+                Ordering and Prefix Rules</a
+              ><a class="sidebar-lesson" href="Lesson3.html"
+                ><span>03</span>Multikey Indexes for Arrays: Index-Key
+                Expansion, Constraints, and Query Shapes</a
+              ><a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>Unique Indexes, Missing/Null Values, Collations,
+                and Application Invariants</a
+              ><a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Create, Hide, Inspect, Rename/Drop, and Measure
+                Indexes Without Guessing</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>Advanced Indexes: Partial, Sparse, TTL, Wildcard,
+              Hashed, Text, and Geospatial
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>Partial vs Sparse Indexes: Selective Indexing
+                and Query Eligibility</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>TTL Indexes: Expiration Semantics, Background
+                Deletion, and Time-Based Retention</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>Wildcard Indexes for Dynamic Fields:
+                Flexibility, Cost, and When Explicit Indexes Win</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Hashed Indexes and Their Role in Shard-Key
+                Distribution</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Text and Geospatial Index Families:
+                Capabilities, Restrictions, and Dedicated Search Alternatives</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>Query Planning, explain(), Plan Cache, Profiling,
+              and Slow Query Diagnosis
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>COLLSCAN, IXSCAN, FETCH, SORT, COVERED Plans,
+                and Reading explain Execution Stats</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>Winning vs Rejected Plans, Candidate
+                Enumeration, and Plan Cache Behavior</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>Index Selectivity, Cardinality, Sort Support,
+                Multikey Effects, and Query Shape</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>Database Profiler, Slow Operation Thresholds,
+                Logs, $currentOp, and Query Analysis</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>Tune a Slow Workload by Changing Query Shape or
+                Indexes and Re-Measure the Evidence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Sessions and Multi-Document Transactions
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>Single-Document Atomicity First: When
+                Transactions Are Unnecessary</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Logical Sessions, Transaction
+                Start/Commit/Abort, and Driver Transaction APIs</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>Read Concern, Write Concern, Retry Semantics,
+                and Snapshot Behavior Inside Transactions</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Production Limits: Runtime, Locking, Sharded
+                Costs, DDL Restrictions, and Abort Scenarios</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Redesign a Transaction-Heavy Model to Reduce
+                Cross-Document/Cross-Shard Coordination</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Replica Sets: Replication, Oplog, Elections, and
+              Failover
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Replica-Set Roles, Primary/Secondary Members,
+                Oplog Replication, and Majority Commit Point</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Initialize a Replica Set, Add Members, Inspect
+                Status, and Understand Configuration Versions</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Elections, Terms, Heartbeats, Priorities, Votes,
+                Stepdown, and Failover Windows</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Secondary Sync, Initial Sync, Rollback, Oplog
+                Sizing, and Replication Lag</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Run Failure Drills: Kill the Primary, Observe
+                Elections, and Verify Application Recovery</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Read Concern, Write Concern, Read Preference, and
+              Causal Consistency
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>Write Concern w, j, wtimeout, Majority
+                Acknowledgment, and Durability Expectations</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Read Concern local, available, majority,
+                linearizable, snapshot, and Staleness Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Read Preference Modes, Tag Sets,
+                maxStalenessSeconds, and Secondary-Read Consequences</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Causally Consistent Sessions, Read-Your-Writes,
+                Monotonic Reads, and Cluster Time</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Choose Concerns per Operation from Invariants,
+                Latency Budgets, and Regional Failure Requirements</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Sharded Cluster Architecture, mongos Routing,
+              Config Servers, and Chunks/Ranges
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>Why Shard: Data Capacity, Throughput, Working
+                Set, and Geographic/Operational Needs</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Shards as Replica Sets, Config Server Replica
+                Set, mongos Routers, and Metadata</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>Query Targeting vs Scatter/Gather: How Shard
+                Keys Determine Routing Cost</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Chunks/Ranges, Balancer, Migration, Critical
+                Sections, and Operational Headroom</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Build a Small Sharded Lab and Trace a Routed
+                Query from mongos to Target Shards</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Shard Keys, Zones, Balancing, Resharding, and
+              Evolving Distribution
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>Choose a Shard Key: Cardinality, Frequency,
+                Monotonicity, Query Isolation, and Write Distribution</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>Ranged vs Hashed Sharding, Compound Keys, and
+                Prefix-Aware Targeting</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>analyzeShardKey and Workload Evidence for
+                Prospective Keys</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>Zones and Zone Ranges for Data Locality,
+                Compliance, and Hardware Tiers</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Refine, Reshard, Unshard/Move Collections Where
+                Supported, and Plan Safe Distribution Changes</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Change Streams, CDC, Resumability, and Event-Driven
+              Integration
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>Change Streams vs Tailing the Oplog: Stable API,
+                Resume Tokens, and Deployment Requirements</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>Watch a Collection, Database, or Deployment and
+                Filter Change Events with Pipelines</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Full Document/Pre-Image Options, Update
+                Descriptions, Deletes, and Schema Evolution</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Resume Tokens, startAfter/resumeAfter,
+                Invalidation, Oplog Windows, and Recovery</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>Build Idempotent Consumers for Search Indexing,
+                Cache Invalidation, Outbox Alternatives, and Analytics</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>19</span>Time-Series Collections, Bucketing, Retention, and
+              Time-Based Analytics
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Time-Series Collection Model: timeField,
+                metaField, Granularity, and Internal Bucketing</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Model Sensors, Metrics, Events, and Device
+                Metadata for Efficient Compression and Queries</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>Time-Series Indexes, Sort/Match Patterns, Window
+                Analytics, and Bucket-Aware Performance</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>Expiration/Retention Policies and the Difference
+                Between Event Time and Ingest Time</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Operate High-Volume Time-Series Workloads with
+                Bounded Cardinality and Capacity Planning</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Geospatial Data and Location Queries
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>GeoJSON, Legacy Coordinate Pairs, Coordinate
+                Reference Expectations, and Data Validation</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>2dsphere vs 2d Indexes and Choosing the Right
+                Geometry Model</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>$near/$nearSphere, $geoWithin, $geoIntersects,
+                Distance, and Query Constraints</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>$geoNear in Aggregation Pipelines and Combining
+                Spatial Predicates with Business Filters</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Design and Benchmark a Location Service with
+                Precision, Bounding, and Index Selectivity</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Atlas Search, Vector Search, Hybrid Retrieval, and
+              AI-Oriented Workloads
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>Dedicated Search vs Database Indexes: Analyzers,
+                Relevance, Faceting, and Operational Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>Atlas Search Index Mappings, Text Operators,
+                Compound Queries, Highlighting, and Scoring</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>Embeddings and Vector Search: Dimensions,
+                Similarity Metrics, ANN Recall, and Index Choices</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Hybrid Text + Vector Retrieval, Metadata
+                Filtering, Reranking, and Evaluation</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>Design RAG/Recommendation Retrieval with
+                Freshness, Security Filters, Cost, and Observability</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Authentication, Authorization, TLS, Network
+              Security, and Auditing
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>Enable Authentication Safely and Understand the
+                localhost Exception During Bootstrap</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>Users, Roles, Privileges, Built-In Roles, Custom
+                Roles, and Least-Privilege Service Accounts</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>TLS Certificates, Hostname Validation, Internal
+                Cluster Authentication, and Key Rotation</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>Network Exposure, Firewalls/Private Networking,
+                Bind Settings, and Administrative Separation</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Auditing and Compliance Capabilities: What to
+                Log, Protect, Retain, and Review</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>23</span>Encryption: At Rest, Client-Side Field Level, and
+              Queryable Encryption
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter23/Lesson1.html"
+                ><span>01</span>Threat Models: Disk Theft, Cloud Admin, Database
+                Admin, Application Compromise, and Log Leakage</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson2.html"
+                ><span>02</span>Storage Encryption and Key Management Boundaries
+                in Self-Managed and Managed Environments</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson3.html"
+                ><span>03</span>Client-Side Field Level Encryption: Key Vaults,
+                KMS, Automatic Encryption, and Driver Responsibilities</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson4.html"
+                ><span>04</span>Queryable Encryption: Supported Query Patterns,
+                Metadata, Performance, and Schema Planning</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson5.html"
+                ><span>05</span>Rotate Keys, Back Up Key Material, Test
+                Recovery, and Prevent Encrypted Data from Becoming
+                Unrecoverable</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>WiredTiger Storage Engine, Journaling, Checkpoints,
+              Compression, and Cache
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter24/Lesson1.html"
+                ><span>01</span>WiredTiger Tables, B-Trees, Pages, Cache, File
+                Layout, and the Storage-Engine Boundary</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson2.html"
+                ><span>02</span>Journaling and Checkpoints: Durability Timeline,
+                Crash Recovery, and Write Concern Interaction</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson3.html"
+                ><span>03</span>Compression for Collections and Indexes: Space,
+                CPU, Cache Density, and Workload Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson4.html"
+                ><span>04</span>WiredTiger Cache Pressure, Eviction, Dirty Data,
+                Tickets/Concurrency, and Diagnostic Metrics</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson5.html"
+                ><span>05</span>Diagnose Disk, Cache, Checkpoint, and Write
+                Amplification Problems with Server Metrics</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>25</span>Backup, Restore, Snapshots, Point-in-Time Recovery,
+              and Disaster Recovery
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter25/Lesson1.html"
+                ><span>01</span>Logical Export/Import vs Physical Backup:
+                mongodump/mongorestore Boundaries and Use Cases</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson2.html"
+                ><span>02</span>Replica-Set Consistent Snapshots,
+                Filesystem/Volume Snapshots, and Oplog-Aware Recovery</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson3.html"
+                ><span>03</span>Atlas Backup Concepts, Continuous/PIT Recovery,
+                Retention, and Regional Copy Strategy</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson4.html"
+                ><span>04</span>Sharded-Cluster Backup Consistency,
+                Balancer/Metadata Concerns, and Restore Ordering</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson5.html"
+                ><span>05</span>Perform a Restore Drill and Measure RPO, RTO,
+                Integrity, Index Rebuild, and Application Cutover</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>26</span>Monitoring, Capacity, Performance, Upgrades, and
+              Feature Compatibility Version
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter26/Lesson1.html"
+                ><span>01</span>serverStatus, dbStats/collStats, Logs, Profiler,
+                currentOp, Atlas Metrics, and Alert Design</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson2.html"
+                ><span>02</span>Capacity for Working Set, WiredTiger Cache,
+                Indexes, Oplog, Connections, Disk, and Replication Headroom</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson3.html"
+                ><span>03</span>Benchmark Reads/Writes/Aggregations with
+                Realistic Document Shapes, Skew, Durability, and Concurrency</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson4.html"
+                ><span>04</span>Rolling Upgrades, Binary Compatibility, Feature
+                Compatibility Version, and Upgrade Sequencing</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson5.html"
+                ><span>05</span>Incident Runbooks for Replication Lag, Disk
+                Pressure, Slow Queries, Elections, and Shard Imbalance</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>27</span>Drivers, Application Patterns, Production
+              Architecture, and Capstone
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter27/Lesson1.html"
+                ><span>01</span>Connection Strings, Topology Discovery,
+                Connection Pools, Server Selection, Timeouts, and
+                Cancellation</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson2.html"
+                ><span>02</span>Retryable Reads/Writes, Transactions,
+                Idempotency, Command Monitoring, and Error Classification</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson3.html"
+                ><span>03</span>Pagination, Batch Operations, Schema Versioning,
+                Change Streams, and Backpressure in Applications</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson4.html"
+                ><span>04</span>Production Design: Topology, Concerns, Shard
+                Key, Index Budget, Backups, Security, Monitoring, and Cost</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson5.html"
+                ><span>05</span>Capstone: Build, Load-Test, Fail, Recover,
+                Secure, Tune, and Defend a Production MongoDB System</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 10 · Lesson 01</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">MongoDB</a><span>/</span
+            ><span>Chapter 10 · Lesson 01</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Build an exact mental model of ordered MongoDB indexes by tracing
+              equality, range, sort, coverage, explain evidence, and
+              write/storage cost on AtlasMart orders.
+            </p>
+            <h1>
+              How B-Tree-Like Indexes Support Equality, Range, Sort, and Covered
+              Queries
+            </h1>
+            <p>
+              Batch heterogeneous writes safely, interpret partial success,
+              compare ordered and unordered execution, and use modern
+              cross-namespace bulk APIs without assuming all-or-nothing
+              behavior.
+            </p>
+            <div class="lesson-meta">
+              <span>Intermediate</span><span>100–135 minutes</span
+              ><span>B-tree-like equality/range/sort/coverage lab</span
+              ><span>MongoDB 8.3.8 · mongosh 2.10.0</span
+              ><span>Last reviewed: September 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning objectives</h2>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Model a conventional MongoDB index as an ordered B-tree-like
+                    key structure rather than a magic “fast query” switch.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Connect equality, range, and sort predicates to contiguous
+                    regions of an ordered index.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Read explain execution statistics before and after index
+                    creation and distinguish keys examined from documents
+                    examined.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Recognize a covered query by the absence of collection
+                    document fetches and understand how projection choices can
+                    destroy coverage.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Measure index storage and write-maintenance cost before
+                    deciding an index is worth keeping.
+                  </p>
+                </div>
+              </div>
+            </section>
+            <div class="callout">
+              <strong>Reproducible lab baseline</strong>
+              <p>
+                This lesson pins MongoDB Community Server
+                <code>8.3.8</code> with
+                <code
+                  >mongodb/mongodb-community-server:8.3.8-ubuntu2204-slim</code
+                >
+                and mongosh <code>2.10.0</code>. The server is a disposable
+                standalone published only on loopback
+                <code>127.0.0.1:27062</code>. Authentication and TLS are
+                disabled only for this isolated lab. Feature Compatibility
+                Version (FCV) is observed but never changed. Default read/write
+                concern and primary read preference apply. Atlas, Search, KMS,
+                Enterprise Advanced, and paid services are not required. Runtime
+                output shown as “expected” is documentation-derived because this
+                generation environment has no Docker/mongod/mongosh runtime.
+              </p>
+            </div>
+            <div class="callout">
+              <strong>Evidence, not index folklore</strong>
+              <p>
+                Index behavior depends on query shape, projection, sort, data
+                distribution, planner choice, cache state, topology, and patch
+                version. The labs therefore inspect <code>winningPlan</code>,
+                <code>totalKeysExamined</code>, <code>totalDocsExamined</code>,
+                index definitions/sizes, and target query results. Small
+                fixtures prove semantics, not production latency. Timing
+                snippets are comparative demonstrations only, not benchmarks.
+              </p>
+            </div>
+            <section>
+              <h2>
+                1. AtlasMart problem: a paid-order timeline is correct but scans
+                too much
+              </h2>
+              <p>
+                AtlasMart repeatedly asks for recent paid orders for one tenant
+                above a minimum amount. Without a suitable secondary index,
+                MongoDB may examine collection documents to find the answer. A
+                conventional MongoDB index stores ordered key values plus
+                references back to documents. “B-tree-like” describes the
+                ordered search structure at the level needed for query design;
+                the lesson does not pretend application developers manage
+                physical B-tree pages directly.
+              </p>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Concept</th>
+                    <th>What it means</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Index key</td>
+                    <td>
+                      One ordered value or tuple derived from indexed document
+                      fields.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Equality predicate</td>
+                    <td>
+                      Narrows the scan to one value or a contiguous prefix of
+                      values.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Range predicate</td>
+                    <td>
+                      Selects an interval such as
+                      <code>$gte</code>/<code>$lt</code>; it can widen the
+                      number of keys scanned.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Sort support</td>
+                    <td>
+                      The index already stores keys in an order compatible with
+                      the requested sort, avoiding a blocking sort stage.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Covered query</td>
+                    <td>
+                      All matching and returned fields come from index keys, so
+                      collection documents need not be fetched.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Write amplification</td>
+                    <td>
+                      Every relevant insert/update/delete must also maintain
+                      each affected index structure.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+            <section>
+              <h2>
+                2. Seed a deterministic workload and observe the no-index
+                baseline
+              </h2>
+              <div class="code-window" data-code-block="" data-language="bash">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>bash ·
+                    isolated Chapter 10 Lesson 1 lab setup
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0 2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-bash"><span class="code-line">docker rm -f atlasmart-mongo-ch10-l1 2&gt;/dev/null || true</span><span class="code-line">docker volume rm atlasmart-mongo-ch10-l1-data 2&gt;/dev/null || true</span><span class="code-line">docker run -d --name atlasmart-mongo-ch10-l1 \</span><span class="code-line">  -p 127.0.0.1:27062:27017 \</span><span class="code-line">  -v atlasmart-mongo-ch10-l1-data:/data/db \</span><span class="code-line">  mongodb/mongodb-community-server:8.3.8-ubuntu2204-slim</span><span class="code-line"></span><span class="code-line">mongosh "mongodb://127.0.0.1:27062/atlasmart?directConnection=true" --quiet --eval \</span><span class="code-line">'printjson({server:db.version(),hello:db.hello().isWritablePrimary}); printjson(db.getSiblingDB("admin").runCommand({getParameter:1,featureCompatibilityVersion:1}))' </span></code></pre>
+              </div>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="javascript"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >javascript · seed AtlasMart orders
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0 2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-javascript"><span class="code-line">const c=db.orders_ch10_l1;</span><span class="code-line">c.drop();</span><span class="code-line">c.insertMany([</span><span class="code-line"> {_id:1,orderId:"A-1001",tenantId:"tenant-a",status:"paid",createdAt:ISODate("2026-08-01T09:00:00Z"),totalCents:1200},</span><span class="code-line"> {_id:2,orderId:"A-1002",tenantId:"tenant-a",status:"paid",createdAt:ISODate("2026-08-01T10:00:00Z"),totalCents:3200},</span><span class="code-line"> {_id:3,orderId:"A-1003",tenantId:"tenant-a",status:"paid",createdAt:ISODate("2026-08-01T11:00:00Z"),totalCents:2500},</span><span class="code-line"> {_id:4,orderId:"A-1004",tenantId:"tenant-a",status:"cancelled",createdAt:ISODate("2026-08-01T12:00:00Z"),totalCents:9000},</span><span class="code-line"> {_id:5,orderId:"A-1005",tenantId:"tenant-a",status:"paid",createdAt:ISODate("2026-08-02T09:00:00Z"),totalCents:1800},</span><span class="code-line"> {_id:6,orderId:"A-1006",tenantId:"tenant-a",status:"paid",createdAt:ISODate("2026-08-02T10:00:00Z"),totalCents:7400},</span><span class="code-line"> {_id:7,orderId:"B-2001",tenantId:"tenant-b",status:"paid",createdAt:ISODate("2026-08-01T09:30:00Z"),totalCents:5000},</span><span class="code-line"> {_id:8,orderId:"B-2002",tenantId:"tenant-b",status:"paid",createdAt:ISODate("2026-08-01T10:30:00Z"),totalCents:1300},</span><span class="code-line"> {_id:9,orderId:"B-2003",tenantId:"tenant-b",status:"refunded",createdAt:ISODate("2026-08-01T11:30:00Z"),totalCents:5000},</span><span class="code-line"> {_id:10,orderId:"A-1007",tenantId:"tenant-a",status:"paid",createdAt:ISODate("2026-08-03T08:00:00Z"),totalCents:2100},</span><span class="code-line"> {_id:11,orderId:"A-1008",tenantId:"tenant-a",status:"paid",createdAt:ISODate("2026-08-03T09:00:00Z"),totalCents:2200},</span><span class="code-line"> {_id:12,orderId:"A-1009",tenantId:"tenant-a",status:"paid",createdAt:ISODate("2026-08-03T10:00:00Z"),totalCents:2300}</span><span class="code-line">]);</span><span class="code-line">printjson({count:c.countDocuments({}),indexes:c.getIndexes()});</span></code></pre>
+              </div>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="javascript"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >javascript · run query and executionStats before secondary
+                    index
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0 2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-javascript"><span class="code-line">const c=db.orders_ch10_l1;</span><span class="code-line">const filter={tenantId:"tenant-a",status:"paid",totalCents:{$gte:2000}};</span><span class="code-line">const projection={_id:0,orderId:1,createdAt:1,totalCents:1};</span><span class="code-line">const sort={createdAt:-1};</span><span class="code-line">printjson(c.find(filter,projection).sort(sort).toArray());</span><span class="code-line">printjson(c.find(filter,projection).sort(sort).explain("executionStats"));</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="text">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>text ·
+                    deterministic business result
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0 2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-text"><span class="code-line">A-1009 2026-08-03T10:00:00Z 2300</span><span class="code-line">A-1008 2026-08-03T09:00:00Z 2200</span><span class="code-line">A-1007 2026-08-03T08:00:00Z 2100</span><span class="code-line">A-1006 2026-08-02T10:00:00Z 7400</span><span class="code-line">A-1003 2026-08-01T11:00:00Z 2500</span><span class="code-line">A-1002 2026-08-01T10:00:00Z 3200</span></code></pre>
+              </div>
+              <p>
+                The exact winning-plan JSON is version-sensitive, but before the
+                secondary index the important evidence is that MongoDB has no
+                workload-specific ordered access path. On this tiny collection a
+                collection scan is cheap; that does not make the shape
+                production-safe at millions of documents.
+              </p>
+            </section>
+            <section>
+              <h2>3. Build one index whose key order matches the request</h2>
+              <p>
+                The index below sorts first by tenant and status (equality
+                fields), then by descending creation time (the requested order),
+                then stores amount and order identifier. Conceptually, nearby
+                keys look like tuples such as
+                <code>(tenant-a, paid, 2026-08-03T10:00Z, 2300, A-1009)</code>.
+                The index contains encoded BSON key values, not a separate copy
+                of the whole document.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="javascript"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >javascript · create and inspect the compound index
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0 2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-javascript"><span class="code-line">const c=db.orders_ch10_l1;</span><span class="code-line">print(c.createIndex(</span><span class="code-line"> {tenantId:1,status:1,createdAt:-1,totalCents:1,orderId:1},</span><span class="code-line"> {name:"idx_tenant_status_created_total_order"}</span><span class="code-line">));</span><span class="code-line">printjson(c.getIndexes());</span><span class="code-line">printjson(c.stats().indexSizes);</span></code></pre>
+              </div>
+              <div class="callout">
+                <strong>Conceptual key ordering</strong>
+                <p>
+                  Keys for the same tenant/status form one contiguous region.
+                  Within that region, <code>createdAt:-1</code> orders newer
+                  timestamps before older timestamps.
+                  <code>totalCents</code> comes after the sort field, so a
+                  minimum-amount predicate can be evaluated from index keys but
+                  may not bound the scan as tightly as if it appeared earlier.
+                  That tradeoff becomes Lesson 2’s ESR versus ERS decision.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>4. Re-run with hint to isolate the candidate index</h2>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="javascript"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >javascript · force candidate index for controlled
+                    comparison
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0 2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-javascript"><span class="code-line">const c=db.orders_ch10_l1;</span><span class="code-line">const q=c.find(</span><span class="code-line"> {tenantId:"tenant-a",status:"paid",totalCents:{$gte:2000}},</span><span class="code-line"> {_id:0,orderId:1,createdAt:1,totalCents:1}</span><span class="code-line">).sort({createdAt:-1}).hint("idx_tenant_status_created_total_order");</span><span class="code-line">printjson(q.toArray());</span><span class="code-line">printjson(c.find(</span><span class="code-line"> {tenantId:"tenant-a",status:"paid",totalCents:{$gte:2000}},</span><span class="code-line"> {_id:0,orderId:1,createdAt:1,totalCents:1}</span><span class="code-line">).sort({createdAt:-1}).hint("idx_tenant_status_created_total_order").explain("executionStats"));</span></code></pre>
+              </div>
+              <div class="callout">
+                <strong>What explain proves</strong>
+                <p>
+                  Compare <code>totalKeysExamined</code>,
+                  <code>totalDocsExamined</code>, the presence of an
+                  <code>IXSCAN</code>, and whether a <code>FETCH</code> stage
+                  exists. <code>executionTimeMillis</code> on 12 documents is
+                  not a meaningful benchmark. A correct index can even look
+                  slower in a tiny warm-cache test because fixed overhead
+                  dominates.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>
+                5. Covered query boundary: one extra projected field changes the
+                plan
+              </h2>
+              <p>
+                The first projection needs only fields represented in the index
+                and excludes <code>_id</code>; MongoDB can potentially answer
+                from the index alone. Ask for <code>statusNote</code>, which is
+                not indexed, and a document fetch becomes necessary even if that
+                field is absent in most documents.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="javascript"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >javascript · break coverage by requesting a non-indexed
+                    field
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0 2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-javascript"><span class="code-line">const c=db.orders_ch10_l1;</span><span class="code-line">printjson(c.find(</span><span class="code-line"> {tenantId:"tenant-a",status:"paid",totalCents:{$gte:2000}},</span><span class="code-line"> {_id:0,orderId:1,createdAt:1,totalCents:1,statusNote:1}</span><span class="code-line">).sort({createdAt:-1}).hint("idx_tenant_status_created_total_order").explain("executionStats"));</span></code></pre>
+              </div>
+              <div class="callout">
+                <strong>Coverage is a query-shape property</strong>
+                <p>
+                  An index is not “covered” in the abstract. Coverage belongs to
+                  a specific filter + projection + sort combination. Returning
+                  the indexed array field in a multikey query has additional
+                  restrictions covered in Lesson 3.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>6. Indexes consume storage and every write maintains them</h2>
+              <p>
+                Index size is visible through collection statistics, but
+                physical bytes depend on WiredTiger compression, data
+                distribution, and allocation state. Write cost can be compared
+                experimentally using identical disposable collections. The
+                following test deliberately uses wall-clock timing only to
+                demonstrate directionality; it is not a latency benchmark and
+                should not be used for SLO sizing.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="javascript"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >javascript · compare disposable insert maintenance cost
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0 2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-javascript"><span class="code-line">const plain=db.orders_ch10_l1_plain;</span><span class="code-line">const indexed=db.orders_ch10_l1_indexed;</span><span class="code-line">plain.drop(); indexed.drop();</span><span class="code-line">indexed.createIndex({tenantId:1,status:1,createdAt:-1,totalCents:1,orderId:1},{name:"workload_idx"});</span><span class="code-line">function batch(n){</span><span class="code-line"> const a=[];</span><span class="code-line"> for(let i=0;i&lt;n;i++) a.push({_id:i,orderId:`T-${i}`,tenantId:`t-${i%20}`,status:i%5?"paid":"cancelled",createdAt:new Date(1760000000000+i*1000),totalCents:500+(i%10000)});</span><span class="code-line"> return a;</span><span class="code-line">}</span><span class="code-line">const docs=batch(3000);</span><span class="code-line">let t=Date.now(); plain.insertMany(docs); const plainMs=Date.now()-t;</span><span class="code-line">t=Date.now(); indexed.insertMany(docs); const indexedMs=Date.now()-t;</span><span class="code-line">printjson({plainMs,indexedMs,plainIndexBytes:plain.totalIndexSize(),indexedIndexBytes:indexed.totalIndexSize()});</span></code></pre>
+              </div>
+              <div class="callout">
+                <strong>Do not optimize from one timing</strong>
+                <p>
+                  Run controlled representative workloads, multiple trials,
+                  warm/cold-state variants, and tail-latency measurements. More
+                  indexes can reduce read latency while increasing insert/update
+                  latency, cache pressure, build time, backup size, and
+                  recovery/rebuild work.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>7. Verification, cleanup, and production judgment</h2>
+              <h3>Verification checklist</h3>
+              <ul>
+                <li>
+                  Exactly 12 source orders exist before the index experiment.
+                </li>
+                <li>
+                  The paid-order business result remains identical before and
+                  after index creation.
+                </li>
+                <li>
+                  The candidate index definition and size are visible through
+                  <code>getIndexes()</code>/<code>indexSizes</code>.
+                </li>
+                <li>
+                  Explain evidence distinguishes collection document reads from
+                  index-key reads.
+                </li>
+                <li>
+                  Adding a non-indexed projected field destroys the
+                  covered-query condition.
+                </li>
+                <li>
+                  The write-cost demonstration is treated as comparative
+                  evidence, not a universal performance number.
+                </li>
+              </ul>
+              <p>
+                <strong>Production judgment.</strong> Add an index only when a
+                recurring query shape or invariant justifies its storage and
+                write-maintenance cost. Indexes improve access paths; they do
+                not change write concern, replication durability, or read
+                consistency. On replica sets, every index is maintained on
+                replica members; on sharded collections, index requirements
+                interact with shard-key routing and unique-index restrictions.
+                Treat index builds as operational changes with disk/headroom,
+                replication lag, rollback, and observation plans. Lesson 2 turns
+                this one good shape into a systematic compound-key ordering
+                decision.
+              </p>
+              <div class="code-window" data-code-block="" data-language="bash">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>bash ·
+                    cleanup / full reset
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0 2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-bash"><span class="code-line">docker rm -f atlasmart-mongo-ch10-l1</span><span class="code-line">docker volume rm atlasmart-mongo-ch10-l1-data</span></code></pre>
+              </div>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>
+                    Why can an ordered index support both filtering and sorting?
+                  </li>
+                  <li>What does totalDocsExamined measure?</li>
+                  <li>What plan property indicates a covered query?</li>
+                  <li>
+                    Why is a tiny executionTimeMillis comparison weak evidence?
+                  </li>
+                  <li>
+                    What costs increase when another secondary index is added?
+                  </li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      <strong>1.</strong> Equality/range predicates can select
+                      contiguous index regions while the stored key order can
+                      already match the requested sort.
+                    </p>
+                    <p>
+                      <strong>2.</strong> The number of collection-document
+                      examinations during execution; it is not the number of
+                      returned documents.
+                    </p>
+                    <p>
+                      <strong>3.</strong> The plan can answer from index keys
+                      without a collection fetch; explain shows index access
+                      without an IXSCAN descending from/feeding a FETCH for the
+                      covered portion.
+                    </p>
+                    <p>
+                      <strong>4.</strong> Twelve documents are dominated by
+                      fixed overhead, cache state, and planner behavior; it does
+                      not represent production latency distributions.
+                    </p>
+                    <p>
+                      <strong>5.</strong> Storage, cache footprint,
+                      insert/update/delete maintenance, build/rebuild work,
+                      backup footprint, and potentially replication/recovery
+                      cost.
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <ul class="reference-list">
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/manual/release-notes/8.3/"
+                    rel="noopener"
+                    target="_blank"
+                    >MongoDB 8.3 release notes</a
+                  >
+                  — Current 8.3 baseline and patch-sensitive behavior; re-check
+                  before reproduction.
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/manual/indexes/"
+                    rel="noopener"
+                    target="_blank"
+                    >Indexes overview</a
+                  >
+                  — Index concepts, names, build considerations, and
+                  index-management overview.
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/manual/reference/explain-results/"
+                    rel="noopener"
+                    target="_blank"
+                    >Explain results</a
+                  >
+                  — IXSCAN/FETCH/COLLSCAN evidence, covered-query plans,
+                  keys/documents examined, and execution statistics.
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/manual/tutorial/measure-index-use/"
+                    rel="noopener"
+                    target="_blank"
+                    >Measure index use</a
+                  >
+                  — Using $indexStats and explain evidence instead of intuition
+                  to manage indexes.
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/mongodb-shell/changelog/"
+                    rel="noopener"
+                    target="_blank"
+                    >mongosh release notes</a
+                  >
+                  — mongosh version used for chapter commands.
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/manual/data-modeling/schema-design-process/create-indexes/"
+                    rel="noopener"
+                    target="_blank"
+                    >Create indexes to support queries</a
+                  >
+                  — Covered-query concept, workload-driven indexing, and the
+                  warning that excessive indexes hurt write-heavy workloads.
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/manual/core/indexes/index-types/index-compound/"
+                    rel="noopener"
+                    target="_blank"
+                    >Compound indexes</a
+                  >
+                  — Ordered compound keys, field order, prefixes, sort order,
+                  and field-count limit.
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a href="../Chapter09/Lesson5.html"
+              ><small>Previous lesson</small
+              ><strong
+                >$merge and $out for Materialized Views, ETL, Rebuilds, and
+                Operational Safety</strong
+              ></a
+            ><a class="next" href="Lesson2.html"
+              ><small>Next lesson</small
+              ><strong
+                >Single-Field and Compound Indexes: ESR-Style Ordering and
+                Prefix Rules</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <small
+          >Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>

@@ -1,0 +1,1543 @@
+<!doctype html>
+
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Compare logical MongoDB dumps with physical backup, create a consistent replica-set dump with oplog coverage, restore it, and validate application invariants."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Logical Export/Import vs Physical Backup: mongodump/mongorestore
+      Boundaries and Use Cases | MongoDB | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">MDB</span>
+            <div><small>Course 11</small><strong>MongoDB</strong></div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 135 lessons..."
+            type="search"
+        /></label>
+        <nav aria-label="MongoDB curriculum" class="sidebar-curriculum">
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>MongoDB Foundations, Editions, Deployment Models,
+              mongosh, and Lab Setup
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>What MongoDB Is: Document Database Architecture,
+                Common Workloads, and Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Self-Managed MongoDB vs Atlas: Responsibility
+                Boundaries, Features, and Cost Awareness</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>Install MongoDB and mongosh or Provision a Free
+                Learning Environment</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>Processes, Ports, Data Directories, Connection
+                Strings, Databases, and Collections</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Reproducible Lab with Sample Data,
+                Configuration, Logging, and Safe Administrative Accounts</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>BSON, Documents, Collections, Flexible Schema, and
+              Data Types
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>BSON vs JSON: Binary Representation, Type
+                Fidelity, Size, and Driver Mapping</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>_id, ObjectId, Field Names, Embedded Documents,
+                Arrays, and Document Size Limits</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Numeric, Date, Timestamp, Decimal128, Binary,
+                Regex, ObjectId, and Null Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>Flexible Schema Does Not Mean No Schema:
+                Implicit Contracts and Application Evolution</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Inspect Documents and Collection Metadata with
+                mongosh and Database Commands</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>CRUD Fundamentals: Insert, Find, Projection, Sort,
+              Limit, and Delete
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>InsertOne/InsertMany, Generated _id Values,
+                Ordered Writes, and Error Handling</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Find Filters, Comparison/Logical Operators,
+                Projection, Sorting, Skipping, and Limiting</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>Cursor Behavior, Batch Size, Iteration,
+                Exhaustion, and Client-Side Resource Management</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>DeleteOne/DeleteMany, Precise Predicates, Safety
+                Checks, and Observable Change Counts</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Build a CRUD Lab and Verify Every Operation with
+                Deterministic Queries</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Query Operators, Arrays, Nested Fields,
+              Null/Missing Semantics, and Expressions
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Dot Notation, Embedded-Document Matching,
+                Arrays, $elemMatch, and Positional Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>$in, $nin, $all, $size, $exists, $type, $regex,
+                and Expression-Based Filtering</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>Null vs Missing Fields: Query Semantics, Index
+                Behavior, and Data-Quality Consequences</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>$expr and Computed Predicates: Comparing Fields
+                and Reusing Aggregation Expressions</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Query Anti-Patterns: Unbounded Regex, Huge $in
+                Lists, Client Filtering, and Accidental Collection Scans</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>Updates, Array Mutations, Upserts, findAndModify,
+              and Bulk Writes
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>$set, $unset, $inc, $mul, $min, $max, $rename,
+                and Replacement Updates</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>Array Updates with $, $[], $[identifier],
+                arrayFilters, $push, $addToSet, and $pull</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>Upserts, Equality Predicates, Generated
+                Documents, and Race-Safe Expectations</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>findOneAndUpdate/Replace/Delete: Atomic
+                Read-Modify-Write and Return Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>Bulk Writes Across Operations and Namespaces:
+                Ordered vs Unordered Execution and Error Analysis</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Document Modeling: Embedding, References,
+              Cardinality, and Aggregate Boundaries
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>Start from Workload: Queries, Updates,
+                Atomicity, Cardinality, Growth, and Retention</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>Embed vs Reference: Read Locality, Duplication,
+                Independent Lifecycles, and Fan-Out</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>One-to-One, One-to-Many, Many-to-Many,
+                Parent/Child, and Extended Reference Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>Document Growth, Large Arrays,
+                Bucket/Subset/Computed Patterns, and Bounded Aggregates</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Design a Schema for a Real Application and
+                Defend Every Duplication Decision</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>Schema Validation, Evolution, Versioning, and Data
+              Quality
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>JSON Schema Validation with $jsonSchema:
+                Required Fields, Types, Ranges, and Nested Rules</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>Validation Levels and Actions: strict/moderate,
+                error/warn, and Safe Rollout of New Rules</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>Schema Version Fields, Lazy Migration, Eager
+                Backfills, and Mixed-Version Readers</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Defaults, Missing Fields, Derived Data, and
+                Repairing Historical Documents</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Test Validators and Migration Scripts Against
+                Production-Like Samples Before Enforcement</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary><span>08</span>Aggregation Pipeline Fundamentals</summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>Pipeline Mental Model: Documents Flow Through
+                Ordered Stages</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>$match, $project/$set, $unset, $sort, $limit,
+                $skip, and Early-Reduction Strategy</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>$group, Accumulators, Distinct-Like Analysis,
+                and Correct Aggregation Keys</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>$unwind Arrays Without Losing Empty/Missing
+                Cases</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Explain Aggregation Pipelines and Push Selective
+                Work Toward Indexed Stages</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>Advanced Aggregation: Joins, Facets, Windows,
+              Reshaping, and Write-Back
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>$lookup Joins, Correlated Pipelines,
+                Indexability, and When References Become Expensive</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>$graphLookup for Recursive Relationships and
+                Traversal Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>$facet, $bucket/$bucketAuto, Multi-Dimensional
+                Analysis, and Memory Considerations</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>$setWindowFields, Ranking, Moving Windows,
+                Time-Based Analytics, and Partitioning</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>$merge and $out for Materialized Views, ETL,
+                Rebuilds, and Operational Safety</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>Index Fundamentals: Single, Compound, Multikey,
+              Unique, and Index Prefixes
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>How B-Tree-Like Indexes Support Equality, Range,
+                Sort, and Covered Queries</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>Single-Field and Compound Indexes: ESR-Style
+                Ordering and Prefix Rules</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>Multikey Indexes for Arrays: Index-Key
+                Expansion, Constraints, and Query Shapes</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>Unique Indexes, Missing/Null Values, Collations,
+                and Application Invariants</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Create, Hide, Inspect, Rename/Drop, and Measure
+                Indexes Without Guessing</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>Advanced Indexes: Partial, Sparse, TTL, Wildcard,
+              Hashed, Text, and Geospatial
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>Partial vs Sparse Indexes: Selective Indexing
+                and Query Eligibility</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>TTL Indexes: Expiration Semantics, Background
+                Deletion, and Time-Based Retention</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>Wildcard Indexes for Dynamic Fields:
+                Flexibility, Cost, and When Explicit Indexes Win</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Hashed Indexes and Their Role in Shard-Key
+                Distribution</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Text and Geospatial Index Families:
+                Capabilities, Restrictions, and Dedicated Search Alternatives</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>Query Planning, explain(), Plan Cache, Profiling,
+              and Slow Query Diagnosis
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>COLLSCAN, IXSCAN, FETCH, SORT, COVERED Plans,
+                and Reading explain Execution Stats</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>Winning vs Rejected Plans, Candidate
+                Enumeration, and Plan Cache Behavior</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>Index Selectivity, Cardinality, Sort Support,
+                Multikey Effects, and Query Shape</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>Database Profiler, Slow Operation Thresholds,
+                Logs, $currentOp, and Query Analysis</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>Tune a Slow Workload by Changing Query Shape or
+                Indexes and Re-Measure the Evidence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Sessions and Multi-Document Transactions
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>Single-Document Atomicity First: When
+                Transactions Are Unnecessary</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Logical Sessions, Transaction
+                Start/Commit/Abort, and Driver Transaction APIs</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>Read Concern, Write Concern, Retry Semantics,
+                and Snapshot Behavior Inside Transactions</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Production Limits: Runtime, Locking, Sharded
+                Costs, DDL Restrictions, and Abort Scenarios</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Redesign a Transaction-Heavy Model to Reduce
+                Cross-Document/Cross-Shard Coordination</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Replica Sets: Replication, Oplog, Elections, and
+              Failover
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Replica-Set Roles, Primary/Secondary Members,
+                Oplog Replication, and Majority Commit Point</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Initialize a Replica Set, Add Members, Inspect
+                Status, and Understand Configuration Versions</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Elections, Terms, Heartbeats, Priorities, Votes,
+                Stepdown, and Failover Windows</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Secondary Sync, Initial Sync, Rollback, Oplog
+                Sizing, and Replication Lag</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Run Failure Drills: Kill the Primary, Observe
+                Elections, and Verify Application Recovery</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Read Concern, Write Concern, Read Preference, and
+              Causal Consistency
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>Write Concern w, j, wtimeout, Majority
+                Acknowledgment, and Durability Expectations</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Read Concern local, available, majority,
+                linearizable, snapshot, and Staleness Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Read Preference Modes, Tag Sets,
+                maxStalenessSeconds, and Secondary-Read Consequences</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Causally Consistent Sessions, Read-Your-Writes,
+                Monotonic Reads, and Cluster Time</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Choose Concerns per Operation from Invariants,
+                Latency Budgets, and Regional Failure Requirements</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Sharded Cluster Architecture, mongos Routing,
+              Config Servers, and Chunks/Ranges
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>Why Shard: Data Capacity, Throughput, Working
+                Set, and Geographic/Operational Needs</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Shards as Replica Sets, Config Server Replica
+                Set, mongos Routers, and Metadata</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>Query Targeting vs Scatter/Gather: How Shard
+                Keys Determine Routing Cost</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Chunks/Ranges, Balancer, Migration, Critical
+                Sections, and Operational Headroom</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Build a Small Sharded Lab and Trace a Routed
+                Query from mongos to Target Shards</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Shard Keys, Zones, Balancing, Resharding, and
+              Evolving Distribution
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>Choose a Shard Key: Cardinality, Frequency,
+                Monotonicity, Query Isolation, and Write Distribution</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>Ranged vs Hashed Sharding, Compound Keys, and
+                Prefix-Aware Targeting</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>analyzeShardKey and Workload Evidence for
+                Prospective Keys</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>Zones and Zone Ranges for Data Locality,
+                Compliance, and Hardware Tiers</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Refine, Reshard, Unshard/Move Collections Where
+                Supported, and Plan Safe Distribution Changes</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Change Streams, CDC, Resumability, and Event-Driven
+              Integration
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>Change Streams vs Tailing the Oplog: Stable API,
+                Resume Tokens, and Deployment Requirements</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>Watch a Collection, Database, or Deployment and
+                Filter Change Events with Pipelines</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Full Document/Pre-Image Options, Update
+                Descriptions, Deletes, and Schema Evolution</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Resume Tokens, startAfter/resumeAfter,
+                Invalidation, Oplog Windows, and Recovery</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>Build Idempotent Consumers for Search Indexing,
+                Cache Invalidation, Outbox Alternatives, and Analytics</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>19</span>Time-Series Collections, Bucketing, Retention, and
+              Time-Based Analytics
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Time-Series Collection Model: timeField,
+                metaField, Granularity, and Internal Bucketing</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Model Sensors, Metrics, Events, and Device
+                Metadata for Efficient Compression and Queries</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>Time-Series Indexes, Sort/Match Patterns, Window
+                Analytics, and Bucket-Aware Performance</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>Expiration/Retention Policies and the Difference
+                Between Event Time and Ingest Time</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Operate High-Volume Time-Series Workloads with
+                Bounded Cardinality and Capacity Planning</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Geospatial Data and Location Queries
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>GeoJSON, Legacy Coordinate Pairs, Coordinate
+                Reference Expectations, and Data Validation</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>2dsphere vs 2d Indexes and Choosing the Right
+                Geometry Model</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>$near/$nearSphere, $geoWithin, $geoIntersects,
+                Distance, and Query Constraints</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>$geoNear in Aggregation Pipelines and Combining
+                Spatial Predicates with Business Filters</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Design and Benchmark a Location Service with
+                Precision, Bounding, and Index Selectivity</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Atlas Search, Vector Search, Hybrid Retrieval, and
+              AI-Oriented Workloads
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>Dedicated Search vs Database Indexes: Analyzers,
+                Relevance, Faceting, and Operational Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>Atlas Search Index Mappings, Text Operators,
+                Compound Queries, Highlighting, and Scoring</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>Embeddings and Vector Search: Dimensions,
+                Similarity Metrics, ANN Recall, and Index Choices</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Hybrid Text + Vector Retrieval, Metadata
+                Filtering, Reranking, and Evaluation</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>Design RAG/Recommendation Retrieval with
+                Freshness, Security Filters, Cost, and Observability</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Authentication, Authorization, TLS, Network
+              Security, and Auditing
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>Enable Authentication Safely and Understand the
+                localhost Exception During Bootstrap</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>Users, Roles, Privileges, Built-In Roles, Custom
+                Roles, and Least-Privilege Service Accounts</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>TLS Certificates, Hostname Validation, Internal
+                Cluster Authentication, and Key Rotation</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>Network Exposure, Firewalls/Private Networking,
+                Bind Settings, and Administrative Separation</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Auditing and Compliance Capabilities: What to
+                Log, Protect, Retain, and Review</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>23</span>Encryption: At Rest, Client-Side Field Level, and
+              Queryable Encryption
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter23/Lesson1.html"
+                ><span>01</span>Threat Models: Disk Theft, Cloud Admin, Database
+                Admin, Application Compromise, and Log Leakage</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson2.html"
+                ><span>02</span>Storage Encryption and Key Management Boundaries
+                in Self-Managed and Managed Environments</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson3.html"
+                ><span>03</span>Client-Side Field Level Encryption: Key Vaults,
+                KMS, Automatic Encryption, and Driver Responsibilities</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson4.html"
+                ><span>04</span>Queryable Encryption: Supported Query Patterns,
+                Metadata, Performance, and Schema Planning</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson5.html"
+                ><span>05</span>Rotate Keys, Back Up Key Material, Test
+                Recovery, and Prevent Encrypted Data from Becoming
+                Unrecoverable</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>WiredTiger Storage Engine, Journaling, Checkpoints,
+              Compression, and Cache
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="Lesson1.html"
+                ><span>01</span>WiredTiger Tables, B-Trees, Pages, Cache, File
+                Layout, and the Storage-Engine Boundary<i>Current</i></a
+              ><a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>Journaling and Checkpoints: Durability Timeline,
+                Crash Recovery, and Write Concern Interaction</a
+              ><a class="sidebar-lesson" href="Lesson3.html"
+                ><span>03</span>Compression for Collections and Indexes: Space,
+                CPU, Cache Density, and Workload Tradeoffs</a
+              ><a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>WiredTiger Cache Pressure, Eviction, Dirty Data,
+                Tickets/Concurrency, and Diagnostic Metrics</a
+              ><a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Diagnose Disk, Cache, Checkpoint, and Write
+                Amplification Problems with Server Metrics</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>25</span>Backup, Restore, Snapshots, Point-in-Time Recovery,
+              and Disaster Recovery
+            </summary>
+            <div>
+              <a
+                aria-current="page"
+                class="sidebar-lesson is-current"
+                href="../Chapter25/Lesson1.html"
+                ><span>01</span>Logical Export/Import vs Physical Backup:
+                mongodump/mongorestore Boundaries and Use Cases</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson2.html"
+                ><span>02</span>Replica-Set Consistent Snapshots,
+                Filesystem/Volume Snapshots, and Oplog-Aware Recovery</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson3.html"
+                ><span>03</span>Atlas Backup Concepts, Continuous/PIT Recovery,
+                Retention, and Regional Copy Strategy</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson4.html"
+                ><span>04</span>Sharded-Cluster Backup Consistency,
+                Balancer/Metadata Concerns, and Restore Ordering</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson5.html"
+                ><span>05</span>Perform a Restore Drill and Measure RPO, RTO,
+                Integrity, Index Rebuild, and Application Cutover</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>26</span>Monitoring, Capacity, Performance, Upgrades, and
+              Feature Compatibility Version
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter26/Lesson1.html"
+                ><span>01</span>serverStatus, dbStats/collStats, Logs, Profiler,
+                currentOp, Atlas Metrics, and Alert Design</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson2.html"
+                ><span>02</span>Capacity for Working Set, WiredTiger Cache,
+                Indexes, Oplog, Connections, Disk, and Replication Headroom</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson3.html"
+                ><span>03</span>Benchmark Reads/Writes/Aggregations with
+                Realistic Document Shapes, Skew, Durability, and Concurrency</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson4.html"
+                ><span>04</span>Rolling Upgrades, Binary Compatibility, Feature
+                Compatibility Version, and Upgrade Sequencing</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson5.html"
+                ><span>05</span>Incident Runbooks for Replication Lag, Disk
+                Pressure, Slow Queries, Elections, and Shard Imbalance</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>27</span>Drivers, Application Patterns, Production
+              Architecture, and Capstone
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter27/Lesson1.html"
+                ><span>01</span>Connection Strings, Topology Discovery,
+                Connection Pools, Server Selection, Timeouts, and
+                Cancellation</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson2.html"
+                ><span>02</span>Retryable Reads/Writes, Transactions,
+                Idempotency, Command Monitoring, and Error Classification</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson3.html"
+                ><span>03</span>Pagination, Batch Operations, Schema Versioning,
+                Change Streams, and Backpressure in Applications</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson4.html"
+                ><span>04</span>Production Design: Topology, Concerns, Shard
+                Key, Index Budget, Backups, Security, Monitoring, and Cost</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson5.html"
+                ><span>05</span>Capstone: Build, Load-Test, Fail, Recover,
+                Secure, Tune, and Defend a Production MongoDB System</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 22 · Lesson 01</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">MongoDB</a><span>/</span
+            ><span>Chapter 25 · Lesson 01</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Treat logical export as one recovery mechanism—not as a substitute
+              for physical snapshots, PIT history, key recovery, or restore
+              testing.
+            </p>
+            <h1>
+              Logical Export/Import vs Physical Backup: mongodump / mongorestore
+              Boundaries and Use Cases
+            </h1>
+            <p>
+              Compare logical MongoDB dumps with physical backup, create a
+              consistent replica-set dump with oplog coverage, restore it, and
+              validate application invariants.
+            </p>
+            <div class="lesson-meta">
+              <span>Advanced</span><span>120–220 minutes</span
+              ><span>Backup artifact and logical-restore lab</span
+              ><span
+                >MongoDB 8.3.8 · Database Tools 100.18.0 · mongosh 2.10.0 ·
+                PyMongo 4.17.0</span
+              ><span>Last reviewed: September 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning objectives</h2>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Separate logical BSON export/import from physical storage
+                    backup and explain when each is appropriate.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Use Database Tools 100.18.0 with a pinned MongoDB 8.3.8
+                    replica-set lab and capture a backup manifest.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Explain exactly what
+                    <code>mongodump --oplog</code> captures—and why it is not a
+                    continuous PIT archive.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Restore into a clean target, verify counts/indexes/business
+                    invariants, and detect a partial or inconsistent recovery.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Carry encryption/key dependencies, topology, FCV, and
+                    restore-testing requirements into the backup design.
+                  </p>
+                </div>
+              </div>
+            </section>
+            <div class="callout">
+              <strong>Reproducible lab baseline</strong>
+              <p>
+                This chapter pins
+                <code>MongoDB Community Server 8.3.8</code> with
+                <code
+                  >mongodb/mongodb-community-server:8.3.8-ubuntu2204-slim</code
+                >, <code>mongosh 2.10.0</code>,
+                <code>PyMongo 4.17.0</code> where application checks are useful,
+                and <strong>MongoDB Database Tools 100.18.0</strong> for
+                <code>mongodump</code>, <code>mongorestore</code>, and
+                <code>bsondump</code>. Lesson 1 uses a disposable one-member
+                replica set as the source so an oplog exists, plus a clean
+                standalone restore target. Host exposure is loopback-only on
+                <code>127.0.0.1:27191–27192</code>. Authentication and TLS are
+                disabled only for disposable local labs; production security
+                remains the Chapter 22 prerequisite. Default read/write concern
+                and primary read preference are used unless a step states
+                otherwise.
+                <strong>FCV is observed and never changed.</strong> Atlas,
+                Enterprise Advanced, Search, Vector Search, and KMS are optional
+                unless a lesson explicitly labels them. Database Tools run on
+                the host and are verified with <code>mongodump --version</code>;
+                they release independently from the server. Runtime
+                backup/restore labs were not executed in the generation
+                environment, so artifact sizes, restore durations, RPO/RTO
+                measurements, snapshot times, and checksums must be recorded
+                locally rather than copied as invented output.
+              </p>
+            </div>
+            <section>
+              <h2>
+                1. AtlasMart problem: a successful dump is not yet a recovery
+                system
+              </h2>
+              <p>
+                AtlasMart can copy its <code>orders</code> collection every
+                night and still fail recovery. A
+                <strong>logical backup</strong> reads documents, collection
+                options, and index definitions through MongoDB interfaces and
+                serializes them as BSON. A
+                <strong>physical backup</strong> captures the storage files or
+                block device containing WiredTiger state. The two solve
+                different operational problems: logical dumps are portable and
+                selective, while physical snapshots can be much faster for large
+                data sets and preserve storage-engine state as a unit.
+              </p>
+              <p>
+                Neither method is automatically a disaster-recovery system.
+                Recovery also needs a defined
+                <strong>Recovery Point Objective (RPO)</strong>—how much recent
+                data loss the business can tolerate—and
+                <strong>Recovery Time Objective (RTO)</strong>—how long service
+                restoration may take. A backup that cannot be restored within
+                the RTO, lacks encryption keys, or restores documents that
+                violate application invariants is not sufficient.
+              </p>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Mechanism</th>
+                      <th>Captures</th>
+                      <th>Strength</th>
+                      <th>Boundary</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><code>mongodump</code></td>
+                      <td>
+                        BSON documents, metadata/options, index definitions
+                      </td>
+                      <td>Portable and selective</td>
+                      <td>
+                        Reads through a running server; can disturb cache and is
+                        not a physical image
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><code>mongodump --oplog</code></td>
+                      <td>
+                        Full dump plus writes that occur
+                        <em>during that dump</em>
+                      </td>
+                      <td>
+                        Creates a consistent replica-set dump while writes
+                        continue
+                      </td>
+                      <td>Not a continuous history after the dump finishes</td>
+                    </tr>
+                    <tr>
+                      <td>Filesystem / block snapshot</td>
+                      <td>Data/journal blocks at a coordinated instant</td>
+                      <td>
+                        Fast for large deployments when storage supports it
+                      </td>
+                      <td>
+                        Requires snapshot consistency, storage coordination, key
+                        material, and off-system retention
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Atlas continuous backup</td>
+                      <td>Managed snapshots plus retained oplog history</td>
+                      <td>PIT recovery inside configured window</td>
+                      <td>
+                        Paid managed capability with tier/version/region
+                        constraints
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section>
+              <h2>2. Verify the toolchain before creating evidence</h2>
+              <p>
+                MongoDB Database Tools use an independent release train. This
+                lesson pins <code>100.18.0</code>, released in August 2026 and
+                compatible with MongoDB 8.3. Do not assume a server package
+                automatically installed the matching tools.
+              </p>
+              <div class="code-window" data-code-block="" data-language="bash">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>verify
+                    server and Database Tools versions
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-bash"><span class="code-line">mongodump --version</span><span class="code-line">mongorestore --version</span><span class="code-line">bsondump --version</span><span class="code-line"></span><span class="code-line">docker rm -f atlasmart-ch25-l1-src atlasmart-ch25-l1-restore 2&gt;/dev/null || true</span><span class="code-line">docker volume rm atlasmart-ch25-l1-src-db atlasmart-ch25-l1-restore-db 2&gt;/dev/null || true</span><span class="code-line"></span><span class="code-line">docker run -d --name atlasmart-ch25-l1-src \</span><span class="code-line">  -p 127.0.0.1:27191:27017 \</span><span class="code-line">  -v atlasmart-ch25-l1-src-db:/data/db \</span><span class="code-line">  mongodb/mongodb-community-server:8.3.8-ubuntu2204-slim \</span><span class="code-line">  --replSet rs25l1 --bind_ip_all --port 27017</span><span class="code-line">until mongosh "mongodb://127.0.0.1:27191/admin?directConnection=true" --quiet --eval 'db.runCommand({ping:1}).ok' 2&gt;/dev/null | grep -q 1; do sleep 1; done</span><span class="code-line">mongosh "mongodb://127.0.0.1:27191/admin?directConnection=true" --quiet --eval '</span><span class="code-line">  rs.initiate({_id:"rs25l1",members:[{_id:0,host:"atlasmart-ch25-l1-src:27017"}]});</span><span class="code-line">'</span><span class="code-line">until mongosh "mongodb://127.0.0.1:27191/admin?directConnection=true" --quiet --eval 'db.hello().isWritablePrimary' 2&gt;/dev/null | grep -q true; do sleep 1; done</span><span class="code-line">mongosh "mongodb://127.0.0.1:27191/admin?directConnection=true" --quiet --eval '</span><span class="code-line">  printjson(db.adminCommand({buildInfo:1}).version);</span><span class="code-line">  printjson(db.adminCommand({getParameter:1,featureCompatibilityVersion:1}));</span><span class="code-line">'</span></code></pre>
+              </div>
+              <p>
+                The one-member replica set exists only to expose oplog
+                semantics. It has no high availability and does not model
+                majority durability across independent failure domains.
+              </p>
+            </section>
+            <section>
+              <h2>3. Seed a cross-collection invariant before the dump</h2>
+              <p>
+                AtlasMart will validate more than counts. Every paid order must
+                have exactly one payment with the same amount. That business
+                invariant makes a partial restore visible even when individual
+                collections look healthy.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="javascript"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>seed
+                    orders, payments, and indexes
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-javascript"><span class="code-line">const d=db.getSiblingDB("atlasmart");</span><span class="code-line">d.orders_ch25_l1.drop(); d.payments_ch25_l1.drop();</span><span class="code-line">d.orders_ch25_l1.createIndex({tenantId:1,createdAt:-1},{name:"idx_tenant_created"});</span><span class="code-line">d.payments_ch25_l1.createIndex({orderId:1},{name:"uq_payment_order",unique:true});</span><span class="code-line">const orders=[]; const payments=[];</span><span class="code-line">for (let i=0;i&lt;5000;i++) {</span><span class="code-line">  const orderId=`O-${String(i).padStart(6,"0")}`;</span><span class="code-line">  const totalCents=1000+(i%19000);</span><span class="code-line">  orders.push({orderId,tenantId:`tenant-${i%8}`,status:"paid",totalCents,createdAt:new Date(Date.UTC(2026,8,3,6,0,i%60))});</span><span class="code-line">  payments.push({paymentId:`P-${String(i).padStart(6,"0")}`,orderId,amountCents:totalCents,status:"captured"});</span><span class="code-line">}</span><span class="code-line">d.orders_ch25_l1.insertMany(orders);</span><span class="code-line">d.payments_ch25_l1.insertMany(payments);</span><span class="code-line">printjson({orders:d.orders_ch25_l1.countDocuments(),payments:d.payments_ch25_l1.countDocuments()});</span><span class="code-line">printjson(d.orders_ch25_l1.getIndexes().map(x=&gt;({name:x.name,key:x.key})));</span></code></pre>
+              </div>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="python"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >calculate a deterministic application-level checksum
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-python"><span class="code-line">from pymongo import MongoClient</span><span class="code-line">import hashlib, json</span><span class="code-line">c=MongoClient("mongodb://127.0.0.1:27191/?directConnection=true")</span><span class="code-line">db=c.atlasmart</span><span class="code-line"></span><span class="code-line">def digest(name):</span><span class="code-line">    h=hashlib.sha256()</span><span class="code-line">    for doc in db[name].find({}, {"_id":0}).sort([(k,1) for k in (["orderId"] if name.startswith("orders") else ["paymentId"]) ]):</span><span class="code-line">        h.update(json.dumps(doc, sort_keys=True, default=str, separators=(",", ":")).encode())</span><span class="code-line">    return h.hexdigest()</span><span class="code-line">print({"orders":digest("orders_ch25_l1"),"payments":digest("payments_ch25_l1")})</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>
+                4. Take a consistent logical dump and inventory the artifact
+              </h2>
+              <p>
+                Without <code>--oplog</code>, writes that occur while a full
+                replica-set dump is running can leave collections representing
+                different logical moments. With <code>--oplog</code>, the tools
+                capture the oplog entries generated during the dump and
+                <code>mongorestore --oplogReplay</code> applies them after
+                restoring the BSON files. The captured history ends when the
+                dump ends; it does not include later writes and therefore is not
+                continuous point-in-time recovery.
+              </p>
+              <div class="code-window" data-code-block="" data-language="bash">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>create a
+                    full replica-set dump with oplog coverage
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-bash"><span class="code-line">rm -rf /tmp/atlasmart-ch25-l1-dump</span><span class="code-line">mkdir -p /tmp/atlasmart-ch25-l1-dump</span><span class="code-line">START_UTC="$(date -u +%Y-%m-%dT%H:%M:%SZ)"</span><span class="code-line">mongodump \</span><span class="code-line">  --uri="mongodb://127.0.0.1:27191/?directConnection=true" \</span><span class="code-line">  --oplog \</span><span class="code-line">  --out=/tmp/atlasmart-ch25-l1-dump</span><span class="code-line">END_UTC="$(date -u +%Y-%m-%dT%H:%M:%SZ)"</span><span class="code-line">find /tmp/atlasmart-ch25-l1-dump -type f -printf '%P %s bytes\n' | sort</span><span class="code-line">sha256sum /tmp/atlasmart-ch25-l1-dump/oplog.bson</span><span class="code-line">printf 'dump_start=%s\ndump_end=%s\n' "$START_UTC" "$END_UTC" | tee /tmp/atlasmart-ch25-l1-dump/MANIFEST.times</span></code></pre>
+              </div>
+              <div class="callout warning">
+                <strong>Boundary:</strong>
+                <p>
+                  <code>--oplogReplay</code> requires the full dump. Do not
+                  combine it with namespace-limiting restore options. Also,
+                  Database Tools 100.18.0 reject an oplog replay that spans the
+                  MongoDB 8.x→9.0 time-series format conversion. This course
+                  keeps FCV fixed during backup.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>
+                5. Restore into a clean target and prove application integrity
+              </h2>
+              <div class="code-window" data-code-block="" data-language="bash">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>restore
+                    to a disposable clean target
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-bash"><span class="code-line">docker run -d --name atlasmart-ch25-l1-restore \</span><span class="code-line">  -p 127.0.0.1:27192:27017 \</span><span class="code-line">  -v atlasmart-ch25-l1-restore-db:/data/db \</span><span class="code-line">  mongodb/mongodb-community-server:8.3.8-ubuntu2204-slim \</span><span class="code-line">  --bind_ip_all --port 27017</span><span class="code-line">until mongosh "mongodb://127.0.0.1:27192/admin" --quiet --eval 'db.runCommand({ping:1}).ok' 2&gt;/dev/null | grep -q 1; do sleep 1; done</span><span class="code-line">RESTORE_START="$(date +%s)"</span><span class="code-line">mongorestore --uri="mongodb://127.0.0.1:27192/" \</span><span class="code-line">  --oplogReplay \</span><span class="code-line">  /tmp/atlasmart-ch25-l1-dump</span><span class="code-line">RESTORE_END="$(date +%s)"</span><span class="code-line">echo "restore_seconds=$((RESTORE_END-RESTORE_START))"</span></code></pre>
+              </div>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="javascript"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>verify
+                    counts, indexes, and the paid-order/payment invariant
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-javascript"><span class="code-line">const d=db.getSiblingDB("atlasmart");</span><span class="code-line">const bad=d.orders_ch25_l1.aggregate([</span><span class="code-line">  {$match:{status:"paid"}},</span><span class="code-line">  {$lookup:{from:"payments_ch25_l1",localField:"orderId",foreignField:"orderId",as:"p"}},</span><span class="code-line">  {$match:{$expr:{$or:[{$ne:[{$size:"$p"},1]},{$ne:["$totalCents",{$arrayElemAt:["$p.amountCents",0]}]}]}}},</span><span class="code-line">  {$limit:10}</span><span class="code-line">]).toArray();</span><span class="code-line">printjson({orders:d.orders_ch25_l1.countDocuments(),payments:d.payments_ch25_l1.countDocuments(),badInvariantRows:bad.length});</span><span class="code-line">printjson(d.orders_ch25_l1.getIndexes().map(x=&gt;({name:x.name,key:x.key})));</span></code></pre>
+              </div>
+              <p>
+                A restore log ending successfully is only transport evidence.
+                The acceptance criteria are the restored record counts, index
+                definitions, deterministic checksums, and business invariants.
+                If the restore crashes midway, do not continue from a partially
+                restored target as if it were known-good; recreate the
+                disposable target and rerun the recovery from the beginning.
+              </p>
+            </section>
+            <section>
+              <h2>
+                6. Failure case: a selective dump can look healthy and still be
+                unusable
+              </h2>
+              <p>
+                A common “backup” is a dump of only the most visible collection.
+                Restore only <code>orders_ch25_l1</code> into a disposable
+                database and the order count can be perfect while every
+                paid-order/payment invariant fails. This is why backup scope
+                must be derived from application recovery boundaries rather than
+                from storage size or collection popularity.
+              </p>
+              <p>
+                Queryable Encryption introduces an additional boundary: current
+                <code>mongorestore</code> cannot restore a Queryable Encryption
+                collection. Client-Side Field Level Encryption ciphertext also
+                remains useless without the external key material needed to
+                decrypt it. The data artifact and its key-management recovery
+                path must be tested together.
+              </p>
+            </section>
+            <div class="checkpoint">
+              <h3>Check your understanding</h3>
+              <ol>
+                <li>What problem does <code>mongodump --oplog</code> solve?</li>
+                <li>
+                  Does the resulting <code>oplog.bson</code> provide continuous
+                  PIT recovery after the dump finishes?
+                </li>
+                <li>
+                  Why are collection counts insufficient restore evidence?
+                </li>
+                <li>
+                  When is a physical snapshot often preferable to a logical
+                  dump?
+                </li>
+                <li>What must be versioned with the backup besides data?</li>
+              </ol>
+              <details class="answer-toggle">
+                <summary>Review the answers</summary>
+                <div>
+                  <p>
+                    <strong>1.</strong> It captures writes that occur during a
+                    full replica-set dump so replay can make the dump consistent
+                    through the dump completion boundary.
+                  </p>
+                  <p>
+                    <strong>2.</strong> No. It ends with the dump; later writes
+                    require a separate continuous oplog/PIT mechanism.
+                  </p>
+                  <p>
+                    <strong>3.</strong> Counts can match while cross-collection
+                    relationships, totals, uniqueness, indexes, or
+                    encryption/key dependencies are wrong.
+                  </p>
+                  <p>
+                    <strong>4.</strong> For large deployments where block-level
+                    capture can meet the recovery objective with lower
+                    read/cache disruption, assuming snapshot consistency is
+                    engineered.
+                  </p>
+                  <p>
+                    <strong>5.</strong> Tool/server/FCV/topology assumptions,
+                    manifests, restore procedure, application invariant tests,
+                    and required encryption/key material.
+                  </p>
+                </div>
+              </details>
+            </div>
+            <section>
+              <h2>7. Production judgment</h2>
+              <p>
+                Use logical dumps when portability, selective recovery, or a
+                small deployment makes their read cost acceptable. Use
+                coordinated filesystem/block snapshots or managed backup for
+                larger recovery systems. Do not equate replication with backup:
+                an accidental delete is replicated. Treat every backup as
+                untrusted until a clean-target restore proves schema, indexes,
+                business invariants, security dependencies, RPO, and RTO. The
+                next lesson moves below logical BSON and shows what a physically
+                consistent snapshot requires.
+              </p>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <p>
+                Backup behavior is topology-, tool-, storage-, and
+                service-version sensitive. Re-check the current server, Database
+                Tools, Atlas, encryption, and restore documentation before
+                adopting a production procedure.
+              </p>
+              <ul>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/manual/core/backups/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Backup Methods for Self-Managed Deployments</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/manual/tutorial/backup-and-restore-tools/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Back Up and Restore with MongoDB Tools</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/database-tools/mongodump/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >mongodump 100.18.0</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/database-tools/mongorestore/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >mongorestore 100.18.0</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/database-tools/mongodump/mongodump-examples/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >mongodump Examples</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/database-tools/mongorestore/mongorestore-behavior-access-usage/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >mongorestore Behavior, Access, and Usage</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/database-tools/release-notes/database-tools-changelog/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Database Tools Release Notes</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/manual/tutorial/backup-with-filesystem-snapshots/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Filesystem Snapshots</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/manual/reference/method/db.fsyncLock/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >db.fsyncLock()</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/manual/core/replica-set-oplog/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Replication Oplog</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/manual/administration/backup-sharded-clusters/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Backup and Restore Self-Managed Sharded Clusters</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/manual/tutorial/backup-sharded-cluster-with-database-dumps/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Back Up Sharded Cluster with Database Dumps</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/manual/tutorial/restore-sharded-cluster-with-database-dumps/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Restore Sharded Cluster from Database Dumps</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/manual/core/sharded-cluster-config-servers/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Config Servers</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/atlas/architecture/current/backups/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Atlas Backup Architecture Guidance</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/atlas/backup/cloud-backup/restore-from-continuous/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Atlas Continuous Cloud Backup Restore</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/atlas/backup/cloud-backup/configure-backup-policy/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Atlas Backup Policy</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/atlas/architecture/current/disaster-recovery/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Atlas Disaster Recovery Guidance</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/manual/core/security-encryption-at-rest/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Encryption at Rest</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/manual/core/queryable-encryption/fundamentals/manage-keys/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >Queryable Encryption Key Management</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/manual/release-notes/8.3/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >MongoDB 8.3 Release Notes</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/mongodb-shell/changelog/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >mongosh Changelog</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.mongodb.com/docs/languages/python/pymongo-driver/current/reference/release-notes/"
+                    rel="noreferrer"
+                    target="_blank"
+                    >PyMongo Release Notes</a
+                  >
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a href="../Chapter24/Lesson5.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Diagnose Disk, Cache, Checkpoint, and Write Amplification
+                Problems with Server Metrics</strong
+              ></a
+            ><a class="next" href="Lesson2.html"
+              ><small>Next lesson</small
+              ><strong
+                >Replica-Set Consistent Snapshots, Filesystem/Volume Snapshots,
+                and Oplog-Aware Recovery</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <small
+          >Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>
