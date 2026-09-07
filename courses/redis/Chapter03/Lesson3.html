@@ -1,61 +1,1430 @@
 <!doctype html>
 <html data-theme="dark" lang="en">
-<head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><meta content="Work with multiple strings, byte ranges, append-only values, and arbitrary binary payloads while measuring response size, sparse allocation, key size, and Cluster multi-key boundaries." name="description"/><meta content="Abolfazl Mohammadijoo" name="author"/><meta content="dark light" name="color-scheme"/><meta content="#05070b" name="theme-color"/><title>MGET/MSET, GETRANGE/SETRANGE, APPEND, Binary Payloads, and Network/Memory Tradeoffs | Redis | Big Data Academy</title><link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/><link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/><script>try{const t=localStorage.getItem("big-data-academy-theme");if(t)document.documentElement.dataset.theme=t;else if(matchMedia("(prefers-color-scheme:light)").matches)document.documentElement.dataset.theme="light";}catch(e){}</script></head>
-<body class="lesson-page"><div class="reading-progress" data-reading-progress=""></div><div aria-hidden="true" class="site-grid"></div><a class="skip-link" href="#main-content">Skip to content</a>
-<header class="site-header" data-header=""><div class="header-inner"><a aria-label="Big Data Academy home" class="brand" href="../../../index.html"><span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span><span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span></a><nav aria-label="Primary navigation" class="desktop-nav"><a href="../../../index.html#roadmap">Learning path</a><a class="is-active" href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a></nav><div class="header-actions"><button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg></button><button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button></div></div><nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu=""><a href="../../../index.html#roadmap">Learning path</a><a href="../../../index.html#courses">Courses</a><a href="../../../index.html#method">Method</a><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a></nav></header>
-<div class="sidebar-overlay" data-sidebar-overlay=""></div><main class="lesson-shell" id="main-content"><aside class="course-sidebar" data-course-sidebar=""><div class="sidebar-head"><a href="../index.html"><span class="course-glyph">RD</span><div><small>Course 12</small><strong>Redis</strong></div></a><button aria-label="Close course navigation" data-sidebar-close="" type="button">×</button></div><label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 120 lessons..." type="search"/></label><nav aria-label="Redis curriculum" class="sidebar-curriculum"><details class="sidebar-chapter"><summary><span>01</span>Redis Foundations, Redis 8, Deployment Choices, CLI, and Lab Setup</summary><div><a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What Redis Is: In-Memory Data Structures, Optional Durability, and Common Workload Families</a><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Redis Open Source, Managed Services, and Deployment Topologies: Responsibility and Cost Boundaries</a><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>Install Redis or Start a Container, Connect with redis-cli, and Verify Server Metadata</a><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>RESP, Clients, Connections, Databases/Keyspaces, Command Atomicity, and Single-Threaded Command Semantics</a><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build a Reproducible Lab with Configuration, Persistence Directory, Metrics, and Safe Authentication</a></div></details><details class="sidebar-chapter"><summary><span>02</span>Keys, Namespaces, Expiration, TTL, Scanning, and Data-Type Introspection</summary><div><a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>Key Naming Schemes, Namespaces, Hash Tags, Cardinality, and Operational Discoverability</a><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>EXPIRE/PEXPIRE, EXPIREAT, TTL/PTTL, PERSIST, Conditional Expiration, and Lifecycle Semantics</a><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>KEYS vs SCAN: Incremental Iteration, Cursor Semantics, and Production Safety</a><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>TYPE, OBJECT, MEMORY USAGE, DUMP/RESTORE, COPY, RENAME, UNLINK, and Deletion Cost</a><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Design a Key Lifecycle Policy for Retention, Privacy, Cache Freshness, and Capacity</a></div></details><details class="sidebar-chapter" open=""><summary><span>03</span>Strings, Counters, Bitmaps, Bitfields, and Binary Values</summary><div><a class="sidebar-lesson" href="Lesson1.html"><span>01</span>SET/GET Options, NX/XX, GET, EX/PX, Atomic Initialization, and Conditional Writes</a><a class="sidebar-lesson" href="Lesson2.html"><span>02</span>INCR/DECR/INCRBYFLOAT: Counters, Quotas, Sequencing, and Overflow/Precision Awareness</a><a aria-current="page" class="sidebar-lesson is-current" href="Lesson3.html"><span>03</span>MGET/MSET, GETRANGE/SETRANGE, APPEND, Binary Payloads, and Network/Memory Tradeoffs<i>Current</i></a><a class="sidebar-lesson" href="Lesson4.html"><span>04</span>Bitmaps with SETBIT/GETBIT/BITCOUNT/BITOP for Dense Boolean State</a><a class="sidebar-lesson" href="Lesson5.html"><span>05</span>BITFIELD for Packed Integers, Overflow Modes, and Memory-Efficient Counters</a></div></details><details class="sidebar-chapter"><summary><span>04</span>Hashes and Object-Like Records</summary><div><a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>HSET/HGET/HMGET/HGETALL and Modeling Compact Field/Value Records</a><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>HINCRBY/HINCRBYFLOAT for Atomic Per-Field Metrics and State</a><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>HSCAN, Field Cardinality, Large Hashes, and Incremental Processing</a><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Field-Level Expiration Capabilities Where Available and Version-Aware Client Design</a><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>Hashes vs JSON vs Many Keys: Memory, Partial Updates, Indexing, and Schema Tradeoffs</a></div></details><details class="sidebar-chapter"><summary><span>05</span>Lists, Sets, and Queue/Collection Patterns</summary><div><a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>Lists: LPUSH/RPUSH, LPOP/RPOP, LRANGE, LTRIM, and Ordered Sequence Semantics</a><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Blocking List Operations and Reliable Queue Limitations Compared with Streams</a><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>Sets: SADD/SREM/SISMEMBER, Cardinality, Random Members, and Deduplication</a><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>SUNION/SINTER/SDIFF and Set Algebra for Tags, Audiences, and Permissions</a><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Choose List vs Set vs Stream vs Sorted Set from Ordering, Delivery, Replay, and Membership Needs</a></div></details><details class="sidebar-chapter"><summary><span>06</span>Sorted Sets, Rankings, Scheduling, and Range Queries</summary><div><a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>ZADD Scores, Members, Conditional Updates, and Rank Semantics</a><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>ZRANGE by Rank/Score/Lex, Reverse Ordering, Pagination, and WITHSCORES</a><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>ZINCRBY, Leaderboards, Sliding Windows, Delayed Work, and Time-Ordered Indexes</a><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>ZUNION/ZINTER/ZDIFF and Weighted Ranking Aggregation</a><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Use Sorted Sets for Rate Limits, Schedulers, Expiration Indexes, and Secondary Access Paths</a></div></details><details class="sidebar-chapter"><summary><span>07</span>Redis Streams and Consumer Groups</summary><div><a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>XADD IDs, Stream Ordering, Approximate Trimming, and Event Retention</a><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>XREAD for Blocking/Nonblocking Consumption and Replay from Explicit IDs</a><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Consumer Groups with XGROUP/XREADGROUP: Distribution, Pending Entries, and Acknowledgment</a><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>XPENDING, XCLAIM/XAUTOCLAIM, Idle Consumers, Retries, Poison Events, and Recovery</a><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Design an At-Least-Once Stream Pipeline with Idempotent Processing, Backpressure, and Observability</a></div></details><details class="sidebar-chapter"><summary><span>08</span>Redis JSON and Document-Oriented Data</summary><div><a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>JSON.SET/GET and JSON Paths: Store and Address Nested Documents</a><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>Atomic Numeric, String, Array, and Object Mutations Without Replacing Whole Documents</a><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Document Modeling: Embedding, Duplication, Key Design, Size, and Partial Updates</a><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>Index JSON Fields with Redis Search and Keep Schema Evolution Explicit</a><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Choose Hashes vs JSON from Query Needs, Structure, Memory, Client Ergonomics, and Search</a></div></details><details class="sidebar-chapter"><summary><span>09</span>Redis Search: Indexes, Text/Numeric/Tag/Geo Fields, Querying, and Aggregation</summary><div><a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>Create Search Indexes over Hash/JSON Data and Understand Schema/Prefix Scope</a><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>Text Analysis, Stemming, Stop Words, Exact Tags, Numeric Ranges, and Geospatial Fields</a><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>FT.SEARCH Query Syntax, Boolean Logic, Phrase/Prefix/Fuzzy Search, Sorting, and Pagination</a><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>FT.AGGREGATE Pipelines, Grouping, Reducers, Filters, Apply, and Result Shaping</a><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Index Maintenance, Memory Cost, Query Profiling, and Choosing Search vs Key-Based Access</a></div></details><details class="sidebar-chapter"><summary><span>10</span>Vector Sets, Vector Search, Hybrid Retrieval, and AI Workloads</summary><div><a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Embeddings, Dimensions, Cosine Similarity, HNSW Concepts, Recall, and Latency</a><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>VADD, VSIM, Vector-Set Metadata/Attributes, and Core Redis 8 Vector Operations</a><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Hybrid Retrieval with Structured Filters and Vector Similarity</a><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Vector Compression/Quantization Awareness, Memory Planning, and Accuracy Benchmarks</a><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>Design Semantic Search, Recommendations, or RAG Retrieval with Security Filters and Evaluation</a></div></details><details class="sidebar-chapter"><summary><span>11</span>Probabilistic Data Structures and Approximate Analytics</summary><div><a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>HyperLogLog for Approximate Cardinality: PFADD, PFCOUNT, PFMERGE, and Error Tradeoffs</a><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Bloom Filters: Membership with False Positives, Capacity, Error Rate, and Scaling</a><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Cuckoo Filters: Membership, Deletion, Count Semantics, and Capacity Planning</a><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>Count-Min Sketch, Top-K, and t-digest for Frequency, Heavy Hitters, and Quantiles</a><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Choose Approximate Structures When Memory Savings Outweigh Exactness Requirements</a></div></details><details class="sidebar-chapter"><summary><span>12</span>Time Series and Geospatial Workloads</summary><div><a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>Time-Series Keys, Labels, Retention, Duplicate Policies, and Compression Concepts</a><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Aggregations, Downsampling, Compaction Rules, and Multi-Series Queries</a><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Geospatial GEOADD, GEOSEARCH, Distance, Radius/Box Queries, and Sorted-Set Foundations</a><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>Model Metrics/Telemetry and Location Data with Bounded Cardinality and Retention</a><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Combine Time/Geo Data with Search, Streams, and Application-Side Aggregation</a></div></details><details class="sidebar-chapter"><summary><span>13</span>Transactions, WATCH, Optimistic Locking, and Atomicity</summary><div><a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>MULTI/EXEC Queueing Semantics, Atomic Execution, and What Transactions Do Not Provide</a><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>WATCH/UNWATCH for Optimistic Concurrency and Retry Loops</a><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>DISCARD, Command Errors, Runtime Errors, and Partial Semantic Surprises Inside EXEC</a><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Atomic Single Commands vs Transactions vs Functions/Scripts: Choose the Simplest Correct Primitive</a><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Build and Stress-Test a Conditional Update Workflow Under Concurrent Clients</a></div></details><details class="sidebar-chapter"><summary><span>14</span>Lua Scripting and Redis Functions</summary><div><a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>EVAL/EVALSHA: Atomic Server-Side Logic, KEYS/ARGV, and Script Cache Behavior</a><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>Scripting Constraints: Blocking Time, Determinism, Replication, and Cluster Key Access</a><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Redis Functions: Libraries, FCALL, Persistence, Deployment, and Versioned Server Logic</a><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Error Handling, Read-Only Functions/Scripts, ACL Interaction, and Safe Rollout</a><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Replace Multi-Round-Trip Race-Prone Logic with a Small Measured Atomic Function</a></div></details><details class="sidebar-chapter"><summary><span>15</span>Pipelining, Batching, Client Libraries, and Client-Side Caching</summary><div><a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Pipelining vs Transactions: Network Round Trips, Ordering, Buffering, and Error Handling</a><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Batch Size, Memory, Backpressure, and Latency/Throughput Tradeoffs</a><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>Connection Pools vs Multiplexed Clients, Timeouts, Reconnects, and Command Retries</a><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>Client-Side Caching and Server-Assisted Invalidation: Freshness and Coherency Boundaries</a><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Benchmark a Chatty Workflow Before and After Pipelining with Realistic Payloads</a></div></details><details class="sidebar-chapter"><summary><span>16</span>Pub/Sub, Keyspace Notifications, and Messaging Tradeoffs</summary><div><a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>PUBLISH/SUBSCRIBE and Pattern/Shard Channels: Ephemeral Fan-Out Semantics</a><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>At-Most-Once Delivery, Disconnect Loss, Slow Subscribers, and Why Pub/Sub Is Not a Durable Queue</a><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>Keyspace/Keyevent Notifications: Configuration, Event Types, Overhead, and Race Conditions</a><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>Pub/Sub vs Streams vs External Brokers: Replay, Consumer State, Ordering, and Durability</a><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Design Real-Time Notifications Without Mistaking Delivery Signals for Business State</a></div></details><details class="sidebar-chapter"><summary><span>17</span>Persistence: RDB Snapshots, AOF, fsync, Rewrites, and Crash Recovery</summary><div><a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>RDB Snapshots: Forking, Copy-on-Write, Save Rules, Startup Load, and Data-Loss Window</a><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>AOF Persistence: Command Logging, fsync Policies, Durability, and File Growth</a><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>AOF Rewrite/Compaction, Base/Incremental Files, Fork Costs, and Disk Headroom</a><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Use RDB + AOF Together, Understand Startup Recovery Order, and Validate Persistence Files</a><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Choose Durability Settings from RPO, Latency, Memory, Fork Behavior, and Storage Characteristics</a></div></details><details class="sidebar-chapter"><summary><span>18</span>Memory Management, Eviction, Expiration, Fragmentation, and OOM Prevention</summary><div><a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>used_memory vs RSS, Allocator Overhead, Fragmentation, Buffers, and Replication/AOF Memory</a><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>maxmemory and Eviction Policies: noeviction, LRU, LFU, Random, and TTL-Aware Choices</a><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Approximate LRU/LFU Sampling, LFU Decay, Hot-Set Behavior, and Cache Hit Rate</a><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Big Keys, Hot Keys, Large Collections, Lazy Freeing, Active Defrag, and Memory Diagnostics</a><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Build a Memory Budget Including Data, Indexes, Replication Buffers, Fork Headroom, and Failover</a></div></details><details class="sidebar-chapter"><summary><span>19</span>Replication, PSYNC, Backlog, Replica Reads, and Failover Foundations</summary><div><a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>Primary/Replica Replication, Asynchronous Semantics, Initial Sync, and Command Propagation</a><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Partial Resynchronization, Replication IDs, Backlog Sizing, and Reconnect Windows</a><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Disk-Based vs Diskless Sync, Replication Buffers, Network Pressure, and Large Dataset Recovery</a><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>Replica Reads, Staleness, replica-read-only, min-replicas Settings, and Durability Expectations</a><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Failure Drill: Break Replication, Observe Lag, Recover, and Measure Data/Availability Impact</a></div></details><details class="sidebar-chapter"><summary><span>20</span>Redis Sentinel: Monitoring, Automatic Failover, and Service Discovery</summary><div><a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Sentinel Architecture, Quorum vs Majority, Objective Down, and Failure Detection</a><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Configure Multiple Sentinels, Monitored Primary, Replicas, Authentication, and Networking</a><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Leader Election, Failover State Machine, Replica Promotion, and Reconfiguration</a><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Client Discovery Through Sentinel, Reconnect Behavior, DNS/NAT/Container Considerations</a><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Run a Sentinel Failover Game Day and Verify Application Recovery and Data-Loss Bounds</a></div></details><details class="sidebar-chapter"><summary><span>21</span>Redis Cluster: Hash Slots, Routing, Resharding, and Cluster Availability</summary><div><a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>16384 Hash Slots, CRC16, Key Distribution, Nodes, Primaries, Replicas, and Cluster Bus</a><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>MOVED vs ASK Redirections, Cluster-Aware Clients, Topology Refresh, and Retry Behavior</a><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Hash Tags and Multi-Key Operations: Co-Locating Related Keys Without Creating Hot Slots</a><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>Add/Remove Nodes, Reshard Slots, Migrate Keys, Fail Over Primaries, and Maintain Headroom</a><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>Cluster Partitions, Replica Migration, Availability Rules, and Designing for Node/Zone Failure</a></div></details><details class="sidebar-chapter"><summary><span>22</span>Security: ACLs, TLS, Command/Key Permissions, Secrets, and Network Boundaries</summary><div><a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Default User, ACL Users, Passwords, Command Categories, Key Patterns, and Channel Patterns</a><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>Least Privilege for Applications, Operators, Monitoring, Replication, Sentinel, and Cluster</a><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>TLS for Client and Internode Traffic, Certificate Lifecycle, and Performance Considerations</a><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Disable/Restrict Dangerous Administration, Protect CONFIG/MODULE-Like Capabilities, and Network Access</a><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Secrets Rotation, Audit/Connection Evidence, Backups, and Incident Response for Credential Exposure</a></div></details><details class="sidebar-chapter"><summary><span>23</span>Application Patterns: Caching, Rate Limiting, Locks, Idempotency, and Hot-Key Control</summary><div><a class="sidebar-lesson" href="../Chapter23/Lesson1.html"><span>01</span>Cache-Aside with TTL/Jitter, Negative Caching, Stampede Protection, and Stale-While-Revalidate</a><a class="sidebar-lesson" href="../Chapter23/Lesson2.html"><span>02</span>Fixed/Sliding Window, Token Bucket, and Leaky-Bucket Rate Limiting with Atomic Operations</a><a class="sidebar-lesson" href="../Chapter23/Lesson3.html"><span>03</span>Distributed Locks: SET NX PX, Ownership Tokens, Safe Unlock, Leases, and Fencing Limitations</a><a class="sidebar-lesson" href="../Chapter23/Lesson4.html"><span>04</span>Idempotency Keys, Deduplication, Request State Machines, and Retry-Safe APIs</a><a class="sidebar-lesson" href="../Chapter23/Lesson5.html"><span>05</span>Hot Keys, Fan-Out, Replication Read Scaling, Sharding, Local Caches, and Workload Redesign</a></div></details><details class="sidebar-chapter"><summary><span>24</span>Observability, Latency, Benchmarking, Capacity, Backup, Upgrades, and Capstone</summary><div><a class="sidebar-lesson" href="../Chapter24/Lesson1.html"><span>01</span>INFO, LATENCY, SLOWLOG, MEMORY, CLIENT LIST, MONITOR Caveats, and Exported Metrics</a><a class="sidebar-lesson" href="../Chapter24/Lesson2.html"><span>02</span>Latency Doctor, Intrinsic Latency, Fork Pauses, Big Commands, Network, CPU, and Storage Diagnostics</a><a class="sidebar-lesson" href="../Chapter24/Lesson3.html"><span>03</span>redis-benchmark and Custom Load Tests: Pipeline Depth, Payload, Durability, Skew, and Tail Latency</a><a class="sidebar-lesson" href="../Chapter24/Lesson4.html"><span>04</span>Back Up RDB/AOF, Test Restore, Perform Rolling/Topology-Aware Upgrades, and Maintain Rollback Plans</a><a class="sidebar-lesson" href="../Chapter24/Lesson5.html"><span>05</span>Capstone: Design, Load-Test, Fail Over, Recover, Secure, Tune, and Operate a Production Redis Platform</a></div></details></nav></aside>
-<div class="lesson-main"><div class="lesson-mobile-bar"><button data-sidebar-open="" type="button"><span>Course navigation</span><span>Chapter 03 · Lesson 03</span></button></div><article class="lesson-container"><nav aria-label="Breadcrumb" class="lesson-breadcrumbs"><a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">Redis</a><span>/</span><span>Chapter 03 · Lesson 03</span></nav><header class="lesson-header"><p class="eyebrow">Chapter 03 · Strings, Counters, Bitmaps, Bitfields, and Binary Values</p><h1>MGET/MSET, GETRANGE/SETRANGE, APPEND, Binary Payloads, and Network/Memory Tradeoffs</h1><p>Work with multiple strings, byte ranges, append-only values, and arbitrary binary payloads while measuring response size, sparse allocation, key size, and Cluster multi-key boundaries.</p><div class="lesson-meta"><span>Intermediate</span><span>125–155 minutes</span><span>Binary + range lab</span><span>Redis Open Source 8.10.1</span><span>Free/local-first</span><span>Last reviewed: September 6, 2026</span></div></header><nav aria-label="On this page" class="lesson-toc"><strong>On this page</strong><ol data-generated-toc=""></ol></nav><div class="lesson-content">
-<section><h2>Learning outcomes</h2>
-<p>AtlasMart now wants to fetch several small configuration values in one request, patch fixed-width bytes inside a compact blob, append device fragments, and store a binary thumbnail fingerprint. A “String” mental model based only on human-readable text becomes actively misleading here. Large multi-key replies, sparse offsets, base64 wrappers, and cross-slot commands can change both correctness and cost.</p>
-<div class="objectives"><div class="objective"><span>01</span><p>Use MGET/MSET with a precise model of atomic server execution, nil results, overwrite behavior, O(N) work, response size, and Cluster same-slot constraints.</p></div><div class="objective"><span>02</span><p>Use GETRANGE and SETRANGE as byte-range operations with inclusive offsets, negative GETRANGE indexing, zero padding, and 512-MiB String limits.</p></div><div class="objective"><span>03</span><p>Use APPEND for deliberate append-only byte sequences while recognizing big-key growth, rewrite/copy cost, and lack of automatic trimming.</p></div><div class="objective"><span>04</span><p>Round-trip arbitrary binary bytes without accidental text decoding and measure RESP framing/payload overhead directly.</p></div><div class="objective"><span>05</span><p>Compare raw binary storage with base64, sparse allocation, multiple keys, and application chunking using memory/network/persistence/operational evidence.</p></div></div>
-<div class="callout"><strong>Exact lab baseline</strong><p>All Chapter 03 labs reuse the disposable Chapter 01 environment: Redis Open Source <strong>8.10.1</strong> from Docker Official Image <code>redis:8.10.1</code>, container <code>atlasmart-redis-ch01</code>, standalone topology, host publication <code>127.0.0.1:6379</code>, TLS disabled only because traffic stays on loopback, default user disabled, named ACL users <code>atlasmart-app</code> and <code>academy-admin</code>, logical database 0, AOF with <code>appendfsync everysec</code> plus RDB snapshots, persistent <code>/data</code> volume, and no explicit Redis <code>maxmemory</code> limit/eviction policy. The application ACL is restricted to <code>~atlasmart:*</code> and normal read/write/connection categories. Search, JSON, vector, time-series, and probabilistic features are not required. Python examples use only the standard library for byte/RESP inspection, so no third-party client package is required. redis-cli remains the primary command client.</p></div>
-</section>
-<section><h2>1. MGET/MSET reduce command count but do not remove data-model cost</h2>
-<p><code>MGET</code> returns one result position for each requested key. Missing keys and keys that do not hold Strings produce null entries rather than failing the entire command. <code>MSET</code> atomically creates or replaces multiple String values on a single Redis instance. Both are O(N) in the number of keys, and reply/request bytes still cross the network.</p>
-<div class="code-window" data-code-block="" data-language="redis-cli"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>redis-cli · multi-key String behavior</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app MSET atlasmart:ch03:m:a alpha atlasmart:ch03:m:b beta atlasmart:ch03:m:c gamma</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app MGET atlasmart:ch03:m:a atlasmart:ch03:m:missing atlasmart:ch03:m:c</span><span class="code-line"></span><span class="code-line"># Expected positions: "alpha", (nil), "gamma".</span><span class="code-line"># MGET preserves argument order.</span></code></pre></div>
-<p>On a standalone server, keys can be unrelated. Redis Cluster partitions keys across hash slots, and native multi-key operations generally require appropriate slot locality. A cluster-aware client may split some logical operations into several server commands, which changes atomicity and latency. Chapter 21 will test that explicitly. If AtlasMart knows a set of keys must participate in native same-slot operations, a deliberate Cluster hash tag can preserve locality; do not tag everything into one hot slot.</p>
-</section>
-<section><h2>2. Multi-key replacement can also change TTL state</h2>
-<p>MSET is a replacement operation. If you need per-key expiration preservation, MSET offers no KEEPTTL option. Keep lifecycle behavior visible in tests instead of treating batching as a transparent transport optimization.</p>
-<div class="code-window" data-code-block="" data-language="redis-cli"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>redis-cli · observe lifecycle around replacement</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app SET atlasmart:ch03:m:ttl old EX 120</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app TTL atlasmart:ch03:m:ttl</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app MSET atlasmart:ch03:m:ttl new atlasmart:ch03:m:other value</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app TTL atlasmart:ch03:m:ttl</span><span class="code-line"></span><span class="code-line"># Expected lifecycle: the replaced key is persistent (-1) after MSET.</span></code></pre></div>
-<p>If a service requires “set several values and preserve independent old deadlines,” model that explicitly; do not assume MSET inherits SET's KEEPTTL option. Later transaction/function chapters cover multi-command atomic logic when one command does not express the required invariant.</p>
-</section>
-<section><h2>3. GETRANGE/SETRANGE operate on byte offsets</h2>
-<p><code>GETRANGE key start end</code> returns bytes from inclusive zero-based offsets. Negative GETRANGE offsets count backward from the end. <code>SETRANGE key offset value</code> overwrites bytes starting at a non-negative offset and returns the resulting String length. If the offset lies beyond the current end, Redis fills the gap with zero bytes.</p>
-<div class="code-window" data-code-block="" data-language="redis-cli"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>redis-cli · range reads and in-place byte replacement</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app SET atlasmart:ch03:blob:fixed ABCDEFGHIJ</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app GETRANGE atlasmart:ch03:blob:fixed 2 5</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app GETRANGE atlasmart:ch03:blob:fixed -3 -1</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app SETRANGE atlasmart:ch03:blob:fixed 3 xyz</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app GET atlasmart:ch03:blob:fixed</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app STRLEN atlasmart:ch03:blob:fixed</span><span class="code-line"></span><span class="code-line"># GETRANGE 2..5 -&gt; "CDEF"</span><span class="code-line"># negative range -&gt; "HIJ" before modification</span><span class="code-line"># replacement yields "ABCxyzGHIJ"</span></code></pre></div>
-<p>Current Redis documentation limits SETRANGE offsets to <code>2^29 - 1</code> because a Redis String is limited to 512 MiB. Addressing a far byte on a short String forces Redis to allocate and zero-fill the intermediate region, which can block the server. This is the same sparse-growth mechanism you will see with bitmaps.</p>
-</section>
-<section><h2>4. APPEND is simple, but unbounded append creates a big key</h2>
-<p><code>APPEND</code> adds bytes to the existing String and returns its new byte length. On an absent key it behaves as if appending to an empty String. Small appends are amortized O(1), but the resulting value still grows, moves through persistence/replication, consumes memory, and eventually becomes expensive to read, copy, back up, or fail over.</p>
-<div class="code-window" data-code-block="" data-language="redis-cli"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>redis-cli · append fixed-width synthetic samples</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app UNLINK atlasmart:ch03:samples:1</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app APPEND atlasmart:ch03:samples:1 0043</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app APPEND atlasmart:ch03:samples:1 0035</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app STRLEN atlasmart:ch03:samples:1</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app GETRANGE atlasmart:ch03:samples:1 0 3</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app GETRANGE atlasmart:ch03:samples:1 4 7</span><span class="code-line"></span><span class="code-line"># Length -&gt; 8, ranges -&gt; "0043" and "0035".</span></code></pre></div>
-<p>For an indefinite event stream, Redis Streams or another log-oriented design is usually a clearer model. APPEND can be efficient for fixed-format bounded segments, but the application must define rotation/retention because String commands do not provide a general “trim arbitrary bytes from the front” operation.</p>
-</section>
-<section><h2>5. Binary-safe round trip: prove bytes, do not trust terminal rendering</h2>
-<p>The following standard-library Python script speaks RESP2 directly over TCP. It authenticates as the Chapter 01 application ACL user, sends a payload containing NUL and 0xFF bytes, reads it back, and compares exact bytes. It also prints the encoded SET request size so payload versus protocol framing is visible. The script is cross-platform on any host with Python 3 and access to <code>127.0.0.1:6379</code>.</p>
-<div class="code-window" data-code-block="" data-language="python"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>python · binary RESP round trip and request-size measurement</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">import socket</span><span class="code-line"></span><span class="code-line">HOST, PORT = "127.0.0.1", 6379</span><span class="code-line">USER = "atlasmart-app"</span><span class="code-line">PASSWORD = "AtlasMart-App-Lab-Only-2026"</span><span class="code-line">KEY = b"atlasmart:ch03:binary:payload"</span><span class="code-line">PAYLOAD = bytes([0x00, 0xFF, 0x41, 0x00, 0x0A, 0x7F])</span><span class="code-line"></span><span class="code-line">def resp(*parts: bytes) -&gt; bytes:</span><span class="code-line">    out = [f"*{len(parts)}\r\n".encode()]</span><span class="code-line">    for p in parts:</span><span class="code-line">        out += [f"${len(p)}\r\n".encode(), p, b"\r\n"]</span><span class="code-line">    return b"".join(out)</span><span class="code-line"></span><span class="code-line">def read_reply(f):</span><span class="code-line">    prefix = f.read(1)</span><span class="code-line">    line = f.readline()[:-2]</span><span class="code-line">    if prefix in (b"+", b"-"):</span><span class="code-line">        return prefix, line</span><span class="code-line">    if prefix == b":":</span><span class="code-line">        return prefix, int(line)</span><span class="code-line">    if prefix == b"$":</span><span class="code-line">        n = int(line)</span><span class="code-line">        if n == -1: return prefix, None</span><span class="code-line">        data = f.read(n); assert f.read(2) == b"\r\n"</span><span class="code-line">        return prefix, data</span><span class="code-line">    raise RuntimeError((prefix, line))</span><span class="code-line"></span><span class="code-line">with socket.create_connection((HOST, PORT), timeout=3) as s:</span><span class="code-line">    f = s.makefile("rb")</span><span class="code-line">    s.sendall(resp(b"AUTH", USER.encode(), PASSWORD.encode()))</span><span class="code-line">    print("AUTH", read_reply(f))</span><span class="code-line"></span><span class="code-line">    request = resp(b"SET", KEY, PAYLOAD)</span><span class="code-line">    print("payload_bytes", len(PAYLOAD))</span><span class="code-line">    print("set_request_bytes", len(request))</span><span class="code-line">    s.sendall(request); print("SET", read_reply(f))</span><span class="code-line"></span><span class="code-line">    s.sendall(resp(b"GET", KEY))</span><span class="code-line">    _, returned = read_reply(f)</span><span class="code-line">    print("returned_hex", returned.hex())</span><span class="code-line">    print("exact_round_trip", returned == PAYLOAD)</span><span class="code-line"></span><span class="code-line"># Expected final line: exact_round_trip True.</span></code></pre></div>
-<p>This test avoids base64 entirely. Base64 is useful when a text-only transport requires it, but encoding 3 input bytes into 4 output characters adds about one-third payload overhead before key metadata, allocator overhead, RESP framing, persistence, or replication. Do not pay that cost automatically when both Redis and the client library can carry raw bytes.</p>
-</section>
-<section><h2>6. Network and memory tradeoffs are shape-dependent</h2>
-<p>One MGET saves command round trips compared with N sequential GET commands, but it can create one large reply and one larger atomic server command. Chapter 15 will measure pipelining separately. For now, record three sizes: key-name bytes, value bytes, and RESP framing bytes. Then compare Redis <code>MEMORY USAGE</code> for representative keys. Memory usage is not equal to payload length because Redis object/key metadata and allocator rounding matter.</p>
-<table class="data-table"><thead><tr><th>Design</th><th>Benefit</th><th>Cost/risk</th></tr></thead><tbody><tr><td>One bounded binary String</td><td>Compact metadata, direct range access</td><td>Big-key operations and coarse lifecycle if it grows too far.</td></tr><tr><td>Many small keys</td><td>Independent TTL/ownership/sharding</td><td>Per-key metadata/cardinality and discovery/persistence overhead.</td></tr><tr><td>Base64 String</td><td>Safe through text-only intermediaries</td><td>~33% payload expansion plus encode/decode CPU.</td></tr><tr><td>Sparse SETRANGE</td><td>O(1)-style indexed addressing after allocation</td><td>Zero-filled gap consumes real memory and first growth can block.</td></tr><tr><td>MGET/MSET</td><td>Fewer command exchanges, atomic server command on one instance</td><td>O(N) work, large reply/request, Cluster slot restrictions.</td></tr></tbody></table>
-</section>
-<section><h2>7. Deliberately wrong approach: base64 everything and SETRANGE a distant byte</h2>
-<p>Two common “safe” shortcuts can be expensive. First, a service base64-encodes every binary value even though its Redis client already supports bytes. Second, an engineer models a sparse identifier space with a single String and writes one byte at offset 8,388,607. That offset is deliberately bounded for the lab: it grows the String to roughly 8 MiB, large enough to demonstrate the mechanism without approaching Redis's 512-MiB limit.</p>
-<div class="code-window" data-code-block="" data-language="redis-cli"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>redis-cli · bounded sparse-allocation failure injection</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app UNLINK atlasmart:ch03:wrong:sparse</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-Admin-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user academy-admin MEMORY USAGE atlasmart:ch03:wrong:sparse</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app SETRANGE atlasmart:ch03:wrong:sparse 8388607 X</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app STRLEN atlasmart:ch03:wrong:sparse</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-Admin-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user academy-admin MEMORY USAGE atlasmart:ch03:wrong:sparse</span><span class="code-line"></span><span class="code-line"># STRLEN becomes 8,388,608 bytes.</span><span class="code-line"># MEMORY USAGE should jump accordingly; exact allocator bytes are version/build dependent.</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app UNLINK atlasmart:ch03:wrong:sparse</span></code></pre></div>
-<p>The repair is to choose a data structure whose density matches the address space: chunk by meaningful ranges, use separate bounded keys, or choose a Set/Hash/bitmap/other structure based on operations and cardinality. Do not use a sparse String merely because random byte access exists.</p>
-</section>
-<section><h2>8. Hands-on lab: compact product-state transport</h2>
-<p>Create three small product-state Strings with MSET, read them with MGET, patch one fixed-width region, append a bounded audit suffix, and inspect payload/memory. Keep the values tiny; the goal is semantics, not throughput.</p>
-<div class="code-window" data-code-block="" data-language="shell"><div class="code-head"><div class="code-title"><span class="code-dots"><i></i><i></i><i></i></span>shell · multi-key and range fixture</div><button class="copy-code" data-copy-code="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy</button></div><pre><code><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app UNLINK atlasmart:ch03:l3:p1 atlasmart:ch03:l3:p2 atlasmart:ch03:l3:p3</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app MSET atlasmart:ch03:l3:p1 ABCD0001 atlasmart:ch03:l3:p2 ABCD0002 atlasmart:ch03:l3:p3 ABCD0003</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app MGET atlasmart:ch03:l3:p1 atlasmart:ch03:l3:p2 atlasmart:ch03:l3:p3</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app SETRANGE atlasmart:ch03:l3:p2 4 9999</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app APPEND atlasmart:ch03:l3:p2 -ok</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app GET atlasmart:ch03:l3:p2</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app STRLEN atlasmart:ch03:l3:p2</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app GETRANGE atlasmart:ch03:l3:p2 4 7</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-Admin-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user academy-admin MEMORY USAGE atlasmart:ch03:l3:p2</span><span class="code-line"></span><span class="code-line"># Cleanup only this lesson.</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app UNLINK atlasmart:ch03:l3:p1 atlasmart:ch03:l3:p2 atlasmart:ch03:l3:p3 atlasmart:ch03:m:a atlasmart:ch03:m:b atlasmart:ch03:m:c atlasmart:ch03:m:ttl atlasmart:ch03:m:other atlasmart:ch03:blob:fixed atlasmart:ch03:samples:1 atlasmart:ch03:binary:payload</span></code></pre></div>
-<p><strong>Verification checklist:</strong></p><ul><li>You can explain MGET null positions, MSET atomic replacement on standalone Redis, and the Cluster same-slot caveat.</li><li>You can prove GETRANGE endpoints are inclusive and SETRANGE zero-fills gaps.</li><li>You can state the 512-MiB String / 2^29−1 SETRANGE offset boundary and why far writes can block during allocation.</li><li>You can round-trip NUL/0xFF bytes without text decoding and calculate RESP request bytes versus payload bytes.</li><li>You measured MEMORY USAGE instead of equating logical payload length with total Redis memory.</li></ul>
-</section>
-<section><h2>9. Production judgment</h2>
-<p>Choose MGET/MSET for bounded related keys when atomic server execution and key locality fit the workload; do not turn them into unbounded “fetch everything” commands. Bound String sizes and range offsets. For binary data, prefer raw bytes through a binary-safe client unless an external text-only boundary justifies encoding. Observe request/reply sizes, network round-trip time, server command latency, key/value sizes, memory usage, AOF/replication volume, persistence rewrite behavior, and hot-key distribution.</p>
-<p>Managed services may impose smaller item/command/request limits than Redis Open Source or may alter multi-key behavior through proxy/Active-Active architectures; verify provider documentation. Cluster migration requires reviewing every MGET/MSET/BITOP-style multi-key operation for slot locality. Security review should consider whether raw binary content contains secrets/PII and whether backups/AOF files need encryption and retention controls.</p>
-</section>
-<section><h2>10. Summary and next step</h2>
-<p>Redis Strings are byte arrays with String commands layered on top. MGET/MSET batch multiple keys but still have O(N), response-size, lifecycle, and Cluster boundaries. GETRANGE/SETRANGE address bytes; APPEND grows values; raw binary can round-trip without base64. Sparse offsets and big Strings create real memory and tail-latency risks. Next, you will use those same bytes as a dense array of individual bits and compare the huge efficiency gain of dense boolean state with the allocation cost of sparse offsets.</p>
-<div class="checkpoint"><h3>Check your understanding</h3><ol><li>What does MGET return for a missing key?</li><li>Why can SETRANGE offset 8,388,607 be expensive on a tiny key?</li><li>Are GETRANGE offsets byte or character indexes?</li><li>Why is base64 not automatically required for Redis binary values?</li><li>What changes for MSET in Redis Cluster?</li></ol><details class="answer-toggle"><summary>Review the answers</summary><div><p><strong>1.</strong> A null entry in the corresponding result position; it does not fail the whole MGET.</p><p><strong>2.</strong> Redis must allocate and zero-fill all intermediate bytes, growing the String to 8 MiB.</p><p><strong>3.</strong> Byte offsets; String values are binary-safe, not Unicode-character arrays.</p><p><strong>4.</strong> Redis Strings and binary-capable clients already carry arbitrary bytes; base64 is only needed for text-only boundaries and adds size/CPU overhead.</p><p><strong>5.</strong> Native multi-key operations are constrained by hash-slot locality; a client may need same-slot keys or split work, changing atomicity/latency.</p></div></details></div>
-</section>
-<section><h2>Authoritative references</h2><ul class="reference-list"><li><a href="https://redis.io/docs/latest/commands/mget/" rel="noopener" target="_blank">MGET command</a> — multi-key return semantics and complexity</li><li><a href="https://redis.io/docs/latest/commands/mset/" rel="noopener" target="_blank">MSET command</a> — atomic multi-key String replacement</li><li><a href="https://redis.io/docs/latest/develop/using-commands/multi-key-operations/" rel="noopener" target="_blank">Multi-key operations</a> — standalone versus Cluster/Active-Active boundaries</li><li><a href="https://redis.io/docs/latest/commands/getrange/" rel="noopener" target="_blank">GETRANGE command</a> — inclusive and negative byte-range reads</li><li><a href="https://redis.io/docs/latest/commands/setrange/" rel="noopener" target="_blank">SETRANGE command</a> — zero padding, maximum offset, and allocation warning</li><li><a href="https://redis.io/docs/latest/commands/append/" rel="noopener" target="_blank">APPEND command</a> — append semantics and amortized complexity</li></ul></section>
-</div><nav aria-label="Lesson navigation" class="lesson-nav"><a href="Lesson2.html"><small>Previous lesson</small><strong>INCR/DECR/INCRBYFLOAT: Counters, Quotas, Sequencing, and Overflow/Precision Awareness</strong></a><a class="next" href="Lesson4.html"><small>Next lesson</small><strong>Bitmaps with SETBIT/GETBIT/BITCOUNT/BITOP for Dense Boolean State</strong></a></nav></article><div class="lesson-support"><section aria-labelledby="support-title" class="support-section section-shell"><div class="support-grid reveal"><div><p class="eyebrow">Keep knowledge open</p><h2 id="support-title">Help the academy stay free and grow.</h2><p>If these tutorials save you time, a small donation supports new lessons, technical review, diagrams, examples, and long-term maintenance.</p><div aria-label="Author links" class="social-row"><a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a><a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a><a href="https://mohammadijoo.ir/" rel="noopener" target="_blank">Website <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a></div></div><div class="donation-card"><div class="donation-head"><span>ETH</span><small>Ethereum / ERC-20 only</small></div><code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code><button class="button secondary compact" data-copy-donation="" type="button"><svg aria-hidden="true" viewbox="0 0 24 24"><rect height="11" rx="2" width="11" x="8" y="8"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy address</button><p>Send only Ethereum or ERC-20 compatible assets to this address.</p></div></div></section></div></div></main><footer class="site-footer"><div class="section-shell footer-inner"><div><strong>Big Data Academy</strong><p>A free, prerequisite-aware path from SQL foundations to distributed data systems.</p></div><small>Created by <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> · © 2026</small></div></footer><script src="../../../assets/js/main.js"></script><script src="../redis-syntax.js"></script><script src="../../../assets/js/lesson.js?v=20260805.4"></script></body></html>
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Work with multiple strings, byte ranges, append-only values, and arbitrary binary payloads while measuring response size, sparse allocation, key size, and Cluster multi-key boundaries."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      MGET/MSET, GETRANGE/SETRANGE, APPEND, Binary Payloads, and Network/Memory
+      Tradeoffs | Redis | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">RD</span>
+            <div><small>Course 12</small><strong>Redis</strong></div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 120 lessons..."
+            type="search"
+        /></label>
+        <nav aria-label="Redis curriculum" class="sidebar-curriculum">
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>Redis Foundations, Redis 8, Deployment Choices,
+              CLI, and Lab Setup
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>What Redis Is: In-Memory Data Structures,
+                Optional Durability, and Common Workload Families</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Redis Open Source, Managed Services, and
+                Deployment Topologies: Responsibility and Cost Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>Install Redis or Start a Container, Connect with
+                redis-cli, and Verify Server Metadata</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>RESP, Clients, Connections, Databases/Keyspaces,
+                Command Atomicity, and Single-Threaded Command Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Reproducible Lab with Configuration,
+                Persistence Directory, Metrics, and Safe Authentication</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>Keys, Namespaces, Expiration, TTL, Scanning, and
+              Data-Type Introspection
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>Key Naming Schemes, Namespaces, Hash Tags,
+                Cardinality, and Operational Discoverability</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>EXPIRE/PEXPIRE, EXPIREAT, TTL/PTTL, PERSIST,
+                Conditional Expiration, and Lifecycle Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>KEYS vs SCAN: Incremental Iteration, Cursor
+                Semantics, and Production Safety</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>TYPE, OBJECT, MEMORY USAGE, DUMP/RESTORE, COPY,
+                RENAME, UNLINK, and Deletion Cost</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Design a Key Lifecycle Policy for Retention,
+                Privacy, Cache Freshness, and Capacity</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>03</span>Strings, Counters, Bitmaps, Bitfields, and Binary
+              Values
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="Lesson1.html"
+                ><span>01</span>SET/GET Options, NX/XX, GET, EX/PX, Atomic
+                Initialization, and Conditional Writes</a
+              ><a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>INCR/DECR/INCRBYFLOAT: Counters, Quotas,
+                Sequencing, and Overflow/Precision Awareness</a
+              ><a
+                aria-current="page"
+                class="sidebar-lesson is-current"
+                href="Lesson3.html"
+                ><span>03</span>MGET/MSET, GETRANGE/SETRANGE, APPEND, Binary
+                Payloads, and Network/Memory Tradeoffs<i>Current</i></a
+              ><a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>Bitmaps with SETBIT/GETBIT/BITCOUNT/BITOP for
+                Dense Boolean State</a
+              ><a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>BITFIELD for Packed Integers, Overflow Modes,
+                and Memory-Efficient Counters</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary><span>04</span>Hashes and Object-Like Records</summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>HSET/HGET/HMGET/HGETALL and Modeling Compact
+                Field/Value Records</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>HINCRBY/HINCRBYFLOAT for Atomic Per-Field
+                Metrics and State</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>HSCAN, Field Cardinality, Large Hashes, and
+                Incremental Processing</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>Field-Level Expiration Capabilities Where
+                Available and Version-Aware Client Design</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Hashes vs JSON vs Many Keys: Memory, Partial
+                Updates, Indexing, and Schema Tradeoffs</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>Lists, Sets, and Queue/Collection Patterns
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>Lists: LPUSH/RPUSH, LPOP/RPOP, LRANGE, LTRIM,
+                and Ordered Sequence Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>Blocking List Operations and Reliable Queue
+                Limitations Compared with Streams</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>Sets: SADD/SREM/SISMEMBER, Cardinality, Random
+                Members, and Deduplication</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>SUNION/SINTER/SDIFF and Set Algebra for Tags,
+                Audiences, and Permissions</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>Choose List vs Set vs Stream vs Sorted Set from
+                Ordering, Delivery, Replay, and Membership Needs</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Sorted Sets, Rankings, Scheduling, and Range
+              Queries
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>ZADD Scores, Members, Conditional Updates, and
+                Rank Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>ZRANGE by Rank/Score/Lex, Reverse Ordering,
+                Pagination, and WITHSCORES</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>ZINCRBY, Leaderboards, Sliding Windows, Delayed
+                Work, and Time-Ordered Indexes</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>ZUNION/ZINTER/ZDIFF and Weighted Ranking
+                Aggregation</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Use Sorted Sets for Rate Limits, Schedulers,
+                Expiration Indexes, and Secondary Access Paths</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary><span>07</span>Redis Streams and Consumer Groups</summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>XADD IDs, Stream Ordering, Approximate Trimming,
+                and Event Retention</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>XREAD for Blocking/Nonblocking Consumption and
+                Replay from Explicit IDs</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>Consumer Groups with XGROUP/XREADGROUP:
+                Distribution, Pending Entries, and Acknowledgment</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>XPENDING, XCLAIM/XAUTOCLAIM, Idle Consumers,
+                Retries, Poison Events, and Recovery</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Design an At-Least-Once Stream Pipeline with
+                Idempotent Processing, Backpressure, and Observability</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>Redis JSON and Document-Oriented Data
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>JSON.SET/GET and JSON Paths: Store and Address
+                Nested Documents</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>Atomic Numeric, String, Array, and Object
+                Mutations Without Replacing Whole Documents</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>Document Modeling: Embedding, Duplication, Key
+                Design, Size, and Partial Updates</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>Index JSON Fields with Redis Search and Keep
+                Schema Evolution Explicit</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Choose Hashes vs JSON from Query Needs,
+                Structure, Memory, Client Ergonomics, and Search</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>Redis Search: Indexes, Text/Numeric/Tag/Geo Fields,
+              Querying, and Aggregation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>Create Search Indexes over Hash/JSON Data and
+                Understand Schema/Prefix Scope</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>Text Analysis, Stemming, Stop Words, Exact Tags,
+                Numeric Ranges, and Geospatial Fields</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>FT.SEARCH Query Syntax, Boolean Logic,
+                Phrase/Prefix/Fuzzy Search, Sorting, and Pagination</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>FT.AGGREGATE Pipelines, Grouping, Reducers,
+                Filters, Apply, and Result Shaping</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>Index Maintenance, Memory Cost, Query Profiling,
+                and Choosing Search vs Key-Based Access</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>Vector Sets, Vector Search, Hybrid Retrieval, and
+              AI Workloads
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>Embeddings, Dimensions, Cosine Similarity, HNSW
+                Concepts, Recall, and Latency</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>VADD, VSIM, Vector-Set Metadata/Attributes, and
+                Core Redis 8 Vector Operations</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>Hybrid Retrieval with Structured Filters and
+                Vector Similarity</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>Vector Compression/Quantization Awareness,
+                Memory Planning, and Accuracy Benchmarks</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Design Semantic Search, Recommendations, or RAG
+                Retrieval with Security Filters and Evaluation</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>Probabilistic Data Structures and Approximate
+              Analytics
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>HyperLogLog for Approximate Cardinality: PFADD,
+                PFCOUNT, PFMERGE, and Error Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>Bloom Filters: Membership with False Positives,
+                Capacity, Error Rate, and Scaling</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>Cuckoo Filters: Membership, Deletion, Count
+                Semantics, and Capacity Planning</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Count-Min Sketch, Top-K, and t-digest for
+                Frequency, Heavy Hitters, and Quantiles</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Choose Approximate Structures When Memory
+                Savings Outweigh Exactness Requirements</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>Time Series and Geospatial Workloads
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>Time-Series Keys, Labels, Retention, Duplicate
+                Policies, and Compression Concepts</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>Aggregations, Downsampling, Compaction Rules,
+                and Multi-Series Queries</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>Geospatial GEOADD, GEOSEARCH, Distance,
+                Radius/Box Queries, and Sorted-Set Foundations</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>Model Metrics/Telemetry and Location Data with
+                Bounded Cardinality and Retention</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>Combine Time/Geo Data with Search, Streams, and
+                Application-Side Aggregation</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Transactions, WATCH, Optimistic Locking, and
+              Atomicity
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>MULTI/EXEC Queueing Semantics, Atomic Execution,
+                and What Transactions Do Not Provide</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>WATCH/UNWATCH for Optimistic Concurrency and
+                Retry Loops</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>DISCARD, Command Errors, Runtime Errors, and
+                Partial Semantic Surprises Inside EXEC</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Atomic Single Commands vs Transactions vs
+                Functions/Scripts: Choose the Simplest Correct Primitive</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Build and Stress-Test a Conditional Update
+                Workflow Under Concurrent Clients</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary><span>14</span>Lua Scripting and Redis Functions</summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>EVAL/EVALSHA: Atomic Server-Side Logic,
+                KEYS/ARGV, and Script Cache Behavior</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Scripting Constraints: Blocking Time,
+                Determinism, Replication, and Cluster Key Access</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Redis Functions: Libraries, FCALL, Persistence,
+                Deployment, and Versioned Server Logic</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Error Handling, Read-Only Functions/Scripts, ACL
+                Interaction, and Safe Rollout</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Replace Multi-Round-Trip Race-Prone Logic with a
+                Small Measured Atomic Function</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Pipelining, Batching, Client Libraries, and
+              Client-Side Caching
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>Pipelining vs Transactions: Network Round Trips,
+                Ordering, Buffering, and Error Handling</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Batch Size, Memory, Backpressure, and
+                Latency/Throughput Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Connection Pools vs Multiplexed Clients,
+                Timeouts, Reconnects, and Command Retries</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Client-Side Caching and Server-Assisted
+                Invalidation: Freshness and Coherency Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Benchmark a Chatty Workflow Before and After
+                Pipelining with Realistic Payloads</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Pub/Sub, Keyspace Notifications, and Messaging
+              Tradeoffs
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>PUBLISH/SUBSCRIBE and Pattern/Shard Channels:
+                Ephemeral Fan-Out Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>At-Most-Once Delivery, Disconnect Loss, Slow
+                Subscribers, and Why Pub/Sub Is Not a Durable Queue</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>Keyspace/Keyevent Notifications: Configuration,
+                Event Types, Overhead, and Race Conditions</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Pub/Sub vs Streams vs External Brokers: Replay,
+                Consumer State, Ordering, and Durability</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Design Real-Time Notifications Without Mistaking
+                Delivery Signals for Business State</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Persistence: RDB Snapshots, AOF, fsync, Rewrites,
+              and Crash Recovery
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>RDB Snapshots: Forking, Copy-on-Write, Save
+                Rules, Startup Load, and Data-Loss Window</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>AOF Persistence: Command Logging, fsync
+                Policies, Durability, and File Growth</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>AOF Rewrite/Compaction, Base/Incremental Files,
+                Fork Costs, and Disk Headroom</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>Use RDB + AOF Together, Understand Startup
+                Recovery Order, and Validate Persistence Files</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Choose Durability Settings from RPO, Latency,
+                Memory, Fork Behavior, and Storage Characteristics</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Memory Management, Eviction, Expiration,
+              Fragmentation, and OOM Prevention
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>used_memory vs RSS, Allocator Overhead,
+                Fragmentation, Buffers, and Replication/AOF Memory</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>maxmemory and Eviction Policies: noeviction,
+                LRU, LFU, Random, and TTL-Aware Choices</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Approximate LRU/LFU Sampling, LFU Decay, Hot-Set
+                Behavior, and Cache Hit Rate</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Big Keys, Hot Keys, Large Collections, Lazy
+                Freeing, Active Defrag, and Memory Diagnostics</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>Build a Memory Budget Including Data, Indexes,
+                Replication Buffers, Fork Headroom, and Failover</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>19</span>Replication, PSYNC, Backlog, Replica Reads, and
+              Failover Foundations
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Primary/Replica Replication, Asynchronous
+                Semantics, Initial Sync, and Command Propagation</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Partial Resynchronization, Replication IDs,
+                Backlog Sizing, and Reconnect Windows</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>Disk-Based vs Diskless Sync, Replication
+                Buffers, Network Pressure, and Large Dataset Recovery</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>Replica Reads, Staleness, replica-read-only,
+                min-replicas Settings, and Durability Expectations</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Failure Drill: Break Replication, Observe Lag,
+                Recover, and Measure Data/Availability Impact</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Redis Sentinel: Monitoring, Automatic Failover, and
+              Service Discovery
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>Sentinel Architecture, Quorum vs Majority,
+                Objective Down, and Failure Detection</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>Configure Multiple Sentinels, Monitored Primary,
+                Replicas, Authentication, and Networking</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>Leader Election, Failover State Machine, Replica
+                Promotion, and Reconfiguration</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>Client Discovery Through Sentinel, Reconnect
+                Behavior, DNS/NAT/Container Considerations</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Run a Sentinel Failover Game Day and Verify
+                Application Recovery and Data-Loss Bounds</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Redis Cluster: Hash Slots, Routing, Resharding, and
+              Cluster Availability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>16384 Hash Slots, CRC16, Key Distribution,
+                Nodes, Primaries, Replicas, and Cluster Bus</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>MOVED vs ASK Redirections, Cluster-Aware
+                Clients, Topology Refresh, and Retry Behavior</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>Hash Tags and Multi-Key Operations: Co-Locating
+                Related Keys Without Creating Hot Slots</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Add/Remove Nodes, Reshard Slots, Migrate Keys,
+                Fail Over Primaries, and Maintain Headroom</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>Cluster Partitions, Replica Migration,
+                Availability Rules, and Designing for Node/Zone Failure</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Security: ACLs, TLS, Command/Key Permissions,
+              Secrets, and Network Boundaries
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>Default User, ACL Users, Passwords, Command
+                Categories, Key Patterns, and Channel Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>Least Privilege for Applications, Operators,
+                Monitoring, Replication, Sentinel, and Cluster</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>TLS for Client and Internode Traffic,
+                Certificate Lifecycle, and Performance Considerations</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>Disable/Restrict Dangerous Administration,
+                Protect CONFIG/MODULE-Like Capabilities, and Network Access</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Secrets Rotation, Audit/Connection Evidence,
+                Backups, and Incident Response for Credential Exposure</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>23</span>Application Patterns: Caching, Rate Limiting,
+              Locks, Idempotency, and Hot-Key Control
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter23/Lesson1.html"
+                ><span>01</span>Cache-Aside with TTL/Jitter, Negative Caching,
+                Stampede Protection, and Stale-While-Revalidate</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson2.html"
+                ><span>02</span>Fixed/Sliding Window, Token Bucket, and
+                Leaky-Bucket Rate Limiting with Atomic Operations</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson3.html"
+                ><span>03</span>Distributed Locks: SET NX PX, Ownership Tokens,
+                Safe Unlock, Leases, and Fencing Limitations</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson4.html"
+                ><span>04</span>Idempotency Keys, Deduplication, Request State
+                Machines, and Retry-Safe APIs</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson5.html"
+                ><span>05</span>Hot Keys, Fan-Out, Replication Read Scaling,
+                Sharding, Local Caches, and Workload Redesign</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>Observability, Latency, Benchmarking, Capacity,
+              Backup, Upgrades, and Capstone
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter24/Lesson1.html"
+                ><span>01</span>INFO, LATENCY, SLOWLOG, MEMORY, CLIENT LIST,
+                MONITOR Caveats, and Exported Metrics</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson2.html"
+                ><span>02</span>Latency Doctor, Intrinsic Latency, Fork Pauses,
+                Big Commands, Network, CPU, and Storage Diagnostics</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson3.html"
+                ><span>03</span>redis-benchmark and Custom Load Tests: Pipeline
+                Depth, Payload, Durability, Skew, and Tail Latency</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson4.html"
+                ><span>04</span>Back Up RDB/AOF, Test Restore, Perform
+                Rolling/Topology-Aware Upgrades, and Maintain Rollback Plans</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson5.html"
+                ><span>05</span>Capstone: Design, Load-Test, Fail Over, Recover,
+                Secure, Tune, and Operate a Production Redis Platform</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 03 · Lesson 03</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">Redis</a><span>/</span
+            ><span>Chapter 03 · Lesson 03</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 03 · Strings, Counters, Bitmaps, Bitfields, and Binary
+              Values
+            </p>
+            <h1>
+              MGET/MSET, GETRANGE/SETRANGE, APPEND, Binary Payloads, and
+              Network/Memory Tradeoffs
+            </h1>
+            <p>
+              Work with multiple strings, byte ranges, append-only values, and
+              arbitrary binary payloads while measuring response size, sparse
+              allocation, key size, and Cluster multi-key boundaries.
+            </p>
+            <div class="lesson-meta">
+              <span>Intermediate</span><span>125–155 minutes</span
+              ><span>Binary + range lab</span
+              ><span>Redis Open Source 8.10.1</span><span>Free/local-first</span
+              ><span>Last reviewed: September 6, 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                AtlasMart now wants to fetch several small configuration values
+                in one request, patch fixed-width bytes inside a compact blob,
+                append device fragments, and store a binary thumbnail
+                fingerprint. A “String” mental model based only on
+                human-readable text becomes actively misleading here. Large
+                multi-key replies, sparse offsets, base64 wrappers, and
+                cross-slot commands can change both correctness and cost.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Use MGET/MSET with a precise model of atomic server
+                    execution, nil results, overwrite behavior, O(N) work,
+                    response size, and Cluster same-slot constraints.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Use GETRANGE and SETRANGE as byte-range operations with
+                    inclusive offsets, negative GETRANGE indexing, zero padding,
+                    and 512-MiB String limits.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Use APPEND for deliberate append-only byte sequences while
+                    recognizing big-key growth, rewrite/copy cost, and lack of
+                    automatic trimming.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Round-trip arbitrary binary bytes without accidental text
+                    decoding and measure RESP framing/payload overhead directly.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Compare raw binary storage with base64, sparse allocation,
+                    multiple keys, and application chunking using
+                    memory/network/persistence/operational evidence.
+                  </p>
+                </div>
+              </div>
+              <div class="callout">
+                <strong>Exact lab baseline</strong>
+                <p>
+                  All Chapter 03 labs reuse the disposable Chapter 01
+                  environment: Redis Open Source <strong>8.10.1</strong> from
+                  Docker Official Image <code>redis:8.10.1</code>, container
+                  <code>atlasmart-redis-ch01</code>, standalone topology, host
+                  publication <code>127.0.0.1:6379</code>, TLS disabled only
+                  because traffic stays on loopback, default user disabled,
+                  named ACL users <code>atlasmart-app</code> and
+                  <code>academy-admin</code>, logical database 0, AOF with
+                  <code>appendfsync everysec</code> plus RDB snapshots,
+                  persistent <code>/data</code> volume, and no explicit Redis
+                  <code>maxmemory</code> limit/eviction policy. The application
+                  ACL is restricted to <code>~atlasmart:*</code> and normal
+                  read/write/connection categories. Search, JSON, vector,
+                  time-series, and probabilistic features are not required.
+                  Python examples use only the standard library for byte/RESP
+                  inspection, so no third-party client package is required.
+                  redis-cli remains the primary command client.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>
+                1. MGET/MSET reduce command count but do not remove data-model
+                cost
+              </h2>
+              <p>
+                <code>MGET</code> returns one result position for each requested
+                key. Missing keys and keys that do not hold Strings produce null
+                entries rather than failing the entire command.
+                <code>MSET</code> atomically creates or replaces multiple String
+                values on a single Redis instance. Both are O(N) in the number
+                of keys, and reply/request bytes still cross the network.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="redis-cli"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >redis-cli · multi-key String behavior
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app MSET atlasmart:ch03:m:a alpha atlasmart:ch03:m:b beta atlasmart:ch03:m:c gamma</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app MGET atlasmart:ch03:m:a atlasmart:ch03:m:missing atlasmart:ch03:m:c</span><span class="code-line"></span><span class="code-line"># Expected positions: "alpha", (nil), "gamma".</span><span class="code-line"># MGET preserves argument order.</span></code></pre>
+              </div>
+              <p>
+                On a standalone server, keys can be unrelated. Redis Cluster
+                partitions keys across hash slots, and native multi-key
+                operations generally require appropriate slot locality. A
+                cluster-aware client may split some logical operations into
+                several server commands, which changes atomicity and latency.
+                Chapter 21 will test that explicitly. If AtlasMart knows a set
+                of keys must participate in native same-slot operations, a
+                deliberate Cluster hash tag can preserve locality; do not tag
+                everything into one hot slot.
+              </p>
+            </section>
+            <section>
+              <h2>2. Multi-key replacement can also change TTL state</h2>
+              <p>
+                MSET is a replacement operation. If you need per-key expiration
+                preservation, MSET offers no KEEPTTL option. Keep lifecycle
+                behavior visible in tests instead of treating batching as a
+                transparent transport optimization.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="redis-cli"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >redis-cli · observe lifecycle around replacement
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app SET atlasmart:ch03:m:ttl old EX 120</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app TTL atlasmart:ch03:m:ttl</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app MSET atlasmart:ch03:m:ttl new atlasmart:ch03:m:other value</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app TTL atlasmart:ch03:m:ttl</span><span class="code-line"></span><span class="code-line"># Expected lifecycle: the replaced key is persistent (-1) after MSET.</span></code></pre>
+              </div>
+              <p>
+                If a service requires “set several values and preserve
+                independent old deadlines,” model that explicitly; do not assume
+                MSET inherits SET's KEEPTTL option. Later transaction/function
+                chapters cover multi-command atomic logic when one command does
+                not express the required invariant.
+              </p>
+            </section>
+            <section>
+              <h2>3. GETRANGE/SETRANGE operate on byte offsets</h2>
+              <p>
+                <code>GETRANGE key start end</code> returns bytes from inclusive
+                zero-based offsets. Negative GETRANGE offsets count backward
+                from the end. <code>SETRANGE key offset value</code> overwrites
+                bytes starting at a non-negative offset and returns the
+                resulting String length. If the offset lies beyond the current
+                end, Redis fills the gap with zero bytes.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="redis-cli"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >redis-cli · range reads and in-place byte replacement
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app SET atlasmart:ch03:blob:fixed ABCDEFGHIJ</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app GETRANGE atlasmart:ch03:blob:fixed 2 5</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app GETRANGE atlasmart:ch03:blob:fixed -3 -1</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app SETRANGE atlasmart:ch03:blob:fixed 3 xyz</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app GET atlasmart:ch03:blob:fixed</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app STRLEN atlasmart:ch03:blob:fixed</span><span class="code-line"></span><span class="code-line"># GETRANGE 2..5 -&gt; "CDEF"</span><span class="code-line"># negative range -&gt; "HIJ" before modification</span><span class="code-line"># replacement yields "ABCxyzGHIJ"</span></code></pre>
+              </div>
+              <p>
+                Current Redis documentation limits SETRANGE offsets to
+                <code>2^29 - 1</code> because a Redis String is limited to 512
+                MiB. Addressing a far byte on a short String forces Redis to
+                allocate and zero-fill the intermediate region, which can block
+                the server. This is the same sparse-growth mechanism you will
+                see with bitmaps.
+              </p>
+            </section>
+            <section>
+              <h2>
+                4. APPEND is simple, but unbounded append creates a big key
+              </h2>
+              <p>
+                <code>APPEND</code> adds bytes to the existing String and
+                returns its new byte length. On an absent key it behaves as if
+                appending to an empty String. Small appends are amortized O(1),
+                but the resulting value still grows, moves through
+                persistence/replication, consumes memory, and eventually becomes
+                expensive to read, copy, back up, or fail over.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="redis-cli"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >redis-cli · append fixed-width synthetic samples
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app UNLINK atlasmart:ch03:samples:1</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app APPEND atlasmart:ch03:samples:1 0043</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app APPEND atlasmart:ch03:samples:1 0035</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app STRLEN atlasmart:ch03:samples:1</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app GETRANGE atlasmart:ch03:samples:1 0 3</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app GETRANGE atlasmart:ch03:samples:1 4 7</span><span class="code-line"></span><span class="code-line"># Length -&gt; 8, ranges -&gt; "0043" and "0035".</span></code></pre>
+              </div>
+              <p>
+                For an indefinite event stream, Redis Streams or another
+                log-oriented design is usually a clearer model. APPEND can be
+                efficient for fixed-format bounded segments, but the application
+                must define rotation/retention because String commands do not
+                provide a general “trim arbitrary bytes from the front”
+                operation.
+              </p>
+            </section>
+            <section>
+              <h2>
+                5. Binary-safe round trip: prove bytes, do not trust terminal
+                rendering
+              </h2>
+              <p>
+                The following standard-library Python script speaks RESP2
+                directly over TCP. It authenticates as the Chapter 01
+                application ACL user, sends a payload containing NUL and 0xFF
+                bytes, reads it back, and compares exact bytes. It also prints
+                the encoded SET request size so payload versus protocol framing
+                is visible. The script is cross-platform on any host with Python
+                3 and access to <code>127.0.0.1:6379</code>.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="python"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>python ·
+                    binary RESP round trip and request-size measurement
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">import socket</span><span class="code-line"></span><span class="code-line">HOST, PORT = "127.0.0.1", 6379</span><span class="code-line">USER = "atlasmart-app"</span><span class="code-line">PASSWORD = "AtlasMart-App-Lab-Only-2026"</span><span class="code-line">KEY = b"atlasmart:ch03:binary:payload"</span><span class="code-line">PAYLOAD = bytes([0x00, 0xFF, 0x41, 0x00, 0x0A, 0x7F])</span><span class="code-line"></span><span class="code-line">def resp(*parts: bytes) -&gt; bytes:</span><span class="code-line">    out = [f"*{len(parts)}\r\n".encode()]</span><span class="code-line">    for p in parts:</span><span class="code-line">        out += [f"${len(p)}\r\n".encode(), p, b"\r\n"]</span><span class="code-line">    return b"".join(out)</span><span class="code-line"></span><span class="code-line">def read_reply(f):</span><span class="code-line">    prefix = f.read(1)</span><span class="code-line">    line = f.readline()[:-2]</span><span class="code-line">    if prefix in (b"+", b"-"):</span><span class="code-line">        return prefix, line</span><span class="code-line">    if prefix == b":":</span><span class="code-line">        return prefix, int(line)</span><span class="code-line">    if prefix == b"$":</span><span class="code-line">        n = int(line)</span><span class="code-line">        if n == -1: return prefix, None</span><span class="code-line">        data = f.read(n); assert f.read(2) == b"\r\n"</span><span class="code-line">        return prefix, data</span><span class="code-line">    raise RuntimeError((prefix, line))</span><span class="code-line"></span><span class="code-line">with socket.create_connection((HOST, PORT), timeout=3) as s:</span><span class="code-line">    f = s.makefile("rb")</span><span class="code-line">    s.sendall(resp(b"AUTH", USER.encode(), PASSWORD.encode()))</span><span class="code-line">    print("AUTH", read_reply(f))</span><span class="code-line"></span><span class="code-line">    request = resp(b"SET", KEY, PAYLOAD)</span><span class="code-line">    print("payload_bytes", len(PAYLOAD))</span><span class="code-line">    print("set_request_bytes", len(request))</span><span class="code-line">    s.sendall(request); print("SET", read_reply(f))</span><span class="code-line"></span><span class="code-line">    s.sendall(resp(b"GET", KEY))</span><span class="code-line">    _, returned = read_reply(f)</span><span class="code-line">    print("returned_hex", returned.hex())</span><span class="code-line">    print("exact_round_trip", returned == PAYLOAD)</span><span class="code-line"></span><span class="code-line"># Expected final line: exact_round_trip True.</span></code></pre>
+              </div>
+              <p>
+                This test avoids base64 entirely. Base64 is useful when a
+                text-only transport requires it, but encoding 3 input bytes into
+                4 output characters adds about one-third payload overhead before
+                key metadata, allocator overhead, RESP framing, persistence, or
+                replication. Do not pay that cost automatically when both Redis
+                and the client library can carry raw bytes.
+              </p>
+            </section>
+            <section>
+              <h2>6. Network and memory tradeoffs are shape-dependent</h2>
+              <p>
+                One MGET saves command round trips compared with N sequential
+                GET commands, but it can create one large reply and one larger
+                atomic server command. Chapter 15 will measure pipelining
+                separately. For now, record three sizes: key-name bytes, value
+                bytes, and RESP framing bytes. Then compare Redis
+                <code>MEMORY USAGE</code> for representative keys. Memory usage
+                is not equal to payload length because Redis object/key metadata
+                and allocator rounding matter.
+              </p>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Design</th>
+                    <th>Benefit</th>
+                    <th>Cost/risk</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>One bounded binary String</td>
+                    <td>Compact metadata, direct range access</td>
+                    <td>
+                      Big-key operations and coarse lifecycle if it grows too
+                      far.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Many small keys</td>
+                    <td>Independent TTL/ownership/sharding</td>
+                    <td>
+                      Per-key metadata/cardinality and discovery/persistence
+                      overhead.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Base64 String</td>
+                    <td>Safe through text-only intermediaries</td>
+                    <td>~33% payload expansion plus encode/decode CPU.</td>
+                  </tr>
+                  <tr>
+                    <td>Sparse SETRANGE</td>
+                    <td>O(1)-style indexed addressing after allocation</td>
+                    <td>
+                      Zero-filled gap consumes real memory and first growth can
+                      block.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>MGET/MSET</td>
+                    <td>
+                      Fewer command exchanges, atomic server command on one
+                      instance
+                    </td>
+                    <td>
+                      O(N) work, large reply/request, Cluster slot restrictions.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+            <section>
+              <h2>
+                7. Deliberately wrong approach: base64 everything and SETRANGE a
+                distant byte
+              </h2>
+              <p>
+                Two common “safe” shortcuts can be expensive. First, a service
+                base64-encodes every binary value even though its Redis client
+                already supports bytes. Second, an engineer models a sparse
+                identifier space with a single String and writes one byte at
+                offset 8,388,607. That offset is deliberately bounded for the
+                lab: it grows the String to roughly 8 MiB, large enough to
+                demonstrate the mechanism without approaching Redis's 512-MiB
+                limit.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="redis-cli"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >redis-cli · bounded sparse-allocation failure injection
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app UNLINK atlasmart:ch03:wrong:sparse</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-Admin-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user academy-admin MEMORY USAGE atlasmart:ch03:wrong:sparse</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app SETRANGE atlasmart:ch03:wrong:sparse 8388607 X</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app STRLEN atlasmart:ch03:wrong:sparse</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-Admin-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user academy-admin MEMORY USAGE atlasmart:ch03:wrong:sparse</span><span class="code-line"></span><span class="code-line"># STRLEN becomes 8,388,608 bytes.</span><span class="code-line"># MEMORY USAGE should jump accordingly; exact allocator bytes are version/build dependent.</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app UNLINK atlasmart:ch03:wrong:sparse</span></code></pre>
+              </div>
+              <p>
+                The repair is to choose a data structure whose density matches
+                the address space: chunk by meaningful ranges, use separate
+                bounded keys, or choose a Set/Hash/bitmap/other structure based
+                on operations and cardinality. Do not use a sparse String merely
+                because random byte access exists.
+              </p>
+            </section>
+            <section>
+              <h2>8. Hands-on lab: compact product-state transport</h2>
+              <p>
+                Create three small product-state Strings with MSET, read them
+                with MGET, patch one fixed-width region, append a bounded audit
+                suffix, and inspect payload/memory. Keep the values tiny; the
+                goal is semantics, not throughput.
+              </p>
+              <div class="code-window" data-code-block="" data-language="shell">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>shell ·
+                    multi-key and range fixture
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app UNLINK atlasmart:ch03:l3:p1 atlasmart:ch03:l3:p2 atlasmart:ch03:l3:p3</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app MSET atlasmart:ch03:l3:p1 ABCD0001 atlasmart:ch03:l3:p2 ABCD0002 atlasmart:ch03:l3:p3 ABCD0003</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app MGET atlasmart:ch03:l3:p1 atlasmart:ch03:l3:p2 atlasmart:ch03:l3:p3</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app SETRANGE atlasmart:ch03:l3:p2 4 9999</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app APPEND atlasmart:ch03:l3:p2 -ok</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app GET atlasmart:ch03:l3:p2</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app STRLEN atlasmart:ch03:l3:p2</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app GETRANGE atlasmart:ch03:l3:p2 4 7</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-Admin-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user academy-admin MEMORY USAGE atlasmart:ch03:l3:p2</span><span class="code-line"></span><span class="code-line"># Cleanup only this lesson.</span><span class="code-line">docker exec -e REDISCLI_AUTH=AtlasMart-App-Lab-Only-2026 atlasmart-redis-ch01 redis-cli --user atlasmart-app UNLINK atlasmart:ch03:l3:p1 atlasmart:ch03:l3:p2 atlasmart:ch03:l3:p3 atlasmart:ch03:m:a atlasmart:ch03:m:b atlasmart:ch03:m:c atlasmart:ch03:m:ttl atlasmart:ch03:m:other atlasmart:ch03:blob:fixed atlasmart:ch03:samples:1 atlasmart:ch03:binary:payload</span></code></pre>
+              </div>
+              <p><strong>Verification checklist:</strong></p>
+              <ul>
+                <li>
+                  You can explain MGET null positions, MSET atomic replacement
+                  on standalone Redis, and the Cluster same-slot caveat.
+                </li>
+                <li>
+                  You can prove GETRANGE endpoints are inclusive and SETRANGE
+                  zero-fills gaps.
+                </li>
+                <li>
+                  You can state the 512-MiB String / 2^29−1 SETRANGE offset
+                  boundary and why far writes can block during allocation.
+                </li>
+                <li>
+                  You can round-trip NUL/0xFF bytes without text decoding and
+                  calculate RESP request bytes versus payload bytes.
+                </li>
+                <li>
+                  You measured MEMORY USAGE instead of equating logical payload
+                  length with total Redis memory.
+                </li>
+              </ul>
+            </section>
+            <section>
+              <h2>9. Production judgment</h2>
+              <p>
+                Choose MGET/MSET for bounded related keys when atomic server
+                execution and key locality fit the workload; do not turn them
+                into unbounded “fetch everything” commands. Bound String sizes
+                and range offsets. For binary data, prefer raw bytes through a
+                binary-safe client unless an external text-only boundary
+                justifies encoding. Observe request/reply sizes, network
+                round-trip time, server command latency, key/value sizes, memory
+                usage, AOF/replication volume, persistence rewrite behavior, and
+                hot-key distribution.
+              </p>
+              <p>
+                Managed services may impose smaller item/command/request limits
+                than Redis Open Source or may alter multi-key behavior through
+                proxy/Active-Active architectures; verify provider
+                documentation. Cluster migration requires reviewing every
+                MGET/MSET/BITOP-style multi-key operation for slot locality.
+                Security review should consider whether raw binary content
+                contains secrets/PII and whether backups/AOF files need
+                encryption and retention controls.
+              </p>
+            </section>
+            <section>
+              <h2>10. Summary and next step</h2>
+              <p>
+                Redis Strings are byte arrays with String commands layered on
+                top. MGET/MSET batch multiple keys but still have O(N),
+                response-size, lifecycle, and Cluster boundaries.
+                GETRANGE/SETRANGE address bytes; APPEND grows values; raw binary
+                can round-trip without base64. Sparse offsets and big Strings
+                create real memory and tail-latency risks. Next, you will use
+                those same bytes as a dense array of individual bits and compare
+                the huge efficiency gain of dense boolean state with the
+                allocation cost of sparse offsets.
+              </p>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>What does MGET return for a missing key?</li>
+                  <li>
+                    Why can SETRANGE offset 8,388,607 be expensive on a tiny
+                    key?
+                  </li>
+                  <li>Are GETRANGE offsets byte or character indexes?</li>
+                  <li>
+                    Why is base64 not automatically required for Redis binary
+                    values?
+                  </li>
+                  <li>What changes for MSET in Redis Cluster?</li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      <strong>1.</strong> A null entry in the corresponding
+                      result position; it does not fail the whole MGET.
+                    </p>
+                    <p>
+                      <strong>2.</strong> Redis must allocate and zero-fill all
+                      intermediate bytes, growing the String to 8 MiB.
+                    </p>
+                    <p>
+                      <strong>3.</strong> Byte offsets; String values are
+                      binary-safe, not Unicode-character arrays.
+                    </p>
+                    <p>
+                      <strong>4.</strong> Redis Strings and binary-capable
+                      clients already carry arbitrary bytes; base64 is only
+                      needed for text-only boundaries and adds size/CPU
+                      overhead.
+                    </p>
+                    <p>
+                      <strong>5.</strong> Native multi-key operations are
+                      constrained by hash-slot locality; a client may need
+                      same-slot keys or split work, changing atomicity/latency.
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <ul class="reference-list">
+                <li>
+                  <a
+                    href="https://redis.io/docs/latest/commands/mget/"
+                    rel="noopener"
+                    target="_blank"
+                    >MGET command</a
+                  >
+                  — multi-key return semantics and complexity
+                </li>
+                <li>
+                  <a
+                    href="https://redis.io/docs/latest/commands/mset/"
+                    rel="noopener"
+                    target="_blank"
+                    >MSET command</a
+                  >
+                  — atomic multi-key String replacement
+                </li>
+                <li>
+                  <a
+                    href="https://redis.io/docs/latest/develop/using-commands/multi-key-operations/"
+                    rel="noopener"
+                    target="_blank"
+                    >Multi-key operations</a
+                  >
+                  — standalone versus Cluster/Active-Active boundaries
+                </li>
+                <li>
+                  <a
+                    href="https://redis.io/docs/latest/commands/getrange/"
+                    rel="noopener"
+                    target="_blank"
+                    >GETRANGE command</a
+                  >
+                  — inclusive and negative byte-range reads
+                </li>
+                <li>
+                  <a
+                    href="https://redis.io/docs/latest/commands/setrange/"
+                    rel="noopener"
+                    target="_blank"
+                    >SETRANGE command</a
+                  >
+                  — zero padding, maximum offset, and allocation warning
+                </li>
+                <li>
+                  <a
+                    href="https://redis.io/docs/latest/commands/append/"
+                    rel="noopener"
+                    target="_blank"
+                    >APPEND command</a
+                  >
+                  — append semantics and amortized complexity
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a href="Lesson2.html"
+              ><small>Previous lesson</small
+              ><strong
+                >INCR/DECR/INCRBYFLOAT: Counters, Quotas, Sequencing, and
+                Overflow/Precision Awareness</strong
+              ></a
+            ><a class="next" href="Lesson4.html"
+              ><small>Next lesson</small
+              ><strong
+                >Bitmaps with SETBIT/GETBIT/BITCOUNT/BITOP for Dense Boolean
+                State</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <small
+          >Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../redis-syntax.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>
