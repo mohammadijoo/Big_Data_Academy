@@ -1,0 +1,1426 @@
+<!doctype html>
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Observe Cassandra gossip membership and application-state dissemination and distinguish it from consensus, routing, and driver connection state."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Gossip for Membership and State Dissemination: What Nodes Learn About Each
+      Other | Apache Cassandra | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <link
+      href="../assets/css/cassandra-course-fixes.css?v=20260908.1"
+      rel="stylesheet"
+    />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">CAS</span>
+            <div>
+              <small>Course 13</small><strong>Apache Cassandra</strong>
+            </div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 135 lessons..."
+            type="search"
+        /></label>
+        <nav
+          aria-label="Apache Cassandra curriculum"
+          class="sidebar-curriculum"
+        >
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>Cassandra Foundations, Version 5.0, Architecture,
+              and Lab Setup
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>What Cassandra Is: Distributed Wide-Column
+                Storage, Availability Goals, and Workload Fit</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Peer-to-Peer Architecture vs Primary/Replica
+                Systems: Coordination Without a Permanent Leader</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>Apache Cassandra 5.0 Baseline, Java
+                Requirements, Configuration Layout, and Release Awareness</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>Start a Single-Node or Container Lab, Connect
+                with cqlsh, and Inspect Cluster Metadata</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Safe Course Lab with Multiple Nodes,
+                Sample Keyspaces, Metrics, and Repeatable Failure Tests</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>02</span>Clusters, Datacenters, Racks, Snitches, Gossip, and
+              Failure Detection
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="Lesson1.html"
+                ><span>01</span>Cluster Topology: Nodes, Datacenters, Racks,
+                Endpoints, and Failure Domains</a
+              ><a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>Endpoint Snitches and Replication Placement:
+                Mapping Logical Topology to Physical Infrastructure</a
+              ><a
+                aria-current="page"
+                class="sidebar-lesson is-current"
+                href="Lesson3.html"
+                ><span>03</span>Gossip for Membership and State Dissemination:
+                What Nodes Learn About Each Other<i>Current</i></a
+              ><a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>Failure Detection, Phi Accrual Concepts,
+                Suspicions, DOWN State, and Client Impact</a
+              ><a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Design Rack/Zone Placement That Survives Host,
+                Rack, and Availability-Zone Failure</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>Partitioners, Tokens, Vnodes, Token Rings, and Data
+              Distribution
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>Partition Key Hashing and Murmur3Partitioner:
+                From Key to Token</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Token Ranges, Ownership, Replicas, and Why the
+                Ring Is a Useful Mental Model</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>Virtual Nodes: Many Tokens per Node,
+                Distribution, Streaming, and Operational Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>Hot Partitions, Skewed Keys, Monotonic
+                Workloads, and Why More Nodes Do Not Fix Bad Keys</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Inspect Token Ownership and Distribution with
+                nodetool and System Tables</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Keyspaces, Replication Strategies, Replication
+              Factor, and Placement
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>CREATE KEYSPACE and Replication Configuration:
+                Durable Writes and Namespaces</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>NetworkTopologyStrategy: Replication Factor per
+                Datacenter and Rack-Aware Placement</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>Why SimpleStrategy Is for Limited/Legacy
+                Scenarios and Not Production Multi-Rack Design</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>Replication Factor, Failure Tolerance, Storage
+                Cost, and Consistency-Level Math</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Alter Replication Safely: Repair Requirements,
+                Data Movement, and Validation</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>CQL Foundations: DDL, DML, Filtering Rules, and
+              cqlsh Workflows
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>CREATE/ALTER/DROP TABLE and Keyspace Objects
+                with Schema Agreement Awareness</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>INSERT, UPDATE, DELETE, SELECT, Upserts,
+                Timestamps, TTL, and Last-Write-Wins Cells</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>WHERE Restrictions, ALLOW FILTERING, Query
+                Constraints, and Why CQL Is Not SQL</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>Prepared Statements, Bind Markers, Batch Files,
+                COPY Caveats, and cqlsh Productivity</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>Inspect system_schema and Trace Schema Changes
+                Across a Cluster</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Query-First Data Modeling and Denormalization
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>Start from Application Queries, Ordering,
+                Cardinality, Retention, and Consistency</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>One Table per Query Pattern: Denormalization as
+                an Explicit Write-Time Cost</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>Avoid Joins and Cross-Partition Scans by
+                Precomputing Read Shapes</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>Duplicate Data Across Tables and Keep It
+                Consistent with Application/Streaming Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Redesign a Normalized Relational Model into
+                Cassandra Query Tables and Explain the Tradeoffs</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>Primary Keys, Partition Keys, Clustering Columns,
+              and Ordering
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>PRIMARY KEY Syntax: Composite Partition Keys and
+                Ordered Clustering Columns</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>Partition-Key Cardinality, Distribution,
+                Locality, and Bounded Partition Size</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>Clustering Order, Slice Queries, Prefix Rules,
+                and Efficient Within-Partition Reads</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Time Bucketing, Hash Bucketing, Synthetic
+                Shards, and Avoiding Unbounded Partitions</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Estimate Rows/Bytes per Partition Before
+                Deploying the Schema</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>CQL Data Types, Collections, Tuples, UDTs, Static
+              Columns, and Frozen Values
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>Scalar Types, Timestamps/Dates, UUID/timeuuid,
+                Decimal/Varint, Blob, Duration, and Conversion</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>Lists, Sets, Maps: Read/Write Semantics,
+                Collection Growth, and Tombstone Risks</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>Tuples and User-Defined Types for Structured
+                Values and Schema Evolution</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>Frozen vs Multi-Cell Values, Nested Collections,
+                and Mutation Granularity</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Static Columns for Partition-Wide Metadata and
+                Modeling Shared Attributes</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>The Write Path: Coordinator, Commit Log, Memtables,
+              Replicas, and Acknowledgment
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>Client Request to Coordinator: Token Awareness,
+                Replica Selection, and Write Consistency</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>Commit Log for Durability and Memtables for
+                In-Memory Sorted State</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>Flush Triggers, Memtable-to-SSTable Transition,
+                and Backpressure Under Write Load</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>Timestamps, Conflict Resolution, Tombstones,
+                TTL, and Last-Write-Wins at the Cell Level</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>Trace a Write Across Replicas and Relate
+                Acknowledgments to Consistency Level</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>The Read Path: Bloom Filters, Indexes, SSTables,
+              Caches, Merging, and Reconciliation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>Coordinator Read Requests, Replica Selection,
+                Data/Digest Responses, and Consistency</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>Partition Index/Summary, Bloom Filters, Key
+                Cache, Chunk Cache, and SSTable Lookup</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>Read Amplification Across SSTables and Merging
+                Multiple Versions/Tombstones</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>Read Repair/Reconciliation Concepts and
+                Detecting Inconsistent Replica Data</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Diagnose a Slow Read by Partition Size, SSTable
+                Count, Tombstones, Cache, and Disk Evidence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>SSTables and On-Disk Storage Internals
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>SSTable Components: Data, Index, Summary,
+                Filter, Statistics, Compression, and TOC</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>Immutable Sorted Storage, Partitions on Disk,
+                Compression Chunks, and Sequential I/O</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>SSTable Tools and Metadata Inspection Without
+                Mutating Production Data</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Streaming SSTables During Bootstrap, Repair,
+                Rebuild, and Topology Changes</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Connect SSTable Count/Size to Compaction
+                Strategy, Read Amplification, and Disk Headroom</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>Compaction Strategies and Storage Amplification
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>Why Compaction Exists: Merge Immutable Files,
+                Reclaim Tombstones, and Bound Read Amplification</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>SizeTieredCompactionStrategy for General
+                Write-Oriented Workloads</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>LeveledCompactionStrategy for Read
+                Predictability and Its Write/Space Amplification Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>TimeWindowCompactionStrategy for TTL/Time-Series
+                Workloads and Expiring Data</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>Compaction Throughput, Concurrent Compactors,
+                Pending Tasks, Disk Headroom, and Tuning by Evidence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Tombstones, TTL, gc_grace, Deletes, and Expiration
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>Why Deletes Create Tombstones Instead of
+                Immediate Physical Removal</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Row/Cell/Range Tombstones, Collection
+                Tombstones, TTL Expiration, and Query Cost</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>gc_grace_seconds, Repair Timing, Zombie Data,
+                and Safe Tombstone Purging</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Tombstone Warning/Failure Thresholds, Wide
+                Partitions, and Range-Scan Hazards</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Redesign High-Delete/High-TTL Workloads with
+                Bucketing, TWCS, and Retention-Aware Modeling</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Consistency Levels, Quorums, Availability, and
+              Client Guarantees
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>ANY, ONE, TWO, THREE, QUORUM, ALL, LOCAL_QUORUM,
+                EACH_QUORUM, and LOCAL_ONE Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Quorum Math with Replication Factor and Why
+                LOCAL_QUORUM Matters in Multi-DC Systems</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Write vs Read Consistency Choices: Latency,
+                Availability, Staleness, and Failure Behavior</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Serial Consistency for LWT vs Regular
+                Consistency for Data Operations</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Define Per-Query Consistency from Business
+                Invariants Instead of One Cluster-Wide Habit</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Failure Handling: Hints, Read Repair, Speculative
+              Retry, Timeouts, and Unavailable Errors
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>Hinted Handoff: Best-Effort Delivery of Missed
+                Writes and Retention Limits</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Read Repair/Reconciliation and the Relationship
+                to Eventual Consistency</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Speculative Retry: Tail-Latency Reduction vs
+                Duplicate Replica Work</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Timeout vs Unavailable vs Overloaded/Failure
+                Responses and Correct Client Interpretation</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Failure Drill: Stop Replicas, Vary Consistency
+                Levels, Recover Nodes, and Verify Convergence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Lightweight Transactions, Paxos, CAS, and
+              Linearizable Conditional Updates
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>IF NOT EXISTS and IF Conditions: Compare-and-Set
+                Semantics in CQL</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Paxos Phases and Why LWT Requires More
+                Coordination Than Regular Writes</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>SERIAL/LOCAL_SERIAL Consistency, Replica Scope,
+                Latency, and Failure Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Contention, Hot Partitions, Retries, and
+                Modeling to Minimize LWT Frequency</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Use LWT for True Invariants and Reject It as a
+                General Replacement for Relational Transactions</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Batches, Counters, Idempotency, and Write
+              Coordination
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>LOGGED vs UNLOGGED BATCH: Atomicity Scope, Batch
+                Log, and Multi-Partition Costs</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>Why Batches Are Not a Bulk-Load Performance Tool
+                and When Single-Partition Batches Help</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>Counter Tables, Distributed Counter Semantics,
+                Restrictions, and Workload Suitability</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>Idempotent vs Non-Idempotent Statements and
+                Driver Retry Decisions</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Design Retry-Safe Writes with Request IDs,
+                Conditional Logic, and Eventual Reconciliation</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Secondary Indexing with Storage-Attached Indexing
+              (SAI)
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>Primary-Key Access vs Secondary Indexes: Why
+                Partition Modeling Still Comes First</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>SAI Architecture: Index Components Attached to
+                SSTables and Distributed Query Execution</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Create SAI Indexes for Textual/Numeric Columns
+                and Combine Multiple Predicates</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Index Selectivity, Range Queries, Disk/Write
+                Cost, Query Limits, and Operational Monitoring</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>Choose SAI vs Denormalized Tables vs External
+                Search Based on Workload and Scale</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary><span>19</span>Vector Search in Cassandra 5.0</summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Vector CQL Type: Fixed Dimensions, Embeddings,
+                Similarity, and Schema Constraints</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Create SAI Vector Indexes and Perform
+                Approximate Nearest Neighbor Queries</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>Cosine/Dot/Euclidean Similarity Concepts,
+                Normalization, Recall, and Latency</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>Combine Vector Retrieval with Metadata
+                Predicates and Query-First Modeling</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Capacity, Index Build/Streaming, Embedding
+                Updates, Evaluation, and AI/RAG Architecture Tradeoffs</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Materialized Views and Derived-Table Alternatives
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>Materialized View Concepts: Automatic Derived
+                Tables and Primary-Key Requirements</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>Write Propagation, Consistency Expectations,
+                Operational Limitations, and Failure Considerations</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>When Explicit Denormalized Tables Give Better
+                Ownership and Repairability</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>CDC/Streams/Application Dual Writes vs
+                Materialized Views for Derived Read Models</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Review a Use Case and Choose Between Base Table,
+                SAI, Materialized View, or Explicit Projection</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Drivers, Prepared Statements, Token Awareness,
+              Paging, Retries, and Load Balancing
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>Native Protocol, Driver Sessions, Contact
+                Points, Topology Discovery, and Connection Pools</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>Prepared Statements, Routing Keys, Token-Aware
+                Routing, and Prepared Metadata</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>Paging State, Fetch Size, Large Result Sets, and
+                API Pagination Safety</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Load Balancing by Local Datacenter, Host
+                Distance, Failure Detection, and Request Routing</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>Retry Policies, Idempotency, Timeouts,
+                Speculative Execution, and Error Classification</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Configuration, cqlsh, nodetool, Dynamic Settings,
+              and Operational Tooling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>cassandra.yaml, Environment/JVM Options, Seeds,
+                Listen/RPC Addresses, and Unit-Aware Settings</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>nodetool status/info/describecluster/ring
+                Awareness and Reading Cluster Health</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>cqlsh CONSISTENCY, TRACING, DESCRIBE, COPY
+                Boundaries, and Scripting</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>Runtime/Guardrail Configuration, Rolling
+                Changes, and Avoiding Configuration Drift</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Build a Configuration Baseline and
+                Version-Control Operational Settings Safely</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>23</span>Node Lifecycle: Bootstrap, Replace, Decommission,
+              Remove, Rebuild, and Cleanup
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter23/Lesson1.html"
+                ><span>01</span>Add Capacity: Bootstrap Streaming, Token
+                Ownership, Pending Ranges, and Headroom</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson2.html"
+                ><span>02</span>Decommission a Healthy Node and Stream Its
+                Ranges Safely</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson3.html"
+                ><span>03</span>Replace a Dead Node: Address/Token Identity,
+                replace_address, and Failure Scenarios</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson4.html"
+                ><span>04</span>Remove Unreachable Nodes, Rebuild from Another
+                Datacenter, and Understand Streaming Sources</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson5.html"
+                ><span>05</span>Run cleanup After Topology Changes and Verify
+                Ownership, Disk Use, and Replica Coverage</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>Repair, Anti-Entropy, Incremental/Full Strategies,
+              and Data Convergence
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter24/Lesson1.html"
+                ><span>01</span>Why Repair Is Required Even with Hinted Handoff
+                and Read Repair</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson2.html"
+                ><span>02</span>Merkle Trees, Token Ranges, Streaming
+                Differences, and Repair Session Coordination</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson3.html"
+                ><span>03</span>Incremental Repair vs Full Repair:
+                Repaired/Unrepaired Data and Operational Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson4.html"
+                ><span>04</span>Repair Cadence Relative to gc_grace, Token
+                Ranges, Datacenters, and Resource Throttling</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson5.html"
+                ><span>05</span>Build a Repair Runbook with Scheduling,
+                Monitoring, Failure Recovery, and Verification</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>25</span>Snapshots, Backups, Commitlog Archiving, Restore,
+              and Disaster Recovery
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter25/Lesson1.html"
+                ><span>01</span>nodetool snapshot: Hard Links, SSTable
+                Immutability, Schema Capture, and Space Accounting</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson2.html"
+                ><span>02</span>Incremental Backups, Backup Catalogs, Remote
+                Copies, Retention, and Integrity Checks</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson3.html"
+                ><span>03</span>Commitlog Archiving/Restore for
+                Point-in-Time-Oriented Recovery Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson4.html"
+                ><span>04</span>Restore with sstableloader/Refresh or Node-Level
+                Replacement: Topology and Schema Considerations</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson5.html"
+                ><span>05</span>Perform a Multi-Node Restore Drill and Measure
+                RPO/RTO, Repair Needs, and Application Cutover</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>26</span>Security: Authentication, Authorization, Roles,
+              TLS, and Secrets
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter26/Lesson1.html"
+                ><span>01</span>Enable Authentication and Authorization Safely
+                with a Bootstrap/Recovery Plan</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson2.html"
+                ><span>02</span>Roles, LOGIN, Permissions, GRANT/REVOKE, Role
+                Inheritance, and Least Privilege</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson3.html"
+                ><span>03</span>Internode Encryption vs Client TLS:
+                Certificates, Trust, Rotation, and Failure Modes</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson4.html"
+                ><span>04</span>Protect JMX/Management Interfaces, Credentials,
+                Network Paths, Backups, and Configuration Secrets</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson5.html"
+                ><span>05</span>Operational Security Review: Patch Cadence,
+                Audit Evidence, Incident Access, and Multi-Tenant Boundaries</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>27</span>Observability, Performance, Capacity, Guardrails,
+              Upgrades, Multi-DC Resilience, and Capstone
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter27/Lesson1.html"
+                ><span>01</span>Metrics, Logs, Tracing, nodetool
+                tablestats/tablehistograms/proxyhistograms, and Alerting
+                Signals</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson2.html"
+                ><span>02</span>Capacity Planning for Partitions, SSTables,
+                Compaction, Repair, Heap/Off-Heap, Disk, Network, and Failure
+                Headroom</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson3.html"
+                ><span>03</span>Guardrails and Performance Controls: Prevent
+                Dangerous Schema/Query Patterns Before They Become Incidents</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson4.html"
+                ><span>04</span>Rolling Upgrades, Schema Agreement, Driver
+                Compatibility, Multi-DC Failover/Repair, and Disaster-Game-Day
+                Planning</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson5.html"
+                ><span>05</span>Capstone: Model, Deploy, Load-Test, Fail,
+                Repair, Recover, Secure, Tune, and Defend a Production Cassandra
+                Cluster</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 02 · Lesson 03</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">Apache Cassandra</a><span>/</span
+            ><span>Chapter 02 · Lesson 03</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 02 · Clusters, Datacenters, Racks, Snitches, Gossip, and
+              Failure Detection
+            </p>
+            <h1>
+              Gossip for Membership and State Dissemination: What Nodes Learn
+              About Each Other
+            </h1>
+            <p>
+              See what peers actually learn from gossip, how state versions
+              converge, and why a node can be “down” in one layer while still
+              reachable in another.
+            </p>
+            <div class="lesson-meta">
+              <span>Intermediate</span><span>110–135 minutes</span
+              ><span>Gossip-state and reversible failure lab</span
+              ><span>Apache Cassandra 5.0.9 · 3-node dc1/rack1–3 lab</span
+              ><span>Last reviewed: September 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                AtlasMart's three nodes can now describe one another's DC/rack
+                locations. How does that metadata spread, and what else do nodes
+                learn? Cassandra uses <strong>gossip</strong> to disseminate
+                membership and application state. This lesson makes gossip
+                visible without mislabeling it as a consensus algorithm or a
+                client-routing mechanism.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Explain gossip as decentralized state dissemination among
+                    peers rather than consensus or request routing.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Identify common gossiped application states such as status,
+                    generation/version, DC, rack, host ID, schema and release
+                    metadata.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Compare system.local/system.peers_v2 with nodetool
+                    gossipinfo and explain why views can lag temporarily.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Observe one peer stop updating and recover using a
+                    reversible container pause/unpause experiment.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Explain why a client driver may react to topology/state
+                    events while maintaining its own connection-based node
+                    state.
+                  </p>
+                </div>
+              </div>
+              <div class="callout">
+                <strong>Chapter baseline reviewed 7 September 2026</strong>
+                <p>
+                  Apache Cassandra 5.0.9 is the current GA 5.0 patch on the
+                  official download page. These labs pin
+                  <code>cassandra:5.0.9</code>. The chapter uses one logical
+                  datacenter, <code>dc1</code>, and three logical racks,
+                  <code>rack1</code>–<code>rack3</code>, on the isolated Docker
+                  network <code>atlasmart-cassandra</code>. Topology labels are
+                  learning metadata; they do not create real
+                  host/rack/availability-zone isolation by themselves.
+                </p>
+              </div>
+              <div class="callout warning">
+                <strong>Execution and safety note</strong>
+                <p>
+                  The generation environment does not contain Docker or
+                  Cassandra, so commands were documentation- and syntax-checked
+                  rather than executed here. Record your actual addresses, host
+                  IDs, tokens, gossip generations, phi values, startup times,
+                  and driver events. Never treat the example output shapes as
+                  captured measurements. All failure injection is confined to
+                  disposable course containers; no host firewall, clock
+                  manipulation, or production endpoint is required.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>
+                1. Gossip spreads peer state; it does not serialize the cluster
+              </h2>
+              <p>
+                Cassandra nodes periodically exchange membership and
+                application-state information with peers. The mechanism is
+                epidemic: each node talks to a small set of peers and state
+                versions propagate until views converge. Gossip lets nodes learn
+                endpoint status, topology labels, host identity, schema/release
+                information and other application states without a central
+                membership master.
+              </p>
+              <p>
+                That does <em>not</em> make gossip a consensus protocol.
+                Consensus answers questions such as “what single value was
+                chosen under concurrent proposals?” Gossip answers “what state
+                updates have peers heard, and which versions are newer?”
+                Lightweight transactions later use Paxos for a different
+                purpose. Likewise, gossip is not the client load-balancing
+                policy; drivers consume server topology/status events and
+                maintain their own connection pools and node states.
+              </p>
+            </section>
+            <section>
+              <h2>
+                2. Inspect gossip without treating every field as an API
+                contract
+              </h2>
+              <div class="code-window" data-code-block="" data-language="bash">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>bash /
+                    PowerShell · reusable three-node topology lab
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-bash"><span class="code-line">docker network create atlasmart-cassandra</span><span class="code-line"></span><span class="code-line">docker volume create atlasmart-cass-1-data</span><span class="code-line">docker volume create atlasmart-cass-2-data</span><span class="code-line">docker volume create atlasmart-cass-3-data</span><span class="code-line"></span><span class="code-line">docker run -d --name atlasmart-cass-1 --hostname atlasmart-cass-1 --network atlasmart-cassandra -e CASSANDRA_CLUSTER_NAME=atlasmart-course -e CASSANDRA_DC=dc1 -e CASSANDRA_RACK=rack1 -e CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch -v atlasmart-cass-1-data:/var/lib/cassandra cassandra:5.0.9</span><span class="code-line"># Wait until node 1 accepts CQL before starting peers.</span><span class="code-line">docker run -d --name atlasmart-cass-2 --hostname atlasmart-cass-2 --network atlasmart-cassandra -e CASSANDRA_CLUSTER_NAME=atlasmart-course -e CASSANDRA_SEEDS=atlasmart-cass-1 -e CASSANDRA_DC=dc1 -e CASSANDRA_RACK=rack2 -e CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch -v atlasmart-cass-2-data:/var/lib/cassandra cassandra:5.0.9</span><span class="code-line">docker run -d --name atlasmart-cass-3 --hostname atlasmart-cass-3 --network atlasmart-cassandra -e CASSANDRA_CLUSTER_NAME=atlasmart-course -e CASSANDRA_SEEDS=atlasmart-cass-1 -e CASSANDRA_DC=dc1 -e CASSANDRA_RACK=rack3 -e CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch -v atlasmart-cass-3-data:/var/lib/cassandra cassandra:5.0.9</span><span class="code-line"></span><span class="code-line"># Wait for all three nodes to become Up/Normal, then verify from two peers.</span><span class="code-line">docker exec atlasmart-cass-1 nodetool status</span><span class="code-line">docker exec atlasmart-cass-2 nodetool status</span></code></pre>
+              </div>
+              <p>
+                Once the cluster converges, inspect a focused subset of gossip
+                output. Field names and formatting can evolve, so the lesson
+                uses them as evidence for this pinned 5.0.9 baseline, not as a
+                parser contract.
+              </p>
+              <div class="code-window" data-code-block="" data-language="bash">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>gossip
+                    evidence · raw state plus queryable system metadata
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-bash"><span class="code-line">docker exec atlasmart-cass-1 nodetool gossipinfo</span><span class="code-line">docker exec atlasmart-cass-1 sh -lc "nodetool gossipinfo | grep -E '^/|STATUS:|DC:|RACK:|HOST_ID:|RELEASE_VERSION:|SCHEMA:'"</span><span class="code-line">docker exec atlasmart-cass-1 cqlsh -e "SELECT data_center, rack, host_id, release_version, schema_version FROM system.local;"</span><span class="code-line">docker exec atlasmart-cass-1 cqlsh -e "SELECT peer, data_center, rack, host_id, release_version, schema_version FROM system.peers_v2;"</span></code></pre>
+              </div>
+              <p>
+                You should see one endpoint section per known peer with
+                versioned application states. Exact generation numbers and
+                heartbeat versions are intentionally not hard-coded; they
+                reflect process start history and ongoing gossip exchanges.
+              </p>
+            </section>
+            <section>
+              <h2>3. Generation and versions explain “newer state”</h2>
+              <p>
+                At a high level, gossip needs a way to distinguish stale
+                information from newer information. Endpoint state includes a
+                generation associated with the process incarnation plus
+                versioned application states/heartbeats. A restarted node can
+                therefore publish a newer incarnation rather than being
+                permanently trapped behind stale state.
+              </p>
+              <p>
+                This is why copying one <code>gossipinfo</code> line into an
+                incident report without a timestamp is weak evidence. Operators
+                should correlate which node produced the view, when it was
+                captured, whether the peer was reachable, and whether the same
+                transition appears in logs, failure-detector output and driver
+                events.
+              </p>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Evidence</th>
+                    <th>Strength</th>
+                    <th>Limit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>nodetool gossipinfo</code></td>
+                    <td>Rich peer/application-state view from one node</td>
+                    <td>
+                      Point-in-time local perspective; format is operational
+                      output
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>system.peers_v2</code></td>
+                    <td>Queryable peer metadata</td>
+                    <td>Not a complete failure timeline</td>
+                  </tr>
+                  <tr>
+                    <td>Driver node state</td>
+                    <td>What the application client currently believes</td>
+                    <td>
+                      Can differ from a peer's gossip suspicion because live
+                      connections matter
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+            <section>
+              <h2>
+                4. Controlled failure: freeze one peer and watch state
+                dissemination
+              </h2>
+              <p>
+                Use <code>docker pause</code> rather than host firewall rules.
+                It freezes the container's processes while keeping the course
+                boundary reversible. This simulates an unresponsive node; it is
+                not a packet-level partition and should be labeled accordingly.
+              </p>
+              <div class="code-window" data-code-block="" data-language="bash">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>failure
+                    injection · pause, observe, recover
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-bash"><span class="code-line">docker exec atlasmart-cass-1 nodetool status</span><span class="code-line">docker pause atlasmart-cass-3</span><span class="code-line"># Wait for failure detection to converge. Bash: sleep 20</span><span class="code-line"># PowerShell: Start-Sleep -Seconds 20</span><span class="code-line">docker exec atlasmart-cass-1 nodetool status</span><span class="code-line">docker exec atlasmart-cass-1 nodetool failuredetector</span><span class="code-line">docker exec atlasmart-cass-1 sh -lc "nodetool gossipinfo | grep -E '^/|STATUS:'"</span><span class="code-line"></span><span class="code-line">docker unpause atlasmart-cass-3</span><span class="code-line"># Wait for recovery/convergence, then re-check.</span><span class="code-line">docker exec atlasmart-cass-1 nodetool status</span><span class="code-line">docker exec atlasmart-cass-1 nodetool gossipinfo</span></code></pre>
+              </div>
+              <p>
+                Do not demand a fixed 20-second transition: detector timing
+                depends on heartbeat history and scheduling. The acceptance
+                criterion is a timeline: peer initially Up, becomes
+                suspected/Down from the observer's perspective after missed
+                heartbeats, then returns Up after the process resumes and state
+                converges.
+              </p>
+              <div class="callout warning">
+                <strong
+                  >DOWN is a suspicion decision, not a permanent
+                  deletion.</strong
+                >
+                <p>
+                  The endpoint remains part of cluster membership. A stopped or
+                  paused node is not automatically removed from token ownership,
+                  and operators must not respond to a transient DOWN state by
+                  running removal procedures blindly.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>
+                5. Driver perspective: similar vocabulary, different evidence
+              </h2>
+              <p>
+                The Apache Cassandra Java Driver exposes node states such as
+                <code>UP</code>, <code>DOWN</code>, <code>UNKNOWN</code> and
+                <code>FORCED_DOWN</code>. Importantly, the driver's view is
+                connection-aware. Official driver documentation notes that a
+                node can remain UP from the driver's perspective if active
+                connections still work even while Cassandra gossip on some peer
+                suspects that node because of cross-node connectivity problems.
+              </p>
+              <div class="code-window" data-code-block="" data-language="java">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>optional
+                    driver evidence · application-side host state
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-java"><span class="code-line">// Apache Cassandra Java Driver 4.19.x: inspect the driver's current metadata view.</span><span class="code-line">session.getMetadata().getNodes().values().forEach(node -&gt;</span><span class="code-line">    System.out.printf("%s dc=%s rack=%s state=%s connections=%d%n",</span><span class="code-line">        node.getEndPoint(), node.getDatacenter(), node.getRack(),</span><span class="code-line">        node.getState(), node.getOpenConnections())));</span></code></pre>
+              </div>
+              <p>
+                This is a critical production distinction: server failure
+                suspicion and client reachability are not identical network
+                observations. Incident runbooks should capture both rather than
+                force them into one “truth.”
+              </p>
+              <h3>Verification checklist</h3>
+              <ul>
+                <li>
+                  You can explain gossip without using the word consensus as a
+                  synonym.
+                </li>
+                <li>
+                  You captured peer topology/identity from both gossip and
+                  system tables.
+                </li>
+                <li>
+                  You observed a reversible Up→Down→Up timeline without host
+                  firewall changes.
+                </li>
+                <li>You did not remove/decommission the paused peer.</li>
+                <li>
+                  You can state why driver and server node-state views can
+                  differ.
+                </li>
+              </ul>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>Why is gossip not consensus?</li>
+                  <li>What does a gossip generation help distinguish?</li>
+                  <li>Does a DOWN gossip status remove token ownership?</li>
+                  <li>
+                    Why might a driver keep a node UP while one Cassandra peer
+                    marks it down?
+                  </li>
+                  <li>Why use docker pause here?</li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      <strong>1.</strong> Gossip disseminates versioned state
+                      until peers converge; it does not choose one serialized
+                      value under competing proposals.
+                    </p>
+                    <p>
+                      <strong>2.</strong> A newer process incarnation from stale
+                      state about an older incarnation.
+                    </p>
+                    <p>
+                      <strong>3.</strong> No. Failure suspicion is not the same
+                      as removing a node from cluster ownership.
+                    </p>
+                    <p>
+                      <strong>4.</strong> The driver can still have active
+                      client connections even when peer-to-peer connectivity
+                      caused gossip/failure detection to suspect the node.
+                    </p>
+                    <p>
+                      <strong>5.</strong> It creates an isolated, reversible
+                      unresponsive-node simulation without altering host
+                      firewall or system clock state.
+                    </p>
+                  </div>
+                </details>
+              </div>
+              <h3>Cleanup</h3>
+              <div class="code-window" data-code-block="" data-language="bash">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>cleanup
+                    · Bash form; remove only course-owned resources
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-bash"><span class="code-line">docker unpause atlasmart-cass-1 2&gt;/dev/null || true</span><span class="code-line">docker unpause atlasmart-cass-2 2&gt;/dev/null || true</span><span class="code-line">docker unpause atlasmart-cass-3 2&gt;/dev/null || true</span><span class="code-line">docker rm -f atlasmart-cass-1 atlasmart-cass-2 atlasmart-cass-3</span><span class="code-line">docker volume rm atlasmart-cass-1-data atlasmart-cass-2-data atlasmart-cass-3-data</span><span class="code-line">docker network rm atlasmart-cassandra</span></code></pre>
+              </div>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="powershell"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>cleanup
+                    · PowerShell form
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-powershell"><span class="code-line">docker unpause atlasmart-cass-1 2&gt;$null</span><span class="code-line">docker unpause atlasmart-cass-2 2&gt;$null</span><span class="code-line">docker unpause atlasmart-cass-3 2&gt;$null</span><span class="code-line">docker rm -f atlasmart-cass-1 atlasmart-cass-2 atlasmart-cass-3</span><span class="code-line">docker volume rm atlasmart-cass-1-data atlasmart-cass-2-data atlasmart-cass-3-data</span><span class="code-line">docker network rm atlasmart-cassandra</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>Summary and next step</h2>
+              <p>
+                This lesson’s concepts, evidence path, failure boundaries, and
+                production judgment should now be explicit enough to verify
+                rather than assume. Re-run the check-your-understanding prompts
+                and preserve any lab evidence you need before changing or
+                cleaning up the environment.
+              </p>
+              <p>
+                Next, continue to
+                <strong
+                  >Failure Detection, Phi Accrual Concepts, Suspicions, DOWN
+                  State, and Client Impact</strong
+                >.
+              </p>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <ul class="reference-list">
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/stable/"
+                    rel="noopener"
+                    target="_blank"
+                    >Apache Cassandra 5.0 documentation</a
+                  >
+                  — Official documentation entry point for the current 5.0 line.
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/_/download"
+                    rel="noopener"
+                    target="_blank"
+                    >Apache Cassandra downloads</a
+                  >
+                  — Official release page used to verify Cassandra 5.0.9 as the
+                  current GA patch.
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/stable/cassandra/managing/operating/snitch.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Snitch</a
+                  >
+                  — Official explanation of topology/proximity and rack-aware
+                  replica placement.
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/stable/cassandra/managing/configuration/cass_rackdc_file.html"
+                    rel="noopener"
+                    target="_blank"
+                    >cassandra-rackdc.properties</a
+                  >
+                  — Official DC/rack configuration for
+                  GossipingPropertyFileSnitch.
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/stable/cassandra/architecture/dynamo.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Dynamo architecture and replication</a
+                  >
+                  — Official NetworkTopologyStrategy and replica-placement
+                  semantics.
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/stable/cassandra/managing/tools/nodetool/gossipinfo.html"
+                    rel="noopener"
+                    target="_blank"
+                    >nodetool gossipinfo</a
+                  >
+                  — Official gossip-state inspection command.
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/stable/cassandra/managing/tools/nodetool/failuredetector.html"
+                    rel="noopener"
+                    target="_blank"
+                    >nodetool failuredetector</a
+                  >
+                  — Official failure-detector inspection command.
+                </li>
+                <li>
+                  <a
+                    href="https://apache.github.io/cassandra-java-driver/4.19.0/core/metadata/node/"
+                    rel="noopener"
+                    target="_blank"
+                    >Java Driver 4.19 node metadata</a
+                  >
+                  — Apache Java Driver documentation for driver-side node state
+                  and topology metadata.
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a href="Lesson2.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Endpoint Snitches and Replication Placement: Mapping Logical
+                Topology to Physical Infrastructure</strong
+              ></a
+            ><a class="next" href="Lesson4.html"
+              ><small>Next lesson</small
+              ><strong
+                >Failure Detection, Phi Accrual Concepts, Suspicions, DOWN
+                State, and Client Impact</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <small
+          >Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+    <script src="../assets/js/cassandra-highlight.js?v=20260908.1"></script>
+  </body>
+</html>

@@ -1,0 +1,1577 @@
+<!doctype html>
+
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Apache Cassandra Chapter 23 Lesson 3: Replace a Dead Node: Address/Token Identity, replace_address, and Failure Scenarios. Mechanism-first Cassandra 5.0.9 node-lifecycle lesson."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Replace a Dead Node: Address/Token Identity, replace_address, and Failure
+      Scenarios | Apache Cassandra | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <link
+      href="../assets/css/cassandra-course-fixes.css?v=20260908.1"
+      rel="stylesheet"
+    />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">CAS</span>
+            <div>
+              <small>Course 13</small><strong>Apache Cassandra</strong>
+            </div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 135 lessons..."
+            type="search"
+        /></label>
+        <nav
+          aria-label="Apache Cassandra curriculum"
+          class="sidebar-curriculum"
+        >
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>Cassandra Foundations, Version 5.0, Architecture,
+              and Lab Setup
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>What Cassandra Is: Distributed Wide-Column
+                Storage, Availability Goals, and Workload Fit</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Peer-to-Peer Architecture vs Primary/Replica
+                Systems: Coordination Without a Permanent Leader</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>Apache Cassandra 5.0 Baseline, Java
+                Requirements, Configuration Layout, and Release Awareness</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>Start a Single-Node or Container Lab, Connect
+                with cqlsh, and Inspect Cluster Metadata</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Safe Course Lab with Multiple Nodes,
+                Sample Keyspaces, Metrics, and Repeatable Failure Tests</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>Clusters, Datacenters, Racks, Snitches, Gossip, and
+              Failure Detection
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>Cluster Topology: Nodes, Datacenters, Racks,
+                Endpoints, and Failure Domains</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>Endpoint Snitches and Replication Placement:
+                Mapping Logical Topology to Physical Infrastructure</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Gossip for Membership and State Dissemination:
+                What Nodes Learn About Each Other</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>Failure Detection, Phi Accrual Concepts,
+                Suspicions, DOWN State, and Client Impact</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Design Rack/Zone Placement That Survives Host,
+                Rack, and Availability-Zone Failure</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>Partitioners, Tokens, Vnodes, Token Rings, and Data
+              Distribution
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>Partition Key Hashing and Murmur3Partitioner:
+                From Key to Token</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Token Ranges, Ownership, Replicas, and Why the
+                Ring Is a Useful Mental Model</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>Virtual Nodes: Many Tokens per Node,
+                Distribution, Streaming, and Operational Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>Hot Partitions, Skewed Keys, Monotonic
+                Workloads, and Why More Nodes Do Not Fix Bad Keys</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Inspect Token Ownership and Distribution with
+                nodetool and System Tables</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Keyspaces, Replication Strategies, Replication
+              Factor, and Placement
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>CREATE KEYSPACE and Replication Configuration:
+                Durable Writes and Namespaces</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>NetworkTopologyStrategy: Replication Factor per
+                Datacenter and Rack-Aware Placement</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>Why SimpleStrategy Is for Limited/Legacy
+                Scenarios and Not Production Multi-Rack Design</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>Replication Factor, Failure Tolerance, Storage
+                Cost, and Consistency-Level Math</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Alter Replication Safely: Repair Requirements,
+                Data Movement, and Validation</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>CQL Foundations: DDL, DML, Filtering Rules, and
+              cqlsh Workflows
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>CREATE/ALTER/DROP TABLE and Keyspace Objects
+                with Schema Agreement Awareness</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>INSERT, UPDATE, DELETE, SELECT, Upserts,
+                Timestamps, TTL, and Last-Write-Wins Cells</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>WHERE Restrictions, ALLOW FILTERING, Query
+                Constraints, and Why CQL Is Not SQL</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>Prepared Statements, Bind Markers, Batch Files,
+                COPY Caveats, and cqlsh Productivity</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>Inspect system_schema and Trace Schema Changes
+                Across a Cluster</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Query-First Data Modeling and Denormalization
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>Start from Application Queries, Ordering,
+                Cardinality, Retention, and Consistency</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>One Table per Query Pattern: Denormalization as
+                an Explicit Write-Time Cost</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>Avoid Joins and Cross-Partition Scans by
+                Precomputing Read Shapes</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>Duplicate Data Across Tables and Keep It
+                Consistent with Application/Streaming Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Redesign a Normalized Relational Model into
+                Cassandra Query Tables and Explain the Tradeoffs</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>Primary Keys, Partition Keys, Clustering Columns,
+              and Ordering
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>PRIMARY KEY Syntax: Composite Partition Keys and
+                Ordered Clustering Columns</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>Partition-Key Cardinality, Distribution,
+                Locality, and Bounded Partition Size</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>Clustering Order, Slice Queries, Prefix Rules,
+                and Efficient Within-Partition Reads</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Time Bucketing, Hash Bucketing, Synthetic
+                Shards, and Avoiding Unbounded Partitions</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Estimate Rows/Bytes per Partition Before
+                Deploying the Schema</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>CQL Data Types, Collections, Tuples, UDTs, Static
+              Columns, and Frozen Values
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>Scalar Types, Timestamps/Dates, UUID/timeuuid,
+                Decimal/Varint, Blob, Duration, and Conversion</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>Lists, Sets, Maps: Read/Write Semantics,
+                Collection Growth, and Tombstone Risks</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>Tuples and User-Defined Types for Structured
+                Values and Schema Evolution</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>Frozen vs Multi-Cell Values, Nested Collections,
+                and Mutation Granularity</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Static Columns for Partition-Wide Metadata and
+                Modeling Shared Attributes</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>The Write Path: Coordinator, Commit Log, Memtables,
+              Replicas, and Acknowledgment
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>Client Request to Coordinator: Token Awareness,
+                Replica Selection, and Write Consistency</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>Commit Log for Durability and Memtables for
+                In-Memory Sorted State</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>Flush Triggers, Memtable-to-SSTable Transition,
+                and Backpressure Under Write Load</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>Timestamps, Conflict Resolution, Tombstones,
+                TTL, and Last-Write-Wins at the Cell Level</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>Trace a Write Across Replicas and Relate
+                Acknowledgments to Consistency Level</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>The Read Path: Bloom Filters, Indexes, SSTables,
+              Caches, Merging, and Reconciliation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>Coordinator Read Requests, Replica Selection,
+                Data/Digest Responses, and Consistency</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>Partition Index/Summary, Bloom Filters, Key
+                Cache, Chunk Cache, and SSTable Lookup</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>Read Amplification Across SSTables and Merging
+                Multiple Versions/Tombstones</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>Read Repair/Reconciliation Concepts and
+                Detecting Inconsistent Replica Data</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Diagnose a Slow Read by Partition Size, SSTable
+                Count, Tombstones, Cache, and Disk Evidence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>SSTables and On-Disk Storage Internals
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>SSTable Components: Data, Index, Summary,
+                Filter, Statistics, Compression, and TOC</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>Immutable Sorted Storage, Partitions on Disk,
+                Compression Chunks, and Sequential I/O</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>SSTable Tools and Metadata Inspection Without
+                Mutating Production Data</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Streaming SSTables During Bootstrap, Repair,
+                Rebuild, and Topology Changes</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Connect SSTable Count/Size to Compaction
+                Strategy, Read Amplification, and Disk Headroom</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>Compaction Strategies and Storage Amplification
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>Why Compaction Exists: Merge Immutable Files,
+                Reclaim Tombstones, and Bound Read Amplification</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>SizeTieredCompactionStrategy for General
+                Write-Oriented Workloads</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>LeveledCompactionStrategy for Read
+                Predictability and Its Write/Space Amplification Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>TimeWindowCompactionStrategy for TTL/Time-Series
+                Workloads and Expiring Data</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>Compaction Throughput, Concurrent Compactors,
+                Pending Tasks, Disk Headroom, and Tuning by Evidence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Tombstones, TTL, gc_grace, Deletes, and Expiration
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>Why Deletes Create Tombstones Instead of
+                Immediate Physical Removal</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Row/Cell/Range Tombstones, Collection
+                Tombstones, TTL Expiration, and Query Cost</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>gc_grace_seconds, Repair Timing, Zombie Data,
+                and Safe Tombstone Purging</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Tombstone Warning/Failure Thresholds, Wide
+                Partitions, and Range-Scan Hazards</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Redesign High-Delete/High-TTL Workloads with
+                Bucketing, TWCS, and Retention-Aware Modeling</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Consistency Levels, Quorums, Availability, and
+              Client Guarantees
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>ANY, ONE, TWO, THREE, QUORUM, ALL, LOCAL_QUORUM,
+                EACH_QUORUM, and LOCAL_ONE Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Quorum Math with Replication Factor and Why
+                LOCAL_QUORUM Matters in Multi-DC Systems</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Write vs Read Consistency Choices: Latency,
+                Availability, Staleness, and Failure Behavior</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Serial Consistency for LWT vs Regular
+                Consistency for Data Operations</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Define Per-Query Consistency from Business
+                Invariants Instead of One Cluster-Wide Habit</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Failure Handling: Hints, Read Repair, Speculative
+              Retry, Timeouts, and Unavailable Errors
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>Hinted Handoff: Best-Effort Delivery of Missed
+                Writes and Retention Limits</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Read Repair/Reconciliation and the Relationship
+                to Eventual Consistency</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Speculative Retry: Tail-Latency Reduction vs
+                Duplicate Replica Work</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Timeout vs Unavailable vs Overloaded/Failure
+                Responses and Correct Client Interpretation</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Failure Drill: Stop Replicas, Vary Consistency
+                Levels, Recover Nodes, and Verify Convergence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Lightweight Transactions, Paxos, CAS, and
+              Linearizable Conditional Updates
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>IF NOT EXISTS and IF Conditions: Compare-and-Set
+                Semantics in CQL</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Paxos Phases and Why LWT Requires More
+                Coordination Than Regular Writes</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>SERIAL/LOCAL_SERIAL Consistency, Replica Scope,
+                Latency, and Failure Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Contention, Hot Partitions, Retries, and
+                Modeling to Minimize LWT Frequency</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Use LWT for True Invariants and Reject It as a
+                General Replacement for Relational Transactions</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Batches, Counters, Idempotency, and Write
+              Coordination
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>LOGGED vs UNLOGGED BATCH: Atomicity Scope, Batch
+                Log, and Multi-Partition Costs</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>Why Batches Are Not a Bulk-Load Performance Tool
+                and When Single-Partition Batches Help</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>Counter Tables, Distributed Counter Semantics,
+                Restrictions, and Workload Suitability</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>Idempotent vs Non-Idempotent Statements and
+                Driver Retry Decisions</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Design Retry-Safe Writes with Request IDs,
+                Conditional Logic, and Eventual Reconciliation</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Secondary Indexing with Storage-Attached Indexing
+              (SAI)
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>Primary-Key Access vs Secondary Indexes: Why
+                Partition Modeling Still Comes First</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>SAI Architecture: Index Components Attached to
+                SSTables and Distributed Query Execution</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Create SAI Indexes for Textual/Numeric Columns
+                and Combine Multiple Predicates</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Index Selectivity, Range Queries, Disk/Write
+                Cost, Query Limits, and Operational Monitoring</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>Choose SAI vs Denormalized Tables vs External
+                Search Based on Workload and Scale</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary><span>19</span>Vector Search in Cassandra 5.0</summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Vector CQL Type: Fixed Dimensions, Embeddings,
+                Similarity, and Schema Constraints</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Create SAI Vector Indexes and Perform
+                Approximate Nearest Neighbor Queries</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>Cosine/Dot/Euclidean Similarity Concepts,
+                Normalization, Recall, and Latency</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>Combine Vector Retrieval with Metadata
+                Predicates and Query-First Modeling</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Capacity, Index Build/Streaming, Embedding
+                Updates, Evaluation, and AI/RAG Architecture Tradeoffs</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Materialized Views and Derived-Table Alternatives
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>Materialized View Concepts: Automatic Derived
+                Tables and Primary-Key Requirements</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>Write Propagation, Consistency Expectations,
+                Operational Limitations, and Failure Considerations</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>When Explicit Denormalized Tables Give Better
+                Ownership and Repairability</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>CDC/Streams/Application Dual Writes vs
+                Materialized Views for Derived Read Models</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Review a Use Case and Choose Between Base Table,
+                SAI, Materialized View, or Explicit Projection</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Drivers, Prepared Statements, Token Awareness,
+              Paging, Retries, and Load Balancing
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>Native Protocol, Driver Sessions, Contact
+                Points, Topology Discovery, and Connection Pools</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>Prepared Statements, Routing Keys, Token-Aware
+                Routing, and Prepared Metadata</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>Paging State, Fetch Size, Large Result Sets, and
+                API Pagination Safety</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Load Balancing by Local Datacenter, Host
+                Distance, Failure Detection, and Request Routing</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>Retry Policies, Idempotency, Timeouts,
+                Speculative Execution, and Error Classification</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Configuration, cqlsh, nodetool, Dynamic Settings,
+              and Operational Tooling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>cassandra.yaml, Environment/JVM Options, Seeds,
+                Listen/RPC Addresses, and Unit-Aware Settings</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>nodetool status/info/describecluster/ring
+                Awareness and Reading Cluster Health</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>cqlsh CONSISTENCY, TRACING, DESCRIBE, COPY
+                Boundaries, and Scripting</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>Runtime/Guardrail Configuration, Rolling
+                Changes, and Avoiding Configuration Drift</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Build a Configuration Baseline and
+                Version-Control Operational Settings Safely</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>23</span>Node Lifecycle: Bootstrap, Replace, Decommission,
+              Remove, Rebuild, and Cleanup
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="Lesson1.html"
+                ><span>01</span>Add Capacity: Bootstrap Streaming, Token
+                Ownership, Pending Ranges, and Headroom</a
+              ><a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>Decommission a Healthy Node and Stream Its
+                Ranges Safely</a
+              ><a
+                aria-current="page"
+                class="sidebar-lesson is-current"
+                href="Lesson3.html"
+                ><span>03</span>Replace a Dead Node: Address/Token Identity,
+                replace_address, and Failure Scenarios<i>Current</i></a
+              ><a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>Remove Unreachable Nodes, Rebuild from Another
+                Datacenter, and Understand Streaming Sources</a
+              ><a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Run cleanup After Topology Changes and Verify
+                Ownership, Disk Use, and Replica Coverage</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>Repair, Anti-Entropy, Incremental/Full Strategies,
+              and Data Convergence
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter24/Lesson1.html"
+                ><span>01</span>Why Repair Is Required Even with Hinted Handoff
+                and Read Repair</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson2.html"
+                ><span>02</span>Merkle Trees, Token Ranges, Streaming
+                Differences, and Repair Session Coordination</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson3.html"
+                ><span>03</span>Incremental Repair vs Full Repair:
+                Repaired/Unrepaired Data and Operational Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson4.html"
+                ><span>04</span>Repair Cadence Relative to gc_grace, Token
+                Ranges, Datacenters, and Resource Throttling</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson5.html"
+                ><span>05</span>Build a Repair Runbook with Scheduling,
+                Monitoring, Failure Recovery, and Verification</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>25</span>Snapshots, Backups, Commitlog Archiving, Restore,
+              and Disaster Recovery
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter25/Lesson1.html"
+                ><span>01</span>nodetool snapshot: Hard Links, SSTable
+                Immutability, Schema Capture, and Space Accounting</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson2.html"
+                ><span>02</span>Incremental Backups, Backup Catalogs, Remote
+                Copies, Retention, and Integrity Checks</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson3.html"
+                ><span>03</span>Commitlog Archiving/Restore for
+                Point-in-Time-Oriented Recovery Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson4.html"
+                ><span>04</span>Restore with sstableloader/Refresh or Node-Level
+                Replacement: Topology and Schema Considerations</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson5.html"
+                ><span>05</span>Perform a Multi-Node Restore Drill and Measure
+                RPO/RTO, Repair Needs, and Application Cutover</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>26</span>Security: Authentication, Authorization, Roles,
+              TLS, and Secrets
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter26/Lesson1.html"
+                ><span>01</span>Enable Authentication and Authorization Safely
+                with a Bootstrap/Recovery Plan</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson2.html"
+                ><span>02</span>Roles, LOGIN, Permissions, GRANT/REVOKE, Role
+                Inheritance, and Least Privilege</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson3.html"
+                ><span>03</span>Internode Encryption vs Client TLS:
+                Certificates, Trust, Rotation, and Failure Modes</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson4.html"
+                ><span>04</span>Protect JMX/Management Interfaces, Credentials,
+                Network Paths, Backups, and Configuration Secrets</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson5.html"
+                ><span>05</span>Operational Security Review: Patch Cadence,
+                Audit Evidence, Incident Access, and Multi-Tenant Boundaries</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>27</span>Observability, Performance, Capacity, Guardrails,
+              Upgrades, Multi-DC Resilience, and Capstone
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter27/Lesson1.html"
+                ><span>01</span>Metrics, Logs, Tracing, nodetool
+                tablestats/tablehistograms/proxyhistograms, and Alerting
+                Signals</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson2.html"
+                ><span>02</span>Capacity Planning for Partitions, SSTables,
+                Compaction, Repair, Heap/Off-Heap, Disk, Network, and Failure
+                Headroom</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson3.html"
+                ><span>03</span>Guardrails and Performance Controls: Prevent
+                Dangerous Schema/Query Patterns Before They Become Incidents</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson4.html"
+                ><span>04</span>Rolling Upgrades, Schema Agreement, Driver
+                Compatibility, Multi-DC Failover/Repair, and Disaster-Game-Day
+                Planning</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson5.html"
+                ><span>05</span>Capstone: Model, Deploy, Load-Test, Fail,
+                Repair, Recover, Secure, Tune, and Defend a Production Cassandra
+                Cluster</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 09 · Lesson 05</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">Apache Cassandra</a><span>/</span
+            ><span>Chapter 23 · Lesson 03</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 23 · Node Lifecycle: Bootstrap, Replace, Decommission,
+              Remove, Rebuild, and Cleanup
+            </p>
+            <h1>
+              Replace a Dead Node: Address / Token Identity, replace_address,
+              and Failure Scenarios
+            </h1>
+            <p>
+              Replace a dead Cassandra node using recorded endpoint identity and
+              clean storage; observe replacement streaming and define when
+              post-replacement repair is required.
+            </p>
+            <div class="lesson-meta">
+              <span>Intermediate → Advanced</span><span>135–180 minutes</span
+              ><span>Dead-node replacement lab</span
+              ><span
+                >Apache Cassandra 5.0.9 · Java 17 · cqlsh/nodetool · isolated
+                RF=3 lifecycle topology · UCS</span
+              ><span>Last reviewed: September 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                AtlasMart loses a node and its local disk. The replacement
+                server must assume the dead member's ownership, but reusing an
+                old volume or starting a generic new node can create
+                duplicate/wrong membership. This lesson makes replacement
+                identity explicit: identify the dead endpoint/host ID, prove it
+                is actually down, start a clean replacement with the documented
+                replacement property, observe streaming, then repair when
+                hint/write-forwarding coverage is insufficient.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Distinguish endpoint/host/token identity from container/VM
+                    name and data-directory identity.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Use replace_address semantics only after proving the target
+                    member is dead and recording its identity/topology.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Observe replacement streaming, replacement logs, membership
+                    and replica coverage with a clean data volume.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Explain same-address versus different-address
+                    write-forwarding/hint-window implications.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Reject live-node replacement, stale data-volume reuse and
+                    insufficient-source replacement as unsafe failure handling.
+                  </p>
+                </div>
+              </div>
+              <div class="callout">
+                <strong>Chapter 23 lifecycle lab baseline</strong>
+                <p>
+                  Topology changes are intentionally isolated from the shared
+                  course cluster. The mandatory labs use a disposable Docker
+                  network <code>atlasmart-cassandra-life</code>, cluster
+                  <code>atlasmart-lifecycle</code>, nodes
+                  <code>atlasmart-life-1..4</code> (plus explicitly named
+                  replacement/cross-DC nodes where a lesson needs them), pinned
+                  Docker Official Image <code>cassandra:5.0.9</code>, Java 17
+                  inside the image, <code>dc1</code>, racks
+                  <code>rack1..rack3</code>, and 16 virtual nodes (vnodes) per
+                  node. The keyspace <code>atlasmart_lifecycle</code> uses
+                  <code>NetworkTopologyStrategy</code> and replication factor
+                  (RF) 3 in <code>dc1</code>; normal verification uses
+                  <code>LOCAL_QUORUM</code>. New tables explicitly use
+                  UnifiedCompactionStrategy (UCS), no default time-to-live
+                  (TTL), and Cassandra's normal <code>gc_grace_seconds</code>.
+                  Authentication, client/internode Transport Layer Security
+                  (TLS), and remote Java Management Extensions (JMX) are
+                  disabled only on this isolated single-host learning network.
+                  The labs never expose JMX or native transport to an untrusted
+                  network. Exact IP addresses, host IDs, tokens, streaming
+                  sources, bytes, duration, ownership percentages,
+                  failure-detection timing, disk usage and p95/p99 application
+                  latency are learner-captured evidence. Docker examples are
+                  Bash-compatible; Windows Docker Desktop users can run the same
+                  <code>docker</code> commands individually in PowerShell if a
+                  shell loop is inconvenient.
+                </p>
+              </div>
+              <div class="callout warning">
+                <strong>Execution and safety note</strong>
+                <p>
+                  Run commands only against the disposable Apache Cassandra
+                  course lab or another explicitly approved non-production
+                  environment. Confirm node, keyspace, table, container, volume,
+                  path, and datacenter targets before destructive,
+                  failure-injection, cleanup, repair, restore, security, or
+                  topology operations. Capture current state and expected
+                  rollback/recovery evidence first; output and timings can
+                  differ by host, operating system, Java runtime,
+                  Docker/runtime, driver, and Cassandra configuration.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>Terms and lifecycle mental model</h2>
+              <p>
+                A Cassandra <strong>node</strong> is one member of a
+                peer-to-peer cluster. A <strong>datacenter (DC)</strong> and
+                <strong>rack</strong> are logical topology labels used by
+                replication placement to represent failure domains. A
+                <strong>partition key</strong> is hashed by the partitioner to a
+                <strong>token</strong>; with
+                <strong>virtual nodes (vnodes)</strong>, one physical node owns
+                many token positions. A <strong>replica</strong> stores a copy
+                of a token range according to the keyspace replication strategy.
+                A <strong>coordinator</strong> is whichever node handles one
+                request, not a permanent leader. A
+                <strong>consistency level (CL)</strong> defines the replica
+                acknowledgments/responses required for an operation.
+              </p>
+              <p>
+                A <strong>topology transition</strong> changes cluster
+                membership or token ownership. <strong>Bootstrap</strong> is the
+                join process in which a new node receives ranges by streaming
+                from current replicas before becoming a normal owner.
+                <strong>Pending ranges</strong> are ownership changes that are
+                being prepared during a transition: Cassandra must keep writes
+                safe while the future replica set is not yet fully ready.
+                <strong>Streaming</strong> transfers SSTable data over the
+                internode network. <strong>Decommission</strong> removes a
+                healthy node and streams its ranges away.
+                <strong>Replacement</strong> gives the logical ownership of a
+                dead member to a fresh node identified by the dead endpoint.
+                <strong>removenode</strong> removes an unreachable member from
+                another live node and re-replicates from survivors.
+                <strong>rebuild</strong> repopulates data on the current node by
+                streaming from selected source nodes/DCs without changing that
+                node's ownership. <strong>cleanup</strong> is a compaction-style
+                rewrite that discards ranges a node no longer owns after a
+                completed range movement. <strong>Repair</strong> is
+                anti-entropy reconciliation between replicas;
+                bootstrap/rebuild/cleanup do not make pre-existing replica
+                inconsistencies disappear.
+              </p>
+              <p>
+                <strong>Node identity</strong> includes endpoint/broadcast
+                address, host ID and token ownership recorded by cluster
+                metadata. <strong>Headroom</strong> is spare disk, network, CPU,
+                memory, compaction and replica availability capacity required to
+                perform the transition without violating service objectives. A
+                <strong>rollback/abort path</strong> is the documented action
+                for a stalled or failed lifecycle sequence; it must be chosen
+                from the current Cassandra version's supported topology state,
+                not improvised by deleting system tables or reusing data
+                directories.
+              </p>
+            </section>
+            <section>
+              <h2>1. Replacement is not “add a node with the old hostname”</h2>
+              <p>
+                The cluster already has an ownership record for the dead member.
+                A replacement operation tells Cassandra that a fresh process is
+                assuming that member's token ownership, so surviving replicas
+                stream the ranges it needs. The current 5.0 documentation
+                exposes the JVM system property
+                <code>cassandra.replace_address</code>; topology guidance and
+                Cassandra source also recognize the one-time
+                <code>replace_address_first_boot</code> form. Deployment
+                wrappers differ, so inspect the exact 5.0.x property accepted by
+                your packaging before freezing automation. The Docker Official
+                Image passes <code>JVM_EXTRA_OPTS</code> through Cassandra's JVM
+                configuration, which gives this local lab an explicit, auditable
+                property.
+              </p>
+              <p>
+                The replacement data directory must be clean. Reusing the dead
+                node's partially failed/unknown disk state while also asking
+                Cassandra to bootstrap a replacement mixes two recovery models.
+                The replacement rack/DC must match intended placement, and the
+                endpoint named for replacement must actually correspond to a
+                dead cluster member—not a merely slow or partitioned live node.
+              </p>
+            </section>
+            <section>
+              <h2>
+                2. Create four nodes, record identity, then simulate disk loss
+              </h2>
+              <div class="code-window" data-code-block="" data-language="bash">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>Docker ·
+                    create the isolated three-node RF=3 starting topology
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-bash"><span class="code-line"># These names are dedicated to Chapter 23; the reset block never targets the shared course cluster.</span><span class="code-line">docker network inspect atlasmart-cassandra-life &gt;/dev/null 2&gt;&amp;1 || docker network create atlasmart-cassandra-life</span><span class="code-line">docker volume create atlasmart-life-1-data</span><span class="code-line">docker volume create atlasmart-life-2-data</span><span class="code-line">docker volume create atlasmart-life-3-data</span><span class="code-line"></span><span class="code-line">docker run -d --name atlasmart-life-1 --hostname atlasmart-life-1 --network atlasmart-cassandra-life \</span><span class="code-line">  -e CASSANDRA_CLUSTER_NAME=atlasmart-lifecycle -e CASSANDRA_DC=dc1 -e CASSANDRA_RACK=rack1 \</span><span class="code-line">  -e CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch -e CASSANDRA_NUM_TOKENS=16 \</span><span class="code-line">  -v atlasmart-life-1-data:/var/lib/cassandra cassandra:5.0.9</span><span class="code-line"># Wait until node 1 is UN before starting peers.</span><span class="code-line">docker exec atlasmart-life-1 nodetool status</span><span class="code-line"></span><span class="code-line">docker run -d --name atlasmart-life-2 --hostname atlasmart-life-2 --network atlasmart-cassandra-life \</span><span class="code-line">  -e CASSANDRA_CLUSTER_NAME=atlasmart-lifecycle -e CASSANDRA_DC=dc1 -e CASSANDRA_RACK=rack2 \</span><span class="code-line">  -e CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch -e CASSANDRA_NUM_TOKENS=16 \</span><span class="code-line">  -e CASSANDRA_SEEDS=atlasmart-life-1 -v atlasmart-life-2-data:/var/lib/cassandra cassandra:5.0.9</span><span class="code-line"></span><span class="code-line">docker run -d --name atlasmart-life-3 --hostname atlasmart-life-3 --network atlasmart-cassandra-life \</span><span class="code-line">  -e CASSANDRA_CLUSTER_NAME=atlasmart-lifecycle -e CASSANDRA_DC=dc1 -e CASSANDRA_RACK=rack3 \</span><span class="code-line">  -e CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch -e CASSANDRA_NUM_TOKENS=16 \</span><span class="code-line">  -e CASSANDRA_SEEDS=atlasmart-life-1 -v atlasmart-life-3-data:/var/lib/cassandra cassandra:5.0.9</span><span class="code-line"></span><span class="code-line"># Continue only after all three appear UN from at least two observers.</span><span class="code-line">docker exec atlasmart-life-1 nodetool status</span><span class="code-line">docker exec atlasmart-life-2 nodetool status</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>CQL ·
+                    create a small deterministic AtlasMart ownership fixture
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-sql"><span class="code-line">CREATE KEYSPACE IF NOT EXISTS atlasmart_lifecycle</span><span class="code-line">WITH replication = {'class':'NetworkTopologyStrategy','dc1':3};</span><span class="code-line"></span><span class="code-line">CREATE TABLE IF NOT EXISTS atlasmart_lifecycle.order_probe (</span><span class="code-line">  order_id text PRIMARY KEY,</span><span class="code-line">  customer_id text,</span><span class="code-line">  status text,</span><span class="code-line">  total decimal,</span><span class="code-line">  updated_at timestamp</span><span class="code-line">) WITH compaction = {'class':'UnifiedCompactionStrategy'};</span><span class="code-line"></span><span class="code-line">CONSISTENCY LOCAL_QUORUM;</span><span class="code-line">INSERT INTO atlasmart_lifecycle.order_probe (order_id,customer_id,status,total,updated_at)</span><span class="code-line">VALUES ('ord-1001','cust-42','PAID',129.90,'2026-09-08T06:00:00Z');</span><span class="code-line">INSERT INTO atlasmart_lifecycle.order_probe (order_id,customer_id,status,total,updated_at)</span><span class="code-line">VALUES ('ord-1002','cust-77','PACKING',89.50,'2026-09-08T06:01:00Z');</span><span class="code-line">INSERT INTO atlasmart_lifecycle.order_probe (order_id,customer_id,status,total,updated_at)</span><span class="code-line">VALUES ('ord-1003','cust-42','SHIPPED',42.00,'2026-09-08T06:02:00Z');</span><span class="code-line">SELECT * FROM atlasmart_lifecycle.order_probe WHERE order_id='ord-1001';</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="bash">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>Docker ·
+                    bootstrap node 4 into dc1/rack1
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-bash"><span class="code-line">docker volume create atlasmart-life-4-data</span><span class="code-line">docker run -d --name atlasmart-life-4 --hostname atlasmart-life-4 --network atlasmart-cassandra-life \</span><span class="code-line">  -e CASSANDRA_CLUSTER_NAME=atlasmart-lifecycle -e CASSANDRA_DC=dc1 -e CASSANDRA_RACK=rack1 \</span><span class="code-line">  -e CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch -e CASSANDRA_NUM_TOKENS=16 \</span><span class="code-line">  -e CASSANDRA_SEEDS=atlasmart-life-1 -v atlasmart-life-4-data:/var/lib/cassandra cassandra:5.0.9</span><span class="code-line"></span><span class="code-line"># Poll from separate terminals while the node is joining; a tiny dataset may finish too quickly to catch UJ.</span><span class="code-line">docker exec atlasmart-life-1 nodetool status atlasmart_lifecycle</span><span class="code-line">docker exec atlasmart-life-4 nodetool netstats -H</span><span class="code-line">docker exec atlasmart-life-4 nodetool bootstrap</span><span class="code-line"># Final acceptance requires node 4 to be UN and schema versions to agree.</span><span class="code-line">docker exec atlasmart-life-1 nodetool status atlasmart_lifecycle</span><span class="code-line">docker exec atlasmart-life-1 nodetool describecluster</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="bash">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >Docker/nodetool · record node 4 identity before failure
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-bash"><span class="code-line">DEAD_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' atlasmart-life-4)</span><span class="code-line">echo "dead endpoint candidate: $DEAD_IP"</span><span class="code-line">docker exec atlasmart-life-1 nodetool status atlasmart_lifecycle</span><span class="code-line">docker exec atlasmart-life-1 cqlsh -e "SELECT peer, host_id, data_center, rack, tokens FROM system.peers_v2;" </span><span class="code-line">docker exec atlasmart-life-1 nodetool getendpoints atlasmart_lifecycle order_probe ord-1001</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="bash">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>Docker ·
+                    crash the member and model total local-disk loss
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-bash"><span class="code-line">docker stop atlasmart-life-4</span><span class="code-line"># Wait until multiple observers report the endpoint DN; failure detection is not instantaneous.</span><span class="code-line">docker exec atlasmart-life-1 nodetool status atlasmart_lifecycle</span><span class="code-line">docker exec atlasmart-life-2 nodetool status atlasmart_lifecycle</span><span class="code-line"># Remove the dead container and its lost data volume only after recording its endpoint/host identity.</span><span class="code-line">docker rm atlasmart-life-4</span><span class="code-line">docker volume rm atlasmart-life-4-data</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>
+                3. Start a clean replacement and observe ownership recovery
+              </h2>
+              <div class="code-window" data-code-block="" data-language="bash">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>Docker ·
+                    replace the dead endpoint with a fresh data directory
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-bash"><span class="code-line">DEAD_IP=&lt;paste-the-recorded-dead-endpoint-here&gt;</span><span class="code-line">docker volume create atlasmart-life-4r-data</span><span class="code-line">docker run -d --name atlasmart-life-4r --hostname atlasmart-life-4r --network atlasmart-cassandra-life \</span><span class="code-line">  -e CASSANDRA_CLUSTER_NAME=atlasmart-lifecycle -e CASSANDRA_DC=dc1 -e CASSANDRA_RACK=rack1 \</span><span class="code-line">  -e CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch -e CASSANDRA_NUM_TOKENS=16 \</span><span class="code-line">  -e CASSANDRA_SEEDS=atlasmart-life-1 \</span><span class="code-line">  -e JVM_EXTRA_OPTS="-Dcassandra.replace_address=$DEAD_IP" \</span><span class="code-line">  -v atlasmart-life-4r-data:/var/lib/cassandra cassandra:5.0.9</span><span class="code-line"></span><span class="code-line"># While replacement is active:</span><span class="code-line">docker exec atlasmart-life-4r nodetool netstats -H</span><span class="code-line">docker logs --tail 200 atlasmart-life-4r</span><span class="code-line"># After completion:</span><span class="code-line">docker exec atlasmart-life-1 nodetool status atlasmart_lifecycle</span><span class="code-line">docker exec atlasmart-life-1 nodetool checktokenmetadata</span><span class="code-line">docker exec atlasmart-life-4r cqlsh -e "CONSISTENCY LOCAL_QUORUM; SELECT * FROM atlasmart_lifecycle.order_probe WHERE order_id='ord-1001';"</span></code></pre>
+              </div>
+              <p>
+                Exact host ID behavior and topology-sequence output are
+                version-dependent; record what Cassandra 5.0.9 reports rather
+                than assuming a UUID. The invariant is logical ownership
+                continuity: the dead endpoint is no longer an active member, the
+                replacement becomes normal only after required data arrives, and
+                replica coverage for the keyspace remains valid.
+              </p>
+            </section>
+            <section>
+              <h2>
+                4. Edge cases: live target, hint window, same address and
+                missing sources
+              </h2>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Case</th>
+                      <th>Why it changes the procedure</th>
+                      <th>Required judgment</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>target is still live/partitioned</td>
+                      <td>
+                        two processes could contend for one ownership identity
+                      </td>
+                      <td>
+                        prove death from several observers and infrastructure
+                        control plane before replace
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>different replacement address</td>
+                      <td>
+                        surviving nodes can forward writes to the joining
+                        replacement during replacement
+                      </td>
+                      <td>
+                        still verify missed-write window and repair requirements
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>same replacement address</td>
+                      <td>
+                        current docs warn writes are not forwarded in the same
+                        way during replacement
+                      </td>
+                      <td>
+                        repair if replacement interval exceeds hint coverage
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>dead longer than max_hint_window</td>
+                      <td>hints cannot cover the full outage window</td>
+                      <td>run repair after replacement</td>
+                    </tr>
+                    <tr>
+                      <td>too few surviving replicas</td>
+                      <td>
+                        no trustworthy source may exist for required ranges
+                      </td>
+                      <td>
+                        restore source availability/backup; do not force a fake
+                        successful replace
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="callout warning">
+                <strong
+                  >Deliberately wrong: replace a node that is merely
+                  slow.</strong
+                >
+                <p>
+                  Cassandra's replacement checks are designed to reject
+                  replacing a live member. Do not work around that protection
+                  with IP tricks, stale gossip deletion or unsafe replacement
+                  flags. Diagnose the network/process first. A split-brain
+                  ownership mistake is far more dangerous than waiting for a
+                  controlled decision.
+                </p>
+              </div>
+              <div class="code-window" data-code-block="" data-language="bash">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >Evidence/repair · post-replacement convergence when the
+                    outage exceeded hint coverage
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-bash"><span class="code-line">docker exec atlasmart-life-1 nodetool getmaxhintwindow</span><span class="code-line"># If the replacement timeframe or same-address behavior exceeded documented hint/write-forwarding coverage:</span><span class="code-line">docker exec atlasmart-life-4r nodetool repair --full atlasmart_lifecycle order_probe</span><span class="code-line"># Verify from multiple nodes after repair.</span><span class="code-line">docker exec atlasmart-life-1 cqlsh -e "CONSISTENCY LOCAL_QUORUM; SELECT * FROM atlasmart_lifecycle.order_probe WHERE order_id='ord-1001';"</span><span class="code-line">docker exec atlasmart-life-2 cqlsh -e "CONSISTENCY LOCAL_QUORUM; SELECT * FROM atlasmart_lifecycle.order_probe WHERE order_id='ord-1001';"</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>5. Replacement acceptance and reset</h2>
+              <ul>
+                <li>
+                  Old endpoint/identity was captured before destructive
+                  infrastructure cleanup.
+                </li>
+                <li>Multiple observers confirmed the target was down.</li>
+                <li>
+                  The replacement used a clean volume and intended DC/rack
+                  settings.
+                </li>
+                <li>
+                  <code>netstats</code>/logs showed replacement streaming or
+                  completion evidence.
+                </li>
+                <li>
+                  Cluster metadata/token checks and representative RF3 reads
+                  pass.
+                </li>
+                <li>
+                  Repair is run when downtime/write-forwarding/hint coverage
+                  cannot prove convergence.
+                </li>
+              </ul>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>Why must a replacement use a clean data directory?</li>
+                  <li>
+                    Why record the old endpoint and host ID before deleting
+                    infrastructure?
+                  </li>
+                  <li>When is post-replacement repair especially required?</li>
+                  <li>
+                    Can replacement safely target a node that is still live?
+                  </li>
+                  <li>
+                    What if surviving replicas cannot provide a required range?
+                  </li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      <strong>1.</strong> The workflow reconstructs the dead
+                      member from surviving replicas; reusing uncertain partial
+                      data mixes identities/recovery models and can invalidate
+                      assumptions.
+                    </p>
+                    <p>
+                      <strong>2.</strong> Replacement/removal decisions are made
+                      against Cassandra membership identity, not the
+                      cloud/VM/container name.
+                    </p>
+                    <p>
+                      <strong>3.</strong> When the node was down longer than
+                      hint coverage, same-address replacement missed writes
+                      beyond the hint window, or any other evidence cannot prove
+                      full convergence.
+                    </p>
+                    <p>
+                      <strong>4.</strong> No. Prove the old member is truly
+                      dead; current Cassandra explicitly protects against
+                      replacing a live member.
+                    </p>
+                    <p>
+                      <strong>5.</strong> Stop forcing the workflow and restore
+                      a valid source or recovery path; replacement cannot
+                      manufacture data that no source has.
+                    </p>
+                  </div>
+                </details>
+              </div>
+              <div class="code-window" data-code-block="" data-language="bash">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>Docker ·
+                    reset only the dedicated Chapter 23 lifecycle lab
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-bash"><span class="code-line">docker rm -f atlasmart-life-1 atlasmart-life-2 atlasmart-life-3 atlasmart-life-4 atlasmart-life-4r atlasmart-life-dc2-1 2&gt;/dev/null || true</span><span class="code-line">docker volume rm atlasmart-life-1-data atlasmart-life-2-data atlasmart-life-3-data atlasmart-life-4-data atlasmart-life-4r-data atlasmart-life-dc2-1-data 2&gt;/dev/null || true</span><span class="code-line">docker network rm atlasmart-cassandra-life 2&gt;/dev/null || true</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>Production judgment</h2>
+              <p>
+                Topology work consumes the same resources that serve customer
+                traffic. Before a bootstrap, decommission, replacement, removal
+                or rebuild, record Cassandra/JDK/driver versions, DC/rack
+                layout, RF and query CLs, vnode count, per-node used/free disk,
+                compaction backlog, streaming throughput, NIC saturation, JVM/GC
+                pressure, repair age, hint window, backup status, SAI/vector
+                indexes, tenant/security constraints, driver
+                timeouts/retries/idempotency and representative p50/p95/p99
+                latency. Confirm that losing one additional host/rack during the
+                operation still leaves the required replicas and operational
+                headroom. Avoid concurrent range movements in the same failure
+                domain unless the current version and runbook explicitly prove
+                safety.
+              </p>
+              <p>
+                Streaming moves bytes; it does not cure bad partition keys,
+                oversized partitions, old replica divergence, poor compaction
+                headroom or missing repair. Cleanup reclaims no-longer-owned
+                ranges; it is not anti-entropy. Replacement preserves ownership
+                identity but still requires post-replacement convergence when
+                downtime/write-forwarding exceeds the mechanisms that could
+                cover missed writes. Managed Cassandra services may hide or
+                forbid these commands; use the provider's documented
+                replacement/scale workflow but keep the same evidence and
+                acceptance model. Lesson 4 separates two more operations that
+                are often conflated with replacement: removing a permanently
+                unreachable member from surviving nodes, and rebuilding the
+                current node’s replicas from a chosen source datacenter.
+              </p>
+            </section>
+            <section>
+              <h2>Summary and next bridge</h2>
+              <p>
+                Replacement preserves logical ownership for a dead member while
+                rebuilding a fresh local data set from surviving replicas.
+                Correct endpoint identity, clean storage, source availability
+                and post-replacement convergence are part of the operation.
+                Next, remove a dead member when it will not be replaced and
+                contrast that membership change with a rebuild that does not
+                change membership.
+              </p>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <p>
+                Lifecycle commands are version-sensitive and state-sensitive.
+                Re-check these sources, the release notes and your deployment's
+                orchestration/managed-service rules before applying a topology
+                procedure.
+              </p>
+              <ul class="reference-list">
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/_/download"
+                    rel="noopener"
+                    target="_blank"
+                    >Apache Cassandra downloads / current 5.0 patch</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/latest/cassandra/managing/operating/topo_changes.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Adding, replacing, moving and removing nodes</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/latest/cassandra/managing/tools/nodetool/nodetool.html"
+                    rel="noopener"
+                    target="_blank"
+                    >nodetool command reference</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/latest/cassandra/managing/tools/nodetool/bootstrap.html"
+                    rel="noopener"
+                    target="_blank"
+                    >nodetool bootstrap</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/latest/cassandra/managing/tools/nodetool/decommission.html"
+                    rel="noopener"
+                    target="_blank"
+                    >nodetool decommission</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/latest/cassandra/managing/tools/nodetool/removenode.html"
+                    rel="noopener"
+                    target="_blank"
+                    >nodetool removenode</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/latest/cassandra/managing/tools/nodetool/rebuild.html"
+                    rel="noopener"
+                    target="_blank"
+                    >nodetool rebuild</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/latest/cassandra/managing/tools/nodetool/cleanup.html"
+                    rel="noopener"
+                    target="_blank"
+                    >nodetool cleanup</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/latest/cassandra/managing/tools/nodetool/netstats.html"
+                    rel="noopener"
+                    target="_blank"
+                    >nodetool netstats</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/latest/cassandra/managing/configuration/cass_env_sh_file.html"
+                    rel="noopener"
+                    target="_blank"
+                    >cassandra-env JVM/system properties including
+                    replacement</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/stable/cassandra/managing/operating/compaction/overview.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Compaction overview / cleanup semantics</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://github.com/docker-library/cassandra/blob/master/5.0/Dockerfile"
+                    rel="noopener"
+                    target="_blank"
+                    >Docker Official Cassandra 5.0 packaging</a
+                  >
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a href="Lesson2.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Decommission a Healthy Node and Stream Its Ranges
+                Safely</strong
+              ></a
+            ><a class="next" href="Lesson4.html"
+              ><small>Next lesson</small
+              ><strong
+                >Remove Unreachable Nodes, Rebuild from Another Datacenter, and
+                Understand Streaming Sources</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <small
+          >Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+    <script src="../assets/js/cassandra-highlight.js?v=20260908.1"></script>
+  </body>
+</html>

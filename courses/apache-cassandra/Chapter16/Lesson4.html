@@ -1,0 +1,1511 @@
+<!doctype html>
+
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Apache Cassandra Chapter 16 Lesson 4: Contention, Hot Partitions, Retries, and Modeling to Minimize LWT Frequency. Mechanism-first AtlasMart LWT/Paxos lab for Cassandra 5.0.9."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Contention, Hot Partitions, Retries, and Modeling to Minimize LWT
+      Frequency | Apache Cassandra | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <link
+      href="../assets/css/cassandra-course-fixes.css?v=20260908.1"
+      rel="stylesheet"
+    />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">CAS</span>
+            <div>
+              <small>Course 13</small><strong>Apache Cassandra</strong>
+            </div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 135 lessons..."
+            type="search"
+        /></label>
+        <nav
+          aria-label="Apache Cassandra curriculum"
+          class="sidebar-curriculum"
+        >
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>Cassandra Foundations, Version 5.0, Architecture,
+              and Lab Setup
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>What Cassandra Is: Distributed Wide-Column
+                Storage, Availability Goals, and Workload Fit</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Peer-to-Peer Architecture vs Primary/Replica
+                Systems: Coordination Without a Permanent Leader</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>Apache Cassandra 5.0 Baseline, Java
+                Requirements, Configuration Layout, and Release Awareness</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>Start a Single-Node or Container Lab, Connect
+                with cqlsh, and Inspect Cluster Metadata</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Safe Course Lab with Multiple Nodes,
+                Sample Keyspaces, Metrics, and Repeatable Failure Tests</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>Clusters, Datacenters, Racks, Snitches, Gossip, and
+              Failure Detection
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>Cluster Topology: Nodes, Datacenters, Racks,
+                Endpoints, and Failure Domains</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>Endpoint Snitches and Replication Placement:
+                Mapping Logical Topology to Physical Infrastructure</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Gossip for Membership and State Dissemination:
+                What Nodes Learn About Each Other</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>Failure Detection, Phi Accrual Concepts,
+                Suspicions, DOWN State, and Client Impact</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Design Rack/Zone Placement That Survives Host,
+                Rack, and Availability-Zone Failure</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>Partitioners, Tokens, Vnodes, Token Rings, and Data
+              Distribution
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>Partition Key Hashing and Murmur3Partitioner:
+                From Key to Token</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Token Ranges, Ownership, Replicas, and Why the
+                Ring Is a Useful Mental Model</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>Virtual Nodes: Many Tokens per Node,
+                Distribution, Streaming, and Operational Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>Hot Partitions, Skewed Keys, Monotonic
+                Workloads, and Why More Nodes Do Not Fix Bad Keys</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Inspect Token Ownership and Distribution with
+                nodetool and System Tables</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Keyspaces, Replication Strategies, Replication
+              Factor, and Placement
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>CREATE KEYSPACE and Replication Configuration:
+                Durable Writes and Namespaces</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>NetworkTopologyStrategy: Replication Factor per
+                Datacenter and Rack-Aware Placement</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>Why SimpleStrategy Is for Limited/Legacy
+                Scenarios and Not Production Multi-Rack Design</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>Replication Factor, Failure Tolerance, Storage
+                Cost, and Consistency-Level Math</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Alter Replication Safely: Repair Requirements,
+                Data Movement, and Validation</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>CQL Foundations: DDL, DML, Filtering Rules, and
+              cqlsh Workflows
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>CREATE/ALTER/DROP TABLE and Keyspace Objects
+                with Schema Agreement Awareness</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>INSERT, UPDATE, DELETE, SELECT, Upserts,
+                Timestamps, TTL, and Last-Write-Wins Cells</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>WHERE Restrictions, ALLOW FILTERING, Query
+                Constraints, and Why CQL Is Not SQL</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>Prepared Statements, Bind Markers, Batch Files,
+                COPY Caveats, and cqlsh Productivity</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>Inspect system_schema and Trace Schema Changes
+                Across a Cluster</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Query-First Data Modeling and Denormalization
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>Start from Application Queries, Ordering,
+                Cardinality, Retention, and Consistency</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>One Table per Query Pattern: Denormalization as
+                an Explicit Write-Time Cost</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>Avoid Joins and Cross-Partition Scans by
+                Precomputing Read Shapes</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>Duplicate Data Across Tables and Keep It
+                Consistent with Application/Streaming Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Redesign a Normalized Relational Model into
+                Cassandra Query Tables and Explain the Tradeoffs</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>Primary Keys, Partition Keys, Clustering Columns,
+              and Ordering
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>PRIMARY KEY Syntax: Composite Partition Keys and
+                Ordered Clustering Columns</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>Partition-Key Cardinality, Distribution,
+                Locality, and Bounded Partition Size</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>Clustering Order, Slice Queries, Prefix Rules,
+                and Efficient Within-Partition Reads</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Time Bucketing, Hash Bucketing, Synthetic
+                Shards, and Avoiding Unbounded Partitions</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Estimate Rows/Bytes per Partition Before
+                Deploying the Schema</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>CQL Data Types, Collections, Tuples, UDTs, Static
+              Columns, and Frozen Values
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>Scalar Types, Timestamps/Dates, UUID/timeuuid,
+                Decimal/Varint, Blob, Duration, and Conversion</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>Lists, Sets, Maps: Read/Write Semantics,
+                Collection Growth, and Tombstone Risks</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>Tuples and User-Defined Types for Structured
+                Values and Schema Evolution</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>Frozen vs Multi-Cell Values, Nested Collections,
+                and Mutation Granularity</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Static Columns for Partition-Wide Metadata and
+                Modeling Shared Attributes</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>The Write Path: Coordinator, Commit Log, Memtables,
+              Replicas, and Acknowledgment
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>Client Request to Coordinator: Token Awareness,
+                Replica Selection, and Write Consistency</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>Commit Log for Durability and Memtables for
+                In-Memory Sorted State</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>Flush Triggers, Memtable-to-SSTable Transition,
+                and Backpressure Under Write Load</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>Timestamps, Conflict Resolution, Tombstones,
+                TTL, and Last-Write-Wins at the Cell Level</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>Trace a Write Across Replicas and Relate
+                Acknowledgments to Consistency Level</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>The Read Path: Bloom Filters, Indexes, SSTables,
+              Caches, Merging, and Reconciliation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>Coordinator Read Requests, Replica Selection,
+                Data/Digest Responses, and Consistency</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>Partition Index/Summary, Bloom Filters, Key
+                Cache, Chunk Cache, and SSTable Lookup</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>Read Amplification Across SSTables and Merging
+                Multiple Versions/Tombstones</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>Read Repair/Reconciliation Concepts and
+                Detecting Inconsistent Replica Data</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Diagnose a Slow Read by Partition Size, SSTable
+                Count, Tombstones, Cache, and Disk Evidence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>SSTables and On-Disk Storage Internals
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>SSTable Components: Data, Index, Summary,
+                Filter, Statistics, Compression, and TOC</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>Immutable Sorted Storage, Partitions on Disk,
+                Compression Chunks, and Sequential I/O</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>SSTable Tools and Metadata Inspection Without
+                Mutating Production Data</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Streaming SSTables During Bootstrap, Repair,
+                Rebuild, and Topology Changes</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Connect SSTable Count/Size to Compaction
+                Strategy, Read Amplification, and Disk Headroom</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>Compaction Strategies and Storage Amplification
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>Why Compaction Exists: Merge Immutable Files,
+                Reclaim Tombstones, and Bound Read Amplification</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>SizeTieredCompactionStrategy for General
+                Write-Oriented Workloads</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>LeveledCompactionStrategy for Read
+                Predictability and Its Write/Space Amplification Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>TimeWindowCompactionStrategy for TTL/Time-Series
+                Workloads and Expiring Data</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>Compaction Throughput, Concurrent Compactors,
+                Pending Tasks, Disk Headroom, and Tuning by Evidence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Tombstones, TTL, gc_grace, Deletes, and Expiration
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>Why Deletes Create Tombstones Instead of
+                Immediate Physical Removal</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Row/Cell/Range Tombstones, Collection
+                Tombstones, TTL Expiration, and Query Cost</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>gc_grace_seconds, Repair Timing, Zombie Data,
+                and Safe Tombstone Purging</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Tombstone Warning/Failure Thresholds, Wide
+                Partitions, and Range-Scan Hazards</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Redesign High-Delete/High-TTL Workloads with
+                Bucketing, TWCS, and Retention-Aware Modeling</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Consistency Levels, Quorums, Availability, and
+              Client Guarantees
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>ANY, ONE, TWO, THREE, QUORUM, ALL, LOCAL_QUORUM,
+                EACH_QUORUM, and LOCAL_ONE Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Quorum Math with Replication Factor and Why
+                LOCAL_QUORUM Matters in Multi-DC Systems</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Write vs Read Consistency Choices: Latency,
+                Availability, Staleness, and Failure Behavior</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Serial Consistency for LWT vs Regular
+                Consistency for Data Operations</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Define Per-Query Consistency from Business
+                Invariants Instead of One Cluster-Wide Habit</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Failure Handling: Hints, Read Repair, Speculative
+              Retry, Timeouts, and Unavailable Errors
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>Hinted Handoff: Best-Effort Delivery of Missed
+                Writes and Retention Limits</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Read Repair/Reconciliation and the Relationship
+                to Eventual Consistency</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Speculative Retry: Tail-Latency Reduction vs
+                Duplicate Replica Work</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Timeout vs Unavailable vs Overloaded/Failure
+                Responses and Correct Client Interpretation</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Failure Drill: Stop Replicas, Vary Consistency
+                Levels, Recover Nodes, and Verify Convergence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>16</span>Lightweight Transactions, Paxos, CAS, and
+              Linearizable Conditional Updates
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="Lesson1.html"
+                ><span>01</span>IF NOT EXISTS and IF Conditions: Compare-and-Set
+                Semantics in CQL</a
+              ><a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>Paxos Phases and Why LWT Requires More
+                Coordination Than Regular Writes</a
+              ><a class="sidebar-lesson" href="Lesson3.html"
+                ><span>03</span>SERIAL/LOCAL_SERIAL Consistency, Replica Scope,
+                Latency, and Failure Tradeoffs</a
+              ><a
+                aria-current="page"
+                class="sidebar-lesson is-current"
+                href="Lesson4.html"
+                ><span>04</span>Contention, Hot Partitions, Retries, and
+                Modeling to Minimize LWT Frequency<i>Current</i></a
+              ><a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Use LWT for True Invariants and Reject It as a
+                General Replacement for Relational Transactions</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Batches, Counters, Idempotency, and Write
+              Coordination
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>LOGGED vs UNLOGGED BATCH: Atomicity Scope, Batch
+                Log, and Multi-Partition Costs</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>Why Batches Are Not a Bulk-Load Performance Tool
+                and When Single-Partition Batches Help</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>Counter Tables, Distributed Counter Semantics,
+                Restrictions, and Workload Suitability</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>Idempotent vs Non-Idempotent Statements and
+                Driver Retry Decisions</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Design Retry-Safe Writes with Request IDs,
+                Conditional Logic, and Eventual Reconciliation</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Secondary Indexing with Storage-Attached Indexing
+              (SAI)
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>Primary-Key Access vs Secondary Indexes: Why
+                Partition Modeling Still Comes First</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>SAI Architecture: Index Components Attached to
+                SSTables and Distributed Query Execution</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Create SAI Indexes for Textual/Numeric Columns
+                and Combine Multiple Predicates</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Index Selectivity, Range Queries, Disk/Write
+                Cost, Query Limits, and Operational Monitoring</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>Choose SAI vs Denormalized Tables vs External
+                Search Based on Workload and Scale</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary><span>19</span>Vector Search in Cassandra 5.0</summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Vector CQL Type: Fixed Dimensions, Embeddings,
+                Similarity, and Schema Constraints</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Create SAI Vector Indexes and Perform
+                Approximate Nearest Neighbor Queries</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>Cosine/Dot/Euclidean Similarity Concepts,
+                Normalization, Recall, and Latency</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>Combine Vector Retrieval with Metadata
+                Predicates and Query-First Modeling</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Capacity, Index Build/Streaming, Embedding
+                Updates, Evaluation, and AI/RAG Architecture Tradeoffs</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Materialized Views and Derived-Table Alternatives
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>Materialized View Concepts: Automatic Derived
+                Tables and Primary-Key Requirements</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>Write Propagation, Consistency Expectations,
+                Operational Limitations, and Failure Considerations</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>When Explicit Denormalized Tables Give Better
+                Ownership and Repairability</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>CDC/Streams/Application Dual Writes vs
+                Materialized Views for Derived Read Models</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Review a Use Case and Choose Between Base Table,
+                SAI, Materialized View, or Explicit Projection</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Drivers, Prepared Statements, Token Awareness,
+              Paging, Retries, and Load Balancing
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>Native Protocol, Driver Sessions, Contact
+                Points, Topology Discovery, and Connection Pools</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>Prepared Statements, Routing Keys, Token-Aware
+                Routing, and Prepared Metadata</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>Paging State, Fetch Size, Large Result Sets, and
+                API Pagination Safety</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Load Balancing by Local Datacenter, Host
+                Distance, Failure Detection, and Request Routing</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>Retry Policies, Idempotency, Timeouts,
+                Speculative Execution, and Error Classification</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Configuration, cqlsh, nodetool, Dynamic Settings,
+              and Operational Tooling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>cassandra.yaml, Environment/JVM Options, Seeds,
+                Listen/RPC Addresses, and Unit-Aware Settings</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>nodetool status/info/describecluster/ring
+                Awareness and Reading Cluster Health</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>cqlsh CONSISTENCY, TRACING, DESCRIBE, COPY
+                Boundaries, and Scripting</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>Runtime/Guardrail Configuration, Rolling
+                Changes, and Avoiding Configuration Drift</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Build a Configuration Baseline and
+                Version-Control Operational Settings Safely</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>23</span>Node Lifecycle: Bootstrap, Replace, Decommission,
+              Remove, Rebuild, and Cleanup
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter23/Lesson1.html"
+                ><span>01</span>Add Capacity: Bootstrap Streaming, Token
+                Ownership, Pending Ranges, and Headroom</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson2.html"
+                ><span>02</span>Decommission a Healthy Node and Stream Its
+                Ranges Safely</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson3.html"
+                ><span>03</span>Replace a Dead Node: Address/Token Identity,
+                replace_address, and Failure Scenarios</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson4.html"
+                ><span>04</span>Remove Unreachable Nodes, Rebuild from Another
+                Datacenter, and Understand Streaming Sources</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson5.html"
+                ><span>05</span>Run cleanup After Topology Changes and Verify
+                Ownership, Disk Use, and Replica Coverage</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>Repair, Anti-Entropy, Incremental/Full Strategies,
+              and Data Convergence
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter24/Lesson1.html"
+                ><span>01</span>Why Repair Is Required Even with Hinted Handoff
+                and Read Repair</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson2.html"
+                ><span>02</span>Merkle Trees, Token Ranges, Streaming
+                Differences, and Repair Session Coordination</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson3.html"
+                ><span>03</span>Incremental Repair vs Full Repair:
+                Repaired/Unrepaired Data and Operational Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson4.html"
+                ><span>04</span>Repair Cadence Relative to gc_grace, Token
+                Ranges, Datacenters, and Resource Throttling</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson5.html"
+                ><span>05</span>Build a Repair Runbook with Scheduling,
+                Monitoring, Failure Recovery, and Verification</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>25</span>Snapshots, Backups, Commitlog Archiving, Restore,
+              and Disaster Recovery
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter25/Lesson1.html"
+                ><span>01</span>nodetool snapshot: Hard Links, SSTable
+                Immutability, Schema Capture, and Space Accounting</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson2.html"
+                ><span>02</span>Incremental Backups, Backup Catalogs, Remote
+                Copies, Retention, and Integrity Checks</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson3.html"
+                ><span>03</span>Commitlog Archiving/Restore for
+                Point-in-Time-Oriented Recovery Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson4.html"
+                ><span>04</span>Restore with sstableloader/Refresh or Node-Level
+                Replacement: Topology and Schema Considerations</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson5.html"
+                ><span>05</span>Perform a Multi-Node Restore Drill and Measure
+                RPO/RTO, Repair Needs, and Application Cutover</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>26</span>Security: Authentication, Authorization, Roles,
+              TLS, and Secrets
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter26/Lesson1.html"
+                ><span>01</span>Enable Authentication and Authorization Safely
+                with a Bootstrap/Recovery Plan</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson2.html"
+                ><span>02</span>Roles, LOGIN, Permissions, GRANT/REVOKE, Role
+                Inheritance, and Least Privilege</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson3.html"
+                ><span>03</span>Internode Encryption vs Client TLS:
+                Certificates, Trust, Rotation, and Failure Modes</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson4.html"
+                ><span>04</span>Protect JMX/Management Interfaces, Credentials,
+                Network Paths, Backups, and Configuration Secrets</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson5.html"
+                ><span>05</span>Operational Security Review: Patch Cadence,
+                Audit Evidence, Incident Access, and Multi-Tenant Boundaries</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>27</span>Observability, Performance, Capacity, Guardrails,
+              Upgrades, Multi-DC Resilience, and Capstone
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter27/Lesson1.html"
+                ><span>01</span>Metrics, Logs, Tracing, nodetool
+                tablestats/tablehistograms/proxyhistograms, and Alerting
+                Signals</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson2.html"
+                ><span>02</span>Capacity Planning for Partitions, SSTables,
+                Compaction, Repair, Heap/Off-Heap, Disk, Network, and Failure
+                Headroom</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson3.html"
+                ><span>03</span>Guardrails and Performance Controls: Prevent
+                Dangerous Schema/Query Patterns Before They Become Incidents</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson4.html"
+                ><span>04</span>Rolling Upgrades, Schema Agreement, Driver
+                Compatibility, Multi-DC Failover/Repair, and Disaster-Game-Day
+                Planning</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson5.html"
+                ><span>05</span>Capstone: Model, Deploy, Load-Test, Fail,
+                Repair, Recover, Secure, Tune, and Defend a Production Cassandra
+                Cluster</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 09 · Lesson 05</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">Apache Cassandra</a><span>/</span
+            ><span>Chapter 16 · Lesson 04</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 16 · Lightweight Transactions, Paxos, CAS, and
+              Linearizable Conditional Updates
+            </p>
+            <h1>
+              Contention, Hot Partitions, Retries, and Modeling to Minimize LWT
+              Frequency
+            </h1>
+            <p>
+              Create a hot CAS key, measure contention, reconcile ambiguous
+              outcomes, and redesign the invariant to reduce LWT frequency.
+            </p>
+            <div class="lesson-meta">
+              <span>Intermediate → Advanced</span><span>120–165 minutes</span
+              ><span>Contention + redesign lab</span
+              ><span
+                >Apache Cassandra 5.0.9 · Java 17 · cqlsh/nodetool · Java Driver
+                4.19.3 optional · RF=3 dc1 · UCS</span
+              ><span>Last reviewed: September 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                AtlasMart launches a flash sale and routes every reservation
+                through one global CAS row. Correctness holds, but p99 explodes
+                because hundreds of contenders serialize on the same Paxos
+                state. The fix is not “retry harder”; it is to reduce contention
+                and shrink the set of operations that truly need LWT.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Explain how concurrent ballots on one Paxos key create
+                    contention and repeated coordination.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Generate a safe hot-key contention fixture and observe
+                    [applied] losers plus CAS latency/ContentionHistogram
+                    evidence.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Distinguish a rejected business condition from an
+                    infrastructure failure or ambiguous timeout.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Design retry behavior that reconciles a timed-out LWT before
+                    deciding whether to reissue it.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Remodel global/hot invariants into partitioned ownership
+                    keys, preallocation, or ordinary idempotent writes where
+                    possible.
+                  </p>
+                </div>
+              </div>
+              <div class="callout">
+                <strong>Chapter 16 lab baseline</strong>
+                <p>
+                  The mandatory labs continue the disposable AtlasMart course
+                  cluster: Apache Cassandra <code>5.0.9</code> in the pinned
+                  <code>cassandra:5.0.9</code> image, Java 17 inside the image,
+                  cluster <code>atlasmart-course</code>, Docker network
+                  <code>atlasmart-cassandra</code>, nodes
+                  <code>atlasmart-cass-1..3</code>, datacenter <code>dc1</code>,
+                  racks <code>rack1..rack3</code>, 16 virtual nodes per node,
+                  <code>NetworkTopologyStrategy</code> with replication factor
+                  (RF) 3, and regular consistency level (CL)
+                  <code>LOCAL_QUORUM</code> unless an experiment says otherwise.
+                  New tables use UnifiedCompactionStrategy (UCS),
+                  <code>gc_grace_seconds = 864000</code> unless explicitly
+                  isolated for an exercise, and no default TTL. Authentication,
+                  client TLS, internode TLS, and remote JMX are disabled only
+                  inside this isolated local learning network. The optional
+                  application examples use Apache Cassandra Java Driver
+                  <code>4.19.3</code>. Verify your actual runtime with
+                  <code>nodetool version</code>, <code>cqlsh --version</code>,
+                  and <code>java -version</code>.
+                </p>
+              </div>
+              <div class="callout warning">
+                <strong>Execution and safety note</strong>
+                <p>
+                  Run commands only against the disposable Apache Cassandra
+                  course lab or another explicitly approved non-production
+                  environment. Confirm node, keyspace, table, container, volume,
+                  path, and datacenter targets before destructive,
+                  failure-injection, cleanup, repair, restore, security, or
+                  topology operations. Capture current state and expected
+                  rollback/recovery evidence first; output and timings can
+                  differ by host, operating system, Java runtime,
+                  Docker/runtime, driver, and Cassandra configuration.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>Core terms for this chapter</h2>
+              <p>
+                A <strong>lightweight transaction (LWT)</strong> is Cassandra's
+                conditional mutation mechanism. It uses the
+                <strong>Paxos</strong> consensus protocol so competing
+                operations on the same logical Paxos scope can agree on one
+                ordered outcome. <strong>Compare-and-set (CAS)</strong> means
+                “apply this mutation only if the current value satisfies the
+                condition.” A <strong>conditional mutation</strong> is CQL such
+                as <code>INSERT ... IF NOT EXISTS</code> or
+                <code>UPDATE ... IF column = value</code>.
+                <strong>Linearizable</strong> means successful operations appear
+                to occur in a single real-time-compatible order within the
+                guarantee's documented scope; it is stronger than ordinary
+                eventual consistency.
+              </p>
+              <p>
+                A <strong>coordinator</strong> is the Cassandra node handling
+                one request. A <strong>replica</strong> is a node that stores
+                the partition according to the keyspace replication strategy. A
+                <strong>partition</strong> groups rows by partition key and maps
+                through the partitioner to a token; the token determines natural
+                replicas. <strong>RF</strong> is replication factor. A regular
+                <strong>CL</strong> controls the data/learn phase of the
+                operation. <strong>SERIAL</strong> and
+                <strong>LOCAL_SERIAL</strong> are
+                <em>serial consistency levels</em> that control the Paxos phase.
+                A <strong>ballot</strong> is the proposal identity/order used by
+                Paxos rounds. <strong>Contention</strong> occurs when concurrent
+                conditional operations compete for the same Paxos state. A
+                <strong>hot partition</strong> is a partition receiving
+                disproportionately high request volume. A
+                <strong>retry</strong> repeats an operation after an error or
+                timeout; for LWT, an ambiguous outcome must be reconciled before
+                blind retry. <strong>SSTables</strong> are immutable on-disk
+                table files, while <strong>compaction</strong> rewrites
+                SSTables. <strong>repair</strong> is Cassandra's anti-entropy
+                process and is separate from Paxos agreement.
+                <strong>Storage-Attached Indexing (SAI)</strong> and vector
+                search can help locate rows but do not create uniqueness or
+                cross-row transactional invariants.
+              </p>
+            </section>
+            <section>
+              <h2>1. Correct can still be operationally wrong</h2>
+              <p>
+                Paxos makes competing CAS operations agree, but agreement on one
+                hot key necessarily coordinates contenders around the same
+                state. As concurrency rises, ballots can collide, conditions can
+                become stale, and the coordinator may perform more work before
+                an operation wins or is rejected. The application should treat
+                <code>[applied]=False</code> as a normal concurrency/business
+                result when the condition simply lost; only
+                timeouts/failures/unavailability are infrastructure-style
+                errors.
+              </p>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Signal</th>
+                      <th>Meaning</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><code>[applied]=False</code></td>
+                      <td>condition was not true at compare point</td>
+                      <td>
+                        read returned current values; choose business path,
+                        usually no retry loop
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>CAS contention histogram rises</td>
+                      <td>multiple Paxos operations compete</td>
+                      <td>
+                        find hot keys/invariants; reduce shared contention
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>CAS timeout</td>
+                      <td>outcome may be ambiguous</td>
+                      <td>reconcile/read current state before reissuing</td>
+                    </tr>
+                    <tr>
+                      <td>Unavailable</td>
+                      <td>serial/regular quorum cannot be reached</td>
+                      <td>
+                        restore required replica scope or degrade invariant
+                        intentionally at application level—not blind retry
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section>
+              <h2>2. Safe hot-key contention lab</h2>
+              <div class="code-window" data-code-block="" data-language="bash">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>bash ·
+                    verify the disposable AtlasMart cluster
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-bash"><span class="code-line">docker exec atlasmart-cass-1 nodetool version</span><span class="code-line">docker exec atlasmart-cass-1 nodetool status</span><span class="code-line">docker exec atlasmart-cass-1 java -version</span><span class="code-line"></span><span class="code-line">docker exec atlasmart-cass-1 cqlsh -e "SELECT cluster_name, data_center, rack, release_version FROM system.local;"</span><span class="code-line">docker exec atlasmart-cass-1 cqlsh -e "SELECT peer, data_center, rack, release_version FROM system.peers_v2;"</span><span class="code-line"></span><span class="code-line"># Continue only when all three nodes are UN in dc1.</span><span class="code-line"># If the course cluster is absent, recreate it with the same Chapter 01 conventions</span><span class="code-line"># and pinned cassandra:5.0.9 image before running this chapter.</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>CQL ·
+                    one global slot that deliberately attracts contention
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-sql"><span class="code-line">CREATE TABLE IF NOT EXISTS atlasmart_lwt.global_slot (</span><span class="code-line">    slot_id text PRIMARY KEY,</span><span class="code-line">    owner text,</span><span class="code-line">    revision int</span><span class="code-line">) WITH compaction = {'class':'UnifiedCompactionStrategy'};</span><span class="code-line"></span><span class="code-line">INSERT INTO atlasmart_lwt.global_slot (slot_id, owner, revision)</span><span class="code-line">VALUES ('global-flash-slot','OPEN',0);</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="bash">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>bash ·
+                    record CAS latency before contention
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-bash"><span class="code-line">docker exec atlasmart-cass-1 nodetool proxyhistograms</span></code></pre>
+              </div>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="powershell"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >PowerShell · 20 concurrent CAS contenders on one key
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-powershell"><span class="code-line">$jobs = 1..20 | ForEach-Object {</span><span class="code-line">  $n = $_</span><span class="code-line">  Start-Job -ArgumentList $n -ScriptBlock {</span><span class="code-line">    param($n)</span><span class="code-line">    docker exec atlasmart-cass-1 cqlsh -e "CONSISTENCY LOCAL_QUORUM; SERIAL CONSISTENCY LOCAL_SERIAL; UPDATE atlasmart_lwt.global_slot SET owner='order-$n', revision=1 WHERE slot_id='global-flash-slot' IF owner='OPEN' AND revision=0;"</span><span class="code-line">  }</span><span class="code-line">}</span><span class="code-line">$jobs | Wait-Job | Receive-Job</span><span class="code-line">$jobs | Remove-Job</span><span class="code-line"></span><span class="code-line">docker exec atlasmart-cass-1 cqlsh -e "SELECT * FROM atlasmart_lwt.global_slot WHERE slot_id='global-flash-slot';"</span><span class="code-line">docker exec atlasmart-cass-1 nodetool proxyhistograms</span></code></pre>
+              </div>
+              <p>
+                Expect one logical winner from an untouched row, but do not
+                expect a particular order number. Record how many requests were
+                rejected by condition versus failed by infrastructure. For
+                production metrics, collect
+                <code>ClientRequest.CASWrite.ContentionHistogram</code>,
+                <code>ConditionNotMet</code>, latency, timeouts, failures, and
+                unavailables from JMX/your metrics pipeline. The course
+                containers intentionally do not expose remote JMX.
+              </p>
+            </section>
+            <section>
+              <h2>3. Wrong approach: blind retry of a timed-out LWT</h2>
+              <p>
+                A timeout means the client did not receive a definitive result
+                before its deadline. The Paxos operation might still have been
+                chosen or learned. Blindly retrying can produce confusing user
+                experience, repeated contention, or duplicate side effects
+                outside Cassandra even if the CAS itself protects one row.
+                Instead attach a business request/claim identifier,
+                read/reconcile the invariant key after an ambiguous timeout, and
+                only issue another conditional operation if current state proves
+                the original intent did not win.
+              </p>
+              <div class="code-window" data-code-block="" data-language="java">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>Java ·
+                    reconcile an ambiguous CAS before application-level retry
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-java"><span class="code-line">try {</span><span class="code-line">  Row row = session.execute(claimStatement).one();</span><span class="code-line">  boolean applied = row != null &amp;&amp; row.getBoolean("[applied]");</span><span class="code-line">  // handle applied or condition-not-met normally</span><span class="code-line">} catch (DriverTimeoutException ambiguous) {</span><span class="code-line">  // Do NOT blindly resubmit a high-value CAS.</span><span class="code-line">  Row current = session.execute(</span><span class="code-line">      SimpleStatement.builder(</span><span class="code-line">          "SELECT owner_id FROM atlasmart_lwt.unique_claim WHERE claim_type=? AND claim_value=?")</span><span class="code-line">          .addPositionalValues("promo", "WELCOME-42")</span><span class="code-line">          .setConsistencyLevel(DefaultConsistencyLevel.LOCAL_QUORUM)</span><span class="code-line">          .setSerialConsistencyLevel(DefaultConsistencyLevel.LOCAL_SERIAL)</span><span class="code-line">          .build()).one();</span><span class="code-line">  // Compare current owner/request identity with the original intent, then decide.</span><span class="code-line">}</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>4. Model to reduce LWT frequency</h2>
+              <p>
+                Suppose AtlasMart needs one reservation per SKU per order. A
+                single global row for “all inventory” creates unnecessary
+                contention. Better choices include partitioning claims by the
+                actual invariant key, preallocating independently owned
+                inventory buckets, using normal idempotent writes for
+                append-only events/projections, or accepting occasional
+                duplicates and reconciling them when the business invariant
+                permits it. Do not hash-shard a uniqueness constraint randomly
+                unless the application can deterministically route every
+                contender for the same invariant to the same shard.
+              </p>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Requirement</th>
+                      <th>LWT candidate?</th>
+                      <th>Lower-contention alternative</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>unique promo code claim</td>
+                      <td>Yes, key by the code/invariant</td>
+                      <td>
+                        one CAS key per promo code, not one global promo
+                        partition
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>append order event</td>
+                      <td>Usually no</td>
+                      <td>normal idempotent insert keyed by order/event ID</td>
+                    </tr>
+                    <tr>
+                      <td>analytics counter</td>
+                      <td>No generic LWT default</td>
+                      <td>counter/event aggregation depending semantics</td>
+                    </tr>
+                    <tr>
+                      <td>global flash-sale capacity</td>
+                      <td>Maybe, but high contention risk</td>
+                      <td>
+                        preallocate capacity buckets/tokens with deterministic
+                        ownership
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>search/vector nearest-neighbor result</td>
+                      <td>No uniqueness guarantee from index result</td>
+                      <td>
+                        resolve invariant by direct primary-key CAS after search
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>CQL ·
+                    partition contention by the real invariant key
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-sql"><span class="code-line">CREATE TABLE IF NOT EXISTS atlasmart_lwt.inventory_claim_by_sku (</span><span class="code-line">    sku text,</span><span class="code-line">    reservation_id text,</span><span class="code-line">    owner_order text,</span><span class="code-line">    PRIMARY KEY ((sku, reservation_id))</span><span class="code-line">) WITH compaction = {'class':'UnifiedCompactionStrategy'};</span><span class="code-line"></span><span class="code-line">-- If reservation_id itself must be unique, CAS this exact key.</span><span class="code-line">INSERT INTO atlasmart_lwt.inventory_claim_by_sku (sku,reservation_id,owner_order)</span><span class="code-line">VALUES ('sku-42','res-9001','order-9001') IF NOT EXISTS;</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>5. Verification checklist</h2>
+              <ul>
+                <li>Capture before/after CAS percentile evidence.</li>
+                <li>
+                  Separate condition-not-met outcomes from request failures.
+                </li>
+                <li>Document the hot key and contender count.</li>
+                <li>
+                  Show an outcome-reconciliation path for timeout before retry.
+                </li>
+                <li>
+                  Produce a redesigned invariant key that distributes
+                  independent decisions without weakening the invariant.
+                </li>
+              </ul>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>
+                    Why can a perfectly correct LWT design still have poor p99?
+                  </li>
+                  <li>Should [applied]=False be automatically retried?</li>
+                  <li>Why is a timed-out LWT ambiguous?</li>
+                  <li>
+                    How do you reduce LWT contention without weakening
+                    uniqueness?
+                  </li>
+                  <li>
+                    Can SAI or vector search itself enforce a uniqueness
+                    invariant?
+                  </li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      <strong>1.</strong> Many concurrent operations may contend
+                      on the same Paxos state, causing extra
+                      coordination/retries and queueing.
+                    </p>
+                    <p>
+                      <strong>2.</strong> No. It usually means the business
+                      condition lost; retrying the same stale condition can just
+                      create more contention.
+                    </p>
+                    <p>
+                      <strong>3.</strong> The client deadline can expire even if
+                      the Paxos value was chosen or later learned; the client
+                      must reconcile current state.
+                    </p>
+                    <p>
+                      <strong>4.</strong> Partition by the actual invariant key
+                      so only contenders for the same invariant serialize; do
+                      not route independent invariants through one global key.
+                    </p>
+                    <p>
+                      <strong>5.</strong> No. Use the index to locate
+                      candidates, then enforce the invariant on a direct
+                      primary-key conditional mutation if needed.
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section>
+              <h2>Production judgment</h2>
+              <p>
+                LWT is an invariant tool, not a “strong consistency” checkbox
+                for every write. Before using it, define the exact invariant,
+                its partition/key scope, contender cardinality, expected
+                concurrency, RF and datacenter placement, regular and serial CL,
+                failure behavior, acceptable p95/p99 latency,
+                retry/reconciliation rules, and how a timed-out outcome will be
+                discovered. Measure <code>CASRead</code>/<code>CASWrite</code>
+                latency, timeouts, failures, unavailables, condition-not-met
+                counts, and contention histograms alongside ordinary request
+                latency, CPU, JVM garbage collection, network, disk, compaction,
+                repair state, and hot-key distribution.
+              </p>
+              <p>
+                Do not infer a universal LWT throughput number from this laptop
+                lab. SAI/vector indexes do not make a search result safe as a
+                uniqueness lock; security/tenant boundaries require
+                authorization and data-model controls, not
+                <code>LOCAL_SERIAL</code>. Managed Cassandra services can
+                constrain JMX, Paxos variants, or topology settings, so
+                translate the same invariant and evidence model to the service's
+                supported telemetry. Migration and rollback must account for
+                application semantics: replacing a normal write with LWT can
+                change latency and availability, while removing LWT can silently
+                weaken an invariant. Lesson 5 turns these mechanics into an
+                invariant decision framework and shows where Cassandra LWT ends
+                and relational multi-row transaction expectations begin.
+              </p>
+            </section>
+            <section>
+              <h2>Summary and next bridge</h2>
+              <p>
+                Contention is a modeling signal. Paxos can serialize a hot
+                invariant, but it cannot make the hot key cheap. Safe systems
+                reduce the number of decisions requiring LWT, reconcile
+                ambiguous outcomes, and avoid blind retry loops. The final
+                lesson defines when LWT is justified at all.
+              </p>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <p>
+                Use these current official sources as the version-sensitive
+                source of truth. Re-check them when regenerating this chapter
+                because Paxos variants, driver behavior, metrics, and
+                operational recommendations can evolve.
+              </p>
+              <ul class="reference-list">
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/_/download"
+                    rel="noopener"
+                    target="_blank"
+                    >Apache Cassandra downloads — 5.0.9 and Java Driver
+                    4.19.3</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/stable/cassandra/architecture/guarantees.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Cassandra guarantees — LWT and linearizable consistency</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/stable/cassandra/managing/tools/cqlsh.html"
+                    rel="noopener"
+                    target="_blank"
+                    >cqlsh consistency and serial consistency</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/latest/cassandra/managing/configuration/cass_yaml_file.html"
+                    rel="noopener"
+                    target="_blank"
+                    >cassandra.yaml — paxos_variant</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/stable/cassandra/managing/operating/metrics.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Cassandra monitoring metrics — CASRead/CASWrite</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/stable/cassandra/managing/tools/nodetool/proxyhistograms.html"
+                    rel="noopener"
+                    target="_blank"
+                    >nodetool proxyhistograms — CAS latency distributions</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://apache.github.io/cassandra-java-driver/4.19.0/core/statements/"
+                    rel="noopener"
+                    target="_blank"
+                    >Java Driver statement attributes — regular and serial
+                    consistency</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://apache.github.io/cassandra-java-driver/4.19.0/core/retries/"
+                    rel="noopener"
+                    target="_blank"
+                    >Java Driver retries and idempotence</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://apache.github.io/cassandra-java-driver/4.19.0/core/query_timestamps/"
+                    rel="noopener"
+                    target="_blank"
+                    >Java Driver query timestamps — LWT restriction</a
+                  >
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a href="Lesson3.html"
+              ><small>Previous lesson</small
+              ><strong
+                >SERIAL/LOCAL_SERIAL Consistency, Replica Scope, Latency, and
+                Failure Tradeoffs</strong
+              ></a
+            ><a class="next" href="Lesson5.html"
+              ><small>Next lesson</small
+              ><strong
+                >Use LWT for True Invariants and Reject It as a General
+                Replacement for Relational Transactions</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <small
+          >Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+    <script src="../assets/js/cassandra-highlight.js?v=20260908.1"></script>
+  </body>
+</html>

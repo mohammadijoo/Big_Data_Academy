@@ -1,0 +1,1462 @@
+<!doctype html>
+
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Apache Cassandra Chapter 26 Lesson 3: Internode Encryption vs Client TLS: Certificates, Trust, Rotation, and Failure Modes. Defense-in-depth Cassandra 5.0.9 security lesson with reproducible local labs."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Internode Encryption vs Client TLS: Certificates, Trust, Rotation, and
+      Failure Modes | Apache Cassandra | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <link
+      href="../assets/css/cassandra-course-fixes.css?v=20260908.1"
+      rel="stylesheet"
+    />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">CAS</span>
+            <div>
+              <small>Course 13</small><strong>Apache Cassandra</strong>
+            </div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 135 lessons..."
+            type="search"
+        /></label>
+        <nav
+          aria-label="Apache Cassandra curriculum"
+          class="sidebar-curriculum"
+        >
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>Cassandra Foundations, Version 5.0, Architecture,
+              and Lab Setup
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>What Cassandra Is: Distributed Wide-Column
+                Storage, Availability Goals, and Workload Fit</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Peer-to-Peer Architecture vs Primary/Replica
+                Systems: Coordination Without a Permanent Leader</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>Apache Cassandra 5.0 Baseline, Java
+                Requirements, Configuration Layout, and Release Awareness</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>Start a Single-Node or Container Lab, Connect
+                with cqlsh, and Inspect Cluster Metadata</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Safe Course Lab with Multiple Nodes,
+                Sample Keyspaces, Metrics, and Repeatable Failure Tests</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>Clusters, Datacenters, Racks, Snitches, Gossip, and
+              Failure Detection
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>Cluster Topology: Nodes, Datacenters, Racks,
+                Endpoints, and Failure Domains</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>Endpoint Snitches and Replication Placement:
+                Mapping Logical Topology to Physical Infrastructure</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Gossip for Membership and State Dissemination:
+                What Nodes Learn About Each Other</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>Failure Detection, Phi Accrual Concepts,
+                Suspicions, DOWN State, and Client Impact</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Design Rack/Zone Placement That Survives Host,
+                Rack, and Availability-Zone Failure</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>Partitioners, Tokens, Vnodes, Token Rings, and Data
+              Distribution
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>Partition Key Hashing and Murmur3Partitioner:
+                From Key to Token</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Token Ranges, Ownership, Replicas, and Why the
+                Ring Is a Useful Mental Model</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>Virtual Nodes: Many Tokens per Node,
+                Distribution, Streaming, and Operational Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>Hot Partitions, Skewed Keys, Monotonic
+                Workloads, and Why More Nodes Do Not Fix Bad Keys</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Inspect Token Ownership and Distribution with
+                nodetool and System Tables</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Keyspaces, Replication Strategies, Replication
+              Factor, and Placement
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>CREATE KEYSPACE and Replication Configuration:
+                Durable Writes and Namespaces</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>NetworkTopologyStrategy: Replication Factor per
+                Datacenter and Rack-Aware Placement</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>Why SimpleStrategy Is for Limited/Legacy
+                Scenarios and Not Production Multi-Rack Design</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>Replication Factor, Failure Tolerance, Storage
+                Cost, and Consistency-Level Math</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Alter Replication Safely: Repair Requirements,
+                Data Movement, and Validation</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>CQL Foundations: DDL, DML, Filtering Rules, and
+              cqlsh Workflows
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>CREATE/ALTER/DROP TABLE and Keyspace Objects
+                with Schema Agreement Awareness</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>INSERT, UPDATE, DELETE, SELECT, Upserts,
+                Timestamps, TTL, and Last-Write-Wins Cells</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>WHERE Restrictions, ALLOW FILTERING, Query
+                Constraints, and Why CQL Is Not SQL</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>Prepared Statements, Bind Markers, Batch Files,
+                COPY Caveats, and cqlsh Productivity</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>Inspect system_schema and Trace Schema Changes
+                Across a Cluster</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Query-First Data Modeling and Denormalization
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>Start from Application Queries, Ordering,
+                Cardinality, Retention, and Consistency</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>One Table per Query Pattern: Denormalization as
+                an Explicit Write-Time Cost</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>Avoid Joins and Cross-Partition Scans by
+                Precomputing Read Shapes</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>Duplicate Data Across Tables and Keep It
+                Consistent with Application/Streaming Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Redesign a Normalized Relational Model into
+                Cassandra Query Tables and Explain the Tradeoffs</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>Primary Keys, Partition Keys, Clustering Columns,
+              and Ordering
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>PRIMARY KEY Syntax: Composite Partition Keys and
+                Ordered Clustering Columns</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>Partition-Key Cardinality, Distribution,
+                Locality, and Bounded Partition Size</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>Clustering Order, Slice Queries, Prefix Rules,
+                and Efficient Within-Partition Reads</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Time Bucketing, Hash Bucketing, Synthetic
+                Shards, and Avoiding Unbounded Partitions</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Estimate Rows/Bytes per Partition Before
+                Deploying the Schema</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>CQL Data Types, Collections, Tuples, UDTs, Static
+              Columns, and Frozen Values
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>Scalar Types, Timestamps/Dates, UUID/timeuuid,
+                Decimal/Varint, Blob, Duration, and Conversion</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>Lists, Sets, Maps: Read/Write Semantics,
+                Collection Growth, and Tombstone Risks</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>Tuples and User-Defined Types for Structured
+                Values and Schema Evolution</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>Frozen vs Multi-Cell Values, Nested Collections,
+                and Mutation Granularity</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Static Columns for Partition-Wide Metadata and
+                Modeling Shared Attributes</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>The Write Path: Coordinator, Commit Log, Memtables,
+              Replicas, and Acknowledgment
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>Client Request to Coordinator: Token Awareness,
+                Replica Selection, and Write Consistency</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>Commit Log for Durability and Memtables for
+                In-Memory Sorted State</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>Flush Triggers, Memtable-to-SSTable Transition,
+                and Backpressure Under Write Load</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>Timestamps, Conflict Resolution, Tombstones,
+                TTL, and Last-Write-Wins at the Cell Level</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>Trace a Write Across Replicas and Relate
+                Acknowledgments to Consistency Level</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>The Read Path: Bloom Filters, Indexes, SSTables,
+              Caches, Merging, and Reconciliation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>Coordinator Read Requests, Replica Selection,
+                Data/Digest Responses, and Consistency</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>Partition Index/Summary, Bloom Filters, Key
+                Cache, Chunk Cache, and SSTable Lookup</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>Read Amplification Across SSTables and Merging
+                Multiple Versions/Tombstones</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>Read Repair/Reconciliation Concepts and
+                Detecting Inconsistent Replica Data</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Diagnose a Slow Read by Partition Size, SSTable
+                Count, Tombstones, Cache, and Disk Evidence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>SSTables and On-Disk Storage Internals
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>SSTable Components: Data, Index, Summary,
+                Filter, Statistics, Compression, and TOC</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>Immutable Sorted Storage, Partitions on Disk,
+                Compression Chunks, and Sequential I/O</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>SSTable Tools and Metadata Inspection Without
+                Mutating Production Data</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Streaming SSTables During Bootstrap, Repair,
+                Rebuild, and Topology Changes</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Connect SSTable Count/Size to Compaction
+                Strategy, Read Amplification, and Disk Headroom</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>Compaction Strategies and Storage Amplification
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>Why Compaction Exists: Merge Immutable Files,
+                Reclaim Tombstones, and Bound Read Amplification</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>SizeTieredCompactionStrategy for General
+                Write-Oriented Workloads</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>LeveledCompactionStrategy for Read
+                Predictability and Its Write/Space Amplification Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>TimeWindowCompactionStrategy for TTL/Time-Series
+                Workloads and Expiring Data</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>Compaction Throughput, Concurrent Compactors,
+                Pending Tasks, Disk Headroom, and Tuning by Evidence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Tombstones, TTL, gc_grace, Deletes, and Expiration
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>Why Deletes Create Tombstones Instead of
+                Immediate Physical Removal</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Row/Cell/Range Tombstones, Collection
+                Tombstones, TTL Expiration, and Query Cost</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>gc_grace_seconds, Repair Timing, Zombie Data,
+                and Safe Tombstone Purging</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Tombstone Warning/Failure Thresholds, Wide
+                Partitions, and Range-Scan Hazards</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Redesign High-Delete/High-TTL Workloads with
+                Bucketing, TWCS, and Retention-Aware Modeling</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Consistency Levels, Quorums, Availability, and
+              Client Guarantees
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>ANY, ONE, TWO, THREE, QUORUM, ALL, LOCAL_QUORUM,
+                EACH_QUORUM, and LOCAL_ONE Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Quorum Math with Replication Factor and Why
+                LOCAL_QUORUM Matters in Multi-DC Systems</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Write vs Read Consistency Choices: Latency,
+                Availability, Staleness, and Failure Behavior</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Serial Consistency for LWT vs Regular
+                Consistency for Data Operations</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Define Per-Query Consistency from Business
+                Invariants Instead of One Cluster-Wide Habit</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Failure Handling: Hints, Read Repair, Speculative
+              Retry, Timeouts, and Unavailable Errors
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>Hinted Handoff: Best-Effort Delivery of Missed
+                Writes and Retention Limits</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Read Repair/Reconciliation and the Relationship
+                to Eventual Consistency</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Speculative Retry: Tail-Latency Reduction vs
+                Duplicate Replica Work</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Timeout vs Unavailable vs Overloaded/Failure
+                Responses and Correct Client Interpretation</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Failure Drill: Stop Replicas, Vary Consistency
+                Levels, Recover Nodes, and Verify Convergence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Lightweight Transactions, Paxos, CAS, and
+              Linearizable Conditional Updates
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>IF NOT EXISTS and IF Conditions: Compare-and-Set
+                Semantics in CQL</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Paxos Phases and Why LWT Requires More
+                Coordination Than Regular Writes</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>SERIAL/LOCAL_SERIAL Consistency, Replica Scope,
+                Latency, and Failure Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Contention, Hot Partitions, Retries, and
+                Modeling to Minimize LWT Frequency</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Use LWT for True Invariants and Reject It as a
+                General Replacement for Relational Transactions</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Batches, Counters, Idempotency, and Write
+              Coordination
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>LOGGED vs UNLOGGED BATCH: Atomicity Scope, Batch
+                Log, and Multi-Partition Costs</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>Why Batches Are Not a Bulk-Load Performance Tool
+                and When Single-Partition Batches Help</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>Counter Tables, Distributed Counter Semantics,
+                Restrictions, and Workload Suitability</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>Idempotent vs Non-Idempotent Statements and
+                Driver Retry Decisions</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Design Retry-Safe Writes with Request IDs,
+                Conditional Logic, and Eventual Reconciliation</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Secondary Indexing with Storage-Attached Indexing
+              (SAI)
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>Primary-Key Access vs Secondary Indexes: Why
+                Partition Modeling Still Comes First</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>SAI Architecture: Index Components Attached to
+                SSTables and Distributed Query Execution</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Create SAI Indexes for Textual/Numeric Columns
+                and Combine Multiple Predicates</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Index Selectivity, Range Queries, Disk/Write
+                Cost, Query Limits, and Operational Monitoring</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>Choose SAI vs Denormalized Tables vs External
+                Search Based on Workload and Scale</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary><span>19</span>Vector Search in Cassandra 5.0</summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Vector CQL Type: Fixed Dimensions, Embeddings,
+                Similarity, and Schema Constraints</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Create SAI Vector Indexes and Perform
+                Approximate Nearest Neighbor Queries</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>Cosine/Dot/Euclidean Similarity Concepts,
+                Normalization, Recall, and Latency</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>Combine Vector Retrieval with Metadata
+                Predicates and Query-First Modeling</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Capacity, Index Build/Streaming, Embedding
+                Updates, Evaluation, and AI/RAG Architecture Tradeoffs</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Materialized Views and Derived-Table Alternatives
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>Materialized View Concepts: Automatic Derived
+                Tables and Primary-Key Requirements</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>Write Propagation, Consistency Expectations,
+                Operational Limitations, and Failure Considerations</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>When Explicit Denormalized Tables Give Better
+                Ownership and Repairability</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>CDC/Streams/Application Dual Writes vs
+                Materialized Views for Derived Read Models</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Review a Use Case and Choose Between Base Table,
+                SAI, Materialized View, or Explicit Projection</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Drivers, Prepared Statements, Token Awareness,
+              Paging, Retries, and Load Balancing
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>Native Protocol, Driver Sessions, Contact
+                Points, Topology Discovery, and Connection Pools</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>Prepared Statements, Routing Keys, Token-Aware
+                Routing, and Prepared Metadata</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>Paging State, Fetch Size, Large Result Sets, and
+                API Pagination Safety</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Load Balancing by Local Datacenter, Host
+                Distance, Failure Detection, and Request Routing</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>Retry Policies, Idempotency, Timeouts,
+                Speculative Execution, and Error Classification</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Configuration, cqlsh, nodetool, Dynamic Settings,
+              and Operational Tooling
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>cassandra.yaml, Environment/JVM Options, Seeds,
+                Listen/RPC Addresses, and Unit-Aware Settings</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>nodetool status/info/describecluster/ring
+                Awareness and Reading Cluster Health</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>cqlsh CONSISTENCY, TRACING, DESCRIBE, COPY
+                Boundaries, and Scripting</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>Runtime/Guardrail Configuration, Rolling
+                Changes, and Avoiding Configuration Drift</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Build a Configuration Baseline and
+                Version-Control Operational Settings Safely</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>23</span>Node Lifecycle: Bootstrap, Replace, Decommission,
+              Remove, Rebuild, and Cleanup
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter23/Lesson1.html"
+                ><span>01</span>Add Capacity: Bootstrap Streaming, Token
+                Ownership, Pending Ranges, and Headroom</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson2.html"
+                ><span>02</span>Decommission a Healthy Node and Stream Its
+                Ranges Safely</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson3.html"
+                ><span>03</span>Replace a Dead Node: Address/Token Identity,
+                replace_address, and Failure Scenarios</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson4.html"
+                ><span>04</span>Remove Unreachable Nodes, Rebuild from Another
+                Datacenter, and Understand Streaming Sources</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson5.html"
+                ><span>05</span>Run cleanup After Topology Changes and Verify
+                Ownership, Disk Use, and Replica Coverage</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>Repair, Anti-Entropy, Incremental/Full Strategies,
+              and Data Convergence
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter24/Lesson1.html"
+                ><span>01</span>Why Repair Is Required Even with Hinted Handoff
+                and Read Repair</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson2.html"
+                ><span>02</span>Merkle Trees, Token Ranges, Streaming
+                Differences, and Repair Session Coordination</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson3.html"
+                ><span>03</span>Incremental Repair vs Full Repair:
+                Repaired/Unrepaired Data and Operational Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson4.html"
+                ><span>04</span>Repair Cadence Relative to gc_grace, Token
+                Ranges, Datacenters, and Resource Throttling</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson5.html"
+                ><span>05</span>Build a Repair Runbook with Scheduling,
+                Monitoring, Failure Recovery, and Verification</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>25</span>Snapshots, Backups, Commitlog Archiving, Restore,
+              and Disaster Recovery
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter25/Lesson1.html"
+                ><span>01</span>nodetool snapshot: Hard Links, SSTable
+                Immutability, Schema Capture, and Space Accounting</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson2.html"
+                ><span>02</span>Incremental Backups, Backup Catalogs, Remote
+                Copies, Retention, and Integrity Checks</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson3.html"
+                ><span>03</span>Commitlog Archiving/Restore for
+                Point-in-Time-Oriented Recovery Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson4.html"
+                ><span>04</span>Restore with sstableloader/Refresh or Node-Level
+                Replacement: Topology and Schema Considerations</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson5.html"
+                ><span>05</span>Perform a Multi-Node Restore Drill and Measure
+                RPO/RTO, Repair Needs, and Application Cutover</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>26</span>Security: Authentication, Authorization, Roles,
+              TLS, and Secrets
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="Lesson1.html"
+                ><span>01</span>Enable Authentication and Authorization Safely
+                with a Bootstrap/Recovery Plan</a
+              ><a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>Roles, LOGIN, Permissions, GRANT/REVOKE, Role
+                Inheritance, and Least Privilege</a
+              ><a
+                aria-current="page"
+                class="sidebar-lesson is-current"
+                href="Lesson3.html"
+                ><span>03</span>Internode Encryption vs Client TLS:
+                Certificates, Trust, Rotation, and Failure Modes<i
+                  >Current</i
+                ></a
+              ><a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>Protect JMX/Management Interfaces, Credentials,
+                Network Paths, Backups, and Configuration Secrets</a
+              ><a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Operational Security Review: Patch Cadence,
+                Audit Evidence, Incident Access, and Multi-Tenant Boundaries</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>27</span>Observability, Performance, Capacity, Guardrails,
+              Upgrades, Multi-DC Resilience, and Capstone
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter27/Lesson1.html"
+                ><span>01</span>Metrics, Logs, Tracing, nodetool
+                tablestats/tablehistograms/proxyhistograms, and Alerting
+                Signals</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson2.html"
+                ><span>02</span>Capacity Planning for Partitions, SSTables,
+                Compaction, Repair, Heap/Off-Heap, Disk, Network, and Failure
+                Headroom</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson3.html"
+                ><span>03</span>Guardrails and Performance Controls: Prevent
+                Dangerous Schema/Query Patterns Before They Become Incidents</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson4.html"
+                ><span>04</span>Rolling Upgrades, Schema Agreement, Driver
+                Compatibility, Multi-DC Failover/Repair, and Disaster-Game-Day
+                Planning</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson5.html"
+                ><span>05</span>Capstone: Model, Deploy, Load-Test, Fail,
+                Repair, Recover, Secure, Tune, and Defend a Production Cassandra
+                Cluster</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 09 · Lesson 05</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">Apache Cassandra</a><span>/</span
+            ><span>Chapter 26 · Lesson 03</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 26 · Security: Authentication, Authorization, Roles, TLS,
+              and Secrets
+            </p>
+            <h1>
+              Internode Encryption vs Client TLS: Certificates, Trust, Rotation,
+              and Failure Modes
+            </h1>
+            <p>
+              Protect and verify client and internode TLS independently,
+              including certificate rotation failures.
+            </p>
+            <div class="lesson-meta">
+              <span>Advanced</span><span>140–200 minutes</span
+              ><span>Client/internode TLS + rotation lab</span
+              ><span
+                >Apache Cassandra 5.0.9 · Java 17 · cqlsh/nodetool · RF=3 ·
+                LOCAL_QUORUM · UCS</span
+              ><span>Last reviewed: September 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                Password authentication does not encrypt network traffic.
+                Enabling client TLS does not encrypt gossip, repair or
+                streaming, and it does not secure JMX. This lesson treats each
+                path separately and rehearses certificate rotation failure
+                modes.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Distinguish client TLS, internode TLS, JMX protection,
+                    authentication and authorization.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Generate disposable per-node certificate material without
+                    embedding private keys.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Use optional=true as a rolling migration state, then enforce
+                    TLS-only traffic.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Verify active TLS with certificate evidence and
+                    system_views.clients.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Rehearse trust/SAN/expiry/key mismatch and
+                    rotation/hot-reload behavior.
+                  </p>
+                </div>
+              </div>
+              <div class="callout">
+                <strong>Chapter 26 lab baseline</strong>
+                <p>
+                  The mandatory work uses a separate disposable security cluster
+                  so hardening experiments cannot lock the shared course
+                  cluster. Pin Apache Cassandra <code>5.0.9</code> with the
+                  official <code>cassandra:5.0.9</code> image, Java 17 from that
+                  image, Docker network
+                  <code>atlasmart-cassandra-security</code>, cluster
+                  <code>atlasmart-security</code>, nodes
+                  <code>atlasmart-sec-1..3</code>, datacenter <code>dc1</code>,
+                  racks <code>rack1..rack3</code>, 16 virtual nodes (vnodes) per
+                  node, <code>NetworkTopologyStrategy</code>, replication factor
+                  (RF) 3, and <code>LOCAL_QUORUM</code> for application-style
+                  verification. Tables use UnifiedCompactionStrategy (UCS),
+                  <code>default_time_to_live=0</code>, and
+                  <code>gc_grace_seconds=864000</code>.
+                </p>
+                <p>
+                  The lab intentionally starts with Cassandra's compatible
+                  security defaults so the migration is observable:
+                  <code>AllowAllAuthenticator</code>,
+                  <code>AllowAllAuthorizer</code>, client TLS disabled,
+                  internode encryption <code>none</code>, and JMX local-only. No
+                  Cassandra/JMX/storage ports are published to the host. This is
+                  a local learning boundary, not a production posture. Never
+                  place a real password, token, private key, keystore password,
+                  backup key, or break-glass credential into Git, lesson HTML,
+                  screenshots, chat, shell history, or process arguments.
+                </p>
+              </div>
+              <div class="callout warning">
+                <strong>Execution and safety note</strong>
+                <p>
+                  Run commands only against the disposable Apache Cassandra
+                  course lab or another explicitly approved non-production
+                  environment. Confirm node, keyspace, table, container, volume,
+                  path, and datacenter targets before destructive,
+                  failure-injection, cleanup, repair, restore, security, or
+                  topology operations. Capture current state and expected
+                  rollback/recovery evidence first; output and timings can
+                  differ by host, operating system, Java runtime,
+                  Docker/runtime, driver, and Cassandra configuration.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>Terms before the security mechanisms</h2>
+              <p>
+                <strong>CQL</strong> is Cassandra Query Language. A
+                <strong>coordinator</strong> is the node accepting a client
+                request; <strong>replicas</strong> store copies of the target
+                partition. A <strong>partition</strong> is the row group located
+                by a partition key; its hash maps to a <strong>token</strong>.
+                <strong>vnodes</strong> are multiple token ranges assigned per
+                node. A <strong>keyspace</strong> defines replication.
+                <strong>RF</strong> is replication factor and
+                <strong>CL</strong> is consistency level. An
+                <strong>SSTable</strong> is Cassandra's immutable on-disk table
+                file set; <strong>compaction</strong> merges SSTables;
+                <strong>repair</strong> compares replica ranges and streams
+                differences. <strong>SAI</strong> is Storage-Attached Indexing.
+                A <strong>driver</strong> is the client library speaking
+                Cassandra's native protocol.
+              </p>
+              <p>
+                <strong>Authentication</strong> proves an identity; Cassandra's
+                <strong>authenticator</strong> implements that decision.
+                <strong>Authorization</strong> decides what an authenticated
+                identity may do; the <strong>authorizer</strong> checks
+                permissions on Cassandra resources. A <strong>role</strong> is
+                Cassandra's principal/inheritance object;
+                <code>LOGIN=true</code> makes it directly authenticatable. A
+                <strong>superuser</strong> bypasses normal authorization and
+                therefore belongs only in tightly controlled administration or
+                break-glass recovery. <strong>Least privilege</strong> grants
+                only the permissions needed.
+              </p>
+              <p>
+                <strong>TLS</strong> (Transport Layer Security) protects network
+                traffic and authenticates endpoints with certificates.
+                <strong>Client TLS</strong> protects application/cqlsh ↔
+                Cassandra native protocol;
+                <strong>internode TLS</strong> protects Cassandra node ↔ node
+                gossip/replication/streaming. <strong>mTLS</strong> (mutual TLS)
+                means both sides present certificates. A
+                <strong>keystore</strong> holds private key/certificate material
+                and a <strong>truststore</strong> holds trust anchors.
+                <strong>JMX</strong> (Java Management Extensions) is Cassandra's
+                management interface used by <code>nodetool</code>.
+                <strong>Defense in depth</strong> layers identity, permissions,
+                encryption, network isolation, secrets, backups, audit, patching
+                and recovery instead of trusting one control.
+              </p>
+            </section>
+            <section>
+              <h2>1. Three network planes, three controls</h2>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Plane</th>
+                      <th>Interface</th>
+                      <th>Security control</th>
+                      <th>What another plane does not solve</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>client/native</td>
+                      <td>9042</td>
+                      <td>
+                        client_encryption_options + client trust validation
+                      </td>
+                      <td>internode TLS does not protect client CQL</td>
+                    </tr>
+                    <tr>
+                      <td>internode</td>
+                      <td>storage/gossip/streaming</td>
+                      <td>server_encryption_options / internode_encryption</td>
+                      <td>client TLS does not protect repair/streaming</td>
+                    </tr>
+                    <tr>
+                      <td>management</td>
+                      <td>JMX</td>
+                      <td>local-only or JMX auth+TLS+network policy</td>
+                      <td>CQL roles/TLS do not secure JMX</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p>
+                Cassandra 5.0's preferred model is a single native transport
+                port; the older dedicated SSL port is deprecated. A rolling
+                migration can temporarily accept encrypted and unencrypted
+                traffic with <code>optional=true</code>, but the end state
+                should enforce the intended policy.
+              </p>
+            </section>
+            <section>
+              <h2>2. Generate disposable lab certificates</h2>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="powershell"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >PowerShell · per-node identities without plaintext store
+                    passwords in command text
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-powershell"><span class="code-line">New-Item -ItemType Directory -Force .\ch26-tls | Out-Null</span><span class="code-line">if (-not $env:ATLASMART_TLS_STORE_PASSWORD) { throw "Set the store secret from an approved source." }</span><span class="code-line">1..3 | ForEach-Object {</span><span class="code-line">  $n=$_</span><span class="code-line">  docker run --rm -e ATLASMART_TLS_STORE_PASSWORD="$env:ATLASMART_TLS_STORE_PASSWORD" `</span><span class="code-line">    -v "${PWD}/ch26-tls:/tls" --entrypoint keytool cassandra:5.0.9 `</span><span class="code-line">    -genkeypair -alias "atlasmart-sec-$n" -keyalg RSA -keysize 2048 -validity 30 `</span><span class="code-line">    -dname "CN=atlasmart-sec-$n,OU=Training,O=AtlasMart,C=XX" `</span><span class="code-line">    -ext "SAN=dns:atlasmart-sec-$n" -keystore "/tls/node$n.p12" -storetype PKCS12 `</span><span class="code-line">    -storepass:env ATLASMART_TLS_STORE_PASSWORD -keypass:env ATLASMART_TLS_STORE_PASSWORD</span><span class="code-line">  docker run --rm -e ATLASMART_TLS_STORE_PASSWORD="$env:ATLASMART_TLS_STORE_PASSWORD" `</span><span class="code-line">    -v "${PWD}/ch26-tls:/tls" --entrypoint keytool cassandra:5.0.9 `</span><span class="code-line">    -exportcert -rfc -alias "atlasmart-sec-$n" -keystore "/tls/node$n.p12" `</span><span class="code-line">    -storetype PKCS12 -storepass:env ATLASMART_TLS_STORE_PASSWORD -file "/tls/node$n.crt"</span><span class="code-line">}</span></code></pre>
+              </div>
+              <p>
+                The 30-day self-signed identities make expiry observable in a
+                free local lab. They are not a production PKI recommendation.
+                Production certificates need approved CA profiles, Subject
+                Alternative Names (SANs), key custody, renewal/revocation and
+                trust-chain governance.
+              </p>
+            </section>
+            <section>
+              <h2>3. Configure client and internode TLS independently</h2>
+              <div class="code-window" data-code-block="" data-language="yaml">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>yaml ·
+                    secure-state shape; inject secrets at deployment
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-yaml"><span class="code-line">server_encryption_options:</span><span class="code-line">  internode_encryption: all</span><span class="code-line">  optional: false</span><span class="code-line">  legacy_ssl_storage_port_enabled: false</span><span class="code-line">  keystore: /run/atlasmart-tls/node.p12</span><span class="code-line">  keystore_password: &lt;INJECT_FROM_SECRET_SOURCE&gt;</span><span class="code-line">  truststore: /run/atlasmart-tls/truststore.p12</span><span class="code-line">  truststore_password: &lt;INJECT_FROM_SECRET_SOURCE&gt;</span><span class="code-line">  require_client_auth: true</span><span class="code-line">  require_endpoint_verification: true</span><span class="code-line">client_encryption_options:</span><span class="code-line">  enabled: true</span><span class="code-line">  optional: false</span><span class="code-line">  keystore: /run/atlasmart-tls/node.p12</span><span class="code-line">  keystore_password: &lt;INJECT_FROM_SECRET_SOURCE&gt;</span><span class="code-line">  require_client_auth: false</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="text">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>text ·
+                    rolling migration plan
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-text"><span class="code-line">CLIENT TLS</span><span class="code-line">1. enabled=true, optional=true; rolling restart.</span><span class="code-line">2. Configure every cqlsh/driver with trust validation and verify TLS.</span><span class="code-line">3. Inspect system_views.clients for ssl_enabled/protocol/cipher/user.</span><span class="code-line">4. Set optional=false; rolling restart.</span><span class="code-line">5. Prove plaintext fails while TLS succeeds.</span><span class="code-line"></span><span class="code-line">INTERNODE TLS</span><span class="code-line">1. internode_encryption=all, optional=true; rolling restart.</span><span class="code-line">2. Verify UN state, restart, repair and streaming with encrypted peers.</span><span class="code-line">3. Set optional=false; rolling restart.</span><span class="code-line">4. If mTLS is required, verify every peer certificate/trust/SAN.</span><span class="code-line">5. Repeat node restart/repair/streaming tests after enforcement.</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>4. Observe TLS instead of trusting YAML</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>CQL ·
+                    active native client evidence
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-sql"><span class="code-line">SELECT address,port,driver_name,driver_version,protocol_version,</span><span class="code-line">       ssl_enabled,ssl_protocol,ssl_cipher_suite,username</span><span class="code-line">FROM system_views.clients;</span></code></pre>
+              </div>
+              <p>
+                A row with <code>ssl_enabled=true</code> proves that listed
+                active connection negotiated TLS. It does not prove all clients
+                use TLS, endpoint verification is enabled, internode traffic is
+                encrypted, or JMX is secure.
+              </p>
+              <div class="code-window" data-code-block="" data-language="bash">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>bash ·
+                    certificate inventory and hot-reload trigger
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-bash"><span class="code-line">keytool -printcert -file /run/atlasmart-tls/node.crt</span><span class="code-line"># After replacing a file-based keystore/truststore in a controlled rotation:</span><span class="code-line">docker exec atlasmart-sec-1 nodetool reloadssl</span><span class="code-line"># Open new connections and repeat TLS/certificate evidence.</span></code></pre>
+              </div>
+              <div class="callout warning">
+                <strong
+                  >Unsafe assumption: “TLS enabled” means rotation is
+                  solved.</strong
+                >
+                <p>
+                  A new certificate can fail because the CA is not yet trusted,
+                  SAN/hostname is wrong, private key and certificate do not
+                  match, or the certificate is not yet valid/expired. Build
+                  overlapping trust where appropriate, canary the new material,
+                  reload/open new connections, revoke old material, and test an
+                  intentionally untrusted/expired path.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>5. What to capture</h2>
+              <ul>
+                <li>Authentication success/failure over TLS.</li>
+                <li>
+                  Certificate subject, SAN, fingerprint and expiry without
+                  private-key disclosure.
+                </li>
+                <li>
+                  <code>system_views.clients</code> SSL evidence for expected
+                  users.
+                </li>
+                <li>
+                  Node health plus repair/streaming after internode TLS
+                  enforcement.
+                </li>
+                <li>Plaintext denial after the transition.</li>
+                <li>
+                  Rotation success and invalid/untrusted certificate failure.
+                </li>
+              </ul>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>Does PasswordAuthenticator encrypt traffic?</li>
+                  <li>Does client TLS protect repair/streaming?</li>
+                  <li>What does ssl_enabled in system_views.clients prove?</li>
+                  <li>Why use optional=true temporarily?</li>
+                  <li>What must rotation test?</li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      <strong>1.</strong> No; authentication and transport
+                      encryption are independent.
+                    </p>
+                    <p>
+                      <strong>2.</strong> No; internode encryption is separate.
+                    </p>
+                    <p>
+                      <strong>3.</strong> Only that the listed active native
+                      connection negotiated TLS.
+                    </p>
+                    <p>
+                      <strong>4.</strong> It permits a controlled rolling
+                      transition before TLS-only enforcement.
+                    </p>
+                    <p>
+                      <strong>5.</strong> Trust overlap, SAN verification,
+                      key/cert match, validity window, reload/new connections,
+                      failure and rollback.
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section>
+              <h2>Production judgment</h2>
+              <p>
+                Security controls affect latency, availability and operator
+                skill. Record Cassandra/JVM/driver versions, DC/racks/RF/CL,
+                auth/TLS/JMX/network state, role inheritance,
+                credential/certificate expiry, audit retention, backup
+                encryption/access, patch status, repair/restore credentials and
+                the application routing/retry/idempotency model. Re-run
+                p50/p95/p99 latency and replica-failure tests after
+                encryption/authorization changes. Data modeling still matters:
+                partition/cardinality/TTL/tombstone/compaction/repair/SAI/vector
+                choices can change sensitive-data exposure and resource-denial
+                risk.
+              </p>
+              <p>
+                Do not treat a private subnet, one superuser password, client
+                TLS or one audit stream as sufficient. Managed Cassandra may
+                operate some server certificates, JMX, upgrades or backups, but
+                application identities, permissions, client trust, data
+                classification, secret use and incident response still have
+                explicit owners. Migration/rollback must retain a tested
+                administrative path and prevent coordinator-dependent security
+                drift. Lesson 4 protects the other privileged surfaces: JMX,
+                listener exposure, credentials, configuration secrets and
+                backups.
+              </p>
+            </section>
+            <section>
+              <h2>Summary and next step</h2>
+              <p>
+                This lesson’s concepts, evidence path, failure boundaries, and
+                production judgment should now be explicit enough to verify
+                rather than assume. Re-run the check-your-understanding prompts
+                and preserve any lab evidence you need before changing or
+                cleaning up the environment.
+              </p>
+              <p>
+                Next, continue to
+                <strong
+                  >Protect JMX/Management Interfaces, Credentials, Network
+                  Paths, Backups, and Configuration Secrets</strong
+                >.
+              </p>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <p>
+                Security defaults, algorithms, tooling and deprecations are
+                version-sensitive. Re-check the target Cassandra/JVM/driver
+                distribution and organizational cryptographic policy before
+                production rollout.
+              </p>
+              <ul class="reference-list">
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/_/download"
+                    rel="noopener"
+                    target="_blank"
+                    >Apache Cassandra releases</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/latest/cassandra/managing/operating/security.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Apache Cassandra security operations</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/latest/cassandra/managing/configuration/cass_yaml_file.html"
+                    rel="noopener"
+                    target="_blank"
+                    >cassandra.yaml reference</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/latest/cassandra/developing/cql/security.html"
+                    rel="noopener"
+                    target="_blank"
+                    >CQL security and access control</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/latest/cassandra/reference/cql-commands/create-role.html"
+                    rel="noopener"
+                    target="_blank"
+                    >CREATE ROLE</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/latest/cassandra/reference/cql-commands/grant.html"
+                    rel="noopener"
+                    target="_blank"
+                    >GRANT</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/latest/cassandra/reference/cql-commands/revoke.html"
+                    rel="noopener"
+                    target="_blank"
+                    >REVOKE</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/latest/cassandra/tooling/hash-password.html"
+                    rel="noopener"
+                    target="_blank"
+                    >hash_password</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/stable/cassandra/managing/tools/cqlsh.html"
+                    rel="noopener"
+                    target="_blank"
+                    >cqlsh security/history options</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/latest/cassandra/managing/operating/virtualtables.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Virtual tables</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/latest/cassandra/managing/operating/auditlogging.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Audit logging</a
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://cassandra.apache.org/doc/latest/cassandra/managing/tools/nodetool/reloadssl.html"
+                    rel="noopener"
+                    target="_blank"
+                    >nodetool reloadssl</a
+                  >
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a href="Lesson2.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Roles, LOGIN, Permissions, GRANT/REVOKE, Role Inheritance, and
+                Least Privilege</strong
+              ></a
+            ><a class="next" href="Lesson4.html"
+              ><small>Next lesson</small
+              ><strong
+                >Protect JMX/Management Interfaces, Credentials, Network Paths,
+                Backups, and Configuration Secrets</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <small
+          >Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+    <script src="../assets/js/cassandra-highlight.js?v=20260908.1"></script>
+  </body>
+</html>
