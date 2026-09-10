@@ -1,0 +1,1621 @@
+<!doctype html>
+
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Batch AtlasMart writes with explicit payload, transaction and concurrency boundaries, then prove restartability and invariants."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Batch Writes with UNWIND, Transaction Chunking, Payload Size, and
+      Throughput/Latency Tradeoffs | Neo4j | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <link rel="stylesheet" href="../neo4j-course-fixes.css" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">N4J</span>
+            <div><small>Course 14</small><strong>Neo4j</strong></div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 135 lessons..."
+            type="search"
+        /></label>
+        <nav aria-label="Neo4j curriculum" class="sidebar-curriculum">
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>Graph Database Foundations, Neo4j Editions,
+              Deployment Choices, and Lab Setup
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>Graph Databases vs Relational, Document, and
+                Search Systems: Connectivity, Traversal, and Workload Fit</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Neo4j Community, Enterprise, Aura, and
+                Infinigraph: Capability, Responsibility, and Cost Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>Install Neo4j Desktop/Server or Provision Aura,
+                Connect with Browser and Cypher Shell, and Verify the DBMS</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>Databases, DBMS Processes, Bolt, HTTP, Drivers,
+                Configuration, Storage Locations, and Transaction Logs</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Reproducible Graph Lab with Sample Data,
+                Administrative Accounts, Metrics, and Safe Reset Procedures</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>Property Graph Model: Nodes, Relationships, Labels,
+              Properties, Types, and Schema Discipline
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>Nodes and Relationships as First-Class Entities:
+                Direction, Identity, and Traversal Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>Labels, Relationship Types, Properties, Lists,
+                Maps, Temporal/Spatial Values, Null, and Missing Properties</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Schema-Optional Does Not Mean Model-Free:
+                Contracts, Naming, Cardinality, and Invariants</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>Model Identity, Natural Keys, Surrogate
+                Identifiers, Relationship Properties, and Effective Dating</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Translate a Relational/Document Domain into a
+                Property Graph and Defend Every Modeling Decision</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>Cypher Fundamentals: MATCH, RETURN, WHERE,
+              Parameters, Ordering, and Pagination
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>Read Graph Patterns with MATCH and Understand
+                Variable Binding Across Nodes and Relationships</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Filter with WHERE, Predicates, Labels, Types,
+                Property Access, Null Semantics, and Parameters</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>Project Results with RETURN, Aliases, DISTINCT,
+                Expressions, Maps, and Pattern Comprehensions</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>ORDER BY, SKIP/OFFSET, LIMIT, Deterministic
+                Pagination, and Why Deep Pagination Can Be Expensive</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Build Parameterized Read Queries in Cypher Shell
+                and Verify Results Against Known Graph Fixtures</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Advanced Pattern Matching: Variable Length,
+              OPTIONAL MATCH, Paths, Quantified Patterns, and Shortest Paths
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Variable-Length and Quantified Path Patterns:
+                Bounds, Semantics, and Combinatorial Risk</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>OPTIONAL MATCH and Null Introduction: Preserving
+                Rows Without Accidentally Filtering Them Away</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>Path Values, Nodes/Relationships Functions, Path
+                Predicates, Uniqueness, and Cycle Awareness</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>Shortest-Path Queries, Weighted vs Unweighted
+                Reasoning, and When to Use Graph Data Science Instead</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Diagnose a Path Explosion and Rewrite the Query
+                with Better Anchors, Bounds, and Predicates</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>Cypher Expressions, Aggregation, UNWIND,
+              Collections, Maps, and Subqueries
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>Aggregation with count, collect, sum, avg,
+                min/max, Grouping Keys, and Cardinality Reasoning</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>List Expressions, List Comprehensions, reduce,
+                any/all/none/single, and Collection Transformations</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>UNWIND for Turning Collections into Rows,
+                Batching Input, and Preserving Deterministic Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>CALL Subqueries, EXISTS Subqueries, Scope
+                Import/Export, and Avoiding Accidental Cartesian Products</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>Compose a Multi-Stage Analytical Query with
+                Parameters, Aggregation, Subqueries, and Explainable
+                Intermediate Results</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Graph Writes: CREATE, MERGE, SET, REMOVE, DELETE,
+              and Idempotent Mutation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>CREATE Nodes and Relationships Safely and
+                Understand Transactional Visibility</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>MERGE Match-or-Create Semantics, ON CREATE/ON
+                MATCH, Uniqueness Constraints, and Concurrency Hazards</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>SET and REMOVE Properties/Labels, Map
+                Replacement vs Mutation, and Schema Evolution</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>DELETE vs DETACH DELETE, Relationship Cleanup,
+                Cascades by Application Policy, and Safety Guardrails</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Design an Idempotent Import/Upsert Workflow and
+                Prove It Remains Correct Under Repeated Execution</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>Graph Data Modeling: Aggregates, Relationships,
+              Hyperedges, Hierarchies, and Temporal Graphs
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>Choose Node vs Property vs Relationship by Query
+                Pattern, Identity, Cardinality, and Evolution Needs</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>Model Many-to-Many Facts, Reified
+                Relationships/Intermediate Nodes, and Hyperedge-Like Concepts</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>Hierarchies, Trees, DAGs, Bill-of-Materials,
+                Organizational Graphs, and Cycle Constraints</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Temporal Validity, Event Histories, Versioned
+                Relationships, Bitemporal Questions, and Snapshot Queries</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Review a Poor Graph Model and Refactor It for
+                Traversal Clarity, Integrity, and Query Performance</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>Importing Data: LOAD CSV, Data Importer, Bulk
+              Import, Transformation, and Validation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>Prepare Source Data: Stable Keys, Referential
+                Integrity, Encoding, Nulls, Duplicates, and Relationship
+                Files</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>LOAD CSV with Parameters, Transactions, MERGE
+                Discipline, and Incremental Import Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>Neo4j Data Importer Workflows: Mapping Tables to
+                Nodes/Relationships and Validating Generated Models</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>Bulk/Offline Import Concepts, Ordering,
+                Memory/Storage Planning, and When LOAD CSV Is the Wrong Tool</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Reconcile Counts, Constraints, Orphans,
+                Duplicates, and Business Invariants After a Large Import</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>Constraints and Indexes: Range, Text, Point, Token,
+              Full-Text, and Schema Enforcement
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>Uniqueness, Key, Property Existence, Property
+                Type, and Other Constraints as Executable Model Contracts</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>Range, Text, Point, and Token Lookup Indexes:
+                Supported Predicates and Workload Fit</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>Composite Index Order, Selectivity,
+                Labels/Types, Relationship Indexes, and Index Population
+                States</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>Full-Text Indexes, Analyzers, Eventual
+                Consistency Options, and Query Procedures</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>Inspect SHOW INDEXES/CONSTRAINTS, Identify
+                Redundant Structures, and Build an Evidence-Based Index Set</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>Query Planning and Profiling: Cardinality,
+              Operators, Index Selection, and Plan Stability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>EXPLAIN vs PROFILE, Logical/Physical Operators,
+                Rows, Database Hits, Memory, and Pipeline Interpretation</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>Cardinality Estimation, Selectivity, Starting
+                Points, Expand Operators, and Why Graph Shape Matters</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>Index Seeks/Scans, Label/Type Lookups,
+                Join/Apply Operators, Eagerization, and Sort/Aggregation
+                Costs</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>Parameter Values, Statistics, Plan Cache
+                Behavior, and Testing Representative Workload Shapes</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Tune a Slow Cypher Query by Changing Model,
+                Predicate, Index, or Query Shape—Then Re-Measure</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>Transactions, Isolation, Locking, Deadlocks,
+              Retries, and Consistency
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>ACID Transactions, Auto-Commit vs Explicit
+                Transactions, Statement Boundaries, and Failure Atomicity</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>Locks on Nodes/Relationships/Schema, Contention
+                Patterns, Dense Graph Hotspots, and Deadlock Detection</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>Driver Transaction Functions, Retryable
+                Failures, Idempotency, and Backoff</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Bookmarks and Causal Consistency Across
+                Sessions/Cluster Routing</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Design and Load-Test a High-Contention Write
+                Workflow Without Hiding Correctness Failures</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>APOC, Procedures, Functions, Triggers-Like
+              Workflows, and Extending Cypher
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>APOC Core: Procedures vs Functions,
+                Installation/Availability, Configuration, and Security
+                Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>Collections, Maps, Text, Date, Conversion, Path
+                Expansion, and Utility Procedures</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>Data Integration and Export Procedures: Files,
+                HTTP, JSON, and Operational Safety</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>Custom Procedures/Functions Concepts, Java
+                Extension Boundaries, Version Compatibility, and Deployment
+                Risk</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>Decide When to Use Pure Cypher, APOC,
+                Application Code, or a Custom Extension for a Real
+                Requirement</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Application Drivers and Bolt: Sessions, Routing,
+              Parameters, Result Streaming, and Connection Pools
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>Official Drivers, Bolt Protocol Concepts, URI
+                Schemes, Authentication, TLS, and Routing Tables</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Sessions, Transactions, Parameters, Result
+                Cursors/Streams, Fetch Size, and Backpressure</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>Connection Pool Sizing, Timeouts, Lifetime,
+                Health Checks, and Avoiding One-Session-per-Request
+                Anti-Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Read/Write Routing, Bookmarks, Retry Logic,
+                Error Classification, and Observability Correlation</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Build a Repository/Service Layer that Keeps
+                Cypher Parameterized, Transactional, Testable, and Measurable</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>14</span>Asynchronous, Reactive, Batch, and High-Throughput
+              Application Patterns
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="Lesson1.html"
+                ><span>01</span>Async Driver APIs, Concurrency Limits,
+                Cancellation, Timeouts, and Resource Cleanup</a
+              ><a
+                aria-current="page"
+                class="sidebar-lesson is-current"
+                href="Lesson2.html"
+                ><span>02</span>Batch Writes with UNWIND, Transaction Chunking,
+                Payload Size, and Throughput/Latency Tradeoffs<i>Current</i></a
+              ><a class="sidebar-lesson" href="Lesson3.html"
+                ><span>03</span>Reactive Streams Concepts, Demand, Backpressure,
+                and When Reactive Access Helps</a
+              ><a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>N+1 Graph Queries, Chatty Traversals, Projection
+                Design, and Returning Only Needed Data</a
+              ><a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Benchmark Driver-Side Throughput and Separate
+                Database Time from Network/Serialization/Client Time</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Security: Authentication, RBAC, Privileges, TLS,
+              Secrets, and Least Privilege
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>Users, Roles, Authentication Providers, Password
+                Policy, and Administrative Separation</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Database, Graph, Label/Type, Procedure, and
+                Other Privileges: Designing Least-Privilege Roles</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>TLS for Bolt/HTTPS, Certificate Trust,
+                Encryption in Transit, and Client Verification</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Secrets Management, Rotation, Driver
+                Credentials, Audit Evidence, and Incident Response</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Threat-Model a Graph Application Including Query
+                Injection, Over-Privileged Procedures, Data Exfiltration, and
+                Admin Paths</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Backup, Restore, Transaction Logs, Disaster
+              Recovery, and Upgrade Safety
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>Backup Types, Online Backup Concepts,
+                Transaction Logs, Retention, and Recovery Objectives</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Restore Workflows, Validation,
+                Point-in-Time/Transaction-Log Reasoning, and Isolated Recovery
+                Testing</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>Backup Encryption/Access, Offsite Copies,
+                Retention Policies, and Immutable Recovery Evidence</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Upgrade/Migration Planning, Store Compatibility,
+                Rolling vs Offline Constraints, Plugins, and Rollback</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Run a Disaster-Recovery Drill and Measure RPO,
+                RTO, Data Integrity, Application Recovery, and Operator Steps</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Clustering, High Availability, Routing, Consensus,
+              and Failure Domains
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>Cluster Roles, Primaries/Secondaries or Current
+                Topology Concepts, Consensus, Quorum, and Write Availability</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>Server Discovery, Routing, Leader Changes, Read
+                Scaling, and Causal Consistency Expectations</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>Failure Domains, Zones/Regions, Network
+                Partitions, Quorum Loss, and Split-Brain Avoidance</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>Cluster Seeding, Membership Changes,
+                Maintenance, Capacity Headroom, and Rebalancing Operational
+                Risk</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Inject Node/Network Failures and Verify Driver
+                Recovery, Transaction Outcomes, and Operational Alerts</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Monitoring and Troubleshooting: Metrics, Logs,
+              Query Visibility, Memory, Store, and Capacity
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>DBMS Metrics, Query/Transaction Listings, Logs,
+                GC/JVM Evidence, Page Cache, and Operating-System Signals</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>Page Cache vs Heap, Transaction Memory, Query
+                Memory, File Descriptors, CPU, Storage I/O, and Network</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Slow Query Capture, PROFILE Evidence,
+                Lock/Transaction Diagnostics, and Workload Correlation</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Store Growth, Relationship Density, Index Size,
+                Transaction Log Growth, and Capacity Forecasting</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>Build a Troubleshooting Runbook from Symptom to
+                Evidence to Hypothesis to Verified Remediation</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>19</span>Composite Databases, Multiple Databases,
+              Federation, and Data-Domain Boundaries
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Multiple Databases: Isolation, Administration,
+                Security, Resource Considerations, and Tenant Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Composite Database Concepts, Constituents,
+                Querying Across Graphs, and Location Transparency</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>Federated Queries, Data Locality, Cross-Graph
+                Joins/Traversal Constraints, and Latency Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>Domain Decomposition, Graph Ownership, Shared
+                Reference Data, and Governance Across Graphs</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Design a Multi-Domain Graph Architecture and
+                Decide Which Relationships Belong Local vs Federated</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Change Data Capture, Event Integration,
+              Kafka/Connect Patterns, and Near-Real-Time Graph Synchronization
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>Neo4j CDC Concepts, Change Identifiers, Event
+                Semantics, Capture Scope, and Consumer Checkpoints</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>At-Least-Once Delivery, Ordering, Idempotent
+                Consumers, Replay, and Schema/Model Evolution</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>Kafka/Connector Patterns for Ingesting to or
+                Emitting from Neo4j and Avoiding Feedback Loops</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>Outbox/CDC Integration with Relational Sources,
+                Identity Mapping, and Eventual Consistency</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Build a Recoverable CDC Pipeline and Prove
+                Restart, Duplicate, Gap, and Backfill Behavior</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Full-Text Search, Text Analysis, Relevance, and
+              Hybrid Retrieval with Graph Context
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>Full-Text Index Schema, Node vs Relationship
+                Indexes, Analyzers, Tokenization, and Language Handling</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>Query Syntax, Scoring, Boolean/phrase/fuzzy
+                Patterns, Result Limits, and Score Interpretation</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>Eventually Consistent Full-Text Indexing,
+                Freshness Expectations, and Operational Monitoring</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Combine Full-Text Candidates with Graph
+                Traversal, Business Rules, and Post-Ranking</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>Evaluate Search Quality with Queries/Judgments
+                Instead of Tuning Only by Anecdotal Examples</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Vector Search, Embeddings, Cypher SEARCH, Hybrid
+              Search, and GraphRAG
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>Embeddings, VECTOR/LIST Values, Dimensionality,
+                Similarity Functions, HNSW Concepts, and ANN Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>Create and Inspect Vector Indexes, Additional
+                Filter Properties, Population State, and Quantization Options</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>Query Vector Indexes with the Modern Cypher
+                SEARCH Clause and Understand Approximate-Neighbor Limits</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>Hybrid Full-Text + Vector Retrieval, Independent
+                Ranking, Filtering, Re-Ranking, and Graph Expansion</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Design GraphRAG: Chunk/Entity/Relationship
+                Modeling, Retrieval, Context Assembly, Provenance, and
+                Evaluation</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>23</span>Graph Data Science Foundations: Projections, Graph
+              Catalog, Memory, and Execution Modes
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter23/Lesson1.html"
+                ><span>01</span>GDS Architecture, In-Memory Graph Catalog,
+                Native/Cypher Projections, and Projection Scope</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson2.html"
+                ><span>02</span>Node/Relationship Properties, Orientation,
+                Filtering, Graph Schema, and Projection Verification</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson3.html"
+                ><span>03</span>Estimate Memory, Control Concurrency, Manage
+                Graph Lifecycles, and Avoid Production Memory Starvation</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson4.html"
+                ><span>04</span>stream, stats, mutate, write, and estimate
+                Modes: Separating Exploration from Persistent Changes</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson5.html"
+                ><span>05</span>Build, Validate, Use, and Drop a GDS Projection
+                with Reproducible Resource Measurements</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>Graph Algorithms: Centrality, Community Detection,
+              Similarity, Paths, and Topology Analytics
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter24/Lesson1.html"
+                ><span>01</span>Degree, PageRank, Betweenness, Eigenvector-Like
+                Centrality Concepts and Business Interpretation</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson2.html"
+                ><span>02</span>Louvain/Leiden/Label Propagation and Community
+                Detection: Resolution, Stability, and Validation</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson3.html"
+                ><span>03</span>Node Similarity, KNN, Jaccard/Overlap/Cosine
+                Concepts, and Candidate Generation</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson4.html"
+                ><span>04</span>Pathfinding and Spanning/Reachability
+                Algorithms: When GDS Beats Transactional Cypher</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson5.html"
+                ><span>05</span>Choose an Algorithm from the Decision Question,
+                Validate Assumptions, and Interpret Results Without
+                Overclaiming</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>25</span>Graph Embeddings and Machine Learning Pipelines
+              with GDS
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter25/Lesson1.html"
+                ><span>01</span>Node Embeddings from Topology/Properties,
+                FastRP/Node2Vec-Like Concepts, Dimensions, and
+                Reproducibility</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson2.html"
+                ><span>02</span>Feature Engineering from Graph Algorithms,
+                Properties, Labels, and Leakage Prevention</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson3.html"
+                ><span>03</span>Node Classification, Link Prediction, and
+                Regression Pipeline Concepts, Splits, Metrics, and Baselines</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson4.html"
+                ><span>04</span>Model Catalog, Training, Hyperparameter Search,
+                Prediction, Persistence, and Production Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson5.html"
+                ><span>05</span>Evaluate a Graph ML Workflow Against Non-Graph
+                Baselines and Document Where the Graph Actually Adds Signal</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>26</span>Performance Engineering: Data Model, Traversal
+              Shape, Page Cache, Memory, and Workload Isolation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter26/Lesson1.html"
+                ><span>01</span>Profile Workload Mix: Read/Write Ratios,
+                Traversal Depth, Fan-Out, Hot Nodes, Result Sizes, and
+                Concurrency</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson2.html"
+                ><span>02</span>Model-Level Optimization: Relationship
+                Direction/Type, Intermediate Nodes, Denormalization, and
+                Precomputation</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson3.html"
+                ><span>03</span>Query-Level Optimization: Anchors, Selectivity,
+                Predicate Placement, Subqueries, Aggregation, and Result
+                Shaping</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson4.html"
+                ><span>04</span>Infrastructure Tuning: Heap, Page Cache,
+                Transaction Memory, CPU, Storage, Containers, and OS Limits</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson5.html"
+                ><span>05</span>Run Controlled Benchmarks and Capacity Tests
+                with Tail Latency, Saturation, Failure, and Regression
+                Thresholds</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>27</span>Production Capstone: Model, Import, Query, Search,
+              Analyze, Secure, Fail Over, and Operate Neo4j
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter27/Lesson1.html"
+                ><span>01</span>Define Requirements, Workloads,
+                Availability/RPO/RTO, Data Sources, Security Boundaries, and
+                Graph-Fit Criteria</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson2.html"
+                ><span>02</span>Build the Graph Model, Constraints/Indexes,
+                Import Pipeline, Core Cypher Queries, and Application Driver
+                Layer</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson3.html"
+                ><span>03</span>Add Full-Text/Vector/GraphRAG and GDS Analytics
+                Only Where Measured Requirements Justify Them</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson4.html"
+                ><span>04</span>Load-Test, Profile, Secure, Back Up, Restore,
+                Fail Over, Monitor, Upgrade, and Execute Incident Runbooks</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson5.html"
+                ><span>05</span>Present the Architecture with Evidence, Known
+                Limits, Cost/Capacity Assumptions, and Clear Criteria for When
+                Neo4j Is Not the Right Tool</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 14 · Lesson 02</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">Neo4j</a><span>/</span
+            ><span>Chapter 14 · Lesson 02</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 14 · Asynchronous, Reactive, Batch, and High-Throughput
+              Application Patterns
+            </p>
+            <h1>
+              Batch Writes with UNWIND, Transaction Chunking, Payload Size, and
+              Throughput/Latency Tradeoffs
+            </h1>
+            <p>
+              Batch AtlasMart writes with explicit payload, transaction and
+              concurrency boundaries, then prove restartability and invariants.
+            </p>
+            <div class="lesson-meta">
+              <span>Advanced</span><span>190–240 minutes</span
+              ><span>UNWIND batch-size benchmark lab</span
+              ><span>Neo4j 2026.07.1 Community · Cypher 25</span
+              ><span>Python driver 6.3.0 · async</span
+              ><span>Optional JS driver 6.2.0 · Reactive API</span
+              ><span>Last reviewed: September 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                AtlasMart receives 20,000 product updates. Sending 20,000
+                separate transactions wastes protocol/transaction overhead;
+                sending one 20,000-row payload in one giant transaction may
+                create a large network message, long lock lifetime, high
+                transaction memory and expensive retries. This lesson treats
+                batch size and transaction chunking as measured control
+                variables.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Use parameterized list-of-map payloads with
+                    <code>UNWIND</code> for repeatable batch writes.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Distinguish rows-per-query, rows-per-transaction and
+                    concurrent-batch count.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Measure serialized payload bytes, transaction duration and
+                    p95/p99 rather than maximizing batch size blindly.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Keep batch writes idempotent with stable keys, uniqueness
+                    constraints and deterministic mutation semantics.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Choose application chunking versus
+                    <code>CALL { … } IN TRANSACTIONS</code> based on the
+                    ingestion path and transaction ownership.
+                  </p>
+                </div>
+              </div>
+              <div class="callout">
+                <strong>Chapter 14 baseline · reviewed 9 September 2026</strong>
+                <p>
+                  The mandatory lab continues Neo4j Community
+                  <code>2026.07.1</code>, database <code>neo4j</code>, explicit
+                  <code>CYPHER 25</code> where language-version behavior
+                  matters, container <code>atlasmart-neo4j</code>, loopback Bolt
+                  <code>bolt://127.0.0.1:7687</code>, authentication
+                  <code>neo4j</code>/<code>atlasmart-course-2026</code>, and no
+                  TLS on the disposable loopback-only instance. The primary
+                  client is the official Python package
+                  <code>neo4j 6.3.0</code> on Python 3.10–3.14. The optional
+                  Reactive Streams exercise uses the official JavaScript driver
+                  <code>neo4j-driver 6.2.0</code>; its lite package deliberately
+                  omits the Reactive API. Neo4j <code>5.26.30</code> remains the
+                  LTS comparison line.
+                </p>
+              </div>
+              <div class="callout warning">
+                <strong>Evidence boundary</strong>
+                <p>
+                  This generation environment does not connect to your AtlasMart
+                  Neo4j container, so no throughput, p95/p99, pool-queue, CPU,
+                  page-cache, I/O, cancellation, GC, routing or network
+                  measurements are fabricated. The chapter provides
+                  deterministic fixtures, runnable harnesses, measurement
+                  columns and acceptance invariants. Values such as concurrency,
+                  fetch size and batch size are experimental variables—not
+                  universal recommendations.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>Reproducible AtlasMart setup</h2>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="powershell"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >PowerShell · environment
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-powershell"><span class="code-line">$env:NEO4J_URI='bolt://127.0.0.1:7687'</span><span class="code-line">$env:NEO4J_USER='neo4j'</span><span class="code-line">$env:NEO4J_PASSWORD='atlasmart-course-2026'</span><span class="code-line">$env:NEO4J_DATABASE='neo4j'</span><span class="code-line">py -3 -m venv .venv</span><span class="code-line">.\.venv\Scripts\Activate.ps1</span><span class="code-line">python -m pip install --upgrade pip</span><span class="code-line">python -m pip install neo4j==6.3.0</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>Cypher ·
+                    stable fixture and constraints
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-sql"><span class="code-line">CYPHER 25</span><span class="code-line">CREATE CONSTRAINT customer_id IF NOT EXISTS</span><span class="code-line">FOR (c:Customer) REQUIRE c.customerId IS UNIQUE;</span><span class="code-line">CREATE CONSTRAINT product_id IF NOT EXISTS</span><span class="code-line">FOR (p:Product) REQUIRE p.productId IS UNIQUE;</span><span class="code-line">CREATE CONSTRAINT order_id IF NOT EXISTS</span><span class="code-line">FOR (o:Order) REQUIRE o.orderId IS UNIQUE;</span><span class="code-line"></span><span class="code-line">MERGE (c:Customer {customerId:'C-1001'})</span><span class="code-line">SET c.name='Mina Rahimi', c.tier='GOLD'</span><span class="code-line">MERGE (p1:Product {productId:'P-1001'})</span><span class="code-line">SET p1.name='Trail Camera', p1.category='Cameras', p1.price=129.90</span><span class="code-line">MERGE (p2:Product {productId:'P-2001'})</span><span class="code-line">SET p2.name='Smart Shelf Sensor', p2.category='Store IoT', p2.price=79.50</span><span class="code-line">MERGE (o:Order {orderId:'O-5001'})</span><span class="code-line">SET o.status='PAID', o.orderedAt=datetime('2026-09-08T16:30:00Z')</span><span class="code-line">MERGE (c)-[:PLACED]-&gt;(o)</span><span class="code-line">MERGE (o)-[r1:CONTAINS]-&gt;(p1)</span><span class="code-line">SET r1.quantity=1, r1.unitPrice=129.90</span><span class="code-line">MERGE (o)-[r2:CONTAINS]-&gt;(p2)</span><span class="code-line">SET r2.quantity=2, r2.unitPrice=79.50;</span></code></pre>
+              </div>
+              <p>
+                The fixture is intentionally tiny. Performance conclusions come
+                from the synthetic workload generated by the harness, not from
+                pretending two products are representative of production. The
+                stable keys and uniqueness constraints make repeated batch-write
+                experiments safe to reconcile.
+              </p>
+            </section>
+            <section>
+              <h2>1. Three batching dimensions are independent</h2>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Dimension</th>
+                      <th>Example</th>
+                      <th>Primary pressure</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>rows in one Bolt parameter payload</td>
+                      <td>100 product maps in <code>$rows</code></td>
+                      <td>network/serialization/client memory</td>
+                    </tr>
+                    <tr>
+                      <td>rows in one database transaction</td>
+                      <td>same 100 rows under one managed transaction</td>
+                      <td>
+                        locks, transaction state/memory, retry blast radius
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>concurrent batches</td>
+                      <td>4 transactions each processing 100 rows</td>
+                      <td>pool, CPU, lock contention, page cache/I/O</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p>
+                “Batch size = 500” is incomplete unless all three dimensions are
+                stated. Keep them in benchmark output so a later change is
+                reproducible.
+              </p>
+            </section>
+            <section>
+              <h2>2. Idempotent UNWIND upsert</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>Cypher ·
+                    one parameterized batch
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-sql"><span class="code-line">CYPHER 25</span><span class="code-line">UNWIND $rows AS row</span><span class="code-line">MERGE (p:Product {productId: row.productId})</span><span class="code-line">ON CREATE SET p.createdAt = datetime()</span><span class="code-line">SET p.name = row.name,</span><span class="code-line">    p.category = row.category,</span><span class="code-line">    p.price = toFloat(row.price),</span><span class="code-line">    p.updatedAt = datetime()</span><span class="code-line">RETURN count(*) AS inputRows;</span></code></pre>
+              </div>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="python"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>Python ·
+                    managed transaction batch
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-python"><span class="code-line">from neo4j import Query</span><span class="code-line"></span><span class="code-line">UPSERT_PRODUCTS = Query("""</span><span class="code-line">CYPHER 25</span><span class="code-line">UNWIND $rows AS row</span><span class="code-line">MERGE (p:Product {productId:row.productId})</span><span class="code-line">ON CREATE SET p.createdAt = datetime()</span><span class="code-line">SET p.name=row.name,</span><span class="code-line">    p.category=row.category,</span><span class="code-line">    p.price=toFloat(row.price),</span><span class="code-line">    p.updatedAt=datetime()</span><span class="code-line">RETURN count(*) AS inputRows</span><span class="code-line">""", timeout=10.0, metadata={"app":"atlasmart", "op":"batch-products"})</span><span class="code-line"></span><span class="code-line">async def upsert_batch(tx, rows):</span><span class="code-line">    result = await tx.run(UPSERT_PRODUCTS, rows=rows)</span><span class="code-line">    record = await result.single()</span><span class="code-line">    summary = await result.consume()</span><span class="code-line">    return record["inputRows"], summary.counters</span><span class="code-line"></span><span class="code-line">async def write_batch(driver, rows):</span><span class="code-line">    async with driver.session(database="neo4j") as session:</span><span class="code-line">        return await session.execute_write(upsert_batch, rows)</span></code></pre>
+              </div>
+              <p>
+                Because a managed transaction callback may retry, the mutation
+                must remain safe when repeated. The stable
+                <code>productId</code> uniqueness contract plus
+                <code>MERGE</code> identity keeps the node count stable;
+                timestamp values may intentionally change on each successful
+                retry/execution, so do not call every property bit-for-bit
+                idempotent unless that is your actual contract.
+              </p>
+            </section>
+            <section>
+              <h2>3. Chunk in the application and bound concurrent batches</h2>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="python"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>Python ·
+                    chunk + semaphore + payload evidence
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-python"><span class="code-line">import asyncio, json</span><span class="code-line">from time import perf_counter</span><span class="code-line"></span><span class="code-line"></span><span class="code-line">def chunks(rows, size):</span><span class="code-line">    for i in range(0, len(rows), size):</span><span class="code-line">        yield rows[i:i+size]</span><span class="code-line"></span><span class="code-line">async def ingest(driver, rows, batch_size=100, concurrency=4):</span><span class="code-line">    gate = asyncio.Semaphore(concurrency)</span><span class="code-line"></span><span class="code-line">    async def one(batch_no, batch):</span><span class="code-line">        payload_bytes = len(json.dumps(batch, separators=(",", ":")).encode())</span><span class="code-line">        async with gate:</span><span class="code-line">            t0 = perf_counter()</span><span class="code-line">            input_rows, counters = await write_batch(driver, batch)</span><span class="code-line">            ms = (perf_counter() - t0) * 1000</span><span class="code-line">        return {</span><span class="code-line">            "batch": batch_no,</span><span class="code-line">            "rows": input_rows,</span><span class="code-line">            "payload_bytes": payload_bytes,</span><span class="code-line">            "elapsed_ms": ms,</span><span class="code-line">            "nodes_created": counters.nodes_created,</span><span class="code-line">        }</span><span class="code-line"></span><span class="code-line">    jobs = [one(i, b) for i, b in enumerate(chunks(rows, batch_size), 1)]</span><span class="code-line">    return await asyncio.gather(*jobs)</span></code></pre>
+              </div>
+              <p>
+                A safe experiment holds total input and concurrency constant
+                while sweeping batch size, then separately holds batch size
+                constant while sweeping concurrency. Otherwise two independent
+                causes change at once.
+              </p>
+            </section>
+            <section>
+              <h2>4. Wrong extremes: row-at-a-time and giant transaction</h2>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Pattern</th>
+                      <th>Why it looks attractive</th>
+                      <th>Failure mode</th>
+                      <th>Repair</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>one transaction per row</td>
+                      <td>simple code</td>
+                      <td>protocol/transaction overhead; poor throughput</td>
+                      <td>parameterized <code>UNWIND</code> batches</td>
+                    </tr>
+                    <tr>
+                      <td>one enormous <code>$rows</code> list</td>
+                      <td>few round trips</td>
+                      <td>
+                        large serialization/memory; long locks; expensive retry
+                      </td>
+                      <td>
+                        bounded chunks with measured payload/transaction
+                        duration
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>hundreds of concurrent batches</td>
+                      <td>high offered load</td>
+                      <td>
+                        pool queue, contention, server overload, p99 collapse
+                      </td>
+                      <td>bounded concurrency + saturation test</td>
+                    </tr>
+                    <tr>
+                      <td><code>CREATE</code> in retryable batch</td>
+                      <td>fast first run</td>
+                      <td>duplicates on replay/retry</td>
+                      <td>
+                        stable keys + constraints +
+                        <code>MERGE</code>/idempotent design
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section>
+              <h2>5. Application chunking vs CALL IN TRANSACTIONS</h2>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Mechanism</th>
+                      <th>Who owns chunking?</th>
+                      <th>Good fit</th>
+                      <th>Important boundary</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>application chunks + managed tx</td>
+                      <td>client application</td>
+                      <td>
+                        parameter/list ingestion, service jobs, explicit
+                        retry/checkpoint control
+                      </td>
+                      <td>
+                        each managed callback may retry; keep side effects safe
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <code>LOAD CSV ... CALL { … } IN TRANSACTIONS</code>
+                      </td>
+                      <td>Cypher/server statement</td>
+                      <td>
+                        CSV import and server-managed transaction batching
+                      </td>
+                      <td>
+                        must be run as an auto-commit statement because the
+                        clause manages inner transactions
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>single huge transaction</td>
+                      <td>nobody</td>
+                      <td>rarely appropriate for bulk migration</td>
+                      <td>large failure/lock/memory blast radius</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p>
+                Do not cargo-cult the import chapter into application batching.
+                If data is already parsed in your service, list parameters plus
+                <code>UNWIND</code> usually give the application clearer
+                checkpointing and payload control.
+              </p>
+            </section>
+            <section>
+              <h2>6. Benchmark matrix and invariants</h2>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Run</th>
+                      <th>Batch size</th>
+                      <th>Batch concurrency</th>
+                      <th>Capture</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>A</td>
+                      <td>1</td>
+                      <td>1</td>
+                      <td>baseline transaction overhead</td>
+                    </tr>
+                    <tr>
+                      <td>B</td>
+                      <td>10</td>
+                      <td>1</td>
+                      <td>payload/transaction improvement</td>
+                    </tr>
+                    <tr>
+                      <td>C</td>
+                      <td>100</td>
+                      <td>1</td>
+                      <td>larger-batch efficiency and p95/p99</td>
+                    </tr>
+                    <tr>
+                      <td>D</td>
+                      <td>100</td>
+                      <td>4</td>
+                      <td>throughput vs contention</td>
+                    </tr>
+                    <tr>
+                      <td>E</td>
+                      <td>500</td>
+                      <td>4</td>
+                      <td>
+                        whether payload/transaction duration now hurts tails
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>Cypher ·
+                    post-run reconciliation
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-sql"><span class="code-line">CYPHER 25</span><span class="code-line">MATCH (p:Product)</span><span class="code-line">WHERE p.productId STARTS WITH 'P-BENCH-'</span><span class="code-line">WITH count(p) AS nodes, collect(p.productId) AS ids</span><span class="code-line">RETURN nodes, size(ids) AS idsObserved,</span><span class="code-line">       size(ids) = size(reduce(s=[], x IN ids | CASE WHEN x IN s THEN s ELSE s + x END)) AS idsUnique;</span></code></pre>
+              </div>
+              <p>
+                Expected invariant: after rerunning the exact same generated
+                dataset, the count of <code>P-BENCH-*</code> product nodes stays
+                equal to the number of distinct input keys. Command success
+                alone is not reconciliation.
+              </p>
+            </section>
+            <section>
+              <h2>7. Cleanup/reset</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>Cypher ·
+                    scoped benchmark cleanup
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-sql"><span class="code-line">CYPHER 25</span><span class="code-line">MATCH (p:Product)</span><span class="code-line">WHERE p.productId STARTS WITH 'P-BENCH-'</span><span class="code-line">DETACH DELETE p;</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>Production judgment</h2>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Review area</th>
+                      <th>Decision evidence</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Graph/workload fit</td>
+                      <td>
+                        fan-out/degree, result cardinality and traversal shape;
+                        avoid making driver concurrency compensate for a poor
+                        model
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Correctness</td>
+                      <td>
+                        stable keys, constraints, transaction boundaries and
+                        idempotent retry semantics
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Latency</td>
+                      <td>
+                        p50/p95/p99 plus timeout/error/cancellation rate—not
+                        average latency alone
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Client resources</td>
+                      <td>
+                        event-loop queue, connection-pool wait, result bytes,
+                        process RSS/GC and serialization time
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Server resources</td>
+                      <td>
+                        CPU, page cache, store I/O, active/queued transactions,
+                        locks and query memory where observable
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Security</td>
+                      <td>
+                        parameterized Cypher, tenant authorization, TLS/auth
+                        policy and bounded user-controlled result sizes
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Recovery/rollback</td>
+                      <td>
+                        batch checkpoint/reconciliation, stable IDs, bounded
+                        blast radius and restartable jobs
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Edition/topology</td>
+                      <td>
+                        Community lab is single-instance; Aura/Enterprise
+                        routing and managed-service limits require separate
+                        evidence
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>What does UNWIND change?</li>
+                  <li>Why can a larger batch reduce throughput?</li>
+                  <li>What makes the example retry-safe?</li>
+                  <li>Why record payload bytes?</li>
+                  <li>
+                    When is CALL IN TRANSACTIONS different from application
+                    chunking?
+                  </li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      <strong>1.</strong> It turns each list element into a row;
+                      it does not by itself define transaction chunking or
+                      guarantee row order.
+                    </p>
+                    <p>
+                      <strong>2.</strong> Serialization, transaction memory,
+                      lock duration, retry cost or server saturation can
+                      outweigh fewer round trips.
+                    </p>
+                    <p>
+                      <strong>3.</strong> Stable product IDs, a uniqueness
+                      constraint and a match-or-create mutation keyed only by
+                      the stable identity.
+                    </p>
+                    <p>
+                      <strong>4.</strong> Rows alone hide the fact that one row
+                      can be much larger than another and network/client memory
+                      costs scale with bytes.
+                    </p>
+                    <p>
+                      <strong>5.</strong> The Cypher clause owns inner
+                      transaction batching inside an auto-commit statement;
+                      application chunking owns payloads/checkpoints and can use
+                      managed transactions.
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section>
+              <h2>Summary and next step</h2>
+              <p>
+                Batching is a three-dimensional control problem: payload size,
+                transaction size and concurrency. Lesson 3 generalizes bounded
+                demand into a true Reactive Streams mental model.
+              </p>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <ul class="reference-list">
+                <li>
+                  <a
+                    href="https://neo4j.com/current-neo4j-versions/"
+                    rel="noopener"
+                    target="_blank"
+                    >Current Neo4j versions</a
+                  >
+                  — Current server and 5.26 LTS release snapshot.
+                </li>
+                <li>
+                  <a
+                    href="https://neo4j.com/docs/python-manual/current/"
+                    rel="noopener"
+                    target="_blank"
+                    >Neo4j Python Driver Manual</a
+                  >
+                  — Official Python driver guide used by the mandatory async
+                  lab.
+                </li>
+                <li>
+                  <a
+                    href="https://neo4j.com/docs/api/python-driver/current/"
+                    rel="noopener"
+                    target="_blank"
+                    >Python Driver 6.3 API</a
+                  >
+                  — Current synchronous and asynchronous API contracts and
+                  configuration.
+                </li>
+                <li>
+                  <a
+                    href="https://neo4j.com/docs/api/python-driver/current/async_api.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Python async API</a
+                  >
+                  — Async driver/session/result lifecycle, cancellation and
+                  concurrency rules.
+                </li>
+                <li>
+                  <a
+                    href="https://neo4j.com/docs/python-manual/current/concurrency/"
+                    rel="noopener"
+                    target="_blank"
+                    >Python concurrency guide</a
+                  >
+                  — AsyncGraphDatabase and concurrent workflow guidance.
+                </li>
+                <li>
+                  <a
+                    href="https://neo4j.com/docs/python-manual/current/performance/"
+                    rel="noopener"
+                    target="_blank"
+                    >Python performance recommendations</a
+                  >
+                  — Driver performance, routing and batching guidance.
+                </li>
+                <li>
+                  <a
+                    href="https://neo4j.com/docs/cypher-manual/current/clauses/unwind/"
+                    rel="noopener"
+                    target="_blank"
+                    >Cypher UNWIND</a
+                  >
+                  — List-to-row semantics and ordering boundary.
+                </li>
+                <li>
+                  <a
+                    href="https://neo4j.com/docs/operations-manual/current/database-internals/transaction-management/"
+                    rel="noopener"
+                    target="_blank"
+                    >Transaction management</a
+                  >
+                  — Server-side transaction limits and timeout concepts.
+                </li>
+                <li>
+                  <a
+                    href="https://neo4j.com/docs/python-manual/current/query-advanced/"
+                    rel="noopener"
+                    target="_blank"
+                    >Python advanced queries</a
+                  >
+                  — LOAD CSV / CALL IN TRANSACTIONS ownership and transaction
+                  configuration.
+                </li>
+                <li>
+                  <a
+                    href="https://neo4j.com/docs/python-manual/current/performance/"
+                    rel="noopener"
+                    target="_blank"
+                    >Python driver performance</a
+                  >
+                  — Batch data creation and driver performance guidance.
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a class="prev" href="Lesson1.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Async Driver APIs, Concurrency Limits, Cancellation, Timeouts,
+                and Resource Cleanup</strong
+              ></a
+            ><a class="next" href="Lesson3.html"
+              ><small>Next lesson</small
+              ><strong
+                >Reactive Streams Concepts, Demand, Backpressure, and When
+                Reactive Access Helps</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub<svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn<svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website<svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <small
+          >Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../neo4j-syntax-compat.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>

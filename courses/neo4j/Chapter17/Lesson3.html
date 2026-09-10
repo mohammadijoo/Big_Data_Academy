@@ -1,0 +1,1890 @@
+<!doctype html>
+<!doctype html>
+
+<!doctype html>
+
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Design AtlasMart placement around real failure domains and quorum mathematics, reason through asymmetric network partitions, and understand why majority consensus prevents two independent writers from safely committing."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Failure Domains, Zones/Regions, Network Partitions, Quorum Loss, and
+      Split-Brain Avoidance | Neo4j | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <link rel="stylesheet" href="../neo4j-course-fixes.css" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">N4J</span>
+            <div><small>Course 14</small><strong>Neo4j</strong></div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 135 lessons..."
+            type="search"
+        /></label>
+        <nav aria-label="Neo4j curriculum" class="sidebar-curriculum">
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>Graph Database Foundations, Neo4j Editions,
+              Deployment Choices, and Lab Setup
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>Graph Databases vs Relational, Document, and
+                Search Systems: Connectivity, Traversal, and Workload Fit</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Neo4j Community, Enterprise, Aura, and
+                Infinigraph: Capability, Responsibility, and Cost Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>Install Neo4j Desktop/Server or Provision Aura,
+                Connect with Browser and Cypher Shell, and Verify the DBMS</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>Databases, DBMS Processes, Bolt, HTTP, Drivers,
+                Configuration, Storage Locations, and Transaction Logs</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Reproducible Graph Lab with Sample Data,
+                Administrative Accounts, Metrics, and Safe Reset Procedures</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>Property Graph Model: Nodes, Relationships, Labels,
+              Properties, Types, and Schema Discipline
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>Nodes and Relationships as First-Class Entities:
+                Direction, Identity, and Traversal Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>Labels, Relationship Types, Properties, Lists,
+                Maps, Temporal/Spatial Values, Null, and Missing Properties</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Schema-Optional Does Not Mean Model-Free:
+                Contracts, Naming, Cardinality, and Invariants</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>Model Identity, Natural Keys, Surrogate
+                Identifiers, Relationship Properties, and Effective Dating</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Translate a Relational/Document Domain into a
+                Property Graph and Defend Every Modeling Decision</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>Cypher Fundamentals: MATCH, RETURN, WHERE,
+              Parameters, Ordering, and Pagination
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>Read Graph Patterns with MATCH and Understand
+                Variable Binding Across Nodes and Relationships</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Filter with WHERE, Predicates, Labels, Types,
+                Property Access, Null Semantics, and Parameters</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>Project Results with RETURN, Aliases, DISTINCT,
+                Expressions, Maps, and Pattern Comprehensions</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>ORDER BY, SKIP/OFFSET, LIMIT, Deterministic
+                Pagination, and Why Deep Pagination Can Be Expensive</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Build Parameterized Read Queries in Cypher Shell
+                and Verify Results Against Known Graph Fixtures</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Advanced Pattern Matching: Variable Length,
+              OPTIONAL MATCH, Paths, Quantified Patterns, and Shortest Paths
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Variable-Length and Quantified Path Patterns:
+                Bounds, Semantics, and Combinatorial Risk</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>OPTIONAL MATCH and Null Introduction: Preserving
+                Rows Without Accidentally Filtering Them Away</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>Path Values, Nodes/Relationships Functions, Path
+                Predicates, Uniqueness, and Cycle Awareness</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>Shortest-Path Queries, Weighted vs Unweighted
+                Reasoning, and When to Use Graph Data Science Instead</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Diagnose a Path Explosion and Rewrite the Query
+                with Better Anchors, Bounds, and Predicates</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>Cypher Expressions, Aggregation, UNWIND,
+              Collections, Maps, and Subqueries
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>Aggregation with count, collect, sum, avg,
+                min/max, Grouping Keys, and Cardinality Reasoning</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>List Expressions, List Comprehensions, reduce,
+                any/all/none/single, and Collection Transformations</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>UNWIND for Turning Collections into Rows,
+                Batching Input, and Preserving Deterministic Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>CALL Subqueries, EXISTS Subqueries, Scope
+                Import/Export, and Avoiding Accidental Cartesian Products</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>Compose a Multi-Stage Analytical Query with
+                Parameters, Aggregation, Subqueries, and Explainable
+                Intermediate Results</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Graph Writes: CREATE, MERGE, SET, REMOVE, DELETE,
+              and Idempotent Mutation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>CREATE Nodes and Relationships Safely and
+                Understand Transactional Visibility</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>MERGE Match-or-Create Semantics, ON CREATE/ON
+                MATCH, Uniqueness Constraints, and Concurrency Hazards</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>SET and REMOVE Properties/Labels, Map
+                Replacement vs Mutation, and Schema Evolution</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>DELETE vs DETACH DELETE, Relationship Cleanup,
+                Cascades by Application Policy, and Safety Guardrails</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Design an Idempotent Import/Upsert Workflow and
+                Prove It Remains Correct Under Repeated Execution</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>Graph Data Modeling: Aggregates, Relationships,
+              Hyperedges, Hierarchies, and Temporal Graphs
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>Choose Node vs Property vs Relationship by Query
+                Pattern, Identity, Cardinality, and Evolution Needs</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>Model Many-to-Many Facts, Reified
+                Relationships/Intermediate Nodes, and Hyperedge-Like Concepts</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>Hierarchies, Trees, DAGs, Bill-of-Materials,
+                Organizational Graphs, and Cycle Constraints</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Temporal Validity, Event Histories, Versioned
+                Relationships, Bitemporal Questions, and Snapshot Queries</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Review a Poor Graph Model and Refactor It for
+                Traversal Clarity, Integrity, and Query Performance</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>Importing Data: LOAD CSV, Data Importer, Bulk
+              Import, Transformation, and Validation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>Prepare Source Data: Stable Keys, Referential
+                Integrity, Encoding, Nulls, Duplicates, and Relationship
+                Files</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>LOAD CSV with Parameters, Transactions, MERGE
+                Discipline, and Incremental Import Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>Neo4j Data Importer Workflows: Mapping Tables to
+                Nodes/Relationships and Validating Generated Models</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>Bulk/Offline Import Concepts, Ordering,
+                Memory/Storage Planning, and When LOAD CSV Is the Wrong Tool</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Reconcile Counts, Constraints, Orphans,
+                Duplicates, and Business Invariants After a Large Import</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>Constraints and Indexes: Range, Text, Point, Token,
+              Full-Text, and Schema Enforcement
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>Uniqueness, Key, Property Existence, Property
+                Type, and Other Constraints as Executable Model Contracts</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>Range, Text, Point, and Token Lookup Indexes:
+                Supported Predicates and Workload Fit</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>Composite Index Order, Selectivity,
+                Labels/Types, Relationship Indexes, and Index Population
+                States</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>Full-Text Indexes, Analyzers, Eventual
+                Consistency Options, and Query Procedures</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>Inspect SHOW INDEXES/CONSTRAINTS, Identify
+                Redundant Structures, and Build an Evidence-Based Index Set</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>Query Planning and Profiling: Cardinality,
+              Operators, Index Selection, and Plan Stability
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>EXPLAIN vs PROFILE, Logical/Physical Operators,
+                Rows, Database Hits, Memory, and Pipeline Interpretation</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>Cardinality Estimation, Selectivity, Starting
+                Points, Expand Operators, and Why Graph Shape Matters</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>Index Seeks/Scans, Label/Type Lookups,
+                Join/Apply Operators, Eagerization, and Sort/Aggregation
+                Costs</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>Parameter Values, Statistics, Plan Cache
+                Behavior, and Testing Representative Workload Shapes</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Tune a Slow Cypher Query by Changing Model,
+                Predicate, Index, or Query Shape—Then Re-Measure</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>Transactions, Isolation, Locking, Deadlocks,
+              Retries, and Consistency
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>ACID Transactions, Auto-Commit vs Explicit
+                Transactions, Statement Boundaries, and Failure Atomicity</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>Locks on Nodes/Relationships/Schema, Contention
+                Patterns, Dense Graph Hotspots, and Deadlock Detection</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>Driver Transaction Functions, Retryable
+                Failures, Idempotency, and Backoff</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Bookmarks and Causal Consistency Across
+                Sessions/Cluster Routing</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Design and Load-Test a High-Contention Write
+                Workflow Without Hiding Correctness Failures</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>APOC, Procedures, Functions, Triggers-Like
+              Workflows, and Extending Cypher
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>APOC Core: Procedures vs Functions,
+                Installation/Availability, Configuration, and Security
+                Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>Collections, Maps, Text, Date, Conversion, Path
+                Expansion, and Utility Procedures</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>Data Integration and Export Procedures: Files,
+                HTTP, JSON, and Operational Safety</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>Custom Procedures/Functions Concepts, Java
+                Extension Boundaries, Version Compatibility, and Deployment
+                Risk</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>Decide When to Use Pure Cypher, APOC,
+                Application Code, or a Custom Extension for a Real
+                Requirement</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Application Drivers and Bolt: Sessions, Routing,
+              Parameters, Result Streaming, and Connection Pools
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>Official Drivers, Bolt Protocol Concepts, URI
+                Schemes, Authentication, TLS, and Routing Tables</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Sessions, Transactions, Parameters, Result
+                Cursors/Streams, Fetch Size, and Backpressure</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>Connection Pool Sizing, Timeouts, Lifetime,
+                Health Checks, and Avoiding One-Session-per-Request
+                Anti-Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Read/Write Routing, Bookmarks, Retry Logic,
+                Error Classification, and Observability Correlation</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Build a Repository/Service Layer that Keeps
+                Cypher Parameterized, Transactional, Testable, and Measurable</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Asynchronous, Reactive, Batch, and High-Throughput
+              Application Patterns
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Async Driver APIs, Concurrency Limits,
+                Cancellation, Timeouts, and Resource Cleanup</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Batch Writes with UNWIND, Transaction Chunking,
+                Payload Size, and Throughput/Latency Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Reactive Streams Concepts, Demand, Backpressure,
+                and When Reactive Access Helps</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>N+1 Graph Queries, Chatty Traversals, Projection
+                Design, and Returning Only Needed Data</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Benchmark Driver-Side Throughput and Separate
+                Database Time from Network/Serialization/Client Time</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Security: Authentication, RBAC, Privileges, TLS,
+              Secrets, and Least Privilege
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>Users, Roles, Authentication Providers, Password
+                Policy, and Administrative Separation<i>Current</i></a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Database, Graph, Label/Type, Procedure, and
+                Other Privileges: Designing Least-Privilege Roles</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>TLS for Bolt/HTTPS, Certificate Trust,
+                Encryption in Transit, and Client Verification</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Secrets Management, Rotation, Driver
+                Credentials, Audit Evidence, and Incident Response</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Threat-Model a Graph Application Including Query
+                Injection, Over-Privileged Procedures, Data Exfiltration, and
+                Admin Paths</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Backup, Restore, Transaction Logs, Disaster
+              Recovery, and Upgrade Safety
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>Backup Types, Online Backup Concepts,
+                Transaction Logs, Retention, and Recovery Objectives</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Restore Workflows, Validation,
+                Point-in-Time/Transaction-Log Reasoning, and Isolated Recovery
+                Testing</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>Backup Encryption/Access, Offsite Copies,
+                Retention Policies, and Immutable Recovery Evidence</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Upgrade/Migration Planning, Store Compatibility,
+                Rolling vs Offline Constraints, Plugins, and Rollback</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Run a Disaster-Recovery Drill and Measure RPO,
+                RTO, Data Integrity, Application Recovery, and Operator Steps</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>17</span>Clustering, High Availability, Routing, Consensus,
+              and Failure Domains
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="Lesson1.html"
+                ><span>01</span>Cluster Roles, Primaries/Secondaries or Current
+                Topology Concepts, Consensus, Quorum, and Write Availability</a
+              ><a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>Server Discovery, Routing, Leader Changes, Read
+                Scaling, and Causal Consistency Expectations</a
+              ><a
+                aria-current="page"
+                class="sidebar-lesson is-current"
+                href="Lesson3.html"
+                ><span>03</span>Failure Domains, Zones/Regions, Network
+                Partitions, Quorum Loss, and Split-Brain Avoidance</a
+              ><a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>Cluster Seeding, Membership Changes,
+                Maintenance, Capacity Headroom, and Rebalancing Operational
+                Risk</a
+              ><a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Inject Node/Network Failures and Verify Driver
+                Recovery, Transaction Outcomes, and Operational Alerts</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Monitoring and Troubleshooting: Metrics, Logs,
+              Query Visibility, Memory, Store, and Capacity
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>DBMS Metrics, Query/Transaction Listings, Logs,
+                GC/JVM Evidence, Page Cache, and Operating-System Signals</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>Page Cache vs Heap, Transaction Memory, Query
+                Memory, File Descriptors, CPU, Storage I/O, and Network</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Slow Query Capture, PROFILE Evidence,
+                Lock/Transaction Diagnostics, and Workload Correlation</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Store Growth, Relationship Density, Index Size,
+                Transaction Log Growth, and Capacity Forecasting</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>Build a Troubleshooting Runbook from Symptom to
+                Evidence to Hypothesis to Verified Remediation</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>19</span>Composite Databases, Multiple Databases,
+              Federation, and Data-Domain Boundaries
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Multiple Databases: Isolation, Administration,
+                Security, Resource Considerations, and Tenant Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Composite Database Concepts, Constituents,
+                Querying Across Graphs, and Location Transparency</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>Federated Queries, Data Locality, Cross-Graph
+                Joins/Traversal Constraints, and Latency Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>Domain Decomposition, Graph Ownership, Shared
+                Reference Data, and Governance Across Graphs</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Design a Multi-Domain Graph Architecture and
+                Decide Which Relationships Belong Local vs Federated</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Change Data Capture, Event Integration,
+              Kafka/Connect Patterns, and Near-Real-Time Graph Synchronization
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>Neo4j CDC Concepts, Change Identifiers, Event
+                Semantics, Capture Scope, and Consumer Checkpoints</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>At-Least-Once Delivery, Ordering, Idempotent
+                Consumers, Replay, and Schema/Model Evolution</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>Kafka/Connector Patterns for Ingesting to or
+                Emitting from Neo4j and Avoiding Feedback Loops</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>Outbox/CDC Integration with Relational Sources,
+                Identity Mapping, and Eventual Consistency</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Build a Recoverable CDC Pipeline and Prove
+                Restart, Duplicate, Gap, and Backfill Behavior</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Full-Text Search, Text Analysis, Relevance, and
+              Hybrid Retrieval with Graph Context
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>Full-Text Index Schema, Node vs Relationship
+                Indexes, Analyzers, Tokenization, and Language Handling</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>Query Syntax, Scoring, Boolean/phrase/fuzzy
+                Patterns, Result Limits, and Score Interpretation</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>Eventually Consistent Full-Text Indexing,
+                Freshness Expectations, and Operational Monitoring</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Combine Full-Text Candidates with Graph
+                Traversal, Business Rules, and Post-Ranking</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>Evaluate Search Quality with Queries/Judgments
+                Instead of Tuning Only by Anecdotal Examples</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Vector Search, Embeddings, Cypher SEARCH, Hybrid
+              Search, and GraphRAG
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>Embeddings, VECTOR/LIST Values, Dimensionality,
+                Similarity Functions, HNSW Concepts, and ANN Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>Create and Inspect Vector Indexes, Additional
+                Filter Properties, Population State, and Quantization Options</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>Query Vector Indexes with the Modern Cypher
+                SEARCH Clause and Understand Approximate-Neighbor Limits</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>Hybrid Full-Text + Vector Retrieval, Independent
+                Ranking, Filtering, Re-Ranking, and Graph Expansion</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Design GraphRAG: Chunk/Entity/Relationship
+                Modeling, Retrieval, Context Assembly, Provenance, and
+                Evaluation</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>23</span>Graph Data Science Foundations: Projections, Graph
+              Catalog, Memory, and Execution Modes
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter23/Lesson1.html"
+                ><span>01</span>GDS Architecture, In-Memory Graph Catalog,
+                Native/Cypher Projections, and Projection Scope</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson2.html"
+                ><span>02</span>Node/Relationship Properties, Orientation,
+                Filtering, Graph Schema, and Projection Verification</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson3.html"
+                ><span>03</span>Estimate Memory, Control Concurrency, Manage
+                Graph Lifecycles, and Avoid Production Memory Starvation</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson4.html"
+                ><span>04</span>stream, stats, mutate, write, and estimate
+                Modes: Separating Exploration from Persistent Changes</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson5.html"
+                ><span>05</span>Build, Validate, Use, and Drop a GDS Projection
+                with Reproducible Resource Measurements</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>Graph Algorithms: Centrality, Community Detection,
+              Similarity, Paths, and Topology Analytics
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter24/Lesson1.html"
+                ><span>01</span>Degree, PageRank, Betweenness, Eigenvector-Like
+                Centrality Concepts and Business Interpretation</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson2.html"
+                ><span>02</span>Louvain/Leiden/Label Propagation and Community
+                Detection: Resolution, Stability, and Validation</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson3.html"
+                ><span>03</span>Node Similarity, KNN, Jaccard/Overlap/Cosine
+                Concepts, and Candidate Generation</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson4.html"
+                ><span>04</span>Pathfinding and Spanning/Reachability
+                Algorithms: When GDS Beats Transactional Cypher</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson5.html"
+                ><span>05</span>Choose an Algorithm from the Decision Question,
+                Validate Assumptions, and Interpret Results Without
+                Overclaiming</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>25</span>Graph Embeddings and Machine Learning Pipelines
+              with GDS
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter25/Lesson1.html"
+                ><span>01</span>Node Embeddings from Topology/Properties,
+                FastRP/Node2Vec-Like Concepts, Dimensions, and
+                Reproducibility</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson2.html"
+                ><span>02</span>Feature Engineering from Graph Algorithms,
+                Properties, Labels, and Leakage Prevention</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson3.html"
+                ><span>03</span>Node Classification, Link Prediction, and
+                Regression Pipeline Concepts, Splits, Metrics, and Baselines</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson4.html"
+                ><span>04</span>Model Catalog, Training, Hyperparameter Search,
+                Prediction, Persistence, and Production Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson5.html"
+                ><span>05</span>Evaluate a Graph ML Workflow Against Non-Graph
+                Baselines and Document Where the Graph Actually Adds Signal</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>26</span>Performance Engineering: Data Model, Traversal
+              Shape, Page Cache, Memory, and Workload Isolation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter26/Lesson1.html"
+                ><span>01</span>Profile Workload Mix: Read/Write Ratios,
+                Traversal Depth, Fan-Out, Hot Nodes, Result Sizes, and
+                Concurrency</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson2.html"
+                ><span>02</span>Model-Level Optimization: Relationship
+                Direction/Type, Intermediate Nodes, Denormalization, and
+                Precomputation</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson3.html"
+                ><span>03</span>Query-Level Optimization: Anchors, Selectivity,
+                Predicate Placement, Subqueries, Aggregation, and Result
+                Shaping</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson4.html"
+                ><span>04</span>Infrastructure Tuning: Heap, Page Cache,
+                Transaction Memory, CPU, Storage, Containers, and OS Limits</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson5.html"
+                ><span>05</span>Run Controlled Benchmarks and Capacity Tests
+                with Tail Latency, Saturation, Failure, and Regression
+                Thresholds</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>27</span>Production Capstone: Model, Import, Query, Search,
+              Analyze, Secure, Fail Over, and Operate Neo4j
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter27/Lesson1.html"
+                ><span>01</span>Define Requirements, Workloads,
+                Availability/RPO/RTO, Data Sources, Security Boundaries, and
+                Graph-Fit Criteria</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson2.html"
+                ><span>02</span>Build the Graph Model, Constraints/Indexes,
+                Import Pipeline, Core Cypher Queries, and Application Driver
+                Layer</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson3.html"
+                ><span>03</span>Add Full-Text/Vector/GraphRAG and GDS Analytics
+                Only Where Measured Requirements Justify Them</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson4.html"
+                ><span>04</span>Load-Test, Profile, Secure, Back Up, Restore,
+                Fail Over, Monitor, Upgrade, and Execute Incident Runbooks</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson5.html"
+                ><span>05</span>Present the Architecture with Evidence, Known
+                Limits, Cost/Capacity Assumptions, and Clear Criteria for When
+                Neo4j Is Not the Right Tool</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 15 · Lesson 01</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">Neo4j</a><span>/</span
+            ><span>Chapter 17 · Lesson 03</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 17 · Clustering, High Availability, Routing, Consensus,
+              and Failure Domains
+            </p>
+            <h1>
+              Failure Domains, Zones/Regions, Network Partitions, Quorum Loss,
+              and Split-Brain Avoidance
+            </h1>
+            <p>
+              Design AtlasMart placement around real failure domains and quorum
+              mathematics, reason through asymmetric network partitions, and
+              understand why majority consensus prevents two independent writers
+              from safely committing.
+            </p>
+            <div class="lesson-meta">
+              <span>Advanced</span><span>220–290 minutes</span
+              ><span>Failure-domain partition lab</span
+              ><span
+                >Neo4j 2026.07.1 Community mandatory trace · Enterprise cluster
+                optional</span
+              ><span
+                >Cypher 25 · current primary/secondary topology
+                terminology</span
+              ><span>Java 21/25 · Python driver 6.3</span
+              ><span>Last reviewed: September 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <p>
+                AtlasMart expands into multiple availability zones. A diagram
+                with three server icons in different boxes looks resilient, but
+                appearance is not enough. You need to ask which failures are
+                correlated, where the primary majority remains after each
+                failure, what cross-zone round trips cost every write, and what
+                a network partition does when both sides are still running.
+              </p>
+            </section>
+            <section>
+              <h2>Learning outcomes</h2>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Translate host/zone/data-center/network failures into
+                    reachable-primary counts and write-quorum outcomes.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Explain how majority consensus prevents two partitioned
+                    sides from both safely committing independent write
+                    histories.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Compare 3-primary and 5-primary placement patterns across
+                    failure domains and maintenance scenarios.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Separate secondary read resilience from primary write fault
+                    tolerance and account for asynchronous lag.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Define failure-injection acceptance criteria that measure
+                    availability, correctness, alerts, latency and recovery
+                    rather than process survival.
+                  </p>
+                </div>
+              </div>
+            </section>
+            <section>
+              <h2>Lab baseline and scope</h2>
+              <div class="callout">
+                <strong>Chapter 17 baseline · reviewed 9 September 2026</strong>
+                <p>
+                  The continuity environment remains
+                  <code>Neo4j Community 2026.07.1</code>, database
+                  <code>neo4j</code>, explicit <code>CYPHER 25</code> where
+                  language selection matters, container
+                  <code>atlasmart-neo4j</code>, loopback Bolt
+                  <code>bolt://127.0.0.1:7687</code>, synthetic local credential
+                  <code>neo4j / atlasmart-course-2026</code>, Java 21 or 25, and
+                  Python driver 6.3. Current 5.26 LTS is <code>5.26.30</code>.
+                  Community is intentionally retained for the mandatory path,
+                  but it cannot run a Neo4j DBMS cluster; cluster output is
+                  therefore never fabricated.
+                </p>
+              </div>
+              <div class="callout warning">
+                <strong>Edition and evidence boundary</strong>
+                <p>
+                  Neo4j DBMS clustering, multi-database topology management,
+                  fine-grained server management, and the cluster administrative
+                  evidence used in this chapter are Enterprise Edition
+                  capabilities. The mandatory path is a deterministic local
+                  simulation/trace plus application-level routing/bookmark
+                  exercises that do not pretend Community is clustered. The
+                  optional licensed lab assumes Neo4j Enterprise
+                  <code>2026.07.1</code> on isolated test servers and uses
+                  commands documented for the current release. Aura manages
+                  topology for you, so self-managed server allocation,
+                  discovery, seeding, and failure-domain commands do not map
+                  one-for-one to Aura operations.
+                </p>
+              </div>
+              <p>
+                AtlasMart remains the same customer/order/product graph used
+                throughout earlier chapters. This chapter changes deployment
+                topology, not business identity. The optional licensed topology
+                uses a separate database name <code>atlasmart</code> on
+                disposable test infrastructure so cluster administration cannot
+                damage the single-server continuity database.
+              </p>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Term</th>
+                      <th>Precise meaning in current Neo4j clustering</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>server</td>
+                      <td>
+                        A Neo4j DBMS process/machine that can host allocations
+                        for multiple databases. A server is not permanently “a
+                        primary” or “a secondary”.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>database topology</td>
+                      <td>
+                        The set of primary and secondary allocations for one
+                        database. Each standard database has its own topology.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>primary</td>
+                      <td>
+                        A database copy that participates in fault-tolerant
+                        write processing and is eligible to become that
+                        database’s writer/leader.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>writer / leader</td>
+                      <td>
+                        Exactly one eligible primary at a time orders writes for
+                        a database. Different databases can have different
+                        leaders on the same physical cluster.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>secondary</td>
+                      <td>
+                        An asynchronously replicated database copy used
+                        primarily for read scaling; it does not vote in that
+                        database’s write quorum and can lag.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>quorum / simple majority</td>
+                      <td>
+                        The minimum number of primaries needed to
+                        acknowledge/advance fault-tolerant writes. For
+                        <code>N</code> primaries, majority is
+                        <code>floor(N/2)+1</code>.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>routing table</td>
+                      <td>
+                        A driver-consumable list of routers/readers/writers for
+                        a database, cached for a TTL and refreshed when
+                        topology/leadership changes.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>bookmark</td>
+                      <td>
+                        A causal token used to ensure later work does not
+                        execute before the represented committed state is
+                        available. It is not global serializability.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>failure domain</td>
+                      <td>
+                        Infrastructure expected to fail together: host, rack,
+                        availability zone, data center, region, network path, or
+                        power domain.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Assumption</th>
+                      <th>Pinned value / rule</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>current server</td>
+                      <td>
+                        Neo4j 2026.07.1; 5.26.30 is the current LTS comparison
+                        line
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Cypher</td>
+                      <td>
+                        Cypher 25 for current administrative examples; Cypher 5
+                        is the frozen compatibility line
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>mandatory path</td>
+                      <td>
+                        Community/local deterministic simulation and trace; no
+                        successful Enterprise output is claimed
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>optional cluster</td>
+                      <td>
+                        Enterprise 2026.07.1; at least three servers for primary
+                        quorum; fourth server used when demonstrating a
+                        secondary
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>driver</td>
+                      <td>
+                        Python driver 6.3 with <code>neo4j://</code> routing URI
+                        for a cluster; <code>bolt://</code> is direct to one
+                        address
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>auth/TLS</td>
+                      <td>
+                        synthetic credentials only; production/remote cluster
+                        transport requires properly verified TLS and
+                        intra-cluster encryption as appropriate
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>plugins</td>
+                      <td>APOC/GDS not required for clustering lessons</td>
+                    </tr>
+                    <tr>
+                      <td>measurement</td>
+                      <td>
+                        all failover/lag/latency/alert values must be measured
+                        on the learner’s licensed environment; trace outputs are
+                        explicitly labeled deterministic simulations
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section>
+              <h2>1. A failure domain is a shared cause, not a drawing box</h2>
+              <p>
+                A failure domain is anything likely to fail together: a host,
+                hypervisor, rack switch, power feed, availability zone, data
+                center or regional network. Putting three primaries on three
+                virtual machines does not provide three independent failure
+                domains if all VMs share one physical host or one power/network
+                dependency. The topology review must map <em>causes</em> to
+                allocations.
+              </p>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Placement</th>
+                      <th>Independent against</th>
+                      <th>Still correlated against</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>3 VMs / one host</td>
+                      <td>individual process crash</td>
+                      <td>host, storage, power, top-of-rack failure</td>
+                    </tr>
+                    <tr>
+                      <td>3 hosts / one rack</td>
+                      <td>host failure</td>
+                      <td>rack power/network and site failure</td>
+                    </tr>
+                    <tr>
+                      <td>3 zones / one region</td>
+                      <td>single-zone outage</td>
+                      <td>regional control-plane/network disasters</td>
+                    </tr>
+                    <tr>
+                      <td>3 regions</td>
+                      <td>regional outage</td>
+                      <td>
+                        global identity/DNS/application dependencies;
+                        cross-region write latency
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section>
+              <h2>2. Majority consensus is the split-brain safety rule</h2>
+              <p>
+                Consider a network partition. Both sides may have live Neo4j
+                processes, but only a side that can communicate with a majority
+                of the database’s primaries can continue fault-tolerant commits.
+                In a 3-primary 2|1 partition, the side with two can retain
+                quorum; the single-primary side cannot independently become a
+                safe writer. That sacrifices availability on the minority side
+                to preserve one committed history.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="python"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>Python ·
+                    deterministic network-partition trace
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-python"><span class="code-line">from math import floor</span>
+<span class="code-line"></span>
+<span class="code-line"># Each tuple: (layout name, primaries total, primaries reachable by side A, side B)</span>
+<span class="code-line">partitions = [</span>
+<span class="code-line">    ("3P split 2|1", 3, 2, 1),</span>
+<span class="code-line">    ("5P split 3|2", 5, 3, 2),</span>
+<span class="code-line">    ("3P split 1|1 with one down", 3, 1, 1),</span>
+<span class="code-line">]</span>
+<span class="code-line"></span>
+<span class="code-line">for name, total, a, b in partitions:</span>
+<span class="code-line">    majority = floor(total/2)+1</span>
+<span class="code-line">    print(name, {</span>
+<span class="code-line">        "majority": majority,</span>
+<span class="code-line">        "side_A_can_commit": a &gt;= majority,</span>
+<span class="code-line">        "side_B_can_commit": b &gt;= majority,</span>
+<span class="code-line">    })</span>
+</code></pre>
+              </div>
+              <div class="callout">
+                <strong>What this does not prove</strong>
+                <p>
+                  The script does not model real Raft election timeouts,
+                  partially delayed packets, disk stalls, membership changes,
+                  retries or client timeouts. It only proves the majority
+                  condition each partition side can satisfy.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>3. Three primaries: tolerate one arbitrary primary loss</h2>
+              <p>
+                With three primaries, majority is two. This is compact and often
+                appropriate when the required failure tolerance is one primary.
+                But maintenance consumes the same headroom as a failure: if one
+                primary is deliberately offline, a second failure removes
+                quorum. Therefore a maintenance runbook must state the temporary
+                reduction in fault tolerance.
+              </p>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>State</th>
+                      <th>Live primaries</th>
+                      <th>Can write?</th>
+                      <th>Fault headroom</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>healthy 3P</td>
+                      <td>3</td>
+                      <td>yes</td>
+                      <td>one arbitrary primary can fail</td>
+                    </tr>
+                    <tr>
+                      <td>one primary maintenance</td>
+                      <td>2</td>
+                      <td>yes</td>
+                      <td>zero additional primary failures tolerated</td>
+                    </tr>
+                    <tr>
+                      <td>one maintenance + another failure</td>
+                      <td>1</td>
+                      <td>no</td>
+                      <td>quorum lost</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section>
+              <h2>4. Five primaries: more fault headroom, more coordination</h2>
+              <p>
+                Five primaries need a majority of three and can tolerate two
+                arbitrary primary failures. That can be useful for combinations
+                of maintenance and failure, or carefully designed
+                multi-data-center placement. It also means more copies, more
+                catch-up work and potentially more expensive quorum paths. “Five
+                is safer” is incomplete unless the placement and network latency
+                actually satisfy the intended failure model.
+              </p>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Failure model</th>
+                      <th>3 primaries</th>
+                      <th>5 primaries</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>lose 1 primary</td>
+                      <td>write remains available</td>
+                      <td>write remains available</td>
+                    </tr>
+                    <tr>
+                      <td>lose 2 primaries</td>
+                      <td>write unavailable</td>
+                      <td>write remains available</td>
+                    </tr>
+                    <tr>
+                      <td>maintenance 1 + failure 1</td>
+                      <td>write unavailable</td>
+                      <td>write remains available</td>
+                    </tr>
+                    <tr>
+                      <td>cross-zone quorum latency</td>
+                      <td>depends on placement</td>
+                      <td>can involve more/longer paths; measure</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section>
+              <h2>
+                5. Multi-data-center placement: availability versus latency
+              </h2>
+              <p>
+                Neo4j’s current guidance emphasizes that primary placement
+                across distant data centers increases write latency because the
+                writer must obtain quorum confirmation. Geo-distributing
+                primaries can tolerate site loss when a majority remains, but
+                every transactional write pays for the topology’s network path.
+                A design must therefore define both fault-tolerance objective
+                and latency SLO.
+              </p>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Pattern</th>
+                      <th>Strength</th>
+                      <th>Risk / tradeoff</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>all primaries one DC + remote secondaries</td>
+                      <td>fast local writes; remote read resilience</td>
+                      <td>
+                        loss of primary DC removes write availability until
+                        recovery/recreation
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>3 primaries across 3 DCs</td>
+                      <td>can lose one DC and preserve 2-of-3 quorum</td>
+                      <td>cross-DC write coordination on every commit</td>
+                    </tr>
+                    <tr>
+                      <td>5 primaries 2+2+1 across 3 DCs</td>
+                      <td>
+                        can tolerate any one DC in the documented recommended
+                        shape
+                      </td>
+                      <td>higher cost/coordination and capacity requirement</td>
+                    </tr>
+                    <tr>
+                      <td>balanced 2-DC primary split</td>
+                      <td>looks symmetric</td>
+                      <td>
+                        loss/partition of either DC can lose majority;
+                        documentation strongly warns against this pattern
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section>
+              <h2>6. Secondaries help reads, not partition quorum</h2>
+              <p>
+                If a remote site contains only secondaries, local clients may
+                continue to serve stale-tolerant reads when the primary site is
+                unreachable, subject to routing and the local database state.
+                They cannot form a new write majority. Promoting or recreating
+                databases after disaster is an explicit recovery operation with
+                possible data-loss considerations; it is not the normal meaning
+                of a secondary.
+              </p>
+              <div class="callout warning">
+                <strong>Wrong approach</strong>
+                <p>
+                  “If the primary data center fails, we will just write to the
+                  secondary.” That bypasses the consensus model. Repair: design
+                  sufficient primary placement for the required automatic write
+                  availability, or document a disaster-recovery/recreation
+                  procedure with RPO implications.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>7. Optional licensed partition acceptance matrix</h2>
+              <p>
+                Use safe, isolated failure injection. Prefer stopping an
+                Enterprise test process/container or disconnecting an isolated
+                test network segment. Do not change the host firewall or
+                production routes for a course exercise. Before each injection
+                capture topology, current writer, baseline request success,
+                backup status and reset procedure.
+              </p>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Injection</th>
+                      <th>Expected safety invariant</th>
+                      <th>Availability signal</th>
+                      <th>Recovery signal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>stop secondary</td>
+                      <td>no data divergence</td>
+                      <td>writes continue; read capacity reduced</td>
+                      <td>secondary catches up after restart</td>
+                    </tr>
+                    <tr>
+                      <td>stop one of 3 primaries</td>
+                      <td>single committed history</td>
+                      <td>writes continue after/without leader change</td>
+                      <td>primary returns/catches up</td>
+                    </tr>
+                    <tr>
+                      <td>partition 2P from 1P</td>
+                      <td>only 2P side can maintain majority</td>
+                      <td>minority write requests fail/unavailable</td>
+                      <td>partition heals and minority catches up</td>
+                    </tr>
+                    <tr>
+                      <td>lose 2 of 3 primaries</td>
+                      <td>no unsafe forced writer</td>
+                      <td>writes stop</td>
+                      <td>restore quorum/recreate per documented recovery</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section>
+              <h2>8. Failure-domain verification checklist</h2>
+              <ul>
+                <li>
+                  Every primary is mapped to an independent host/zone/site
+                  cause.
+                </li>
+                <li>
+                  For each planned failure, surviving primaries are counted and
+                  compared with majority.
+                </li>
+                <li>Write latency is measured across the real quorum path.</li>
+                <li>Secondaries are not counted as write voters.</li>
+                <li>
+                  Maintenance states are included in failure combinations.
+                </li>
+                <li>
+                  Backups remain independent from the cluster and
+                  restore-tested.
+                </li>
+              </ul>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>
+                    Why does the minority side of a partition stop writing?
+                  </li>
+                  <li>What does three primaries tolerate?</li>
+                  <li>Why can maintenance reduce HA?</li>
+                  <li>Do remote secondaries solve primary-site write loss?</li>
+                  <li>What must accompany cross-region primaries?</li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      <strong>1.</strong> Because it cannot satisfy the primary
+                      majority required to safely advance the committed history.
+                    </p>
+                    <p>
+                      <strong>2.</strong> One arbitrary primary failure while
+                      retaining a 2-of-3 majority.
+                    </p>
+                    <p>
+                      <strong>3.</strong> A deliberately unavailable primary
+                      consumes the same quorum headroom as a failure.
+                    </p>
+                    <p>
+                      <strong>4.</strong> No. They can help read
+                      scaling/resilience but do not form write quorum.
+                    </p>
+                    <p>
+                      <strong>5.</strong> Measured write-latency impact,
+                      network/failure-domain analysis, capacity and recovery
+                      planning.
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section>
+              <h2>Production judgment</h2>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Decision surface</th>
+                      <th>Questions that must be answered before production</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>graph/workload fit</td>
+                      <td>
+                        Which writes need fault tolerance? How much read scaling
+                        is needed? Does graph fan-out make reader CPU/page-cache
+                        the bottleneck rather than topology?
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>correctness</td>
+                      <td>
+                        Which operations need causal read-after-write? Which
+                        externally visible side effects require
+                        idempotency/reconciliation after an ambiguous client
+                        outcome?
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>topology/cardinality</td>
+                      <td>
+                        How many primaries satisfy failure tolerance? Are
+                        secondaries justified by read demand? Are dense/hot
+                        entities producing lock contention that topology will
+                        not solve?
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>latency</td>
+                      <td>
+                        What are write p50/p95/p99 with quorum across actual
+                        zones? What read tail latency is added by lag/bookmark
+                        waiting/routing refresh?
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>transactions/concurrency</td>
+                      <td>
+                        How do leader changes, deadlocks, retries and long
+                        transactions interact? Is transaction work idempotent
+                        under managed retries?
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>memory/CPU/disk/network</td>
+                      <td>
+                        Can remaining servers absorb a failed member? Is there
+                        space/bandwidth for store copy and catch-up while
+                        serving traffic?
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>indexes/constraints</td>
+                      <td>
+                        Are access paths and uniqueness contracts
+                        identical/ONLINE across allocations after seeding or
+                        recovery?
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>driver</td>
+                      <td>
+                        Is one maintained driver reused? Are routing URI,
+                        database selection, read/write modes, pool sizes,
+                        acquisition timeouts, max retry time and bookmarks
+                        intentional?
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>security</td>
+                      <td>
+                        Are Bolt, HTTPS and intra-cluster links encrypted as
+                        required? Are server-management privileges and
+                        certificates isolated from application credentials?
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>backup/recovery</td>
+                      <td>
+                        Replication is not backup. Where are off-host/immutable
+                        backups and when was an isolated restore last proven?
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>observability</td>
+                      <td>
+                        Do alerts cover writer absence, unavailable primaries,
+                        replication lag, store copy, routing failures, retry
+                        spikes, queueing and capacity headroom?
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>testing/failure injection</td>
+                      <td>
+                        Have host loss, reader loss, writer loss, majority loss,
+                        partition, slow network, maintenance and ambiguous
+                        commit outcomes been tested safely?
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>version/edition</td>
+                      <td>
+                        Are server/Java/driver/APOC/GDS/Cypher/discovery
+                        settings compatible with the exact release and license?
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Aura/self-managed</td>
+                      <td>
+                        Which topology choices are operator-owned self-managed
+                        responsibilities versus managed-service controls/SLOs?
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>cost/migration</td>
+                      <td>
+                        What is the cost of extra primaries/secondaries/zones
+                        and cross-zone traffic, and how will topology changes or
+                        rollback be staged?
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section>
+              <h2>Summary and next step</h2>
+              <p>
+                Quorum defines safety under failure, but day-two operations can
+                accidentally consume that safety margin. Lesson 4 turns to
+                seeding, membership changes, cordoning, deallocation,
+                reallocation and maintenance headroom.
+              </p>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <ul class="reference-list">
+                <li>
+                  <a
+                    href="https://neo4j.com/deployment-center/"
+                    rel="noopener"
+                    target="_blank"
+                    >Current Neo4j versions</a
+                  >
+                  — Current Neo4j 2026.07.1, 5.26.30 LTS, Cypher Shell and GDS
+                  release snapshot.
+                </li>
+                <li>
+                  <a
+                    href="https://neo4j.com/docs/operations-manual/current/clustering/introduction/"
+                    rel="noopener"
+                    target="_blank"
+                    >Clustering architecture</a
+                  >
+                  — Current server/database decoupling, primaries, secondaries,
+                  majority writes, and causal consistency.
+                </li>
+                <li>
+                  <a
+                    href="https://neo4j.com/docs/operations-manual/current/clustering/setup/deploy/"
+                    rel="noopener"
+                    target="_blank"
+                    >Deploy a basic cluster</a
+                  >
+                  — Current discovery/bootstrap configuration and TOPOLOGY
+                  examples.
+                </li>
+                <li>
+                  <a
+                    href="https://neo4j.com/docs/operations-manual/current/clustering/setup/discovery/"
+                    rel="noopener"
+                    target="_blank"
+                    >Cluster server discovery</a
+                  >
+                  — LIST/DNS/Kubernetes discovery and the current
+                  discovery-service model.
+                </li>
+                <li>
+                  <a
+                    href="https://neo4j.com/docs/operations-manual/current/clustering/setup/routing/"
+                    rel="noopener"
+                    target="_blank"
+                    >Leadership, routing, and load balancing</a
+                  >
+                  — Per-database Raft leadership, routing tables,
+                  readers/writers/routers, and routing policy.
+                </li>
+                <li>
+                  <a
+                    href="https://neo4j.com/docs/operations-manual/current/clustering/databases/"
+                    rel="noopener"
+                    target="_blank"
+                    >Managing databases in a cluster</a
+                  >
+                  — Primary/secondary allocation and topology changes.
+                </li>
+                <li>
+                  <a
+                    href="https://neo4j.com/docs/operations-manual/current/clustering/servers/"
+                    rel="noopener"
+                    target="_blank"
+                    >Managing servers in a cluster</a
+                  >
+                  — Server enablement, constraints, deallocation, removal, and
+                  operational lifecycle.
+                </li>
+                <li>
+                  <a
+                    href="https://neo4j.com/docs/operations-manual/current/clustering/server-syntax/"
+                    rel="noopener"
+                    target="_blank"
+                    >Server management command syntax</a
+                  >
+                  — SHOW/ENABLE/ALTER/DEALLOCATE/REALLOCATE/DROP server
+                  commands.
+                </li>
+                <li>
+                  <a
+                    href="https://neo4j.com/docs/operations-manual/current/database-administration/standard-databases/listing-databases/"
+                    rel="noopener"
+                    target="_blank"
+                    >Show databases</a
+                  >
+                  — Role, writer, allocation counts, replication lag, and
+                  database-state evidence.
+                </li>
+                <li>
+                  <a
+                    href="https://neo4j.com/docs/operations-manual/current/clustering/monitoring/show-databases-monitoring/"
+                    rel="noopener"
+                    target="_blank"
+                    >Monitor databases in a cluster</a
+                  >
+                  — SHOW DATABASES-based per-allocation monitoring and status
+                  interpretation.
+                </li>
+                <li>
+                  <a
+                    href="https://neo4j.com/docs/operations-manual/current/clustering/multi-region-deployment/geo-redundant-deployment/"
+                    rel="noopener"
+                    target="_blank"
+                    >Resilient multi-data-center cluster</a
+                  >
+                  — Failure-domain placement, latency/fault-tolerance tradeoffs,
+                  and recommended/anti-pattern layouts.
+                </li>
+                <li>
+                  <a
+                    href="https://neo4j.com/docs/operations-manual/current/clustering/multi-region-deployment/disaster-recovery/"
+                    rel="noopener"
+                    target="_blank"
+                    >Cluster disaster recovery</a
+                  >
+                  — Recovery when allocations or whole failure domains are lost.
+                </li>
+                <li>
+                  <a
+                    href="https://neo4j.com/docs/operations-manual/current/procedures/built-in-procedures/"
+                    rel="noopener"
+                    target="_blank"
+                    >Built-in procedures</a
+                  >
+                  — Current routing, cordon, deallocation and related procedure
+                  names/deprecations.
+                </li>
+                <li>
+                  <a
+                    href="https://neo4j.com/docs/python-manual/current/transactions/"
+                    rel="noopener"
+                    target="_blank"
+                    >Python driver transactions/routing</a
+                  >
+                  — Read/write routing and explicit database selection in the
+                  official driver.
+                </li>
+                <li>
+                  <a
+                    href="https://neo4j.com/docs/python-manual/current/bookmarks/"
+                    rel="noopener"
+                    target="_blank"
+                    >Python driver bookmarks</a
+                  >
+                  — Bookmark propagation and causal-consistency coordination
+                  across sessions.
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a class="prev" href="Lesson2.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Server Discovery, Routing, Leader Changes, Read Scaling, and
+                Causal Consistency Expectations</strong
+              ></a
+            ><a class="next" href="Lesson4.html"
+              ><small>Next lesson</small
+              ><strong
+                >Cluster Seeding, Membership Changes, Maintenance, Capacity
+                Headroom, and Rebalancing Operational Risk</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub<svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn<svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website<svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <small
+          >Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../neo4j-syntax-compat.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>
