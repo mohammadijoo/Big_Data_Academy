@@ -1,0 +1,1739 @@
+<!doctype html>
+
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Replace deep from/size paging with deterministic search_after and point-in-time readers, then test pagination under concurrent writes and clean up retained search contexts."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      from/size Limits, search_after, Point-in-Time Readers, Stable Sort Keys,
+      and Pagination Correctness | Elasticsearch and OpenSearch | Big Data
+      Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <link href="../course-fixes.css" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">SEARCH</span>
+            <div>
+              <small>Course 15</small
+              ><strong>Elasticsearch and OpenSearch</strong>
+            </div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 155 lessons..."
+            type="search"
+        /></label>
+        <nav
+          aria-label="Elasticsearch and OpenSearch curriculum"
+          class="sidebar-curriculum"
+        >
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>Search Engine Foundations, Elasticsearch vs
+              OpenSearch, Deployment Models, and Lab Setup
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>Inverted-Index Search vs
+                Relational / Document / Vector Databases: Workload Fit and
+                Architectural Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Elasticsearch and OpenSearch Lineage,
+                Licensing/Ecosystem Differences, APIs, and Compatibility
+                Expectations</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>Self-Managed, Elastic Cloud/Serverless, Amazon
+                OpenSearch Service, and Other Managed Responsibility
+                Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>Start Local Clusters, Use Kibana/OpenSearch
+                Dashboards Dev Tools or curl, and Inspect Cluster/Node Health</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Reproducible Lab with Sample Data,
+                TLS/Auth, Persistent Storage, Metrics, and Safe Reset
+                Automation</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>Documents, Indices, Data Streams, Shards, Replicas,
+              Nodes, and Cluster Architecture
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>JSON Documents, _source, Metadata Fields, IDs,
+                Versions/Sequence Numbers, and Optimistic Concurrency</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>Indices, Aliases, Data Streams, Backing Indices,
+                Shards, Replicas, and Routing</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Node Roles, Cluster State,
+                Master/Cluster-Manager Responsibilities, Data Tiers, and
+                Coordinating Work</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>Distributed Write and Search Request Flows:
+                Primary Shard, Replication, Scatter/Gather, and Partial
+                Failures</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Trace One Document from Index Request Through
+                Refresh to Search Result and Explain Every Distributed Step</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>Mappings and Field Types: keyword, text, Numeric,
+              Date, Geo, Object, Nested, and Runtime Fields
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>Explicit vs Dynamic Mappings, Field Explosion,
+                Mapping Conflicts, and Schema-Governance Strategy</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>text vs keyword: Analysis, Exact Matching,
+                Sorting/Aggregation, Multi-Fields, and Normalizers</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>Numeric, Date, Boolean, IP, Geo, Range, Dense
+                Vector, Object, Flattened, and Other Specialized Types</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>Object vs nested Modeling, Parent/Child/Join
+                Tradeoffs, Denormalization, and Update Cost</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Design a Mapping from Query/Aggregation
+                Requirements and Validate It Before Bulk Ingestion</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Indexing and CRUD: Bulk APIs, Refresh, Concurrency
+              Control, and Idempotent Ingestion
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Index/Create/Update/Delete Semantics, IDs,
+                Upserts, Scripts, and Partial Document Updates</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>Bulk Request Format, Batch Sizing, Backpressure,
+                Error Inspection, and Retry Classification</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>Refresh vs Flush vs Force Merge: Search
+                Visibility, Durability, Segments, and Performance</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>if_seq_no/if_primary_term Concurrency Control,
+                External Versioning Concepts, and Idempotency Keys</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Build a High-Throughput Bulk Loader that Handles
+                Partial Failure Without Silent Data Loss or Duplication</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>Text Analysis: Character Filters, Tokenizers, Token
+              Filters, Analyzers, and Language Search
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>Index-Time vs Search-Time Analysis and Why Token
+                Streams Define Search Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>Standard, Keyword, Whitespace, Pattern,
+                N-Gram/Edge-N-Gram, Path, and Language Tokenization Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>Lowercase, Stop, Stemmer, Synonym, Shingle,
+                ASCII Folding, and Normalization Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>Custom Analyzers, Multi-Fields, Search
+                Analyzers, Synonym Lifecycle, and Reindexing Implications</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>Use Analyze APIs to Debug Unexpected Matching
+                and Build Tests for Tokenization/Normalization Contracts</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Query DSL Fundamentals: Term-Level, Full-Text,
+              Boolean, Range, Exists, and Filtering
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>match, multi_match, match_phrase,
+                query_string/simple_query_string, and Phrase/Proximity
+                Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>term/terms, range, exists,
+                prefix/wildcard/regexp, IDs, and Cost Awareness</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>bool must/should/filter/must_not, Minimum Should
+                Match, Filter Context, and Cacheability</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>Nested Queries, Geo Queries, Script Queries, and
+                Avoiding Expensive Query Anti-Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Construct a Search API from User Intent with
+                Safe Query Templates, Explicit Filters, and Test Cases</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>Relevance Engineering: BM25, Field Weighting,
+              Function Score, Ranking, and Evaluation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>TF/IDF Intuition, BM25 Parameters, Document
+                Length, Rare Terms, and Why Scores Are Query-Relative</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>Field Boosts, DisMax, Tie Breakers,
+                Cross/Best/Most Fields, and Multi-Match Strategy</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>Function Score, Decay, Rank Feature, Business
+                Signals, Freshness, and Popularity Without Drowning Text
+                Relevance</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Named Queries, Explain/Profile, Score Debugging,
+                and Avoiding Score Comparisons Across Different Retrieval
+                Sources</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Build a Relevance Evaluation Set with Queries,
+                Judgments, Metrics, Baselines, and Regression Thresholds</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>Aggregations: Metrics, Buckets, Pipeline
+              Aggregations, Cardinality, and Analytical Search
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>Metric Aggregations:
+                min/max/avg/sum/stats/percentiles/cardinality and Approximation
+                Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>Bucket Aggregations: terms, range, date
+                histogram, filters, composite, significant terms, and Geo</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>Nested/Reverse Nested, Filter/Global, Sampler,
+                and Modeling Implications for Analytics</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>Pipeline Aggregations, Moving Functions,
+                Derivatives, Bucket Scripts, and Time-Series Computation</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Design a Faceted Analytics Query and Control
+                Accuracy, Memory, Shard Size, and Response Complexity</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>Dynamic Templates, Index Templates, Component
+              Templates, and Schema Evolution
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>Dynamic Field Detection, Coercion, Date/Numeric
+                Detection, and Failure Modes from Uncontrolled Input</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>Dynamic Templates by Path/Name/Type for Stable
+                Mapping Contracts</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>Composable Index Templates, Component Templates,
+                Priorities, Simulation, and Environment Promotion</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>Changing Mappings Safely: Additive Changes, New
+                Indices, Reindex, Alias Cutover, and Rollback</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>Create a Versioned Schema Deployment Workflow
+                with Template Tests and Zero-Downtime Reindexing</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>Data Streams, Time-Series Data, Logs, Metrics, and
+              Append-Heavy Workloads
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>Data Streams, Backing Indices, Write Index,
+                @timestamp, Rollover, and Append-Only Design</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>Time-Series Dimensions/Metrics Concepts, Index
+                Modes, Routing, and Compression/Storage Considerations</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>Logs and Metrics Modeling: High Cardinality,
+                Labels, Structured Events, and Field Governance</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>Late/Out-of-Order Events, Updates/Deletes
+                Against Backing Indices, and Operational Constraints</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Design a Telemetry Data Stream with Lifecycle,
+                Schema, Routing, Search, Aggregation, and Retention
+                Requirements</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>Ingest Pipelines, Processors, Enrichment, Failure
+              Handling, and Data Quality
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>Ingest Nodes/Pipelines, Processor Execution,
+                on_failure, Conditional Processing, and Simulation</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>Grok/Dissect, Date, Convert, Rename, Set,
+                Remove, Script, GeoIP/User-Agent-Like Enrichment Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>Enrich Policies and Lookup Data: Refresh,
+                Consistency, and Deployment Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Dead-Letter/Failure Indices, Observability,
+                Retry, and Preventing Poison Documents from Blocking
+                Pipelines</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Build and Benchmark an Ingest Pipeline Against
+                Upstream ETL Alternatives and Define Ownership Boundaries</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>Aliases, Rollover, Reindex, Update/Delete by Query,
+              and Zero-Downtime Index Changes
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>Read/Write Aliases, Filters, Routing,
+                is_write_index, and Atomic Alias Updates</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>Rollover Conditions by Age/Size/Docs and
+                Coordinating with Data Streams/Lifecycle Policies</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>Reindex from Index/Remote Source, Slicing,
+                Throttling, Conflict Handling, and Validation</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>Update-by-Query/Delete-by-Query, Task APIs,
+                Cancellation, Version Conflicts, and Cluster Impact</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>Execute a Mapping Migration with Dual Read/Write
+                or Alias Cutover, Validation, and Rollback Evidence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Shard Sizing, Routing, Allocation, Awareness, and
+              Cluster Topology
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>Primary/Replica Shard Count, Shard Overhead,
+                Dataset Growth, Search Concurrency, and Recovery Time</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Document Routing, Custom Routing, Hotspots,
+                Skew, and Co-Locating Queries</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>Allocation Deciders, Disk Watermarks,
+                Awareness/Forced Awareness, Data Tiers, and Zone Failure</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Shard Rebalancing, Recovery, Throttling,
+                Relocation, and Operational Headroom</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Model a Capacity/Shard Plan and Simulate Node
+                Loss Without Exceeding Recovery or Latency Objectives</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>Lucene Segments, Refresh, Merge, Translog, Flush,
+              and Storage Internals
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Immutable Segments, Inverted Index/Postings,
+                Stored Fields, Doc Values, Norms, and Term Dictionaries</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Refresh Creates Searchable Segments; Flush
+                Commits; Translog Supports Recovery—Separate the Concepts</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Segment Merging, Deleted Docs, Merge Policy,
+                Force Merge Risks, and Write Amplification</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Compression, Filesystem Cache, mmap, Storage
+                Latency, and Why Local SSD Often Matters</a
+              ><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Diagnose an Indexing/Storage Problem Using
+                Segment Counts, Merge Pressure, Disk I/O, and Refresh
+                Behavior</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Heap, Caches, Circuit Breakers, Thread Pools,
+              Backpressure, and JVM/Runtime Health
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>Heap vs Filesystem Cache, Object Overhead,
+                Compressed OOPs Concepts, and Why More Heap Is Not Always
+                Better</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Query/Request/Fielddata/Shard Request Caches:
+                Eligibility, Invalidation, and Memory Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Circuit Breakers, In-Flight Requests,
+                Aggregation Memory, Fielddata Hazards, and Failure Protection</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Thread Pools, Queues, Rejections, Indexing
+                Pressure, Search Backpressure, and Client-Side Concurrency</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Build a Saturation Diagnosis from GC, CPU, Heap,
+                Rejections, Latency, Disk, and Workload Evidence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>16</span>Search Execution, Profiling, Slow Logs,
+              Async/Search-After/PIT, and Pagination
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="Lesson1.html"
+                ><span>01</span>Distributed Query/Fetch Phases, Can-Match, Shard
+                Pruning, DFS Concepts, and Coordination Cost</a
+              ><a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>Profile API, Explain, Search Slow Logs, Hot
+                Threads, Tasks, and Distinguishing Query from Fetch Cost</a
+              ><a
+                aria-current="page"
+                class="sidebar-lesson is-current"
+                href="Lesson3.html"
+                ><span>03</span>from/size Limits, search_after, Point-in-Time
+                Readers, Stable Sort Keys, and Pagination Correctness<i
+                  >Current</i
+                ></a
+              ><a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>Async Search, Cancellation, Timeouts, Partial
+                Results, and Long-Running Analytical Requests</a
+              ><a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Tune a Slow Search by Changing Query, Mapping,
+                Routing, Shards, Aggregation Strategy, or Pagination—Then
+                Measure</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Index Lifecycle: Elastic ILM/Data Tiers and
+              OpenSearch ISM
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>Lifecycle Goals: Rollover, Retention, Tiering,
+                Shrink/Force-Merge-Like Actions, and Cost/Recovery Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>Elastic ILM Phases/Actions, Data Tiers, Rollover
+                Aliases/Data Streams, and Explain/Troubleshooting</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>OpenSearch Index State Management Policies,
+                States, Transitions, Actions, Templates, and Simulation</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>Lifecycle Policy Versioning, Safe Testing, Stuck
+                Actions, Manual Intervention, and Compliance Retention</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Design Equivalent Retention Strategies in
+                Elastic and OpenSearch and Document Feature/Operational
+                Differences</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Snapshots, Restore, Searchable/Remote Storage
+              Concepts, and Disaster Recovery
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>Snapshot Repository Architecture, Incremental
+                Segment Reuse, Consistency, and Repository Access Control</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>Snapshot Lifecycle/Scheduled Backups, Retention,
+                Verification, and Monitoring</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Restore Full/Partial Indices, Rename-on-Restore,
+                Global State/Security Considerations, and Conflict Handling</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Cross-Region Repository Strategy, Searchable
+                Snapshot/Remote Store Concepts, and Cost/Latency Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>Run a Restore Drill and Measure RPO/RTO, Data
+                Completeness, Security State, Templates, and Application
+                Cutover</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>19</span>Elastic Security: TLS, Realms, Users/Roles, API
+              Keys, DLS/FLS, and Audit
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Secure-by-Default Principles, Node/HTTP TLS,
+                Certificates, Trust, and Enrollment/Bootstrap Concepts</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Users, Roles, Cluster/Index/Application
+                Privileges, Spaces, and Least-Privilege Design</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>API Keys, Service Accounts/Tokens, Rotation,
+                Expiration, and Machine-to-Machine Authentication</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>Document/Field-Level Security, Run-As, Audit
+                Logging, and Subscription/Feature Awareness</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Threat-Model an Elastic Deployment for Anonymous
+                Exposure, Over-Privileged APIs, Snapshot Theft, and Query
+                Abuse</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>OpenSearch Security: TLS, Internal Users, Roles,
+              Tenants, Backends, and Fine-Grained Access
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>Security Plugin Architecture, Node/HTTP
+                Certificates, Distinguished Names, and Initialization</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>Users, Roles, Role Mappings, Action Groups,
+                Index Permissions, and Cluster Permissions</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>Authentication Backends, LDAP/OIDC/SAML-Like
+                Integrations, Dashboards Multi-Tenancy, and Impersonation
+                Concepts</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>Document/Field-Level Security, Audit Logs, API
+                Keys/Scoped Access Where Available, and Secrets Rotation</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Compare an Equivalent Least-Privilege
+                Application Role in OpenSearch vs Elastic and Document
+                Behavioral Differences</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Cluster Operations, Rolling Maintenance, Upgrades,
+              Node Replacement, and Failure Recovery
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>Cluster Health, Unassigned Shards, Allocation
+                Explain, Voting/Master Eligibility, and Quorum Safety</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>Rolling Restart/Upgrade Sequencing, Shard
+                Allocation Control, Synced Recovery Concepts, and Validation</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>Node Replacement, Disk Expansion, Tier
+                Migration, Rebalancing, and Decommissioning</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Version Compatibility, Breaking Changes, Plugin
+                Compatibility, Snapshot Before Upgrade, and Rollback
+                Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>Execute a Maintenance Game Day with a Node
+                Failure During Upgrade and Prove Recovery Procedures</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Remote Clusters, Cross-Cluster Search,
+              Cross-Cluster Replication, and Multi-Region Design
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>Remote Cluster Connectivity, Sniff/Proxy-Like
+                Modes, Security, Latency, and Failure Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>Cross-Cluster Search Across Indices/Data Streams
+                and Federated Query Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>Elastic Cross-Cluster Replication:
+                Leader/Follower, Auto-Follow, Disaster Recovery, and
+                Non-Replicated Configuration</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>OpenSearch Cross-Cluster Replication/Search
+                Concepts and Managed-Service Constraints</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Design Multi-Region Search/DR with Explicit
+                RPO/RTO, Write Ownership, Security, Failover, and Cost
+                Tradeoffs</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>23</span>Operational Analytics Languages: ES|QL, OpenSearch
+              PPL/SQL, and Query API Boundaries
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter23/Lesson1.html"
+                ><span>01</span>ES|QL Pipeline Syntax, Sources, Filtering,
+                Transformation, Aggregation, Enrichment, and Tabular Results</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson2.html"
+                ><span>02</span>ES|QL Across Multiple Indices/Clusters and When
+                It Complements vs Replaces Query DSL/Aggregations</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson3.html"
+                ><span>03</span>OpenSearch PPL and SQL Interfaces:
+                Pipeline/Relational Mental Models, Supported Operations, and
+                Limitations</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson4.html"
+                ><span>04</span>Dashboards/Notebook/Observability Query
+                Workflows and Security/Resource Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson5.html"
+                ><span>05</span>Translate One Analytical Requirement Between
+                Query DSL+Aggregations, ES|QL, and PPL and Compare
+                Semantics/Cost</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>Observability, Dashboards, Alerts, Tracing Search
+              Workloads, and SLOs
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter24/Lesson1.html"
+                ><span>01</span>Cluster/Node/Index Metrics: JVM, CPU, Disk,
+                Shards, Indexing, Search, Cache, Merge, Refresh, and Recovery</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson2.html"
+                ><span>02</span>Dashboards/Kibana Data Views, Saved Objects,
+                Visualizations, and Environment Separation</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson3.html"
+                ><span>03</span>Alerting/Rules/Monitors, Thresholds vs
+                Anomaly/Rate Conditions, Noise Control, and Incident Routing</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson4.html"
+                ><span>04</span>Search SLOs: Availability, p95/p99 Latency,
+                Freshness, Indexing Lag, Error/Rejection Rate, and Relevance
+                Quality</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson5.html"
+                ><span>05</span>Build an Operations Dashboard and Incident
+                Runbook Linking User Symptoms to Cluster and Query Evidence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>25</span>Vector Search Fundamentals: Embeddings,
+              Dense/Sparse Vectors, ANN, HNSW, Quantization, and Filters
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter25/Lesson1.html"
+                ><span>01</span>Embedding Semantics, Dimensions,
+                Distance/Similarity, Normalization, Model Versioning, and Data
+                Contracts</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson2.html"
+                ><span>02</span>Exact vs Approximate kNN, HNSW Concepts, ef/m
+                Parameters, Recall/Latency/Memory Tradeoffs, and Ground-Truth
+                Testing</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson3.html"
+                ><span>03</span>Elastic dense_vector/kNN Concepts and OpenSearch
+                k-NN/vector Engine Options</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson4.html"
+                ><span>04</span>Filtering Vector Search, Multi-Vector/Nested
+                Patterns, Quantization/Compression, and Hardware/Memory
+                Planning</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson5.html"
+                ><span>05</span>Benchmark Vector Recall, p99 Latency, Index
+                Build Time, Memory, and Filter Selectivity with Representative
+                Queries</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>26</span>Semantic, Neural, Sparse, and Hybrid Search in
+              Elasticsearch and OpenSearch
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter26/Lesson1.html"
+                ><span>01</span>Semantic Search from Text to Embeddings:
+                Ingest-Time vs Query-Time Model Invocation and Failure
+                Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson2.html"
+                ><span>02</span>Elastic Semantic/Vector Retrieval and Hybrid
+                Ranking Concepts Across Lexical and Dense/Sparse Signals</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson3.html"
+                ><span>03</span>OpenSearch neural, neural_sparse, k-NN,
+                Ingest/Search Pipelines, and ML Commons Model Integration</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson4.html"
+                ><span>04</span>Hybrid Score Normalization, Weighted
+                Combination, Reciprocal-Rank-Like Fusion, Re-Ranking, and Search
+                Quality Evaluation</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson5.html"
+                ><span>05</span>Build Equivalent Keyword+Semantic Search
+                Pipelines in Both Platforms and Compare Quality, Latency, and
+                Operational Complexity</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>27</span>RAG, AI Search, Inference Pipelines, Agentic
+              Search, and Production Retrieval Architecture
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter27/Lesson1.html"
+                ><span>01</span>RAG Architecture: Chunking, Metadata,
+                Embeddings, Retrieval, Re-Ranking, Context Packing, Citations,
+                and Evaluation</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson2.html"
+                ><span>02</span>Managed/External Model Connectors, Inference
+                Endpoints, Secrets, Rate Limits, Batching, and Model
+                Lifecycle</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson3.html"
+                ><span>03</span>Conversational/Agentic Search Concepts, Query
+                Rewriting, Tooling, Memory, and Guardrails</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson4.html"
+                ><span>04</span>Security for RAG: Tenant Filtering,
+                Document-Level Access, Prompt/Data Injection, Sensitive Fields,
+                and Auditability</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson5.html"
+                ><span>05</span>Evaluate Retrieval Separately from Generation
+                with Recall@k, NDCG/MRR-Like Metrics, Faithfulness, Latency, and
+                Cost</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>28</span>Log Analytics, Security Analytics, Search
+              Applications, and Workload-Specific Architecture
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter28/Lesson1.html"
+                ><span>01</span>Application/Product Search: Catalog Modeling,
+                Synonyms, Relevance Signals, Autocomplete, Facets, and
+                Personalization Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter28/Lesson2.html"
+                ><span>02</span>Log Analytics: ECS/OpenTelemetry-Like Schema
+                Discipline, Pipelines, Data Streams, Retention, and High
+                Cardinality</a
+              ><a class="sidebar-lesson" href="../Chapter28/Lesson3.html"
+                ><span>03</span>Security Analytics: Event Normalization,
+                Detection Queries, Alert Volume, Long Retention, and
+                Investigative Search</a
+              ><a class="sidebar-lesson" href="../Chapter28/Lesson4.html"
+                ><span>04</span>Observability: Logs/Metrics/Traces Correlation,
+                Service Maps, APM-Like Workflows, and Cost Controls</a
+              ><a class="sidebar-lesson" href="../Chapter28/Lesson5.html"
+                ><span>05</span>Choose Index/Shard/Lifecycle/Search Strategies
+                per Workload Instead of Running Every Use Case in One
+                Undifferentiated Cluster</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>29</span>Migration and Interoperability: Elasticsearch ↔
+              OpenSearch, Reindexing, Clients, Plugins, and API Drift
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter29/Lesson1.html"
+                ><span>01</span>Assess API, Mapping, Query, Security, Plugin,
+                Snapshot, and Client Compatibility Before Migration</a
+              ><a class="sidebar-lesson" href="../Chapter29/Lesson2.html"
+                ><span>02</span>Snapshot Compatibility Boundaries vs Remote
+                Reindex/ETL, Full Copy, Dual Write, and Incremental
+                Synchronization</a
+              ><a class="sidebar-lesson" href="../Chapter29/Lesson3.html"
+                ><span>03</span>Client/SDK and Query-Language Differences,
+                Deprecated APIs, Feature Replacements, and Testing Strategy</a
+              ><a class="sidebar-lesson" href="../Chapter29/Lesson4.html"
+                ><span>04</span>Managed-Service Migration: Networking, IAM,
+                Encryption, Snapshot Repositories, DNS/Endpoint Cutover, and
+                Rollback</a
+              ><a class="sidebar-lesson" href="../Chapter29/Lesson5.html"
+                ><span>05</span>Build a Migration Runbook with Data Validation,
+                Relevance Regression, Performance Baselines, RPO, and Rollback
+                Triggers</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>30</span>Performance Engineering and Capacity Planning:
+              Indexing, Search, Shards, Hardware, and Cost
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter30/Lesson1.html"
+                ><span>01</span>Workload Characterization: QPS, Write Rate,
+                Document Size, Fields, Retention, Aggregations, Vector
+                Dimensions, and Concurrency</a
+              ><a class="sidebar-lesson" href="../Chapter30/Lesson2.html"
+                ><span>02</span>Indexing Tuning: Bulk Size, Refresh, Replicas,
+                Pipelines, Merge, Translog/Durability, and Backpressure</a
+              ><a class="sidebar-lesson" href="../Chapter30/Lesson3.html"
+                ><span>03</span>Search Tuning: Query Shape, Filters, Caches,
+                Routing, Shard Count, Precomputation, and Aggregation
+                Strategies</a
+              ><a class="sidebar-lesson" href="../Chapter30/Lesson4.html"
+                ><span>04</span>Hardware/Topology: CPU, Heap, Page Cache, SSD,
+                Network, Data Tiers, Hot/Warm/Cold, and Failure Headroom</a
+              ><a class="sidebar-lesson" href="../Chapter30/Lesson5.html"
+                ><span>05</span>Run Production-Like Benchmarks with Tail
+                Latency, Relevance, Recovery, Indexing Lag, Saturation, and Cost
+                per Workload</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>31</span>Production Capstone: Build, Evaluate, Secure,
+              Scale, Recover, and Operate a Search Platform
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter31/Lesson1.html"
+                ><span>01</span>Define Search/Analytics Requirements, Relevance
+                Judgments, Freshness, Retention, Security, SLOs, RPO/RTO, and
+                Cost Constraints</a
+              ><a class="sidebar-lesson" href="../Chapter31/Lesson2.html"
+                ><span>02</span>Create Mappings/Analyzers/Templates, Ingest
+                Pipelines, Data Streams/Indices, Lifecycle Policies, and Core
+                Search/Aggregation APIs</a
+              ><a class="sidebar-lesson" href="../Chapter31/Lesson3.html"
+                ><span>03</span>Add Vector/Hybrid/RAG Retrieval with Explicit
+                Quality Benchmarks and Tenant/Security Filters</a
+              ><a class="sidebar-lesson" href="../Chapter31/Lesson4.html"
+                ><span>04</span>Load-Test, Profile, Secure, Snapshot/Restore,
+                Fail Over, Upgrade, Monitor, and Execute Operational Incident
+                Drills</a
+              ><a class="sidebar-lesson" href="../Chapter31/Lesson5.html"
+                ><span>05</span>Present Elastic vs OpenSearch Architecture
+                Choices with Evidence, Feature/License/Operations Tradeoffs, and
+                Exit/Migration Strategy</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 16 · Lesson 03</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">Elasticsearch and OpenSearch</a
+            ><span>/</span><span>Chapter 16 · Lesson 03</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 16 · Search Execution, Profiling, Slow Logs,
+              Async/Search-After/PIT, and Pagination
+            </p>
+            <h1>
+              from/size Limits, search_after, Point-in-Time Readers, Stable Sort
+              Keys, and Pagination Correctness
+            </h1>
+            <p>
+              Replace deep from/size paging with deterministic search_after and
+              point-in-time readers, then test pagination under concurrent
+              writes and clean up retained search contexts.
+            </p>
+            <div class="lesson-meta">
+              <span>Intermediate → Advanced</span><span>115–150 minutes</span
+              ><span>Distributed search &amp; pagination lab</span
+              ><span>Elasticsearch 9.5.3 · OpenSearch 3.8.0</span
+              ><span>Last reviewed: September 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                AtlasMart adds a “page 500” button to product search. The API
+                uses <code>from=4990&amp;size=10</code>. Shards repeatedly
+                collect thousands of candidates only to discard almost all of
+                them, and shoppers sometimes see duplicates or missing items
+                when products are updated between clicks. Pagination is now both
+                a cost problem and a correctness problem.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Explain why deep from/size multiplies per-shard candidate
+                    work and why result-window limits are safeguards.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Build deterministic search_after pagination with a total
+                    ordering and a stable tie breaker.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Use product-specific PIT APIs to freeze the searchable view
+                    across pages.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Test concurrent writes to prove PIT consistency and
+                    understand what new data is intentionally hidden.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Close PITs promptly and account for retained segments, file
+                    handles and heap/resource lifetime.
+                  </p>
+                </div>
+              </div>
+              <div class="callout">
+                <strong>Chapter baseline reviewed 11 September 2026</strong>
+                <p>
+                  Examples target self-managed
+                  <strong>Elasticsearch 9.5.3 / Kibana 9.5.3</strong> and
+                  <strong>OpenSearch 3.8.0 / OpenSearch Dashboards 3.8.0</strong
+                  >. AtlasMart keeps <code>https://localhost:9200</code> for
+                  Elasticsearch with CA verification and
+                  <code>https://localhost:9201</code> for the disposable
+                  OpenSearch demo certificate using
+                  <code>OPENSEARCH_INITIAL_ADMIN_PASSWORD</code>. The
+                  established containers are <code>atlasmart-es</code> and
+                  <code>atlasmart-os</code>. This chapter deliberately creates a
+                  disposable index with three primary shards and zero replicas
+                  to make shard fan-out observable on one local node; that is a
+                  teaching topology, not a production sizing recommendation.
+                  OpenSearch demo <code>-k</code> remains local-only; production
+                  must validate certificates. No moving <code>latest</code> tags
+                  are used.
+                </p>
+              </div>
+              <div class="callout">
+                <strong>Execution note</strong>
+                <p>
+                  The generation environment does not run the AtlasMart
+                  containers, so latency, profile nanoseconds, slow-log lines,
+                  task IDs and PIT IDs are <strong>not fabricated</strong>.
+                  Expected outputs describe invariant fields and directions of
+                  change. Run the bounded lab locally and record your own
+                  p50/p95/p99, shard counts, profile trees and resource
+                  statistics before accepting a performance conclusion.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>1. Why from/size gets expensive</h2>
+              <p>
+                For a sorted distributed query, each shard must produce enough
+                local candidates for the coordinator to construct the requested
+                global page. A request for <code>from=90,size=10</code> can
+                require each shard to consider its local top 100 candidates even
+                though only ten hits reach the user. Increasing the offset
+                therefore grows heap/CPU work and coordinator merge pressure
+                with no user-visible benefit.
+              </p>
+              <p>
+                Elasticsearch documents a default result-window safeguard of
+                10,000 hits via <code>index.max_result_window</code>. OpenSearch
+                likewise defaults to a 10,000 result window. This lab
+                intentionally lowers the index setting to 100 so the failure is
+                easy and safe to reproduce.
+              </p>
+              <div class="code-window" data-code-block="" data-language="json">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>Safe
+                    deep-window failure
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-json">GET atlasmart-search-exec-v1/_search
+{
+  "from":95,
+  "size":10,
+  "query":{"match_all":{}},
+  "sort":[{"updated_at":"asc"},{"sku":"asc"}]
+}</code></pre>
+              </div>
+              <div class="callout warning">
+                <strong>Wrong repair</strong>
+                <p>
+                  Raising <code>index.max_result_window</code> until page 500
+                  works removes a safety boundary but does not remove the
+                  per-shard deep-page work. Use cursor-style pagination or a
+                  different export/analytics workflow.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>2. search_after: a cursor over sort values</h2>
+              <p>
+                <code>search_after</code> asks for results strictly after the
+                sort values of the last hit from the previous page. Every page
+                must preserve the same query and sort semantics. A stable, total
+                ordering is essential. If several documents share the same
+                primary sort value and there is no deterministic tie breaker,
+                replicas can order equal values differently and pages can
+                duplicate or omit hits.
+              </p>
+              <p>
+                Use a unique sortable field such as <code>sku</code> as the
+                final application-level tie breaker in this lab. Do not assume
+                <code>_id</code> has doc values; if you need ID-based sorting,
+                map a keyword copy explicitly.
+              </p>
+              <div class="code-window" data-code-block="" data-language="json">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>Page 1
+                    and page 2 with search_after
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-json">GET atlasmart-search-exec-v1/_search
+{
+  "size":10,
+  "query":{"term":{"available":true}},
+  "sort":[{"updated_at":"asc"},{"sku":"asc"}]
+}
+
+# Copy the last hit's sort array exactly, for example:
+GET atlasmart-search-exec-v1/_search
+{
+  "size":10,
+  "query":{"term":{"available":true}},
+  "sort":[{"updated_at":"asc"},{"sku":"asc"}],
+  "search_after":["2026-09-01T00:12:00.000Z","P-1012"]
+}</code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>3. search_after alone is live, PIT freezes the view</h2>
+              <p>
+                Without PIT, each page is a fresh search against the
+                then-current visible index state. A refresh between pages can
+                insert, update or delete documents relative to the sort cursor
+                and produce inconsistent traversal. A
+                <strong>point in time</strong> keeps a logical view of the index
+                stable across page requests.
+              </p>
+              <p>
+                The APIs are not identical. Elasticsearch opens a PIT with
+                <code>POST /index/_pit?keep_alive=...</code> and returns
+                <code>id</code>. OpenSearch opens one with
+                <code>POST /index/_search/point_in_time?keep_alive=...</code>
+                and returns <code>pit_id</code>. Search requests then use a
+                <code>pit</code> object. Elasticsearch documentation also
+                requires using the most recently returned PIT ID because it can
+                change between searches.
+              </p>
+              <div class="code-window" data-code-block="" data-language="json">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >Elasticsearch 9.5.3 PIT flow
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-json">POST /atlasmart-search-exec-v1/_pit?keep_alive=2m
+# capture response.id as PIT_ID
+
+GET /_search
+{
+  "size":10,
+  "pit":{"id":"PIT_ID","keep_alive":"2m"},
+  "query":{"term":{"available":true}},
+  "sort":[{"updated_at":"asc"},{"sku":"asc"}]
+}
+
+# Use the latest PIT id returned by the search plus the last hit's sort array.
+DELETE /_pit
+{"id":"LATEST_PIT_ID"}</code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="json">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >OpenSearch 3.8.0 PIT flow
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-json">POST /atlasmart-search-exec-v1/_search/point_in_time?keep_alive=2m
+# capture response.pit_id as PIT_ID
+
+GET /_search
+{
+  "size":10,
+  "pit":{"id":"PIT_ID","keep_alive":"2m"},
+  "query":{"term":{"available":true}},
+  "sort":[{"updated_at":"asc"},{"sku":"asc"}]
+}
+
+DELETE /_search/point_in_time
+{"pit_id":["PIT_ID"]}</code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>4. Concurrent-write correctness test</h2>
+              <ol>
+                <li>
+                  Open a PIT and fetch page 1. Store its PIT ID and the last hit
+                  sort values.
+                </li>
+                <li>
+                  Index a new document whose <code>updated_at</code> would sort
+                  inside the already-open traversal; refresh it.
+                </li>
+                <li>
+                  Fetch page 2 through the same PIT. The new document should not
+                  suddenly appear because the PIT preserves the earlier view.
+                </li>
+                <li>
+                  Run a new live search or open a new PIT; the new document
+                  should now be visible.
+                </li>
+                <li>
+                  Delete the PIT and the synthetic document during cleanup.
+                </li>
+              </ol>
+              <div class="code-window" data-code-block="" data-language="json">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >Concurrent document
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-json">PUT atlasmart-search-exec-v1/_doc/P-9999?refresh=true
+{
+  "sku":"P-9999",
+  "name":"AtlasMart wireless headset late insert",
+  "category":"audio",
+  "price":49.95,
+  "available":true,
+  "updated_at":"2026-09-01T00:05:30Z",
+  "popularity":50
+}</code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>5. PIT is consistency with a resource bill</h2>
+              <p>
+                A PIT keeps older Lucene segments available while the view is
+                alive. That can retain disk space and file handles;
+                updates/deletes can also increase bookkeeping. OpenSearch
+                exposes PIT count/segment APIs and caps open contexts by
+                setting. Elasticsearch exposes open search-context statistics
+                and warns that PITs can retain old segments and require extra
+                heap/file handles.
+              </p>
+              <p>
+                Therefore <code>keep_alive</code> is not “session duration.” It
+                only needs to be long enough to reach the next request. Refresh
+                it on page access and close the PIT when the user/export is
+                finished. Put server-side limits around abandoned cursors.
+              </p>
+              <div class="callout">
+                <strong>Pagination contract</strong>
+                <p>
+                  Store the exact query/filter/sort version with the cursor. If
+                  the user changes filters or sort order, start a new
+                  PIT/cursor. A cursor from one query contract is not valid for
+                  another.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>6. Lab acceptance criteria</h2>
+              <div class="code-window" data-code-block="" data-language="json">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >Disposable Chapter 16 index — run separately against each
+                    product
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-json">PUT atlasmart-search-exec-v1
+{
+  "settings": {
+    "number_of_shards": 3,
+    "number_of_replicas": 0,
+    "index.max_result_window": 100
+  },
+  "mappings": {
+    "properties": {
+      "sku":        {"type":"keyword"},
+      "name":       {"type":"text","fields":{"raw":{"type":"keyword"}}},
+      "category":   {"type":"keyword"},
+      "price":      {"type":"double"},
+      "available":  {"type":"boolean"},
+      "updated_at": {"type":"date"},
+      "popularity": {"type":"integer"}
+    }
+  }
+}</code></pre>
+              </div>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="python"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >Deterministic fixture generator (Python 3, writes NDJSON)
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-python"># Save as chapter16_fixture.py and redirect stdout to fixture.ndjson.
+import json
+from datetime import datetime, timedelta, timezone
+base = datetime(2026, 9, 1, tzinfo=timezone.utc)
+for i in range(240):
+    sku = f"P-{1000+i:04d}"
+    meta = {"index":{"_index":"atlasmart-search-exec-v1","_id":sku}}
+    doc = {
+      "sku": sku,
+      "name": f"AtlasMart {'wireless' if i%3==0 else 'wired'} headset model {i:03d}",
+      "category": ["audio","mobile","office"][i%3],
+      "price": round(20 + (i%80)*1.25, 2),
+      "available": i%5 != 0,
+      "updated_at": (base + timedelta(minutes=i)).isoformat().replace('+00:00','Z'),
+      "popularity": (i*17)%101
+    }
+    print(json.dumps(meta,separators=(',',':')))
+    print(json.dumps(doc,separators=(',',':')))
+# Then POST fixture.ndjson to /_bulk?refresh=true with Content-Type application/x-ndjson.</code></pre>
+              </div>
+              <ul>
+                <li>
+                  The deliberate <code>from=95,size=10</code> request fails
+                  because the lab result window is 100.
+                </li>
+                <li>
+                  A search_after traversal returns each fixture SKU at most once
+                  for the fixed query/sort.
+                </li>
+                <li>
+                  PIT traversal remains stable when P-9999 is inserted and
+                  refreshed after PIT creation.
+                </li>
+                <li>A newly opened PIT can see P-9999.</li>
+                <li>
+                  PIT resources are explicitly deleted; no lab depends on
+                  waiting for expiration.
+                </li>
+                <li>
+                  Client-side p95/p99 for late pages is compared between
+                  from/size and search_after under the same workload and
+                  warmness.
+                </li>
+              </ul>
+            </section>
+            <section>
+              <h2>7. Production judgment</h2>
+              <p>
+                User-facing pagination and bulk export are different workloads.
+                For interactive deep traversal, PIT plus stable
+                <code>search_after</code> gives consistent cursor semantics. For
+                full exports, consider sliced PIT/search_after, reindex/export
+                tooling, snapshots or an analytics store depending on the
+                objective. Scroll remains useful for some batch workflows but is
+                not the preferred real-time deep-pagination mechanism in current
+                Elastic guidance.
+              </p>
+              <p>
+                Do not keep PITs open indefinitely. Resource lifetime is part of
+                API design: cursor TTL, maximum open cursors per tenant,
+                cancellation on client abandonment and cleanup telemetry belong
+                in the service contract.
+              </p>
+            </section>
+            <div class="checkpoint">
+              <h3>Check your understanding</h3>
+              <ol>
+                <li>Why does deep from/size cost more?</li>
+                <li>What must search_after preserve?</li>
+                <li>Why is a tie breaker necessary?</li>
+                <li>What problem does PIT solve?</li>
+                <li>What is the resource risk of long PITs?</li>
+              </ol>
+              <details class="answer-toggle">
+                <summary>Review the answers</summary>
+                <div>
+                  <p>
+                    <strong>1.</strong> Each shard must retain/consider
+                    candidates up to the requested offset plus page size so the
+                    coordinator can build the global page.
+                  </p>
+                  <p>
+                    <strong>2.</strong> The same query/filter and sort contract,
+                    using the previous page’s final sort values.
+                  </p>
+                  <p>
+                    <strong>3.</strong> Equal primary sort values otherwise have
+                    no deterministic total order across shard copies/pages.
+                  </p>
+                  <p>
+                    <strong>4.</strong> It keeps the searchable dataset view
+                    stable across page requests despite concurrent
+                    refreshes/writes.
+                  </p>
+                  <p>
+                    <strong>5.</strong> They can retain old segments, disk
+                    space, file handles and related search-context bookkeeping.
+                  </p>
+                </div>
+              </details>
+            </div>
+            <section>
+              <h2>Summary and next step</h2>
+              <p>
+                You now have correct deep pagination under concurrent writes.
+                Lesson 4 addresses a different long-running pattern: analytical
+                searches that should be submitted, polled, cancelled and expired
+                rather than tied to one synchronous HTTP request.
+              </p>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <ul class="reference-list">
+                <li>
+                  <a
+                    href="https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-search"
+                    rel="noopener"
+                    target="_blank"
+                    >Elastic search API</a
+                  >
+                  — Current search request options, search type, pre-filter
+                  shard behavior and partial-results controls.
+                </li>
+                <li>
+                  <a
+                    href="https://www.elastic.co/docs/reference/elasticsearch/rest-apis/search-profile"
+                    rel="noopener"
+                    target="_blank"
+                    >Elastic search profiling</a
+                  >
+                  — Profile operator trees, collectors and DFS profiling; also
+                  documents what profile does not measure.
+                </li>
+                <li>
+                  <a
+                    href="https://www.elastic.co/docs/reference/elasticsearch/rest-apis/paginate-search-results"
+                    rel="noopener"
+                    target="_blank"
+                    >Elastic pagination</a
+                  >
+                  — from/size result window, search_after, PIT consistency and
+                  PIT cleanup guidance.
+                </li>
+                <li>
+                  <a
+                    href="https://www.elastic.co/guide/en/elasticsearch/reference/current/point-in-time-api.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Elastic point in time API</a
+                  >
+                  — Opening PITs, keep_alive, changing PIT IDs and
+                  retained-segment resource implications.
+                </li>
+                <li>
+                  <a
+                    href="https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-async-search-submit"
+                    rel="noopener"
+                    target="_blank"
+                    >Elastic async search submit</a
+                  >
+                  — Long-running asynchronous search submission and
+                  response-size constraints.
+                </li>
+                <li>
+                  <a
+                    href="https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-async-search-get"
+                    rel="noopener"
+                    target="_blank"
+                    >Elastic async search results</a
+                  >
+                  — Polling, ownership/security and keep_alive behavior for
+                  async search.
+                </li>
+                <li>
+                  <a
+                    href="https://www.elastic.co/docs/reference/elasticsearch/index-settings/slow-log"
+                    rel="noopener"
+                    target="_blank"
+                    >Elastic slow logs</a
+                  >
+                  — Shard-level query/fetch slow logs and current query-logging
+                  guidance.
+                </li>
+                <li>
+                  <a
+                    href="https://docs.opensearch.org/latest/search-plugins/searching-data/paginate/"
+                    rel="noopener"
+                    target="_blank"
+                    >OpenSearch pagination</a
+                  >
+                  — from/size, search_after and PIT-backed pagination tradeoffs.
+                </li>
+                <li>
+                  <a
+                    href="https://docs.opensearch.org/latest/api-reference/search-apis/point-in-time-api/"
+                    rel="noopener"
+                    target="_blank"
+                    >OpenSearch PIT</a
+                  >
+                  — Create/list/delete PIT APIs, security permissions and
+                  resource lifetime.
+                </li>
+                <li>
+                  <a
+                    href="https://docs.opensearch.org/latest/api-reference/search-apis/profile/"
+                    rel="noopener"
+                    target="_blank"
+                    >OpenSearch profile API</a
+                  >
+                  — Search component timings and explicit omissions such as
+                  network/queue/coordinator idle time.
+                </li>
+                <li>
+                  <a
+                    href="https://docs.opensearch.org/latest/search-plugins/async/index/"
+                    rel="noopener"
+                    target="_blank"
+                    >OpenSearch asynchronous search</a
+                  >
+                  — Plugin endpoint, partial results and long-running search
+                  model.
+                </li>
+                <li>
+                  <a
+                    href="https://docs.opensearch.org/latest/search-plugins/async/settings/"
+                    rel="noopener"
+                    target="_blank"
+                    >OpenSearch async settings</a
+                  >
+                  — Maximum running time, concurrency, retention and wait
+                  timeout settings.
+                </li>
+                <li>
+                  <a
+                    href="https://docs.opensearch.org/latest/install-and-configure/configuring-opensearch/logs/"
+                    rel="noopener"
+                    target="_blank"
+                    >OpenSearch logs</a
+                  >
+                  — Request-level and shard-level search slow logs plus
+                  task-resource logging.
+                </li>
+                <li>
+                  <a
+                    href="https://docs.opensearch.org/latest/api-reference/tasks/"
+                    rel="noopener"
+                    target="_blank"
+                    >OpenSearch tasks API</a
+                  >
+                  — Task inspection and cancellation mechanisms.
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a class="previous" href="Lesson2.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Profile API, Explain, Search Slow Logs, Hot Threads, Tasks, and
+                Distinguishing Query from Fetch Cost</strong
+              ></a
+            ><a class="next" href="Lesson4.html"
+              ><small>Next lesson</small
+              ><strong
+                >Async Search, Cancellation, Timeouts, Partial Results, and
+                Long-Running Analytical Requests</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <small
+          >Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+    <script src="../course-code-highlight.js"></script>
+  </body>
+</html>

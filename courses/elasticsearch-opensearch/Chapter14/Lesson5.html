@@ -1,0 +1,1654 @@
+<!doctype html>
+
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Use segment, refresh, merge, translog, node and application-latency evidence to diagnose an AtlasMart indexing/storage regression and verify a causal repair."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Diagnose an Indexing/Storage Problem Using Segment Counts, Merge Pressure,
+      Disk I/O, and Refresh Behavior | Elasticsearch and OpenSearch | Big Data
+      Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <link href="../course-fixes.css" rel="stylesheet" />
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">SEARCH</span>
+            <div>
+              <small>Course 15</small
+              ><strong>Elasticsearch and OpenSearch</strong>
+            </div></a
+          ><button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 155 lessons..."
+            type="search"
+        /></label>
+        <nav
+          aria-label="Elasticsearch and OpenSearch curriculum"
+          class="sidebar-curriculum"
+        >
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>Search Engine Foundations, Elasticsearch vs
+              OpenSearch, Deployment Models, and Lab Setup
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>Inverted-Index Search vs
+                Relational / Document / Vector Databases: Workload Fit and
+                Architectural Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Elasticsearch and OpenSearch Lineage,
+                Licensing/Ecosystem Differences, APIs, and Compatibility
+                Expectations</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>Self-Managed, Elastic Cloud/Serverless, Amazon
+                OpenSearch Service, and Other Managed Responsibility
+                Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>Start Local Clusters, Use Kibana/OpenSearch
+                Dashboards Dev Tools or curl, and Inspect Cluster/Node Health</a
+              ><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Reproducible Lab with Sample Data,
+                TLS/Auth, Persistent Storage, Metrics, and Safe Reset
+                Automation</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>Documents, Indices, Data Streams, Shards, Replicas,
+              Nodes, and Cluster Architecture
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>JSON Documents, _source, Metadata Fields, IDs,
+                Versions/Sequence Numbers, and Optimistic Concurrency</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>Indices, Aliases, Data Streams, Backing Indices,
+                Shards, Replicas, and Routing</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Node Roles, Cluster State,
+                Master/Cluster-Manager Responsibilities, Data Tiers, and
+                Coordinating Work</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>Distributed Write and Search Request Flows:
+                Primary Shard, Replication, Scatter/Gather, and Partial
+                Failures</a
+              ><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Trace One Document from Index Request Through
+                Refresh to Search Result and Explain Every Distributed Step</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>Mappings and Field Types: keyword, text, Numeric,
+              Date, Geo, Object, Nested, and Runtime Fields
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>Explicit vs Dynamic Mappings, Field Explosion,
+                Mapping Conflicts, and Schema-Governance Strategy</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>text vs keyword: Analysis, Exact Matching,
+                Sorting/Aggregation, Multi-Fields, and Normalizers</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>Numeric, Date, Boolean, IP, Geo, Range, Dense
+                Vector, Object, Flattened, and Other Specialized Types</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>Object vs nested Modeling, Parent/Child/Join
+                Tradeoffs, Denormalization, and Update Cost</a
+              ><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Design a Mapping from Query/Aggregation
+                Requirements and Validate It Before Bulk Ingestion</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>Indexing and CRUD: Bulk APIs, Refresh, Concurrency
+              Control, and Idempotent Ingestion
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Index/Create/Update/Delete Semantics, IDs,
+                Upserts, Scripts, and Partial Document Updates</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>Bulk Request Format, Batch Sizing, Backpressure,
+                Error Inspection, and Retry Classification</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>Refresh vs Flush vs Force Merge: Search
+                Visibility, Durability, Segments, and Performance</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>if_seq_no/if_primary_term Concurrency Control,
+                External Versioning Concepts, and Idempotency Keys</a
+              ><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Build a High-Throughput Bulk Loader that Handles
+                Partial Failure Without Silent Data Loss or Duplication</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>Text Analysis: Character Filters, Tokenizers, Token
+              Filters, Analyzers, and Language Search
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>Index-Time vs Search-Time Analysis and Why Token
+                Streams Define Search Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>Standard, Keyword, Whitespace, Pattern,
+                N-Gram/Edge-N-Gram, Path, and Language Tokenization Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>Lowercase, Stop, Stemmer, Synonym, Shingle,
+                ASCII Folding, and Normalization Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>Custom Analyzers, Multi-Fields, Search
+                Analyzers, Synonym Lifecycle, and Reindexing Implications</a
+              ><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>Use Analyze APIs to Debug Unexpected Matching
+                and Build Tests for Tokenization/Normalization Contracts</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Query DSL Fundamentals: Term-Level, Full-Text,
+              Boolean, Range, Exists, and Filtering
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>match, multi_match, match_phrase,
+                query_string/simple_query_string, and Phrase/Proximity
+                Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>term/terms, range, exists,
+                prefix/wildcard/regexp, IDs, and Cost Awareness</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>bool must/should/filter/must_not, Minimum Should
+                Match, Filter Context, and Cacheability</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>Nested Queries, Geo Queries, Script Queries, and
+                Avoiding Expensive Query Anti-Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Construct a Search API from User Intent with
+                Safe Query Templates, Explicit Filters, and Test Cases</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>07</span>Relevance Engineering: BM25, Field Weighting,
+              Function Score, Ranking, and Evaluation
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter07/Lesson1.html"
+                ><span>01</span>TF/IDF Intuition, BM25 Parameters, Document
+                Length, Rare Terms, and Why Scores Are Query-Relative</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"
+                ><span>02</span>Field Boosts, DisMax, Tie Breakers,
+                Cross/Best/Most Fields, and Multi-Match Strategy</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"
+                ><span>03</span>Function Score, Decay, Rank Feature, Business
+                Signals, Freshness, and Popularity Without Drowning Text
+                Relevance</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"
+                ><span>04</span>Named Queries, Explain/Profile, Score Debugging,
+                and Avoiding Score Comparisons Across Different Retrieval
+                Sources</a
+              ><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"
+                ><span>05</span>Build a Relevance Evaluation Set with Queries,
+                Judgments, Metrics, Baselines, and Regression Thresholds</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>Aggregations: Metrics, Buckets, Pipeline
+              Aggregations, Cardinality, and Analytical Search
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>Metric Aggregations:
+                min/max/avg/sum/stats/percentiles/cardinality and Approximation
+                Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>Bucket Aggregations: terms, range, date
+                histogram, filters, composite, significant terms, and Geo</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>Nested/Reverse Nested, Filter/Global, Sampler,
+                and Modeling Implications for Analytics</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>Pipeline Aggregations, Moving Functions,
+                Derivatives, Bucket Scripts, and Time-Series Computation</a
+              ><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Design a Faceted Analytics Query and Control
+                Accuracy, Memory, Shard Size, and Response Complexity</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>Dynamic Templates, Index Templates, Component
+              Templates, and Schema Evolution
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>Dynamic Field Detection, Coercion, Date/Numeric
+                Detection, and Failure Modes from Uncontrolled Input</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>Dynamic Templates by Path/Name/Type for Stable
+                Mapping Contracts</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>Composable Index Templates, Component Templates,
+                Priorities, Simulation, and Environment Promotion</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>Changing Mappings Safely: Additive Changes, New
+                Indices, Reindex, Alias Cutover, and Rollback</a
+              ><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>Create a Versioned Schema Deployment Workflow
+                with Template Tests and Zero-Downtime Reindexing</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>Data Streams, Time-Series Data, Logs, Metrics, and
+              Append-Heavy Workloads
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>Data Streams, Backing Indices, Write Index,
+                @timestamp, Rollover, and Append-Only Design</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>Time-Series Dimensions/Metrics Concepts, Index
+                Modes, Routing, and Compression/Storage Considerations</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>Logs and Metrics Modeling: High Cardinality,
+                Labels, Structured Events, and Field Governance</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>Late/Out-of-Order Events, Updates/Deletes
+                Against Backing Indices, and Operational Constraints</a
+              ><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Design a Telemetry Data Stream with Lifecycle,
+                Schema, Routing, Search, Aggregation, and Retention
+                Requirements</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>Ingest Pipelines, Processors, Enrichment, Failure
+              Handling, and Data Quality
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>Ingest Nodes/Pipelines, Processor Execution,
+                on_failure, Conditional Processing, and Simulation</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>Grok/Dissect, Date, Convert, Rename, Set,
+                Remove, Script, GeoIP/User-Agent-Like Enrichment Patterns</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>Enrich Policies and Lookup Data: Refresh,
+                Consistency, and Deployment Workflows</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Dead-Letter/Failure Indices, Observability,
+                Retry, and Preventing Poison Documents from Blocking
+                Pipelines</a
+              ><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Build and Benchmark an Ingest Pipeline Against
+                Upstream ETL Alternatives and Define Ownership Boundaries</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>Aliases, Rollover, Reindex, Update/Delete by Query,
+              and Zero-Downtime Index Changes
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>Read/Write Aliases, Filters, Routing,
+                is_write_index, and Atomic Alias Updates</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>Rollover Conditions by Age/Size/Docs and
+                Coordinating with Data Streams/Lifecycle Policies</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>Reindex from Index/Remote Source, Slicing,
+                Throttling, Conflict Handling, and Validation</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>Update-by-Query/Delete-by-Query, Task APIs,
+                Cancellation, Version Conflicts, and Cluster Impact</a
+              ><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>Execute a Mapping Migration with Dual Read/Write
+                or Alias Cutover, Validation, and Rollback Evidence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Shard Sizing, Routing, Allocation, Awareness, and
+              Cluster Topology
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>Primary/Replica Shard Count, Shard Overhead,
+                Dataset Growth, Search Concurrency, and Recovery Time</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Document Routing, Custom Routing, Hotspots,
+                Skew, and Co-Locating Queries</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>Allocation Deciders, Disk Watermarks,
+                Awareness/Forced Awareness, Data Tiers, and Zone Failure</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Shard Rebalancing, Recovery, Throttling,
+                Relocation, and Operational Headroom</a
+              ><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Model a Capacity/Shard Plan and Simulate Node
+                Loss Without Exceeding Recovery or Latency Objectives</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>14</span>Lucene Segments, Refresh, Merge, Translog, Flush,
+              and Storage Internals
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="Lesson1.html"
+                ><span>01</span>Immutable Segments, Inverted Index/Postings,
+                Stored Fields, Doc Values, Norms, and Term Dictionaries</a
+              ><a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>Refresh Creates Searchable Segments; Flush
+                Commits; Translog Supports Recovery—Separate the Concepts</a
+              ><a class="sidebar-lesson" href="Lesson3.html"
+                ><span>03</span>Segment Merging, Deleted Docs, Merge Policy,
+                Force Merge Risks, and Write Amplification</a
+              ><a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>Compression, Filesystem Cache, mmap, Storage
+                Latency, and Why Local SSD Often Matters</a
+              ><a
+                aria-current="page"
+                class="sidebar-lesson is-current"
+                href="Lesson5.html"
+                ><span>05</span>Diagnose an Indexing/Storage Problem Using
+                Segment Counts, Merge Pressure, Disk I/O, and Refresh Behavior<i
+                  >Current</i
+                ></a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Heap, Caches, Circuit Breakers, Thread Pools,
+              Backpressure, and JVM/Runtime Health
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>Heap vs Filesystem Cache, Object Overhead,
+                Compressed OOPs Concepts, and Why More Heap Is Not Always
+                Better</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Query/Request/Fielddata/Shard Request Caches:
+                Eligibility, Invalidation, and Memory Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>Circuit Breakers, In-Flight Requests,
+                Aggregation Memory, Fielddata Hazards, and Failure Protection</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Thread Pools, Queues, Rejections, Indexing
+                Pressure, Search Backpressure, and Client-Side Concurrency</a
+              ><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Build a Saturation Diagnosis from GC, CPU, Heap,
+                Rejections, Latency, Disk, and Workload Evidence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Search Execution, Profiling, Slow Logs,
+              Async/Search-After/PIT, and Pagination
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>Distributed Query/Fetch Phases, Can-Match, Shard
+                Pruning, DFS Concepts, and Coordination Cost</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Profile API, Explain, Search Slow Logs, Hot
+                Threads, Tasks, and Distinguishing Query from Fetch Cost</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>from/size Limits, search_after, Point-in-Time
+                Readers, Stable Sort Keys, and Pagination Correctness</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Async Search, Cancellation, Timeouts, Partial
+                Results, and Long-Running Analytical Requests</a
+              ><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Tune a Slow Search by Changing Query, Mapping,
+                Routing, Shards, Aggregation Strategy, or Pagination—Then
+                Measure</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Index Lifecycle: Elastic ILM/Data Tiers and
+              OpenSearch ISM
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>Lifecycle Goals: Rollover, Retention, Tiering,
+                Shrink/Force-Merge-Like Actions, and Cost/Recovery Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>Elastic ILM Phases/Actions, Data Tiers, Rollover
+                Aliases/Data Streams, and Explain/Troubleshooting</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>OpenSearch Index State Management Policies,
+                States, Transitions, Actions, Templates, and Simulation</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>Lifecycle Policy Versioning, Safe Testing, Stuck
+                Actions, Manual Intervention, and Compliance Retention</a
+              ><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Design Equivalent Retention Strategies in
+                Elastic and OpenSearch and Document Feature/Operational
+                Differences</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Snapshots, Restore, Searchable/Remote Storage
+              Concepts, and Disaster Recovery
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>Snapshot Repository Architecture, Incremental
+                Segment Reuse, Consistency, and Repository Access Control</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>Snapshot Lifecycle/Scheduled Backups, Retention,
+                Verification, and Monitoring</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Restore Full/Partial Indices, Rename-on-Restore,
+                Global State/Security Considerations, and Conflict Handling</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Cross-Region Repository Strategy, Searchable
+                Snapshot/Remote Store Concepts, and Cost/Latency Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>Run a Restore Drill and Measure RPO/RTO, Data
+                Completeness, Security State, Templates, and Application
+                Cutover</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>19</span>Elastic Security: TLS, Realms, Users/Roles, API
+              Keys, DLS/FLS, and Audit
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Secure-by-Default Principles, Node/HTTP TLS,
+                Certificates, Trust, and Enrollment/Bootstrap Concepts</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Users, Roles, Cluster/Index/Application
+                Privileges, Spaces, and Least-Privilege Design</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>API Keys, Service Accounts/Tokens, Rotation,
+                Expiration, and Machine-to-Machine Authentication</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>Document/Field-Level Security, Run-As, Audit
+                Logging, and Subscription/Feature Awareness</a
+              ><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Threat-Model an Elastic Deployment for Anonymous
+                Exposure, Over-Privileged APIs, Snapshot Theft, and Query
+                Abuse</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>OpenSearch Security: TLS, Internal Users, Roles,
+              Tenants, Backends, and Fine-Grained Access
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>Security Plugin Architecture, Node/HTTP
+                Certificates, Distinguished Names, and Initialization</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>Users, Roles, Role Mappings, Action Groups,
+                Index Permissions, and Cluster Permissions</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>Authentication Backends, LDAP/OIDC/SAML-Like
+                Integrations, Dashboards Multi-Tenancy, and Impersonation
+                Concepts</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>Document/Field-Level Security, Audit Logs, API
+                Keys/Scoped Access Where Available, and Secrets Rotation</a
+              ><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Compare an Equivalent Least-Privilege
+                Application Role in OpenSearch vs Elastic and Document
+                Behavioral Differences</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>Cluster Operations, Rolling Maintenance, Upgrades,
+              Node Replacement, and Failure Recovery
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>Cluster Health, Unassigned Shards, Allocation
+                Explain, Voting/Master Eligibility, and Quorum Safety</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>Rolling Restart/Upgrade Sequencing, Shard
+                Allocation Control, Synced Recovery Concepts, and Validation</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>Node Replacement, Disk Expansion, Tier
+                Migration, Rebalancing, and Decommissioning</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Version Compatibility, Breaking Changes, Plugin
+                Compatibility, Snapshot Before Upgrade, and Rollback
+                Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>Execute a Maintenance Game Day with a Node
+                Failure During Upgrade and Prove Recovery Procedures</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Remote Clusters, Cross-Cluster Search,
+              Cross-Cluster Replication, and Multi-Region Design
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>Remote Cluster Connectivity, Sniff/Proxy-Like
+                Modes, Security, Latency, and Failure Semantics</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>Cross-Cluster Search Across Indices/Data Streams
+                and Federated Query Tradeoffs</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>Elastic Cross-Cluster Replication:
+                Leader/Follower, Auto-Follow, Disaster Recovery, and
+                Non-Replicated Configuration</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>OpenSearch Cross-Cluster Replication/Search
+                Concepts and Managed-Service Constraints</a
+              ><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Design Multi-Region Search/DR with Explicit
+                RPO/RTO, Write Ownership, Security, Failover, and Cost
+                Tradeoffs</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>23</span>Operational Analytics Languages: ES|QL, OpenSearch
+              PPL/SQL, and Query API Boundaries
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter23/Lesson1.html"
+                ><span>01</span>ES|QL Pipeline Syntax, Sources, Filtering,
+                Transformation, Aggregation, Enrichment, and Tabular Results</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson2.html"
+                ><span>02</span>ES|QL Across Multiple Indices/Clusters and When
+                It Complements vs Replaces Query DSL/Aggregations</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson3.html"
+                ><span>03</span>OpenSearch PPL and SQL Interfaces:
+                Pipeline/Relational Mental Models, Supported Operations, and
+                Limitations</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson4.html"
+                ><span>04</span>Dashboards/Notebook/Observability Query
+                Workflows and Security/Resource Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter23/Lesson5.html"
+                ><span>05</span>Translate One Analytical Requirement Between
+                Query DSL+Aggregations, ES|QL, and PPL and Compare
+                Semantics/Cost</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>Observability, Dashboards, Alerts, Tracing Search
+              Workloads, and SLOs
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter24/Lesson1.html"
+                ><span>01</span>Cluster/Node/Index Metrics: JVM, CPU, Disk,
+                Shards, Indexing, Search, Cache, Merge, Refresh, and Recovery</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson2.html"
+                ><span>02</span>Dashboards/Kibana Data Views, Saved Objects,
+                Visualizations, and Environment Separation</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson3.html"
+                ><span>03</span>Alerting/Rules/Monitors, Thresholds vs
+                Anomaly/Rate Conditions, Noise Control, and Incident Routing</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson4.html"
+                ><span>04</span>Search SLOs: Availability, p95/p99 Latency,
+                Freshness, Indexing Lag, Error/Rejection Rate, and Relevance
+                Quality</a
+              ><a class="sidebar-lesson" href="../Chapter24/Lesson5.html"
+                ><span>05</span>Build an Operations Dashboard and Incident
+                Runbook Linking User Symptoms to Cluster and Query Evidence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>25</span>Vector Search Fundamentals: Embeddings,
+              Dense/Sparse Vectors, ANN, HNSW, Quantization, and Filters
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter25/Lesson1.html"
+                ><span>01</span>Embedding Semantics, Dimensions,
+                Distance/Similarity, Normalization, Model Versioning, and Data
+                Contracts</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson2.html"
+                ><span>02</span>Exact vs Approximate kNN, HNSW Concepts, ef/m
+                Parameters, Recall/Latency/Memory Tradeoffs, and Ground-Truth
+                Testing</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson3.html"
+                ><span>03</span>Elastic dense_vector/kNN Concepts and OpenSearch
+                k-NN/vector Engine Options</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson4.html"
+                ><span>04</span>Filtering Vector Search, Multi-Vector/Nested
+                Patterns, Quantization/Compression, and Hardware/Memory
+                Planning</a
+              ><a class="sidebar-lesson" href="../Chapter25/Lesson5.html"
+                ><span>05</span>Benchmark Vector Recall, p99 Latency, Index
+                Build Time, Memory, and Filter Selectivity with Representative
+                Queries</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>26</span>Semantic, Neural, Sparse, and Hybrid Search in
+              Elasticsearch and OpenSearch
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter26/Lesson1.html"
+                ><span>01</span>Semantic Search from Text to Embeddings:
+                Ingest-Time vs Query-Time Model Invocation and Failure
+                Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson2.html"
+                ><span>02</span>Elastic Semantic/Vector Retrieval and Hybrid
+                Ranking Concepts Across Lexical and Dense/Sparse Signals</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson3.html"
+                ><span>03</span>OpenSearch neural, neural_sparse, k-NN,
+                Ingest/Search Pipelines, and ML Commons Model Integration</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson4.html"
+                ><span>04</span>Hybrid Score Normalization, Weighted
+                Combination, Reciprocal-Rank-Like Fusion, Re-Ranking, and Search
+                Quality Evaluation</a
+              ><a class="sidebar-lesson" href="../Chapter26/Lesson5.html"
+                ><span>05</span>Build Equivalent Keyword+Semantic Search
+                Pipelines in Both Platforms and Compare Quality, Latency, and
+                Operational Complexity</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>27</span>RAG, AI Search, Inference Pipelines, Agentic
+              Search, and Production Retrieval Architecture
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter27/Lesson1.html"
+                ><span>01</span>RAG Architecture: Chunking, Metadata,
+                Embeddings, Retrieval, Re-Ranking, Context Packing, Citations,
+                and Evaluation</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson2.html"
+                ><span>02</span>Managed/External Model Connectors, Inference
+                Endpoints, Secrets, Rate Limits, Batching, and Model
+                Lifecycle</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson3.html"
+                ><span>03</span>Conversational/Agentic Search Concepts, Query
+                Rewriting, Tooling, Memory, and Guardrails</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson4.html"
+                ><span>04</span>Security for RAG: Tenant Filtering,
+                Document-Level Access, Prompt/Data Injection, Sensitive Fields,
+                and Auditability</a
+              ><a class="sidebar-lesson" href="../Chapter27/Lesson5.html"
+                ><span>05</span>Evaluate Retrieval Separately from Generation
+                with Recall@k, NDCG/MRR-Like Metrics, Faithfulness, Latency, and
+                Cost</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>28</span>Log Analytics, Security Analytics, Search
+              Applications, and Workload-Specific Architecture
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter28/Lesson1.html"
+                ><span>01</span>Application/Product Search: Catalog Modeling,
+                Synonyms, Relevance Signals, Autocomplete, Facets, and
+                Personalization Boundaries</a
+              ><a class="sidebar-lesson" href="../Chapter28/Lesson2.html"
+                ><span>02</span>Log Analytics: ECS/OpenTelemetry-Like Schema
+                Discipline, Pipelines, Data Streams, Retention, and High
+                Cardinality</a
+              ><a class="sidebar-lesson" href="../Chapter28/Lesson3.html"
+                ><span>03</span>Security Analytics: Event Normalization,
+                Detection Queries, Alert Volume, Long Retention, and
+                Investigative Search</a
+              ><a class="sidebar-lesson" href="../Chapter28/Lesson4.html"
+                ><span>04</span>Observability: Logs/Metrics/Traces Correlation,
+                Service Maps, APM-Like Workflows, and Cost Controls</a
+              ><a class="sidebar-lesson" href="../Chapter28/Lesson5.html"
+                ><span>05</span>Choose Index/Shard/Lifecycle/Search Strategies
+                per Workload Instead of Running Every Use Case in One
+                Undifferentiated Cluster</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>29</span>Migration and Interoperability: Elasticsearch ↔
+              OpenSearch, Reindexing, Clients, Plugins, and API Drift
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter29/Lesson1.html"
+                ><span>01</span>Assess API, Mapping, Query, Security, Plugin,
+                Snapshot, and Client Compatibility Before Migration</a
+              ><a class="sidebar-lesson" href="../Chapter29/Lesson2.html"
+                ><span>02</span>Snapshot Compatibility Boundaries vs Remote
+                Reindex/ETL, Full Copy, Dual Write, and Incremental
+                Synchronization</a
+              ><a class="sidebar-lesson" href="../Chapter29/Lesson3.html"
+                ><span>03</span>Client/SDK and Query-Language Differences,
+                Deprecated APIs, Feature Replacements, and Testing Strategy</a
+              ><a class="sidebar-lesson" href="../Chapter29/Lesson4.html"
+                ><span>04</span>Managed-Service Migration: Networking, IAM,
+                Encryption, Snapshot Repositories, DNS/Endpoint Cutover, and
+                Rollback</a
+              ><a class="sidebar-lesson" href="../Chapter29/Lesson5.html"
+                ><span>05</span>Build a Migration Runbook with Data Validation,
+                Relevance Regression, Performance Baselines, RPO, and Rollback
+                Triggers</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>30</span>Performance Engineering and Capacity Planning:
+              Indexing, Search, Shards, Hardware, and Cost
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter30/Lesson1.html"
+                ><span>01</span>Workload Characterization: QPS, Write Rate,
+                Document Size, Fields, Retention, Aggregations, Vector
+                Dimensions, and Concurrency</a
+              ><a class="sidebar-lesson" href="../Chapter30/Lesson2.html"
+                ><span>02</span>Indexing Tuning: Bulk Size, Refresh, Replicas,
+                Pipelines, Merge, Translog/Durability, and Backpressure</a
+              ><a class="sidebar-lesson" href="../Chapter30/Lesson3.html"
+                ><span>03</span>Search Tuning: Query Shape, Filters, Caches,
+                Routing, Shard Count, Precomputation, and Aggregation
+                Strategies</a
+              ><a class="sidebar-lesson" href="../Chapter30/Lesson4.html"
+                ><span>04</span>Hardware/Topology: CPU, Heap, Page Cache, SSD,
+                Network, Data Tiers, Hot/Warm/Cold, and Failure Headroom</a
+              ><a class="sidebar-lesson" href="../Chapter30/Lesson5.html"
+                ><span>05</span>Run Production-Like Benchmarks with Tail
+                Latency, Relevance, Recovery, Indexing Lag, Saturation, and Cost
+                per Workload</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>31</span>Production Capstone: Build, Evaluate, Secure,
+              Scale, Recover, and Operate a Search Platform
+            </summary>
+            <div>
+              <a class="sidebar-lesson" href="../Chapter31/Lesson1.html"
+                ><span>01</span>Define Search/Analytics Requirements, Relevance
+                Judgments, Freshness, Retention, Security, SLOs, RPO/RTO, and
+                Cost Constraints</a
+              ><a class="sidebar-lesson" href="../Chapter31/Lesson2.html"
+                ><span>02</span>Create Mappings/Analyzers/Templates, Ingest
+                Pipelines, Data Streams/Indices, Lifecycle Policies, and Core
+                Search/Aggregation APIs</a
+              ><a class="sidebar-lesson" href="../Chapter31/Lesson3.html"
+                ><span>03</span>Add Vector/Hybrid/RAG Retrieval with Explicit
+                Quality Benchmarks and Tenant/Security Filters</a
+              ><a class="sidebar-lesson" href="../Chapter31/Lesson4.html"
+                ><span>04</span>Load-Test, Profile, Secure, Snapshot/Restore,
+                Fail Over, Upgrade, Monitor, and Execute Operational Incident
+                Drills</a
+              ><a class="sidebar-lesson" href="../Chapter31/Lesson5.html"
+                ><span>05</span>Present Elastic vs OpenSearch Architecture
+                Choices with Evidence, Feature/License/Operations Tradeoffs, and
+                Exit/Migration Strategy</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 14 · Lesson 05</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">Elasticsearch and OpenSearch</a
+            ><span>/</span><span>Chapter 14 · Lesson 05</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 14 · Lucene Segments, Refresh, Merge, Translog, Flush, and
+              Storage Internals
+            </p>
+            <h1>
+              Diagnose an Indexing/Storage Problem Using Segment Counts, Merge
+              Pressure, Disk I/O, and Refresh Behavior
+            </h1>
+            <p>
+              Use segment, refresh, merge, translog, node and
+              application-latency evidence to diagnose an AtlasMart
+              indexing/storage regression and verify a causal repair.
+            </p>
+            <div class="lesson-meta">
+              <span>Intermediate</span><span>115–150 minutes</span
+              ><span>Lucene storage internals &amp; evidence lab</span
+              ><span>Elasticsearch 9.5.3 · OpenSearch 3.8.0</span
+              ><span>Last reviewed: September 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                AtlasMart reports a production symptom: indexing throughput
+                fell, search p99 doubled, disk utilization rose, and operators
+                see hundreds of segments. The wrong response is to force merge
+                immediately. A storage diagnosis must establish a timeline and
+                causal chain across refresh rate, segment creation,
+                update/delete churn, merge pressure, translog/flush behavior,
+                disk I/O and cache state.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Build an evidence timeline from application SLOs and
+                    index/node storage metrics before changing settings.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Distinguish excessive refresh/small-segment pressure from
+                    merge debt, translog/flush pressure and cold-cache I/O.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Use segment, docs.deleted, merge, refresh, flush, translog
+                    and filesystem statistics together.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Run one-variable experiments and reject repairs that only
+                    improve averages while p99 or recovery risk worsens.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Produce a reversible AtlasMart storage runbook with
+                    acceptance, rollback and cleanup criteria.
+                  </p>
+                </div>
+              </div>
+              <div class="callout">
+                <strong>Chapter baseline reviewed 11 September 2026</strong>
+                <p>
+                  Examples target self-managed
+                  <strong>Elasticsearch 9.5.3 / Kibana 9.5.3</strong> and
+                  <strong>OpenSearch 3.8.0 / OpenSearch Dashboards 3.8.0</strong
+                  >. The established AtlasMart endpoints remain
+                  <code>https://localhost:9200</code> for Elasticsearch using
+                  its copied CA and <code>https://localhost:9201</code> for the
+                  disposable OpenSearch demo certificate. The containers use
+                  their bundled JVMs; record the actual runtime with
+                  <code>GET _nodes/jvm</code> instead of hard-coding a JDK
+                  patch. Labs use one primary and zero replicas unless a step
+                  explicitly says otherwise. No moving <code>latest</code> tags,
+                  no manual editing of Lucene files, and no production force
+                  merge are used.
+                </p>
+              </div>
+            
+              <div class="callout warning course-execution-note">
+                <strong>Execution and safety note</strong>
+                <p>
+                  Run mutating, destructive, security, lifecycle, snapshot, failure-injection, and load-test commands only in the disposable AtlasMart lab or an equivalently isolated environment. Verify the target cluster, index, tenant, credentials, and rollback path before execution; treat shown output as an expected invariant unless the lesson explicitly labels it as captured evidence.
+                </p>
+              </div>
+</section>
+            <section>
+              <h2>
+                1. Start from the user-visible regression, not from a favorite
+                metric
+              </h2>
+              <p>
+                Collect the time window in which AtlasMart search/indexing
+                degraded. Record p50/p95/p99 latency, indexing rate,
+                errors/rejections, freshness lag and deployment/configuration
+                changes. Only then align server metrics. Segment count alone is
+                not a diagnosis; a small busy index can have many harmless young
+                segments, while a few huge segments can still be I/O-bound.
+              </p>
+              <p>
+                The goal is a falsifiable hypothesis such as “a
+                refresh-per-document change created small-segment/merge pressure
+                that saturated storage, raising write and search tail latency.”
+              </p>
+              <div class="code-window" data-code-block="" data-language="json">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >First-pass evidence bundle
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-json">GET _cluster/health
+GET _cat/indices/atlasmart-products*?v&amp;h=health,status,index,pri,rep,docs.count,docs.deleted,store.size,pri.store.size
+GET _cat/segments/atlasmart-products*?v
+GET atlasmart-products*/_stats/docs,store,indexing,search,refresh,flush,merge,segments,translog?level=shards
+GET _nodes/stats/fs,indices,jvm,process,thread_pool
+GET _nodes/hot_threads</code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>
+                2. Read symptom patterns, then verify competing explanations
+              </h2>
+              <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Observed pattern</th>
+                      <th>Hypothesis to test</th>
+                      <th>Disconfirming evidence</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Refresh count/rate jumps + many small segments</td>
+                      <td>Forced/too-frequent refresh creates merge work</td>
+                      <td>Refresh unchanged; segment sizes/count stable.</td>
+                    </tr>
+                    <tr>
+                      <td>docs.deleted/store grow with update rate</td>
+                      <td>Update/delete churn awaits merge reclamation</td>
+                      <td>No churn; deleted docs flat.</td>
+                    </tr>
+                    <tr>
+                      <td>merge current/bytes rise with disk await and p99</td>
+                      <td>Merge/storage contention</td>
+                      <td>
+                        Disk idle and CPU/query profile dominates instead.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Translog grows; recovery/flush behavior changes</td>
+                      <td>Flush threshold/durability/write pattern changed</td>
+                      <td>
+                        Translog/flush counters normal for same write rate.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>First queries slow after restart, then improve</td>
+                      <td>Cold filesystem cache</td>
+                      <td>Repeated warm runs remain equally slow.</td>
+                    </tr>
+                    <tr>
+                      <td>Search slow but merge/storage normal</td>
+                      <td>
+                        Query/relevance/heap/thread-pool cause outside this
+                        chapter
+                      </td>
+                      <td>
+                        Profile, GC/rejections/hot threads point elsewhere.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+            </section>
+            <section>
+              <h2>3. Build a controlled AtlasMart failure fixture</h2>
+              <p>
+                In a disposable lab only, compare two write modes against the
+                same dataset: <strong>A</strong> uses bulk writes and a
+                normal/explicit refresh cadence; <strong>B</strong> deliberately
+                uses <code>refresh=true</code> per write for a bounded number of
+                documents. Capture segment/refresh/merge metrics and latency.
+                This safely demonstrates mechanism without filling disks or
+                killing host processes.
+              </p>
+              <p>
+                Do not expect exact numeric outcomes across machines. The pass
+                condition is directional evidence on your environment plus a
+                clear causal explanation.
+              </p>
+              <div class="code-window" data-code-block="" data-language="text">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>Bounded
+                    experiment outline
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-text">Index A: atlasmart-storage-good
+  1 primary, 0 replicas
+  bulk 1,000 deterministic documents
+  refresh only at test boundary
+
+Index B: atlasmart-storage-bad
+  same mapping + documents
+  index each document with refresh=true
+  keep document count bounded
+
+For both capture:
+  _stats/refresh,merge,segments,docs,store
+  _segments
+  wall-clock ingest time
+  fixed-query p50/p95/p99 after indexing
+  host disk/CPU evidence
+
+Cleanup both disposable indices after comparison.</code></pre>
+              </div>
+              <div class="callout warning">
+                <strong>Safety boundary</strong>
+                <p>
+                  Do not intentionally fill the filesystem, disable safety
+                  mechanisms, or force merge a production/hot index to create a
+                  “better demo.” Controlled request patterns are enough to
+                  expose segment/refresh behavior.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>4. One-variable repair: remove forced refresh and retest</h2>
+              <p>
+                If the evidence supports the refresh hypothesis, change only
+                that variable first: remove per-write forced refresh, batch
+                writes, and use the product requirement to choose normal
+                periodic refresh or <code>wait_for</code> where a caller truly
+                needs search visibility. Rerun the identical fixture and query
+                set.
+              </p>
+              <p>
+                Verify that the repair preserves correctness: expected documents
+                are searchable within the agreed freshness bound, no writes are
+                lost, and application behavior that depended on immediate search
+                is either redesigned or explicitly waits for visibility.
+              </p>
+              <div class="code-window" data-code-block="" data-language="text">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >Acceptance record
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-text">Before -&gt; after comparison:
+  document count/checksum: must match
+  search relevance fixture: must pass
+  freshness SLO: must pass
+  indexing docs/s: record
+  p50/p95/p99 search + indexing latency: record
+  refresh total/rate: record
+  segment count/size distribution: record
+  merge bytes/time/current: record
+  disk latency/utilization: record
+  translog/flush stats: record
+
+Reject the change if correctness or tail-latency/recovery objectives regress.</code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>
+                5. Force merge is not the repair for a bad hot-index refresh
+                policy
+              </h2>
+              <p>
+                A force merge might temporarily reduce segment count, but if the
+                application continues forcing refreshes, small segments begin
+                accumulating again. Worse, the force merge itself adds heavy I/O
+                and temporary disk demand. Fix the cause first.
+              </p>
+              <p>
+                If a rolled-over read-only index has a lifecycle reason for
+                force merge, schedule and observe that operation separately, as
+                demonstrated in Lesson 3. Keep the hot write index on normal
+                background merge policy unless benchmark evidence and vendor
+                guidance justify a change.
+              </p>
+            </section>
+            <section>
+              <h2>
+                6. Flush/translog evidence prevents a second category mistake
+              </h2>
+              <p>
+                If operators see a large translog and manually flush repeatedly,
+                ask why. Automatic flush normally manages translog growth. A
+                manual flush might shorten replay state but can add I/O; it does
+                not make new documents searchable and does not remove the need
+                to diagnose storage pressure.
+              </p>
+              <p>
+                Likewise, a refresh does not guarantee a Lucene commit. Keep the
+                five distinct states from Lesson 2 in the incident runbook:
+                acknowledged, GET-visible, search-visible, translog-persisted
+                per policy, Lucene-committed.
+              </p>
+            </section>
+            <section>
+              <h2>7. Cold-cache and storage checks</h2>
+              <p>
+                If the incident followed node restart or shard relocation,
+                compare cold and warmed query behavior before blaming merges. If
+                remote storage or a degraded device shows elevated tail latency,
+                correlate it with node filesystem and host/storage telemetry. A
+                merge can expose storage weakness, but the root cause may be
+                device/network latency rather than “too many segments.”
+              </p>
+              <p>
+                Managed-service users may not have host-level
+                <code>iostat</code> access. Use provider metrics and the
+                product’s node/index statistics, and document observability gaps
+                rather than inventing values.
+              </p>
+            </section>
+            <section>
+              <h2>8. AtlasMart storage runbook and rollback</h2>
+              <ul>
+                <li>
+                  Freeze the evidence window: application p95/p99, throughput,
+                  freshness, errors, deployment/config changes.
+                </li>
+                <li>Capture index/node stats before changing anything.</li>
+                <li>
+                  State one causal hypothesis and one disconfirming observation.
+                </li>
+                <li>
+                  Reproduce safely on a disposable bounded fixture when
+                  possible.
+                </li>
+                <li>
+                  Change one variable; preserve mapping/query/data fixture.
+                </li>
+                <li>
+                  Validate document counts, search fixtures, freshness and tail
+                  latency.
+                </li>
+                <li>Keep rollback command/config and owner.</li>
+                <li>
+                  Delete only disposable lab indices; never manually remove
+                  files under <code>path.data</code>.
+                </li>
+              </ul>
+            </section>
+            <section>
+              <h2>Production judgment</h2>
+              <p>
+                Storage incidents cross layers: application refresh behavior,
+                Lucene segment lifecycle, translog/flush, OS cache, device
+                latency, merge/recovery and query workload. Good diagnosis
+                narrows those layers with evidence. The next chapter
+                deliberately continues upward into JVM heap, caches, circuit
+                breakers, thread pools and backpressure so storage and runtime
+                saturation are not conflated.
+              </p>
+            </section>
+            <div class="checkpoint">
+              <h3>Check your understanding</h3>
+              <ol>
+                <li>Why is segment count alone insufficient for diagnosis?</li>
+                <li>What is a strong refresh-pressure hypothesis?</li>
+                <li>Why not force merge the hot index as first repair?</li>
+                <li>
+                  How do you distinguish cold cache from persistent
+                  storage/query problems?
+                </li>
+                <li>What must every tuning experiment preserve?</li>
+              </ol>
+              <details class="answer-toggle">
+                <summary>Review the answers</summary>
+                <div>
+                  <p>
+                    <strong>1.</strong> It lacks workload, segment-size,
+                    refresh, merge, disk and latency context; many segments can
+                    be normal or pathological depending on evidence.
+                  </p>
+                  <p>
+                    <strong>2.</strong> A documented increase in forced
+                    refreshes aligns with more/smaller segments, more merge
+                    work/storage pressure and degraded foreground latency under
+                    the same workload.
+                  </p>
+                  <p>
+                    <strong>3.</strong> It treats a symptom, adds heavy
+                    I/O/temporary disk demand, and new writes can immediately
+                    recreate small segments.
+                  </p>
+                  <p>
+                    <strong>4.</strong> Run controlled repeated query sets and
+                    correlate latency with device reads/page-cache warmup and
+                    server metrics.
+                  </p>
+                  <p>
+                    <strong>5.</strong> Data/query correctness, freshness
+                    requirements, tail-latency/error objectives, recovery safety
+                    and a reversible change record.
+                  </p>
+                </div>
+              </details>
+            </div>
+            <section>
+              <h2>Summary and next step</h2>
+              <p>
+                You can now connect application-visible latency to segment
+                creation, merge debt, deleted docs, translog/flush behavior,
+                filesystem cache and storage I/O without mixing the mechanisms.
+                Chapter 15 adds JVM heap, caches, circuit breakers, thread
+                pools, queues and backpressure to the same evidence-first
+                diagnostic method.
+              </p>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <ul class="reference-list">
+                <li>
+                  <a
+                    href="https://www.elastic.co/docs/api/doc/elasticsearch/v9/operation/operation-indices-segments"
+                    rel="noopener"
+                    target="_blank"
+                    >Elastic index segments API</a
+                  >
+                  — Low-level Lucene segment metadata for index shards.
+                </li>
+                <li>
+                  <a
+                    href="https://www.elastic.co/docs/api/doc/elasticsearch/v9/operation/operation-indices-stats"
+                    rel="noopener"
+                    target="_blank"
+                    >Elastic index stats API</a
+                  >
+                  — Refresh, flush, merge, segment, translog, docs and store
+                  statistics.
+                </li>
+                <li>
+                  <a
+                    href="https://www.elastic.co/docs/reference/elasticsearch/index-settings/translog"
+                    rel="noopener"
+                    target="_blank"
+                    >Elastic translog settings</a
+                  >
+                  — Flush as Lucene commit plus new translog generation and
+                  request durability semantics.
+                </li>
+                <li>
+                  <a
+                    href="https://www.elastic.co/docs/deploy-manage/production-guidance/optimize-performance/indexing-speed"
+                    rel="noopener"
+                    target="_blank"
+                    >Elastic tune for indexing speed</a
+                  >
+                  — Filesystem-cache and indexing guidance.
+                </li>
+                <li>
+                  <a
+                    href="https://www.elastic.co/guide/en/elasticsearch/reference/current/tune-for-search-speed.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Elastic tune for search speed</a
+                  >
+                  — Filesystem cache, storage latency and local-versus-remote
+                  storage guidance.
+                </li>
+                <li>
+                  <a
+                    href="https://docs.opensearch.org/latest/api-reference/index-apis/segment/"
+                    rel="noopener"
+                    target="_blank"
+                    >OpenSearch Index Segments API</a
+                  >
+                  — Segment committed/search flags and Lucene writer-version
+                  evidence.
+                </li>
+                <li>
+                  <a
+                    href="https://docs.opensearch.org/latest/api-reference/index-apis/stats/"
+                    rel="noopener"
+                    target="_blank"
+                    >OpenSearch Index Stats API</a
+                  >
+                  — Refresh, flush, merge, segments, translog and
+                  deleted-document statistics.
+                </li>
+                <li>
+                  <a
+                    href="https://docs.opensearch.org/latest/api-reference/index-apis/refresh/"
+                    rel="noopener"
+                    target="_blank"
+                    >OpenSearch Refresh API</a
+                  >
+                  — Search-visibility semantics and refresh cost guidance.
+                </li>
+                <li>
+                  <a
+                    href="https://docs.opensearch.org/latest/api-reference/index-apis/flush/"
+                    rel="noopener"
+                    target="_blank"
+                    >OpenSearch Flush API</a
+                  >
+                  — Flush and transaction-log lifecycle semantics.
+                </li>
+                <li>
+                  <a
+                    href="https://docs.opensearch.org/latest/api-reference/index-apis/force-merge/"
+                    rel="noopener"
+                    target="_blank"
+                    >OpenSearch Force Merge API</a
+                  >
+                  — Merge/deleted-document behavior and temporary disk-space
+                  risk.
+                </li>
+                <li>
+                  <a
+                    href="https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-cat-segments"
+                    rel="noopener"
+                    target="_blank"
+                    >Elastic CAT segments</a
+                  >
+                  — Human-readable segment inspection; application code should
+                  use structured APIs.
+                </li>
+                <li>
+                  <a
+                    href="https://docs.opensearch.org/latest/api-reference/cat/cat-segments/"
+                    rel="noopener"
+                    target="_blank"
+                    >OpenSearch CAT segments</a
+                  >
+                  — Human-readable segment-level state.
+                </li>
+                <li>
+                  <a
+                    href="https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-nodes-hot-threads"
+                    rel="noopener"
+                    target="_blank"
+                    >Elastic hot threads API</a
+                  >
+                  — CPU/blocking evidence during diagnosis.
+                </li>
+                <li>
+                  <a
+                    href="https://docs.opensearch.org/latest/api-reference/nodes-apis/nodes-hot-threads/"
+                    rel="noopener"
+                    target="_blank"
+                    >OpenSearch hot threads API</a
+                  >
+                  — Node hot-thread evidence for runtime/storage correlation.
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a class="previous" href="Lesson4.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Compression, Filesystem Cache, mmap, Storage Latency, and Why
+                Local SSD Often Matters</strong
+              ></a
+            ><a class="next" href="../Chapter15/Lesson1.html"
+              ><small>Next lesson</small
+              ><strong
+                >Heap vs Filesystem Cache, Object Overhead, Compressed OOPs
+                Concepts, and Why More Heap Is Not Always Better</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://mohammadijoo.ir/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <small
+          >Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+    <script src="../course-code-highlight.js"></script>
+  </body>
+</html>
