@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Prove non-cascading document deletes, detect orphaned descendants, and implement guarded recursive cleanup with verification." name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>
+      Deleting Documents Does Not Automatically Delete Subcollections: Recursive
+      Delete and Orphan Risk | Firebase and Cloud Firestore | Big Data Academy
+    </title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/><link href="../firebase-firestore-consistency.css?v=20260920.1" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
+<span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24">
+<ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+<path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
+<span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
+</a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a>
+<a class="is-active" href="../../../index.html#courses">Courses</a>
+<a href="../../../index.html#method">Method</a>
+<a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="4"></circle>
+<path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path>
+</svg>
+</button>
+<button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="M4 7h16M4 12h16M4 17h16"></path>
+</svg>
+</button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu="">
+<a href="../../../index.html#roadmap">Learning path</a>
+<a href="../../../index.html#courses">Courses</a>
+<a href="../../../index.html#method">Method</a>
+<a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+</nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">FS</span>
+<div>
+<small>Course 16</small><strong>Firebase and Cloud Firestore</strong>
+</div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">
+            ×
+          </button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24">
+<circle cx="11" cy="11" r="7"></circle>
+<path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 135 lessons..." type="search"/></label>
+<nav aria-label="Firebase and Cloud Firestore curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter">
+<summary>
+<span>01</span>Firestore Foundations, Firebase/Google Cloud,
+              Editions, Modes, Locations, and Lab Setup
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What Cloud Firestore Is: Serverless Document
+                Database, Realtime Clients, Strong Consistency, and Workload
+                Fit</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Standard vs Enterprise Editions and Native
+                Core/Pipeline vs MongoDB Compatibility Modes</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>Firebase Projects, Google Cloud Projects,
+                Databases, Regions/Multi-Regions, Billing, and Responsibility
+                Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Create a Database, Configure SDKs/CLI, Use
+                Emulator Suite Where Appropriate, and Verify Reads/Writes</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build a Reproducible Lab with Authentication,
+                Rules, Test Data, Index Configuration, Logging, and Safe
+                Cleanup</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>02</span>Documents, Collections, Fields, References, Maps,
+              Arrays, Timestamps, GeoPoints, and Limits
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>Document/Collection Hierarchy, Paths, IDs,
+                Subcollections, and the Absence of Traditional Server-Side Joins
+                in Core Operations</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Supported Native Data Types, Null, Numeric
+                Ordering, Timestamps, References, GeoPoints, Bytes, Arrays, and
+                Maps</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>Document Size, Field/Path/Nesting Constraints,
+                Index Entry Implications, and Schema Governance</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Auto IDs vs Semantic IDs, Hotspot Risks, Tenant
+                Prefixes, and External Identity Mapping</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Inspect and Validate a Document Schema Across
+                Web/Mobile/Server SDK Serialization Boundaries</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>03</span>Data Modeling by Access Pattern: Embedding,
+              Referencing, Duplication, Fan-Out, and Denormalization
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>Start from Screens/Queries/Transactions—not
+                Entity Diagrams—When Designing Firestore Models</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Embed vs Reference vs Duplicate: Read Cost,
+                Write Amplification, Consistency, and Document Limits</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>Subcollections vs Root Collections, Collection
+                Groups, Ownership, Lifecycle, and Security Rules</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>Fan-Out Writes, Materialized Views, Counters,
+                Feeds, and Precomputed Query Shapes</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>Refactor a Relational Model into Firestore and
+                Document Every Consistency and Cost Tradeoff</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>04</span>CRUD with Client and Server SDKs: Reads, Writes,
+              Updates, Deletes, Preconditions, and Converters
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>Get Documents, Create/Set/Merge, Update, Delete,
+                and Understand Missing vs Null Fields</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>Field Paths, Nested Updates, Array Operations,
+                Increment, Server Timestamps, and Atomic Field Transforms</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>Server vs Client SDK
+                Authentication/Authorization Models and Trusted vs Untrusted
+                Execution</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Data Converters/Typed Models, Serialization,
+                Validation, and Backward-Compatible Schema Evolution</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>Build an Idempotent CRUD Service and Verify
+                Error Handling, Retry, Preconditions, and Observability</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>05</span>Queries: Filters, Ordering, Limits, Cursors,
+              Collection Groups, and Query Constraints
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>Equality, Inequality, in/not-in,
+                array-contains/array-contains-any, and Compound Query
+                Semantics</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>orderBy, limit/limitToLast,
+                startAt/startAfter/endAt/endBefore, and Stable Cursor
+                Pagination</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>Collection Group Queries Across Subcollections
+                and Their Modeling/Security Implications</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Query Limitations, Field Existence Effects,
+                Index Requirements, and How to Redesign Unsupported Access
+                Patterns</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Create a Query Contract Test Suite Covering
+                Boundaries, Pagination, Empty Results, and Security
+                Constraints</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>06</span>Indexes:
+              Automatic/Composite/Collection-Group/Vector, Exemptions, and Index
+              Cost
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>Single-Field Indexing in Standard Native Mode,
+                Ascending/Descending/Array Entries, and Automatic Behavior</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>Composite Indexes: Ordering, Equality/Range
+                Fields, Collection vs Collection-Group Scope, and Error-Driven
+                Creation</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Index Exemptions for Large Strings/Arrays/Maps,
+                Sequential Fields, TTL Fields, and Write/Storage Cost</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Enterprise Native Indexing Differences and Why
+                Optional Indexing Changes Query-Performance Reasoning</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Audit Index Usage, Remove Redundant Structures,
+                and Validate Query Latency/Cost Before and After Changes</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>07</span>Realtime Listeners: Snapshots, Change Events,
+              Metadata, Latency, and Listener Lifecycle
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>Document vs Query Listeners, Initial Snapshot,
+                Incremental Changes, Ordering, and Local Writes</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Snapshot Metadata, Pending Writes, Cache vs
+                Server Sources, and User-Experience Semantics</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Listener Fan-Out at Scale, Query Selectivity,
+                Reconnects, Resume Behavior, and Bandwidth/Read Cost</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Unsubscribe/Lifecycle Management in Web/Mobile
+                Frameworks and Avoiding Leaked Listeners</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Design a Realtime Screen with Correct
+                Offline/Online State, Security, Pagination, and Cost Controls</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>08</span>Offline Persistence, Local Cache, Synchronization,
+              Conflict Behavior, and Offline Indexes
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>Offline Cache Semantics for Android, Apple, and
+                Web Clients: Reads, Writes, Listeners, and Synchronization</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>Last-Write-Wins Behavior for Multiple Offline
+                Changes and Where Transactions Differ</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Memory vs Persistent Cache Options,
+                Multi-Tab/Process Considerations, and Sensitive-Data Risk</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>Local Query Indexes, Cache Growth, User
+                Sign-Out/Data Clearing, and Offline Performance</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Test Airplane-Mode, Restart, Conflicting Writes,
+                Reconnect, and Security-Rule Changes End to End</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>09</span>Transactions, Batched Writes, Atomic Field
+              Operations, Retries, and Contention
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>Transactions Read-Then-Write Atomically,
+                Optimistic/Pessimistic Differences by SDK/Edition Context, and
+                Retry Semantics</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>Batched Writes for Atomic Multi-Document Changes
+                Without Reads and Operation Limits</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Increment, arrayUnion/arrayRemove, Server
+                Timestamp, Compare/Precondition Patterns, and Conflict
+                Reduction</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Hot Documents, High-Contention Counters,
+                Sharded/Distributed Counter Patterns, and Idempotency</a>
+<a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Load-Test a Contended Workflow and Redesign It
+                to Meet Throughput Without Violating Correctness</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>10</span>Atomicity Across Business Workflows: Counters,
+              Reservations, Idempotency, and Event-Driven Consistency
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Define the True Atomic Boundary: One Document,
+                Transaction Set, or Eventual Multi-Step Workflow</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Distributed/Sharded Counters, Read Aggregation,
+                Write Distribution, and Accuracy/Latency Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Reservation/Inventory Patterns, Conditional
+                Writes, Expiration, Compensation, and Oversell Prevention</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Idempotency Keys, Exactly-Once Illusions, Cloud
+                Functions/Eventarc Retries, and Deduplication</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>Design a Saga-Like Firestore Workflow with
+                Recovery, Replay, Monitoring, and Manual Repair Paths</a>
+</div>
+</details>
+<details class="sidebar-chapter" open="">
+<summary>
+<span>11</span>Subcollections, Collection Groups, Hierarchies,
+              Deletion, and Data Lifecycle
+            </summary>
+<div>
+<a class="sidebar-lesson" href="Lesson1.html"><span>01</span>Deep Hierarchies vs Flat Collections:
+                Queryability, Security, Ownership, and Operational Complexity</a>
+<a class="sidebar-lesson" href="Lesson2.html"><span>02</span>Collection Group Queries and Index/Rules
+                Requirements Across Parent Documents</a>
+<a aria-current="page" class="sidebar-lesson is-current" href="Lesson3.html"><span>03</span>Deleting Documents Does Not Automatically Delete
+                Subcollections: Recursive Delete and Orphan Risk<i>Current</i></a>
+<a class="sidebar-lesson" href="Lesson4.html"><span>04</span>Archiving, Soft Delete, Legal Retention, Tenant
+                Deletion, Export, and Lifecycle State Machines</a>
+<a class="sidebar-lesson" href="Lesson5.html"><span>05</span>Implement a Tenant/Data-Subject Deletion Plan
+                that Finds and Verifies All Hierarchical Data</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>12</span>Security Rules Foundations: Authentication Context,
+              Match Paths, Reads/Writes, and Validation
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>Security Rules Execution Model,
+                request/resource, Auth Context, and Rules Are Not Filters</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Path Matching, Wildcards, Recursive Wildcards,
+                get/exists, and Access-Call Limits</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Separate create/update/delete/read/list/get
+                Permissions and Validate Required/Immutable Fields</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>Role/Ownership Models, Public/Private Documents,
+                Nested Resources, and Deny-by-Default Structure</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Write Emulator-Based Rules Tests for Allowed and
+                Forbidden Cases Before Shipping Client Queries</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>13</span>Advanced Security Rules, Query Compatibility, App
+              Check, and Rules Testing
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>Secure Queries by Making Query Constraints
+                Provably Compatible with Rules</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>Rules Functions, Reuse, Complexity, Access-Call
+                Caching, and Avoiding Hidden Cost/Limit Failures</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>App Check for Abuse Reduction: Attestation
+                Concepts, Enforcement Boundaries, and Why It Is Not
+                Authorization</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Testing Rules in CI with Emulators, Fixtures,
+                Authentication Claims, and Regression Cases</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Threat-Model a Client App for ID Enumeration,
+                Query Broadening, Forged Fields, Replay, and Rule Drift</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>14</span>IAM, Admin/Server SDKs, Service Accounts,
+              Authentication, and Trust Boundaries
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Firebase Authentication vs Google Cloud IAM vs
+                Firestore Security Rules: Who Authorizes Which Request Path</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>Admin/Server SDKs Bypass Security Rules: Service
+                Account Least Privilege and Application-Layer Authorization</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Custom Claims, Tenant/Role Data, Token Refresh,
+                Revocation, and Avoiding Authorization Only in UI</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Workload Identity/Service Accounts, Keyless
+                Credentials, Secrets, Rotation, and Local Development</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Design Separate Browser/Mobile and Backend
+                Access Paths with Explicit Trust, Audit, and Failure
+                Boundaries</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>15</span>Scaling and Hotspots: Key Distribution, Index
+              Fan-Out, Sequential Values, and Ramp-Up
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Automatic Scaling Does Not Remove Hotspot
+                Physics: Document, Key-Range, and Index Contention</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Sequential Document IDs/Timestamps, Monotonic
+                Fields, High Write Rates, and Index Hotspots</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>The 500/50/5-Style Gradual Traffic Ramp Concept,
+                New Collections, and Migration Warm-Up</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>Index Fan-Out, Large Arrays/Maps,
+                High-Cardinality Fields, and Write Latency/Cost</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Load-Test a High-Write Model, Identify Hotspots,
+                and Redesign Keys, Indexes, or Data Distribution</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>16</span>Aggregation Queries, Server-Side Count/Sum/Avg,
+              Materialized Aggregates, and Analytics Boundaries
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>count(), sum(), avg() Semantics, Supported
+                SDKs/Queries, and Index-Entry-Based Cost</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>Aggregations with Filters/Collection Groups and
+                Consistency Expectations</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>When to Maintain Write-Time Aggregates for
+                Realtime Display vs Run Read-Time Aggregations</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>Large-Scale Analytics Limits and
+                Exporting/Replicating Data to BigQuery or Analytical Systems</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Choose Between Query-Time Aggregation,
+                Materialized Document, Distributed Counter, and External
+                Warehouse</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>17</span>Vector Search: Embeddings, KNN Indexes, Distance
+              Measures, Filters, and Retrieval Design
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Embedding Fundamentals, Model Versioning,
+                Dimensions, Similarity/Distance, and Storing Vector Values</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Create/Manage Firestore Vector Indexes and
+                Understand Supported Dimensions/Query Limits</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>K-Nearest-Neighbor Queries, Distance Thresholds,
+                Metadata Filters, and Result Ranking</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Firestore Does Not Generate Embeddings: Vertex
+                AI/External Generation Pipelines, Backfills, and Updates</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Build and Evaluate a Semantic Retrieval Feature
+                with Recall/Quality, Latency, Security, and Cost Measurements</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>18</span>Firestore Enterprise Native Mode: Core vs Pipeline
+              Operations and Advanced Querying
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Enterprise Edition Architecture/Query Engine and
+                How Native Core Semantics Differ from Standard</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Pipeline Operations: Pipeline Syntax Mental
+                Model, Advanced Filters/Transforms/Aggregations, and Server SDK
+                Context</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Relational-Style Join Capabilities Through
+                Sub-Pipelines: Power, Cost, and Modeling Implications</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Index-Optional Querying in Enterprise: Query
+                Explain, Performance, and When to Add Indexes</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Translate an Access Pattern Between Standard
+                Core Queries and Enterprise Pipeline Operations and Compare
+                Tradeoffs</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>19</span>Firestore with MongoDB Compatibility: Drivers,
+              MQL/BSON, Tools, and Serverless Differences
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>Enterprise MongoDB Compatibility Mode, MongoDB
+                Protocol/Drivers, Connection Strings, and Authentication</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Supported BSON Types, _id Rules,
+                Documents/Collections, MQL Query/CRUD Compatibility, and
+                Limits</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>mongosh, Compass, mongoimport/export,
+                mongodump/restore, Mongoose, and Tool Compatibility
+                Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>Behavior Differences from MongoDB: Commands,
+                Transactions/Features, Indexing, Change Semantics, and
+                Operational Model</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Port a Small MongoDB Application and Build
+                Compatibility Tests Instead of Assuming Drop-In Equivalence</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>20</span>Migrating MongoDB Workloads to Firestore MongoDB
+              Compatibility
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Inventory MongoDB Features, Drivers, Data Types,
+                Indexes, Aggregations, Transactions, and Operational
+                Dependencies</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Compatibility Matrix Testing, Unsupported
+                Features, Semantic Differences, and Application Refactoring</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Bulk Migration with Export/Import or
+                Datastream→Cloud Storage→Dataflow Patterns and Change Capture</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Dual-Run/Cutover Planning, Validation, Lag
+                Monitoring, Read/Write Freeze, and Rollback</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Execute a Migration Rehearsal with Counts,
+                Checksums/Samples, Query Regression, Performance, and Failure
+                Recovery</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>21</span>TTL, Retention, Expiration, Backfills, and
+              Lifecycle Automation
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>TTL Policies and Expiration Fields: Asynchronous
+                Deletion Semantics and Non-Instant Guarantees</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>Index Exemptions for TTL Fields, Sequential
+                Timestamp Costs, and Write Throughput Considerations</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Soft Delete vs TTL vs Scheduled/Batch Cleanup vs
+                Archive: Compliance and Product Requirements</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>Backfilling TTL Fields Safely, Monitoring
+                Deletion, Event Side Effects, and Cost</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>Design Retention for Sessions, Events, User
+                Data, Audit Records, and Legal Holds Without Accidental Loss</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>22</span>Backups, Point-in-Time Recovery, Restore, and
+              Disaster Recovery
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Scheduled Backups, Backup Retention, Database
+                Restore/Clone Concepts, and Access Control</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>PITR Window Semantics, Historical
+                Reads/Recovery, and Accidental Write/Delete Scenarios</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>Export/Import vs Managed Backups/PITR: Different
+                Purposes, RPO/RTO, and Operational Workflows</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Multi-Region Location Does Not Replace Backup:
+                Failure Modes, Logical Corruption, and Operator Mistakes</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Run a Recovery Drill and Measure Data
+                Completeness, RPO, RTO, Rules/Indexes/Configuration, and
+                Application Cutover</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>23</span>Encryption, CMEK, Network Access, Private
+              Connectivity, and Data Governance
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter23/Lesson1.html"><span>01</span>Encryption at Rest/In Transit, Google-Managed
+                Keys, CMEK Concepts, Key Availability, Rotation, and Failure
+                Impact</a>
+<a class="sidebar-lesson" href="../Chapter23/Lesson2.html"><span>02</span>VPC/Private Google Access and Service Perimeter
+                Concepts Where Applicable, Egress Paths, and Trusted Backends</a>
+<a class="sidebar-lesson" href="../Chapter23/Lesson3.html"><span>03</span>Database Locations, Data Residency, Multi-Region
+                Tradeoffs, Replication, and Governance Requirements</a>
+<a class="sidebar-lesson" href="../Chapter23/Lesson4.html"><span>04</span>PII Classification, Field-Level Design, Logging
+                Redaction, Backups, Exports, and Right-to-Delete Workflows</a>
+<a class="sidebar-lesson" href="../Chapter23/Lesson5.html"><span>05</span>Build a Security/Governance Control Matrix
+                Mapping Threats and Compliance Requirements to Firestore/Google
+                Cloud Controls</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>24</span>Observability: Query Explain, Query Insights, Key
+              Visualizer, Metrics, Logs, and Troubleshooting
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter24/Lesson1.html"><span>01</span>Cloud Monitoring Metrics for
+                Reads/Writes/Deletes, Latency, Errors, Quotas, Storage, and
+                Listener Behavior</a>
+<a class="sidebar-lesson" href="../Chapter24/Lesson2.html"><span>02</span>Query Explain to Inspect Execution, Index Use,
+                Scanned/Returned Work, and Optimization Evidence</a>
+<a class="sidebar-lesson" href="../Chapter24/Lesson3.html"><span>03</span>Query Insights to Identify Expensive/Slow Query
+                Patterns and Prioritize Tuning</a>
+<a class="sidebar-lesson" href="../Chapter24/Lesson4.html"><span>04</span>Key Visualizer/Hotspot Diagnostics Where
+                Available, Application Tracing, Logs, and Correlation IDs</a>
+<a class="sidebar-lesson" href="../Chapter24/Lesson5.html"><span>05</span>Build a Troubleshooting Runbook for Permission
+                Errors, Missing Indexes, Hotspots, Latency, Quota, and Cost
+                Spikes</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>25</span>Cost Engineering, Quotas, Limits, Billing, and
+              Capacity/Usage Forecasting
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter25/Lesson1.html"><span>01</span>Read/Write/Delete/Index/Storage/Network/Backup/PITR Billing
+                Dimensions and Edition Differences</a>
+<a class="sidebar-lesson" href="../Chapter25/Lesson2.html"><span>02</span>Listener and Query Read Amplification, Index
+                Entry Reads, Aggregations, Retries, and Hidden Cost
+                Multipliers</a>
+<a class="sidebar-lesson" href="../Chapter25/Lesson3.html"><span>03</span>Free Tier/Quotas vs Production Limits, Rate
+                Limits, Daily Budgets, Alerts, and Abuse Controls</a>
+<a class="sidebar-lesson" href="../Chapter25/Lesson4.html"><span>04</span>Model Cost per User/Feature/Event and Compare
+                Denormalization, Fan-Out, Aggregation, and Retention
+                Alternatives</a>
+<a class="sidebar-lesson" href="../Chapter25/Lesson5.html"><span>05</span>Load-Test and Cost-Test a Feature Before Launch
+                with Explicit Volume, Growth, and Worst-Case Assumptions</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>26</span>Testing, Emulator Suite, CI/CD, Index/Rules
+              Deployment, and Schema Migration
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter26/Lesson1.html"><span>01</span>Emulator Suite for Firestore/Auth/Functions-Like
+                Integration Testing and Known Differences from Production</a>
+<a class="sidebar-lesson" href="../Chapter26/Lesson2.html"><span>02</span>Seed/Reset Test Data, Deterministic IDs/Clock
+                Handling, and Parallel Test Isolation</a>
+<a class="sidebar-lesson" href="../Chapter26/Lesson3.html"><span>03</span>Version Security Rules and Index Definitions, CI
+                Validation, Staged Deployment, and Rollback</a>
+<a class="sidebar-lesson" href="../Chapter26/Lesson4.html"><span>04</span>Backward-Compatible Document Migrations, Dual
+                Readers/Writers, Backfills, and Feature Flags</a>
+<a class="sidebar-lesson" href="../Chapter26/Lesson5.html"><span>05</span>Create a Production Deployment Checklist
+                Covering Rules, Indexes, Billing, Backups, Observability, and
+                Rollback</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>27</span>Production Capstone: Design, Secure, Scale, Search,
+              Recover, and Operate a Firestore Application
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter27/Lesson1.html"><span>01</span>Define User Journeys, Data Model, Queries,
+                Realtime/Offline Needs, Atomicity, Retention, Security, SLOs,
+                and Cost Budget</a>
+<a class="sidebar-lesson" href="../Chapter27/Lesson2.html"><span>02</span>Implement
+                Documents/Indexes/Queries/Listeners/Transactions, Typed SDK
+                Access, Security Rules, and Trusted Backend Paths</a>
+<a class="sidebar-lesson" href="../Chapter27/Lesson3.html"><span>03</span>Add Aggregation, Vector Retrieval, Enterprise
+                Pipeline or MongoDB Compatibility Only Where Requirements
+                Justify Them</a>
+<a class="sidebar-lesson" href="../Chapter27/Lesson4.html"><span>04</span>Load-Test Hotspots, Test Offline/Conflict Paths,
+                Run Security Tests, Enable Backup/PITR, Monitor Queries, and
+                Rehearse Recovery</a>
+<a class="sidebar-lesson" href="../Chapter27/Lesson5.html"><span>05</span>Present the Architecture with Measured
+                Cost/Latency, Data-Governance Controls, Known Limits, and
+                Criteria for Choosing Another Database</a>
+</div>
+</details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar">
+<button data-sidebar-open="" type="button">
+<span>Course navigation</span><span>Chapter 11 · Lesson 03</span>
+</button>
+</div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+<a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">Firebase and Cloud Firestore</a><span>/</span><span>Chapter 11 · Lesson 03</span>
+</nav>
+<header class="lesson-header">
+<p class="eyebrow">
+              Chapter 11 · Subcollections, Collection Groups, Hierarchies,
+              Deletion, and Data Lifecycle
+            </p>
+<h1>
+              Deleting Documents Does Not Automatically Delete Subcollections:
+              Recursive Delete and Orphan Risk
+            </h1>
+<p>
+              Prove non-cascading document deletes, detect orphaned descendants,
+              and implement guarded recursive cleanup with verification.
+            </p>
+<div class="lesson-meta">
+<span>Intermediate</span><span>145–175 minutes</span><span>Recursive delete · orphan detection</span><span>Firebase JS 12.19.0 · Admin 14.4.0 · CLI 15.30.0</span><span>Last reviewed: September 2026</span>
+</div>
+</header>
+<nav aria-label="On this page" class="lesson-toc">
+<strong>On this page</strong>
+<ol data-generated-toc=""></ol>
+</nav>
+<div class="lesson-content">
+<section>
+<h2>Learning outcomes</h2>
+<div class="objectives">
+<div class="objective">
+<span>01</span>
+<p>
+                    Prove with a deterministic fixture that deleting a document
+                    does not delete documents in its subcollections.
+                  </p>
+</div>
+<div class="objective">
+<span>02</span>
+<p>
+                    Implement a scoped recursive inventory/delete routine that
+                    is intentionally non-atomic and therefore
+                    resumable/verifiable.
+                  </p>
+</div>
+<div class="objective">
+<span>03</span>
+<p>
+                    Distinguish shallow document delete, recursive server-side
+                    cleanup and managed production bulk-delete behavior.
+                  </p>
+</div>
+<div class="objective">
+<span>04</span>
+<p>
+                    Use project/database/path safety guards and post-delete
+                    scans to reduce catastrophic deletion risk.
+                  </p>
+</div>
+</div><div class="callout warning course-consistency-note"><strong>Execution and safety note</strong><p>Use the Emulator Suite, a Firebase demo project, or an isolated test project for destructive, security-sensitive, billing-sensitive, migration, backup/restore, or write-heavy exercises unless the lesson explicitly marks managed verification as required. Treat shown output as expected evidence unless it is explicitly identified as captured output, and re-check current Firebase/Google Cloud edition, mode, quota, pricing, and security documentation before production execution.</p></div>
+<div class="callout">
+<strong>Chapter 11 reproducibility baseline · reviewed 16 September
+                  2026</strong>
+<p>
+                  AtlasMart continues the same mandatory environment used in
+                  Chapters 01–10: project ID
+                  <code>demo-atlasmart-firestore</code>, Standard edition /
+                  Native mode / <code>(default)</code> database, Firestore
+                  emulator <code>127.0.0.1:8080</code>, Authentication emulator
+                  <code>127.0.0.1:9099</code>, Emulator UI
+                  <code>127.0.0.1:4000</code>, Firebase CLI
+                  <code>15.30.0</code>, Firebase JavaScript SDK
+                  <code>12.19.0</code>, Firebase Admin Node SDK
+                  <code>14.4.0</code> with
+                  <code>@google-cloud/firestore</code> 9.1.0, and Node.js 22+.
+                  Mandatory deletion/lifecycle work remains local and isolated.
+                  Managed bulk delete, managed export/import, PITR, production
+                  IAM, Cloud Storage and legal/compliance procedures are
+                  discussed but are not falsely claimed to have run in the
+                  emulator.
+                </p>
+</div>
+<div class="callout warning">
+<strong>Evidence boundary</strong>
+<p>
+                  The Emulator Suite is appropriate for proving path structure,
+                  document-delete versus surviving-subcollection behavior,
+                  collection-group query results, Security Rules behavior,
+                  recursive-cleanup logic and deterministic post-delete
+                  verification. It does not establish production delete
+                  throughput, billed read/delete cost, managed bulk-delete
+                  progress, export consistency, IAM behavior, backup/PITR
+                  recovery, legal-retention compliance or p95/p99 latency.
+                  Recursive deletion is multi-operation work rather than one
+                  atomic cascade; every production run needs a scoped target,
+                  project/database guard, durable audit evidence and post-delete
+                  verification.
+                </p>
+</div>
+</section>
+<section>
+<h2>
+                1. The AtlasMart incident: the order disappeared, the messages did
+                not
+              </h2>
+<p>
+                An operator deletes
+                <code>tenants/t-acme/orders/o-1001</code> and assumes its chat
+                thread is gone. Firestore document semantics do not cascade:
+                <code>tenants/t-acme/orders/o-1001/messages/m-001</code> can
+                still exist even when the parent order document no longer
+                exists. That surviving child is commonly called an
+                <strong>orphan</strong> in application operations, although
+                Firestore still considers the path valid.
+              </p>
+<div class="code-window" data-code-block="" data-language="javascript">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>trusted
+                    emulator initialization
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code class="language-javascript"><span class="code-line">process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";</span><span class="code-line">process.env.GCLOUD_PROJECT = "demo-atlasmart-firestore";</span><span class="code-line">import { initializeApp } from "firebase-admin/app";</span><span class="code-line">import { getFirestore, FieldValue, Timestamp } from "firebase-admin/firestore";</span><span class="code-line">initializeApp({ projectId: "demo-atlasmart-firestore" });</span><span class="code-line">const db = getFirestore();</span></code></pre>
+</div>
+<div class="code-window" data-code-block="" data-language="javascript">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>seed
+                    deterministic AtlasMart hierarchy
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code class="language-javascript"><span class="code-line">async function seedHierarchy() {</span><span class="code-line">  const batch = db.batch();</span><span class="code-line">  batch.set(db.doc("tenants/t-acme"), {</span><span class="code-line">    name: "Acme Seller", lifecycleState: "ACTIVE", schemaVersion: 4</span><span class="code-line">  });</span><span class="code-line">  batch.set(db.doc("tenants/t-acme/users/u-1001"), {</span><span class="code-line">    tenantId: "t-acme", uid: "u-1001", displayName: "Ava", lifecycleState: "ACTIVE", schemaVersion: 4</span><span class="code-line">  });</span><span class="code-line">  batch.set(db.doc("tenants/t-acme/orders/o-1001"), {</span><span class="code-line">    tenantId: "t-acme", customerId: "u-1001", status: "PAID", totalMinor: 12990,</span><span class="code-line">    lifecycleState: "ACTIVE", schemaVersion: 4</span><span class="code-line">  });</span><span class="code-line">  batch.set(db.doc("tenants/t-acme/orders/o-1002"), {</span><span class="code-line">    tenantId: "t-acme", customerId: "u-1002", status: "PAID", totalMinor: 4950,</span><span class="code-line">    lifecycleState: "ACTIVE", schemaVersion: 4</span><span class="code-line">  });</span><span class="code-line">  batch.set(db.doc("tenants/t-acme/orders/o-1001/messages/m-001"), {</span><span class="code-line">    tenantId: "t-acme", orderId: "o-1001", authorId: "u-1001",</span><span class="code-line">    text: "Please leave at reception", sentAt: Timestamp.fromMillis(1789570800000), schemaVersion: 4</span><span class="code-line">  });</span><span class="code-line">  batch.set(db.doc("tenants/t-acme/orders/o-1002/messages/m-002"), {</span><span class="code-line">    tenantId: "t-acme", orderId: "o-1002", authorId: "u-1002",</span><span class="code-line">    text: "Thanks", sentAt: Timestamp.fromMillis(1789570860000), schemaVersion: 4</span><span class="code-line">  });</span><span class="code-line">  batch.set(db.doc("userDirectory/u-1001"), {</span><span class="code-line">    uid: "u-1001", tenantId: "t-acme", lifecycleState: "ACTIVE", schemaVersion: 4</span><span class="code-line">  });</span><span class="code-line">  batch.set(db.doc("activity/a-001"), {</span><span class="code-line">    subjectUid: "u-1001", tenantId: "t-acme", type: "ORDER_CREATED", schemaVersion: 4</span><span class="code-line">  });</span><span class="code-line">  await batch.commit();</span><span class="code-line">}</span></code></pre>
+</div>
+<div class="code-window" data-code-block="" data-language="javascript">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>prove
+                    shallow delete behavior
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code class="language-javascript"><span class="code-line">await seedHierarchy();</span><span class="code-line">const orderRef = db.doc("tenants/t-acme/orders/o-1001");</span><span class="code-line">const msgRef = db.doc("tenants/t-acme/orders/o-1001/messages/m-001");</span><span class="code-line">console.log("before", (await orderRef.get()).exists, (await msgRef.get()).exists);</span><span class="code-line">await orderRef.delete();</span><span class="code-line">console.log("after ", (await orderRef.get()).exists, (await msgRef.get()).exists);</span><span class="code-line">// Expected: before true true; after false true</span><span class="code-line">if ((await orderRef.get()).exists) throw new Error("parent should be deleted");</span><span class="code-line">if (!(await msgRef.get()).exists) throw new Error("child should survive shallow delete");</span></code></pre>
+</div>
+</section>
+<section>
+<h2>2. Orphans remain queryable</h2>
+<div class="code-window" data-code-block="" data-language="javascript">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>collection-group orphan scan
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code class="language-javascript"><span class="code-line">const messages = await db.collectionGroup("messages").where("tenantId", "==", "t-acme").get();</span><span class="code-line">for (const m of messages.docs) {</span><span class="code-line">  const orderRef = m.ref.parent.parent;       // .../orders/{orderId}</span><span class="code-line">  const parent = await orderRef.get();</span><span class="code-line">  console.log({ message: m.ref.path, parent: orderRef.path, parentExists: parent.exists });</span><span class="code-line">}</span></code></pre>
+</div>
+<p>
+                The message under <code>o-1001</code> still appears in a
+                collection-group query. This matters for privacy, billing,
+                exports, support tools and deletion obligations: “the parent is
+                gone from the UI” is not evidence that descendant data is gone.
+              </p>
+</section>
+<section>
+<h2>3. Build a dry-run inventory before deletion</h2>
+<div class="code-window" data-code-block="" data-language="javascript">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>inventory documents and subcollections recursively
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code class="language-javascript"><span class="code-line">async function inventoryDocument(ref, out = []) {</span><span class="code-line">  const snap = await ref.get();</span><span class="code-line">  out.push({ path: ref.path, exists: snap.exists });</span><span class="code-line">  for (const coll of await ref.listCollections()) {</span><span class="code-line">    const children = await coll.get();</span><span class="code-line">    for (const child of children.docs) await inventoryDocument(child.ref, out);</span><span class="code-line">  }</span><span class="code-line">  return out;</span><span class="code-line">}</span><span class="code-line"></span><span class="code-line">async function inventoryCollection(ref, out = []) {</span><span class="code-line">  const snap = await ref.get();</span><span class="code-line">  for (const doc of snap.docs) await inventoryDocument(doc.ref, out);</span><span class="code-line">  return out;</span><span class="code-line">}</span></code></pre>
+</div>
+<div class="code-window" data-code-block="" data-language="javascript">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>scoped
+                    dry-run
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code class="language-javascript"><span class="code-line">const target = db.doc("tenants/t-acme");</span><span class="code-line">const inventory = await inventoryDocument(target);</span><span class="code-line">console.table(inventory);</span><span class="code-line">console.log({ target: target.path, count: inventory.length, mode: "DRY_RUN" });</span></code></pre>
+</div>
+<p>
+                The dry run is your deletion plan. Store its count and target in
+                a durable deletion-audit record before executing destructive
+                work. For dynamic subcollections, use trusted server APIs that
+                can enumerate child collections. Mobile/web SDKs are not the
+                place for unbounded recursive cleanup.
+              </p>
+</section>
+<section>
+<h2>4. A deterministic recursive cleanup for the emulator</h2>
+<div class="code-window" data-code-block="" data-language="javascript">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>recursive delete with descendants-first order
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code class="language-javascript"><span class="code-line">async function deleteDocumentTree(ref, evidence = []) {</span><span class="code-line">  for (const coll of await ref.listCollections()) {</span><span class="code-line">    const snap = await coll.get();</span><span class="code-line">    for (const child of snap.docs) await deleteDocumentTree(child.ref, evidence);</span><span class="code-line">  }</span><span class="code-line">  const exists = (await ref.get()).exists;</span><span class="code-line">  if (exists) {</span><span class="code-line">    await ref.delete();</span><span class="code-line">    evidence.push(ref.path);</span><span class="code-line">  }</span><span class="code-line">  return evidence;</span><span class="code-line">}</span><span class="code-line"></span><span class="code-line">async function guardedDeleteTenant(tenantId) {</span><span class="code-line">  const project = process.env.GCLOUD_PROJECT;</span><span class="code-line">  if (project !== "demo-atlasmart-firestore") throw new Error(`REFUSE project=${project}`);</span><span class="code-line">  if (!/^t-[a-z0-9-]+$/.test(tenantId)) throw new Error("REFUSE malformed tenant id");</span><span class="code-line">  const target = db.doc(`tenants/${tenantId}`);</span><span class="code-line">  const before = await inventoryDocument(target);</span><span class="code-line">  if (before.length === 0) return { before: 0, deleted: 0 };</span><span class="code-line">  const deleted = await deleteDocumentTree(target);</span><span class="code-line">  const after = await inventoryDocument(target);</span><span class="code-line">  if (after.some(x =&gt; x.exists)) throw new Error("POST_DELETE_VERIFICATION_FAILED");</span><span class="code-line">  return { before: before.length, deleted: deleted.length, paths: deleted };</span><span class="code-line">}</span></code></pre>
+</div>
+<p>
+                This lab implementation is deliberately explicit so learners can
+                inspect the mechanism. Current server libraries also provide
+                recursive-deletion helpers. The Firebase CLI/managed services
+                can delete trees or collection groups in production, but
+                recursive deletion remains a multi-operation process that can
+                fail partway through. Therefore safe tooling must be resumable
+                and followed by verification.
+              </p>
+<div class="callout warning">
+<strong>Wrong approach: one destructive command with no target
+                  proof</strong>
+<p>
+                  Running recursive delete against the wrong project, database
+                  or root path can be catastrophic. Repair it with environment
+                  allowlists, exact target display, dry-run inventory, change
+                  ticket/correlation ID, bounded permissions, operator
+                  confirmation outside automation where appropriate, and a
+                  post-delete scan.
+                </p>
+</div>
+</section>
+<section>
+<h2>5. Partial failure is a state, not a reason to guess</h2>
+<p>
+                Recursive deletion is not atomic. A network/process failure can
+                leave some descendants removed and others present. The repair
+                strategy is not “restore whatever looks missing” by intuition;
+                it is to rerun an idempotent scoped deletion job from durable
+                evidence and verify the target is empty. If deletion must
+                coexist with active writers, first transition the
+                tenant/resource into a deletion state that rejects or redirects
+                new writes, otherwise cleanup can race with recreation.
+              </p>
+<table class="data-table">
+<thead>
+<tr>
+<th>Failure</th>
+<th>Observable evidence</th>
+<th>Safe response</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Parent removed, children remain</td>
+<td>Orphan scan finds messages with missing parent</td>
+<td>
+                      Run scoped recursive cleanup; verify group/path queries
+                    </td>
+</tr>
+<tr>
+<td>Delete job stops halfway</td>
+<td>Audit says RUNNING/FAILED with deleted count</td>
+<td>Resume same scoped job; do not widen target</td>
+</tr>
+<tr>
+<td>New writes race with purge</td>
+<td>Post-delete scan finds newer updateTime</td>
+<td>
+                      Freeze writes via lifecycle/rules/server gate, then rerun
+                    </td>
+</tr>
+<tr>
+<td>Wrong project/database selected</td>
+<td>Guard mismatch before delete</td>
+<td>Abort before destructive call</td>
+</tr>
+<tr>
+<td>Retention hold discovered</td>
+<td>Hold manifest references target data</td>
+<td>
+                      Exclude held records and document exception; do not
+                      hard-delete
+                    </td>
+</tr>
+</tbody>
+</table>
+</section>
+<section>
+<h2>6. Production services are different from the lab</h2>
+<p>
+                Managed bulk delete can remove one or more collection groups and
+                is billing-enabled. It finds matching documents and deletes in
+                batches; it does not automatically delete child collection
+                groups unless they are also specified. Managed recursive/CLI
+                deletion incurs reads/deletes and is not a single atomic
+                operation. For a tenant-specific subtree, a trusted scoped
+                recursive path is usually easier to reason about than a global
+                collection-group bulk delete, but the right operational tool
+                depends on volume, schema and retention constraints.
+              </p>
+</section>
+<section>
+<h2>7. Reproducible AtlasMart lab</h2>
+<div class="code-window" data-code-block="" data-language="json">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>package.json
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code class="language-json"><span class="code-line">{</span><span class="code-line">  "name": "atlasmart-firestore-ch11",</span><span class="code-line">  "private": true,</span><span class="code-line">  "type": "module",</span><span class="code-line">  "engines": { "node": "&gt;=22" },</span><span class="code-line">  "dependencies": {</span><span class="code-line">    "firebase": "12.19.0",</span><span class="code-line">    "firebase-admin": "14.4.0"</span><span class="code-line">  },</span><span class="code-line">  "devDependencies": {</span><span class="code-line">    "firebase-tools": "15.30.0",</span><span class="code-line">    "@firebase/rules-unit-testing": "5.0.2"</span><span class="code-line">  }</span><span class="code-line">}</span></code></pre>
+</div>
+<div class="code-window" data-code-block="" data-language="json">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>firebase.json
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code class="language-json"><span class="code-line">{</span><span class="code-line">  "firestore": {</span><span class="code-line">    "rules": "firestore.rules",</span><span class="code-line">    "indexes": "firestore.indexes.json"</span><span class="code-line">  },</span><span class="code-line">  "emulators": {</span><span class="code-line">    "firestore": { "port": 8080 },</span><span class="code-line">    "auth": { "port": 9099 },</span><span class="code-line">    "ui": { "enabled": true, "port": 4000 }</span><span class="code-line">  }</span><span class="code-line">}</span></code></pre>
+</div>
+<div class="code-window" data-code-block="" data-language="javascript">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>firestore.rules
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code class="language-javascript"><span class="code-line">rules_version = '2';</span><span class="code-line">service cloud.firestore {</span><span class="code-line">  match /databases/{database}/documents {</span><span class="code-line">    function signedIn() { return request.auth != null; }</span><span class="code-line">    function sameTenant(tenantId) {</span><span class="code-line">      return signedIn() &amp;&amp; request.auth.token.tenantId == tenantId;</span><span class="code-line">    }</span><span class="code-line"></span><span class="code-line">    match /tenants/{tenantId} {</span><span class="code-line">      allow read: if sameTenant(tenantId);</span><span class="code-line">      allow write: if false;</span><span class="code-line"></span><span class="code-line">      match /users/{uid} {</span><span class="code-line">        allow read: if sameTenant(tenantId);</span><span class="code-line">        allow write: if sameTenant(tenantId) &amp;&amp; request.auth.uid == uid;</span><span class="code-line">      }</span><span class="code-line">      match /orders/{orderId} {</span><span class="code-line">        allow read: if sameTenant(tenantId);</span><span class="code-line">        allow write: if false;</span><span class="code-line">        match /messages/{messageId} {</span><span class="code-line">          allow read: if sameTenant(tenantId);</span><span class="code-line">          allow write: if false;</span><span class="code-line">        }</span><span class="code-line">      }</span><span class="code-line">    }</span><span class="code-line"></span><span class="code-line">    // Required for collection-group queries over every messages collection.</span><span class="code-line">    match /{path=**}/messages/{messageId} {</span><span class="code-line">      allow read: if signedIn() &amp;&amp; resource.data.tenantId == request.auth.token.tenantId;</span><span class="code-line">      allow write: if false;</span><span class="code-line">    }</span><span class="code-line"></span><span class="code-line">    match /deletionAudits/{id} { allow read, write: if false; }</span><span class="code-line">    match /retentionHolds/{id} { allow read, write: if false; }</span><span class="code-line">    match /{document=**} { allow read, write: if false; }</span><span class="code-line">  }</span><span class="code-line">}</span></code></pre>
+</div>
+<div class="code-window" data-code-block="" data-language="json">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>firestore.indexes.json
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code class="language-json"><span class="code-line">{</span><span class="code-line">  "indexes": [</span><span class="code-line">    {</span><span class="code-line">      "collectionGroup": "messages",</span><span class="code-line">      "queryScope": "COLLECTION_GROUP",</span><span class="code-line">      "fields": [</span><span class="code-line">        { "fieldPath": "tenantId", "order": "ASCENDING" },</span><span class="code-line">        { "fieldPath": "sentAt", "order": "DESCENDING" }</span><span class="code-line">      ]</span><span class="code-line">    }</span><span class="code-line">  ],</span><span class="code-line">  "fieldOverrides": []</span><span class="code-line">}</span></code></pre>
+</div>
+<div class="code-window" data-code-block="" data-language="bash">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>local
+                    setup
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code class="language-bash"><span class="code-line">mkdir atlasmart-firestore-ch11 &amp;&amp; cd atlasmart-firestore-ch11</span><span class="code-line">npm init -y</span><span class="code-line">npm install firebase@12.19.0 firebase-admin@14.4.0</span><span class="code-line">npm install --save-dev firebase-tools@15.30.0 @firebase/rules-unit-testing@5.0.2</span><span class="code-line"># Save firebase.json, firestore.rules and firestore.indexes.json from this lesson.</span><span class="code-line">npx firebase-tools@15.30.0 emulators:start --project demo-atlasmart-firestore --only firestore,auth</span></code></pre>
+</div>
+<p>
+                Run four assertions in order: seed; shallow-delete
+                <code>o-1001</code>; prove <code>m-001</code> survives and
+                remains visible in a <code>messages</code> collection-group
+                scan; restore the fixture and recursively delete
+                <code>tenants/t-acme</code>. Then verify the tenant tree is gone
+                <em>and</em> prove <code>userDirectory/u-1001</code> and
+                <code>activity/a-001</code> still exist, because they are
+                outside the tree. Those leftovers motivate the manifest-based
+                lifecycle work in Lessons 4–5.
+              </p>
+<div class="code-window" data-code-block="" data-language="javascript">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>post-delete verification
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code class="language-javascript"><span class="code-line">const tenant = await db.doc("tenants/t-acme").get();</span><span class="code-line">const tenantMsgs = await db.collectionGroup("messages").where("tenantId","==","t-acme").get();</span><span class="code-line">const directory = await db.doc("userDirectory/u-1001").get();</span><span class="code-line">const activity = await db.doc("activity/a-001").get();</span><span class="code-line">console.log({ tenant:tenant.exists, tenantMessageCount:tenantMsgs.size, directory:directory.exists, activity:activity.exists });</span><span class="code-line">if (tenant.exists || tenantMsgs.size !== 0) throw new Error("tenant tree not fully removed");</span><span class="code-line">if (!directory.exists || !activity.exists) throw new Error("external-copy fixture unexpectedly removed");</span></code></pre>
+</div>
+</section>
+<section>
+<h2>Production judgment</h2>
+<p>
+                Never equate document deletion with object lifecycle completion.
+                The production unit is “all paths and copies governed by the
+                lifecycle policy, plus verified exceptions.” Recursive deletion
+                needs operational safeguards, non-atomic retry semantics,
+                observability and a freeze/new-write strategy. Lesson 4 turns
+                those mechanics into an explicit lifecycle state machine with
+                archive, soft-delete and retention decisions.
+              </p>
+</section>
+<section>
+<h2>Knowledge check</h2>
+<ol>
+<li>
+                  What remains after deleting an order document with messages
+                  beneath it?
+                </li>
+<li>Why perform a dry run?</li>
+<li>Is recursive delete atomic?</li>
+<li>
+                  Why can external copies survive a correct subtree purge?
+                </li>
+<li>What should happen if new writes continue during purge?</li>
+</ol>
+<details class="answer-toggle">
+<summary>Review the answers</summary>
+<div>
+<p>
+<strong>1.</strong> The message subcollection documents can
+                    remain and stay queryable.
+                  </p>
+<p>
+<strong>2.</strong> To prove the exact target/path inventory
+                    and create expected-count evidence before destructive work.
+                  </p>
+<p>
+<strong>3.</strong> No. It can partially complete, so the
+                    job must be resumable and verified.
+                  </p>
+<p>
+<strong>4.</strong> They live outside the target path and
+                    require their own deletion-manifest entries.
+                  </p>
+<p>
+<strong>5.</strong> Freeze or gate writes using
+                    lifecycle/rules/server controls, then rerun and verify
+                    cleanup.
+                  </p>
+</div>
+</details>
+</section>
+<section>
+<h2>Summary and next step</h2>
+<p>
+                Parent deletion is shallow; reliable lifecycle cleanup is
+                recursive, guarded, non-atomic and verified. Next we decide when
+                data should not be immediately hard-deleted at all.
+              </p>
+</section>
+<section>
+<h2>Authoritative references</h2>
+<ul class="reference-list">
+<li>
+<a href="https://firebase.google.com/docs/firestore/data-model" rel="noopener" target="_blank">Cloud Firestore data model</a>
+                  — subcollections, hierarchy depth and the non-cascading
+                  document-delete warning.
+                </li>
+<li>
+<a href="https://firebase.google.com/docs/firestore/query-data/queries#collection-group-query" rel="noopener" target="_blank">Collection group queries</a>
+                  — querying same-ID subcollections across parents.
+                </li>
+<li>
+<a href="https://firebase.google.com/docs/firestore/security/rules-query" rel="noopener" target="_blank">Securely query data</a>
+                  — rules are not filters and rules_version 2 collection-group
+                  patterns.
+                </li>
+<li>
+<a href="https://firebase.google.com/docs/firestore/query-data/indexing" rel="noopener" target="_blank">Manage indexes</a>
+                  — collection-group/composite index configuration.
+                </li>
+<li>
+<a href="https://firebase.google.com/docs/firestore/manage-data/delete-data" rel="noopener" target="_blank">Delete data</a>
+                  — collection deletion guidance and server-side recursive
+                  deletion.
+                </li>
+<li>
+<a href="https://firebase.google.com/docs/firestore/solutions/delete-collections" rel="noopener" target="_blank">Delete collections and subcollections</a>
+                  — recursive deletion, orphan discovery and non-atomic
+                  behavior.
+                </li>
+<li>
+<a href="https://firebase.google.com/docs/firestore/manage-data/bulk-delete" rel="noopener" target="_blank">Managed bulk delete</a>
+                  — production collection-group deletion, billing and operation
+                  behavior.
+                </li>
+<li>
+<a href="https://firebase.google.com/docs/firestore/manage-data/export-import" rel="noopener" target="_blank">Export and import data</a>
+                  — billing, Cloud Storage, collection-group exports and
+                  recovery implications.
+                </li>
+<li>
+<a href="https://firebase.google.com/docs/extensions/official/delete-user-data" rel="noopener" target="_blank">Delete User Data extension</a>
+                  — configured paths, recursive mode and auto-discovery
+                  considerations.
+                </li>
+<li>
+<a href="https://firebase.google.com/support/release-notes/cli" rel="noopener" target="_blank">Firebase CLI release notes</a>
+                  — pinned CLI baseline.
+                </li>
+<li>
+<a href="https://firebase.google.com/support/release-notes/admin/node" rel="noopener" target="_blank">Admin Node.js release notes</a>
+                  — pinned trusted-server baseline.
+                </li>
+</ul>
+</section>
+</div>
+<nav aria-label="Lesson navigation" class="lesson-nav">
+<a class="prev" href="Lesson2.html"><small>Previous lesson</small><strong>Collection Group Queries and Index/Rules Requirements Across
+                Parent Documents</strong></a><a class="next" href="Lesson4.html"><small>Next lesson</small><strong>Archiving, Soft Delete, Legal Retention, Tenant Deletion,
+                Export, and Lifecycle State Machines</strong></a>
+</nav>
+</article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+<div aria-label="Author links" class="social-row">
+<a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="M15 3h6v6"></path>
+<path d="M10 14 21 3"></path>
+<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+</svg>
+</a>
+<a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="M15 3h6v6"></path>
+<path d="M10 14 21 3"></path>
+<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+</svg>
+</a>
+<a href="https://mohammadijoo.github.io/" rel="noopener" target="_blank">Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="M15 3h6v6"></path>
+<path d="M10 14 21 3"></path>
+<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+</svg>
+</a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head">
+<span>ETH</span><small>Ethereum / ERC-20 only</small>
+</div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
+<button class="button secondary compact" data-copy-donation="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy address
+                </button>
+<p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div>
+<strong>Big Data Academy</strong>
+<p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+</div>
+<small>Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../firebase-firestore-code-bootstrap.js?v=20260920.1"></script><script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>

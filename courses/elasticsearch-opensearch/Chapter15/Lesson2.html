@@ -138,9 +138,8 @@
             </summary>
             <div>
               <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
-                ><span>01</span>Inverted-Index Search vs
-                Relational / Document / Vector Databases: Workload Fit and
-                Architectural Tradeoffs</a
+                ><span>01</span>Inverted-Index Search vs Relational / Document /
+                Vector Databases: Workload Fit and Architectural Tradeoffs</a
               ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
                 ><span>02</span>Elasticsearch and OpenSearch Lineage,
                 Licensing/Ecosystem Differences, APIs, and Compatibility
@@ -1057,63 +1056,61 @@
             <section>
               <h2>1. A cache taxonomy that prevents category errors</h2>
               <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>Mechanism</th>
-                      <th>What is reused</th>
-                      <th>Scope / storage</th>
-                      <th>Typical invalidation or turnover</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>OS filesystem cache</td>
-                      <td>File pages such as Lucene segment data.</td>
-                      <td>Operating-system RAM; outside JVM heap.</td>
-                      <td>
-                        Memory pressure, file lifecycle, host/container
-                        behavior—not Query DSL invalidation.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Query/filter cache</td>
-                      <td>Reusable filter-context query results/bit sets.</td>
-                      <td>
-                        Node/shard/segment-oriented internal cache; on heap.
-                      </td>
-                      <td>
-                        Segment lifecycle/merges and cache policy/eviction.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Shard/index request cache</td>
-                      <td>
-                        A shard-level result for a complete search request,
-                        especially aggregation-style requests.
-                      </td>
-                      <td>
-                        Per shard/index; heap-backed unless a product-specific
-                        tiered cache is configured.
-                      </td>
-                      <td>
-                        Refresh/data changes, settings changes, LRU/size and
-                        request eligibility.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Fielddata/global ordinals</td>
-                      <td>
-                        Per-document field access/global term ordinals used for
-                        sorting/aggregations in relevant mappings.
-                      </td>
-                      <td>Node heap.</td>
-                      <td>
-                        Field changes/refresh and cache eviction/rebuild
-                        depending on structure; breaker protects growth.
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                <thead>
+                  <tr>
+                    <th>Mechanism</th>
+                    <th>What is reused</th>
+                    <th>Scope / storage</th>
+                    <th>Typical invalidation or turnover</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>OS filesystem cache</td>
+                    <td>File pages such as Lucene segment data.</td>
+                    <td>Operating-system RAM; outside JVM heap.</td>
+                    <td>
+                      Memory pressure, file lifecycle, host/container
+                      behavior—not Query DSL invalidation.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Query/filter cache</td>
+                    <td>Reusable filter-context query results/bit sets.</td>
+                    <td>
+                      Node/shard/segment-oriented internal cache; on heap.
+                    </td>
+                    <td>Segment lifecycle/merges and cache policy/eviction.</td>
+                  </tr>
+                  <tr>
+                    <td>Shard/index request cache</td>
+                    <td>
+                      A shard-level result for a complete search request,
+                      especially aggregation-style requests.
+                    </td>
+                    <td>
+                      Per shard/index; heap-backed unless a product-specific
+                      tiered cache is configured.
+                    </td>
+                    <td>
+                      Refresh/data changes, settings changes, LRU/size and
+                      request eligibility.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Fielddata/global ordinals</td>
+                    <td>
+                      Per-document field access/global term ordinals used for
+                      sorting/aggregations in relevant mappings.
+                    </td>
+                    <td>Node heap.</td>
+                    <td>
+                      Field changes/refresh and cache eviction/rebuild depending
+                      on structure; breaker protects growth.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
               <p>
                 These mechanisms can all improve latency, but they cache
                 different things. Clearing a request cache does not evict the OS
@@ -1375,63 +1372,60 @@ GET atlasmart-runtime-lab-v1/_stats/fielddata?human</code></pre>
             <section>
               <h2>7. Elastic vs OpenSearch details that matter</h2>
               <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>Area</th>
-                      <th>Elasticsearch 9.5.3</th>
-                      <th>OpenSearch 3.8.0</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Query cache</td>
-                      <td>
-                        Node query cache documented for filter-context results
-                        with per-segment eligibility/history.
-                      </td>
-                      <td>
-                        Query cache exposed through index/node settings/stats;
-                        optimize by measurement rather than assuming identical
-                        policy thresholds.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Request cache</td>
-                      <td>
-                        Shard request cache; default size-zero requests are the
-                        common auto-cache case, with per-request override.
-                      </td>
-                      <td>
-                        Index request cache; 2.19+ adds
-                        <code
-                          >indices.requests.cache.maximum_cacheable_size</code
-                        >, defaulting to zero-size automatic caching.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Fielddata</td>
-                      <td>
-                        On-heap fielddata/global ordinals; fielddata breaker
-                        protects growth.
-                      </td>
-                      <td>
-                        Same fundamental hazard; docs explicitly recommend
-                        keyword subfields instead of text fielddata.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Tiered cache</td>
-                      <td>
-                        Do not assume OpenSearch cache-tier settings exist.
-                      </td>
-                      <td>
-                        OpenSearch can expose tiered-request-cache
-                        statistics/features in supported configurations; treat
-                        as product-specific.
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                <thead>
+                  <tr>
+                    <th>Area</th>
+                    <th>Elasticsearch 9.5.3</th>
+                    <th>OpenSearch 3.8.0</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Query cache</td>
+                    <td>
+                      Node query cache documented for filter-context results
+                      with per-segment eligibility/history.
+                    </td>
+                    <td>
+                      Query cache exposed through index/node settings/stats;
+                      optimize by measurement rather than assuming identical
+                      policy thresholds.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Request cache</td>
+                    <td>
+                      Shard request cache; default size-zero requests are the
+                      common auto-cache case, with per-request override.
+                    </td>
+                    <td>
+                      Index request cache; 2.19+ adds
+                      <code>indices.requests.cache.maximum_cacheable_size</code
+                      >, defaulting to zero-size automatic caching.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Fielddata</td>
+                    <td>
+                      On-heap fielddata/global ordinals; fielddata breaker
+                      protects growth.
+                    </td>
+                    <td>
+                      Same fundamental hazard; docs explicitly recommend keyword
+                      subfields instead of text fielddata.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Tiered cache</td>
+                    <td>Do not assume OpenSearch cache-tier settings exist.</td>
+                    <td>
+                      OpenSearch can expose tiered-request-cache
+                      statistics/features in supported configurations; treat as
+                      product-specific.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </section>
             <section>
               <h2>Production judgment</h2>
@@ -1726,7 +1720,7 @@ GET atlasmart-runtime-lab-v1/_stats/fielddata?human</code></pre>
                         d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
                       ></path></svg></a
                   ><a
-                    href="https://mohammadijoo.ir/"
+                    href="https://mohammadijoo.github.io/"
                     rel="noopener"
                     target="_blank"
                     >Website

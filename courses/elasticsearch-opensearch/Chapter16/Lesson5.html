@@ -139,9 +139,8 @@
             </summary>
             <div>
               <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
-                ><span>01</span>Inverted-Index Search vs
-                Relational / Document / Vector Databases: Workload Fit and
-                Architectural Tradeoffs</a
+                ><span>01</span>Inverted-Index Search vs Relational / Document /
+                Vector Databases: Workload Fit and Architectural Tradeoffs</a
               ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
                 ><span>02</span>Elasticsearch and OpenSearch Lineage,
                 Licensing/Ecosystem Differences, APIs, and Compatibility
@@ -1057,72 +1056,68 @@
             <section>
               <h2>1. Start with a symptom and a hypothesis</h2>
               <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>Symptom/evidence</th>
-                      <th>Candidate hypothesis</th>
-                      <th>High-value experiment</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>
-                        Profile shows wildcard/script dominates query phase.
-                      </td>
-                      <td>Query shape is expensive.</td>
-                      <td>
-                        Replace with indexed normalized field/prefix strategy;
-                        same dataset/query intent.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Fetch slow logs/bytes dominate.</td>
-                      <td>Payload retrieval is expensive.</td>
-                      <td>
-                        Return only required fields or redesign source payload;
-                        preserve semantics.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        Search fans across many shards but requests are
-                        tenant-scoped.
-                      </td>
-                      <td>Fan-out is unnecessary.</td>
-                      <td>
-                        Test correct custom routing on a disposable version;
-                        measure skew too.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        Huge terms aggregation causes memory/latency spikes.
-                      </td>
-                      <td>Bucket strategy is unbounded.</td>
-                      <td>
-                        Bound buckets or use composite for complete key
-                        enumeration.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        Late pages degrade strongly and hit result window.
-                      </td>
-                      <td>Deep from/size is the cause.</td>
-                      <td>
-                        PIT + stable search_after under concurrent writes.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>One shard is CPU hot while peers idle.</td>
-                      <td>Routing/data skew is the cause.</td>
-                      <td>
-                        Compare key distribution and rebalance routing model; do
-                        not merely add replicas.
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                <thead>
+                  <tr>
+                    <th>Symptom/evidence</th>
+                    <th>Candidate hypothesis</th>
+                    <th>High-value experiment</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      Profile shows wildcard/script dominates query phase.
+                    </td>
+                    <td>Query shape is expensive.</td>
+                    <td>
+                      Replace with indexed normalized field/prefix strategy;
+                      same dataset/query intent.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Fetch slow logs/bytes dominate.</td>
+                    <td>Payload retrieval is expensive.</td>
+                    <td>
+                      Return only required fields or redesign source payload;
+                      preserve semantics.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      Search fans across many shards but requests are
+                      tenant-scoped.
+                    </td>
+                    <td>Fan-out is unnecessary.</td>
+                    <td>
+                      Test correct custom routing on a disposable version;
+                      measure skew too.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      Huge terms aggregation causes memory/latency spikes.
+                    </td>
+                    <td>Bucket strategy is unbounded.</td>
+                    <td>
+                      Bound buckets or use composite for complete key
+                      enumeration.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Late pages degrade strongly and hit result window.</td>
+                    <td>Deep from/size is the cause.</td>
+                    <td>PIT + stable search_after under concurrent writes.</td>
+                  </tr>
+                  <tr>
+                    <td>One shard is CPU hot while peers idle.</td>
+                    <td>Routing/data skew is the cause.</td>
+                    <td>
+                      Compare key distribution and rebalance routing model; do
+                      not merely add replicas.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
               <div class="callout">
                 <strong>One change at a time</strong>
                 <p>
@@ -1342,55 +1337,55 @@ for i in range(240):
             <section>
               <h2>6. Before/after evidence table</h2>
               <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>Measure</th>
-                      <th>Baseline</th>
-                      <th>Candidate</th>
-                      <th>Acceptance rule</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Correct result set / aggregate</td>
-                      <td>Record fixture assertions.</td>
-                      <td>Must match unless semantics intentionally change.</td>
-                      <td>No silent correctness regression.</td>
-                    </tr>
-                    <tr>
-                      <td>Relevance metrics</td>
-                      <td>Judged baseline where ranking changes.</td>
-                      <td>Re-run NDCG/MRR/Recall@k as applicable.</td>
-                      <td>Stay within declared regression budget.</td>
-                    </tr>
-                    <tr>
-                      <td>Client p95/p99</td>
-                      <td>Measured under fixed concurrency.</td>
-                      <td>Measured under identical load.</td>
-                      <td>
-                        Meet SLO with confidence/repetition, not one sample.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Shard fan-out</td>
-                      <td><code>_shards.total/skipped</code>.</td>
-                      <td>Same or intentionally changed.</td>
-                      <td>Explain why change is safe.</td>
-                    </tr>
-                    <tr>
-                      <td>CPU/GC/rejections</td>
-                      <td>Time-aligned node evidence.</td>
-                      <td>Same observation window.</td>
-                      <td>No hidden saturation transfer.</td>
-                    </tr>
-                    <tr>
-                      <td>Freshness/consistency</td>
-                      <td>Live or PIT semantics documented.</td>
-                      <td>Re-test concurrent changes.</td>
-                      <td>No accidental stale/missing-page behavior.</td>
-                    </tr>
-                  </tbody>
-                </table>
+                <thead>
+                  <tr>
+                    <th>Measure</th>
+                    <th>Baseline</th>
+                    <th>Candidate</th>
+                    <th>Acceptance rule</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Correct result set / aggregate</td>
+                    <td>Record fixture assertions.</td>
+                    <td>Must match unless semantics intentionally change.</td>
+                    <td>No silent correctness regression.</td>
+                  </tr>
+                  <tr>
+                    <td>Relevance metrics</td>
+                    <td>Judged baseline where ranking changes.</td>
+                    <td>Re-run NDCG/MRR/Recall@k as applicable.</td>
+                    <td>Stay within declared regression budget.</td>
+                  </tr>
+                  <tr>
+                    <td>Client p95/p99</td>
+                    <td>Measured under fixed concurrency.</td>
+                    <td>Measured under identical load.</td>
+                    <td>
+                      Meet SLO with confidence/repetition, not one sample.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Shard fan-out</td>
+                    <td><code>_shards.total/skipped</code>.</td>
+                    <td>Same or intentionally changed.</td>
+                    <td>Explain why change is safe.</td>
+                  </tr>
+                  <tr>
+                    <td>CPU/GC/rejections</td>
+                    <td>Time-aligned node evidence.</td>
+                    <td>Same observation window.</td>
+                    <td>No hidden saturation transfer.</td>
+                  </tr>
+                  <tr>
+                    <td>Freshness/consistency</td>
+                    <td>Live or PIT semantics documented.</td>
+                    <td>Re-test concurrent changes.</td>
+                    <td>No accidental stale/missing-page behavior.</td>
+                  </tr>
+                </tbody>
+              </table>
             </section>
             <section>
               <h2>7. Failure injection and rollback</h2>
@@ -1704,7 +1699,7 @@ for i in range(240):
                         d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
                       ></path></svg></a
                   ><a
-                    href="https://mohammadijoo.ir/"
+                    href="https://mohammadijoo.github.io/"
                     rel="noopener"
                     target="_blank"
                     >Website

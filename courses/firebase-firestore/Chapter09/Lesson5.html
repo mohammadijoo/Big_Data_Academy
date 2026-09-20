@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Load-test AtlasMart contention safely, record retries and tail latency, and redesign throughput bottlenecks without weakening correctness." name="description"/>
+<meta content="Abolfazl Mohammadijoo" name="author"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#05070b" name="theme-color"/>
+<title>
+      Load-Test a Contended Workflow and Redesign It to Meet Throughput Without
+      Violating Correctness | Firebase and Cloud Firestore | Big Data Academy
+    </title>
+<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/><link href="../firebase-firestore-consistency.css?v=20260920.1" rel="stylesheet"/>
+<script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+</head>
+<body class="lesson-page">
+<div class="reading-progress" data-reading-progress=""></div>
+<div aria-hidden="true" class="site-grid"></div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header" data-header="">
+<div class="header-inner">
+<a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
+<span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24">
+<ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+<path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
+<span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
+</a>
+<nav aria-label="Primary navigation" class="desktop-nav">
+<a href="../../../index.html#roadmap">Learning path</a>
+<a class="is-active" href="../../../index.html#courses">Courses</a>
+<a href="../../../index.html#method">Method</a>
+<a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
+</nav>
+<div class="header-actions">
+<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="4"></circle>
+<path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path>
+</svg>
+</button>
+<button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="M4 7h16M4 12h16M4 17h16"></path>
+</svg>
+</button>
+</div>
+</div>
+<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu="">
+<a href="../../../index.html#roadmap">Learning path</a>
+<a href="../../../index.html#courses">Courses</a>
+<a href="../../../index.html#method">Method</a>
+<a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+</nav>
+</header>
+<div class="sidebar-overlay" data-sidebar-overlay=""></div>
+<main class="lesson-shell" id="main-content">
+<aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">FS</span>
+<div>
+<small>Course 16</small><strong>Firebase and Cloud Firestore</strong>
+</div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">
+            ×
+          </button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24">
+<circle cx="11" cy="11" r="7"></circle>
+<path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 135 lessons..." type="search"/></label>
+<nav aria-label="Firebase and Cloud Firestore curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter">
+<summary>
+<span>01</span>Firestore Foundations, Firebase/Google Cloud,
+              Editions, Modes, Locations, and Lab Setup
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What Cloud Firestore Is: Serverless Document
+                Database, Realtime Clients, Strong Consistency, and Workload
+                Fit</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Standard vs Enterprise Editions and Native
+                Core/Pipeline vs MongoDB Compatibility Modes</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>Firebase Projects, Google Cloud Projects,
+                Databases, Regions/Multi-Regions, Billing, and Responsibility
+                Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Create a Database, Configure SDKs/CLI, Use
+                Emulator Suite Where Appropriate, and Verify Reads/Writes</a>
+<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build a Reproducible Lab with Authentication,
+                Rules, Test Data, Index Configuration, Logging, and Safe
+                Cleanup</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>02</span>Documents, Collections, Fields, References, Maps,
+              Arrays, Timestamps, GeoPoints, and Limits
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>Document/Collection Hierarchy, Paths, IDs,
+                Subcollections, and the Absence of Traditional Server-Side Joins
+                in Core Operations</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Supported Native Data Types, Null, Numeric
+                Ordering, Timestamps, References, GeoPoints, Bytes, Arrays, and
+                Maps</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>Document Size, Field/Path/Nesting Constraints,
+                Index Entry Implications, and Schema Governance</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Auto IDs vs Semantic IDs, Hotspot Risks, Tenant
+                Prefixes, and External Identity Mapping</a>
+<a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Inspect and Validate a Document Schema Across
+                Web/Mobile/Server SDK Serialization Boundaries</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>03</span>Data Modeling by Access Pattern: Embedding,
+              Referencing, Duplication, Fan-Out, and Denormalization
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>Start from Screens/Queries/Transactions—not
+                Entity Diagrams—When Designing Firestore Models</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Embed vs Reference vs Duplicate: Read Cost,
+                Write Amplification, Consistency, and Document Limits</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>Subcollections vs Root Collections, Collection
+                Groups, Ownership, Lifecycle, and Security Rules</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>Fan-Out Writes, Materialized Views, Counters,
+                Feeds, and Precomputed Query Shapes</a>
+<a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>Refactor a Relational Model into Firestore and
+                Document Every Consistency and Cost Tradeoff</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>04</span>CRUD with Client and Server SDKs: Reads, Writes,
+              Updates, Deletes, Preconditions, and Converters
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>Get Documents, Create/Set/Merge, Update, Delete,
+                and Understand Missing vs Null Fields</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>Field Paths, Nested Updates, Array Operations,
+                Increment, Server Timestamps, and Atomic Field Transforms</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>Server vs Client SDK
+                Authentication/Authorization Models and Trusted vs Untrusted
+                Execution</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Data Converters/Typed Models, Serialization,
+                Validation, and Backward-Compatible Schema Evolution</a>
+<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>Build an Idempotent CRUD Service and Verify
+                Error Handling, Retry, Preconditions, and Observability</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>05</span>Queries: Filters, Ordering, Limits, Cursors,
+              Collection Groups, and Query Constraints
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>Equality, Inequality, in/not-in,
+                array-contains/array-contains-any, and Compound Query
+                Semantics</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>orderBy, limit/limitToLast,
+                startAt/startAfter/endAt/endBefore, and Stable Cursor
+                Pagination</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>Collection Group Queries Across Subcollections
+                and Their Modeling/Security Implications</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Query Limitations, Field Existence Effects,
+                Index Requirements, and How to Redesign Unsupported Access
+                Patterns</a>
+<a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Create a Query Contract Test Suite Covering
+                Boundaries, Pagination, Empty Results, and Security
+                Constraints</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>06</span>Indexes:
+              Automatic/Composite/Collection-Group/Vector, Exemptions, and Index
+              Cost
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>Single-Field Indexing in Standard Native Mode,
+                Ascending/Descending/Array Entries, and Automatic Behavior</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>Composite Indexes: Ordering, Equality/Range
+                Fields, Collection vs Collection-Group Scope, and Error-Driven
+                Creation</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Index Exemptions for Large Strings/Arrays/Maps,
+                Sequential Fields, TTL Fields, and Write/Storage Cost</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Enterprise Native Indexing Differences and Why
+                Optional Indexing Changes Query-Performance Reasoning</a>
+<a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Audit Index Usage, Remove Redundant Structures,
+                and Validate Query Latency/Cost Before and After Changes</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>07</span>Realtime Listeners: Snapshots, Change Events,
+              Metadata, Latency, and Listener Lifecycle
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>Document vs Query Listeners, Initial Snapshot,
+                Incremental Changes, Ordering, and Local Writes</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Snapshot Metadata, Pending Writes, Cache vs
+                Server Sources, and User-Experience Semantics</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Listener Fan-Out at Scale, Query Selectivity,
+                Reconnects, Resume Behavior, and Bandwidth/Read Cost</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Unsubscribe/Lifecycle Management in Web/Mobile
+                Frameworks and Avoiding Leaked Listeners</a>
+<a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Design a Realtime Screen with Correct
+                Offline/Online State, Security, Pagination, and Cost Controls</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>08</span>Offline Persistence, Local Cache, Synchronization,
+              Conflict Behavior, and Offline Indexes
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>Offline Cache Semantics for Android, Apple, and
+                Web Clients: Reads, Writes, Listeners, and Synchronization</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>Last-Write-Wins Behavior for Multiple Offline
+                Changes and Where Transactions Differ</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Memory vs Persistent Cache Options,
+                Multi-Tab/Process Considerations, and Sensitive-Data Risk</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>Local Query Indexes, Cache Growth, User
+                Sign-Out/Data Clearing, and Offline Performance</a>
+<a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Test Airplane-Mode, Restart, Conflicting Writes,
+                Reconnect, and Security-Rule Changes End to End</a>
+</div>
+</details>
+<details class="sidebar-chapter" open="">
+<summary>
+<span>09</span>Transactions, Batched Writes, Atomic Field
+              Operations, Retries, and Contention
+            </summary>
+<div>
+<a class="sidebar-lesson" href="Lesson1.html"><span>01</span>Transactions Read-Then-Write Atomically,
+                Optimistic/Pessimistic Differences by SDK/Edition Context, and
+                Retry Semantics</a>
+<a class="sidebar-lesson" href="Lesson2.html"><span>02</span>Batched Writes for Atomic Multi-Document Changes
+                Without Reads and Operation Limits</a>
+<a class="sidebar-lesson" href="Lesson3.html"><span>03</span>Increment, arrayUnion/arrayRemove, Server
+                Timestamp, Compare/Precondition Patterns, and Conflict
+                Reduction</a>
+<a class="sidebar-lesson" href="Lesson4.html"><span>04</span>Hot Documents, High-Contention Counters,
+                Sharded/Distributed Counter Patterns, and Idempotency</a>
+<a aria-current="page" class="sidebar-lesson is-current" href="Lesson5.html"><span>05</span>Load-Test a Contended Workflow and Redesign It
+                to Meet Throughput Without Violating Correctness<i>Current</i></a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>10</span>Atomicity Across Business Workflows: Counters,
+              Reservations, Idempotency, and Event-Driven Consistency
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Define the True Atomic Boundary: One Document,
+                Transaction Set, or Eventual Multi-Step Workflow</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Distributed/Sharded Counters, Read Aggregation,
+                Write Distribution, and Accuracy/Latency Tradeoffs</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Reservation/Inventory Patterns, Conditional
+                Writes, Expiration, Compensation, and Oversell Prevention</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Idempotency Keys, Exactly-Once Illusions, Cloud
+                Functions/Eventarc Retries, and Deduplication</a>
+<a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>Design a Saga-Like Firestore Workflow with
+                Recovery, Replay, Monitoring, and Manual Repair Paths</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>11</span>Subcollections, Collection Groups, Hierarchies,
+              Deletion, and Data Lifecycle
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Deep Hierarchies vs Flat Collections:
+                Queryability, Security, Ownership, and Operational Complexity</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Collection Group Queries and Index/Rules
+                Requirements Across Parent Documents</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Deleting Documents Does Not Automatically Delete
+                Subcollections: Recursive Delete and Orphan Risk</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>Archiving, Soft Delete, Legal Retention, Tenant
+                Deletion, Export, and Lifecycle State Machines</a>
+<a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Implement a Tenant/Data-Subject Deletion Plan
+                that Finds and Verifies All Hierarchical Data</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>12</span>Security Rules Foundations: Authentication Context,
+              Match Paths, Reads/Writes, and Validation
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>Security Rules Execution Model,
+                request/resource, Auth Context, and Rules Are Not Filters</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Path Matching, Wildcards, Recursive Wildcards,
+                get/exists, and Access-Call Limits</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Separate create/update/delete/read/list/get
+                Permissions and Validate Required/Immutable Fields</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>Role/Ownership Models, Public/Private Documents,
+                Nested Resources, and Deny-by-Default Structure</a>
+<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Write Emulator-Based Rules Tests for Allowed and
+                Forbidden Cases Before Shipping Client Queries</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>13</span>Advanced Security Rules, Query Compatibility, App
+              Check, and Rules Testing
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>Secure Queries by Making Query Constraints
+                Provably Compatible with Rules</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>Rules Functions, Reuse, Complexity, Access-Call
+                Caching, and Avoiding Hidden Cost/Limit Failures</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>App Check for Abuse Reduction: Attestation
+                Concepts, Enforcement Boundaries, and Why It Is Not
+                Authorization</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Testing Rules in CI with Emulators, Fixtures,
+                Authentication Claims, and Regression Cases</a>
+<a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Threat-Model a Client App for ID Enumeration,
+                Query Broadening, Forged Fields, Replay, and Rule Drift</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>14</span>IAM, Admin/Server SDKs, Service Accounts,
+              Authentication, and Trust Boundaries
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Firebase Authentication vs Google Cloud IAM vs
+                Firestore Security Rules: Who Authorizes Which Request Path</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>Admin/Server SDKs Bypass Security Rules: Service
+                Account Least Privilege and Application-Layer Authorization</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Custom Claims, Tenant/Role Data, Token Refresh,
+                Revocation, and Avoiding Authorization Only in UI</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Workload Identity/Service Accounts, Keyless
+                Credentials, Secrets, Rotation, and Local Development</a>
+<a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Design Separate Browser/Mobile and Backend
+                Access Paths with Explicit Trust, Audit, and Failure
+                Boundaries</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>15</span>Scaling and Hotspots: Key Distribution, Index
+              Fan-Out, Sequential Values, and Ramp-Up
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Automatic Scaling Does Not Remove Hotspot
+                Physics: Document, Key-Range, and Index Contention</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Sequential Document IDs/Timestamps, Monotonic
+                Fields, High Write Rates, and Index Hotspots</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>The 500/50/5-Style Gradual Traffic Ramp Concept,
+                New Collections, and Migration Warm-Up</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>Index Fan-Out, Large Arrays/Maps,
+                High-Cardinality Fields, and Write Latency/Cost</a>
+<a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Load-Test a High-Write Model, Identify Hotspots,
+                and Redesign Keys, Indexes, or Data Distribution</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>16</span>Aggregation Queries, Server-Side Count/Sum/Avg,
+              Materialized Aggregates, and Analytics Boundaries
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>count(), sum(), avg() Semantics, Supported
+                SDKs/Queries, and Index-Entry-Based Cost</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>Aggregations with Filters/Collection Groups and
+                Consistency Expectations</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>When to Maintain Write-Time Aggregates for
+                Realtime Display vs Run Read-Time Aggregations</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>Large-Scale Analytics Limits and
+                Exporting/Replicating Data to BigQuery or Analytical Systems</a>
+<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Choose Between Query-Time Aggregation,
+                Materialized Document, Distributed Counter, and External
+                Warehouse</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>17</span>Vector Search: Embeddings, KNN Indexes, Distance
+              Measures, Filters, and Retrieval Design
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Embedding Fundamentals, Model Versioning,
+                Dimensions, Similarity/Distance, and Storing Vector Values</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Create/Manage Firestore Vector Indexes and
+                Understand Supported Dimensions/Query Limits</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>K-Nearest-Neighbor Queries, Distance Thresholds,
+                Metadata Filters, and Result Ranking</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Firestore Does Not Generate Embeddings: Vertex
+                AI/External Generation Pipelines, Backfills, and Updates</a>
+<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Build and Evaluate a Semantic Retrieval Feature
+                with Recall/Quality, Latency, Security, and Cost Measurements</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>18</span>Firestore Enterprise Native Mode: Core vs Pipeline
+              Operations and Advanced Querying
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Enterprise Edition Architecture/Query Engine and
+                How Native Core Semantics Differ from Standard</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Pipeline Operations: Pipeline Syntax Mental
+                Model, Advanced Filters/Transforms/Aggregations, and Server SDK
+                Context</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Relational-Style Join Capabilities Through
+                Sub-Pipelines: Power, Cost, and Modeling Implications</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Index-Optional Querying in Enterprise: Query
+                Explain, Performance, and When to Add Indexes</a>
+<a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Translate an Access Pattern Between Standard
+                Core Queries and Enterprise Pipeline Operations and Compare
+                Tradeoffs</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>19</span>Firestore with MongoDB Compatibility: Drivers,
+              MQL/BSON, Tools, and Serverless Differences
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>Enterprise MongoDB Compatibility Mode, MongoDB
+                Protocol/Drivers, Connection Strings, and Authentication</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Supported BSON Types, _id Rules,
+                Documents/Collections, MQL Query/CRUD Compatibility, and
+                Limits</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>mongosh, Compass, mongoimport/export,
+                mongodump/restore, Mongoose, and Tool Compatibility
+                Boundaries</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>Behavior Differences from MongoDB: Commands,
+                Transactions/Features, Indexing, Change Semantics, and
+                Operational Model</a>
+<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Port a Small MongoDB Application and Build
+                Compatibility Tests Instead of Assuming Drop-In Equivalence</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>20</span>Migrating MongoDB Workloads to Firestore MongoDB
+              Compatibility
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Inventory MongoDB Features, Drivers, Data Types,
+                Indexes, Aggregations, Transactions, and Operational
+                Dependencies</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Compatibility Matrix Testing, Unsupported
+                Features, Semantic Differences, and Application Refactoring</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Bulk Migration with Export/Import or
+                Datastream→Cloud Storage→Dataflow Patterns and Change Capture</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Dual-Run/Cutover Planning, Validation, Lag
+                Monitoring, Read/Write Freeze, and Rollback</a>
+<a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Execute a Migration Rehearsal with Counts,
+                Checksums/Samples, Query Regression, Performance, and Failure
+                Recovery</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>21</span>TTL, Retention, Expiration, Backfills, and
+              Lifecycle Automation
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>TTL Policies and Expiration Fields: Asynchronous
+                Deletion Semantics and Non-Instant Guarantees</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>Index Exemptions for TTL Fields, Sequential
+                Timestamp Costs, and Write Throughput Considerations</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Soft Delete vs TTL vs Scheduled/Batch Cleanup vs
+                Archive: Compliance and Product Requirements</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>Backfilling TTL Fields Safely, Monitoring
+                Deletion, Event Side Effects, and Cost</a>
+<a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>Design Retention for Sessions, Events, User
+                Data, Audit Records, and Legal Holds Without Accidental Loss</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>22</span>Backups, Point-in-Time Recovery, Restore, and
+              Disaster Recovery
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Scheduled Backups, Backup Retention, Database
+                Restore/Clone Concepts, and Access Control</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>PITR Window Semantics, Historical
+                Reads/Recovery, and Accidental Write/Delete Scenarios</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>Export/Import vs Managed Backups/PITR: Different
+                Purposes, RPO/RTO, and Operational Workflows</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Multi-Region Location Does Not Replace Backup:
+                Failure Modes, Logical Corruption, and Operator Mistakes</a>
+<a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Run a Recovery Drill and Measure Data
+                Completeness, RPO, RTO, Rules/Indexes/Configuration, and
+                Application Cutover</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>23</span>Encryption, CMEK, Network Access, Private
+              Connectivity, and Data Governance
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter23/Lesson1.html"><span>01</span>Encryption at Rest/In Transit, Google-Managed
+                Keys, CMEK Concepts, Key Availability, Rotation, and Failure
+                Impact</a>
+<a class="sidebar-lesson" href="../Chapter23/Lesson2.html"><span>02</span>VPC/Private Google Access and Service Perimeter
+                Concepts Where Applicable, Egress Paths, and Trusted Backends</a>
+<a class="sidebar-lesson" href="../Chapter23/Lesson3.html"><span>03</span>Database Locations, Data Residency, Multi-Region
+                Tradeoffs, Replication, and Governance Requirements</a>
+<a class="sidebar-lesson" href="../Chapter23/Lesson4.html"><span>04</span>PII Classification, Field-Level Design, Logging
+                Redaction, Backups, Exports, and Right-to-Delete Workflows</a>
+<a class="sidebar-lesson" href="../Chapter23/Lesson5.html"><span>05</span>Build a Security/Governance Control Matrix
+                Mapping Threats and Compliance Requirements to Firestore/Google
+                Cloud Controls</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>24</span>Observability: Query Explain, Query Insights, Key
+              Visualizer, Metrics, Logs, and Troubleshooting
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter24/Lesson1.html"><span>01</span>Cloud Monitoring Metrics for
+                Reads/Writes/Deletes, Latency, Errors, Quotas, Storage, and
+                Listener Behavior</a>
+<a class="sidebar-lesson" href="../Chapter24/Lesson2.html"><span>02</span>Query Explain to Inspect Execution, Index Use,
+                Scanned/Returned Work, and Optimization Evidence</a>
+<a class="sidebar-lesson" href="../Chapter24/Lesson3.html"><span>03</span>Query Insights to Identify Expensive/Slow Query
+                Patterns and Prioritize Tuning</a>
+<a class="sidebar-lesson" href="../Chapter24/Lesson4.html"><span>04</span>Key Visualizer/Hotspot Diagnostics Where
+                Available, Application Tracing, Logs, and Correlation IDs</a>
+<a class="sidebar-lesson" href="../Chapter24/Lesson5.html"><span>05</span>Build a Troubleshooting Runbook for Permission
+                Errors, Missing Indexes, Hotspots, Latency, Quota, and Cost
+                Spikes</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>25</span>Cost Engineering, Quotas, Limits, Billing, and
+              Capacity/Usage Forecasting
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter25/Lesson1.html"><span>01</span>Read/Write/Delete/Index/Storage/Network/Backup/PITR Billing
+                Dimensions and Edition Differences</a>
+<a class="sidebar-lesson" href="../Chapter25/Lesson2.html"><span>02</span>Listener and Query Read Amplification, Index
+                Entry Reads, Aggregations, Retries, and Hidden Cost
+                Multipliers</a>
+<a class="sidebar-lesson" href="../Chapter25/Lesson3.html"><span>03</span>Free Tier/Quotas vs Production Limits, Rate
+                Limits, Daily Budgets, Alerts, and Abuse Controls</a>
+<a class="sidebar-lesson" href="../Chapter25/Lesson4.html"><span>04</span>Model Cost per User/Feature/Event and Compare
+                Denormalization, Fan-Out, Aggregation, and Retention
+                Alternatives</a>
+<a class="sidebar-lesson" href="../Chapter25/Lesson5.html"><span>05</span>Load-Test and Cost-Test a Feature Before Launch
+                with Explicit Volume, Growth, and Worst-Case Assumptions</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>26</span>Testing, Emulator Suite, CI/CD, Index/Rules
+              Deployment, and Schema Migration
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter26/Lesson1.html"><span>01</span>Emulator Suite for Firestore/Auth/Functions-Like
+                Integration Testing and Known Differences from Production</a>
+<a class="sidebar-lesson" href="../Chapter26/Lesson2.html"><span>02</span>Seed/Reset Test Data, Deterministic IDs/Clock
+                Handling, and Parallel Test Isolation</a>
+<a class="sidebar-lesson" href="../Chapter26/Lesson3.html"><span>03</span>Version Security Rules and Index Definitions, CI
+                Validation, Staged Deployment, and Rollback</a>
+<a class="sidebar-lesson" href="../Chapter26/Lesson4.html"><span>04</span>Backward-Compatible Document Migrations, Dual
+                Readers/Writers, Backfills, and Feature Flags</a>
+<a class="sidebar-lesson" href="../Chapter26/Lesson5.html"><span>05</span>Create a Production Deployment Checklist
+                Covering Rules, Indexes, Billing, Backups, Observability, and
+                Rollback</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>27</span>Production Capstone: Design, Secure, Scale, Search,
+              Recover, and Operate a Firestore Application
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter27/Lesson1.html"><span>01</span>Define User Journeys, Data Model, Queries,
+                Realtime/Offline Needs, Atomicity, Retention, Security, SLOs,
+                and Cost Budget</a>
+<a class="sidebar-lesson" href="../Chapter27/Lesson2.html"><span>02</span>Implement
+                Documents/Indexes/Queries/Listeners/Transactions, Typed SDK
+                Access, Security Rules, and Trusted Backend Paths</a>
+<a class="sidebar-lesson" href="../Chapter27/Lesson3.html"><span>03</span>Add Aggregation, Vector Retrieval, Enterprise
+                Pipeline or MongoDB Compatibility Only Where Requirements
+                Justify Them</a>
+<a class="sidebar-lesson" href="../Chapter27/Lesson4.html"><span>04</span>Load-Test Hotspots, Test Offline/Conflict Paths,
+                Run Security Tests, Enable Backup/PITR, Monitor Queries, and
+                Rehearse Recovery</a>
+<a class="sidebar-lesson" href="../Chapter27/Lesson5.html"><span>05</span>Present the Architecture with Measured
+                Cost/Latency, Data-Governance Controls, Known Limits, and
+                Criteria for Choosing Another Database</a>
+</div>
+</details>
+</nav>
+</aside>
+<div class="lesson-main">
+<div class="lesson-mobile-bar">
+<button data-sidebar-open="" type="button">
+<span>Course navigation</span><span>Chapter 09 · Lesson 05</span>
+</button>
+</div>
+<article class="lesson-container">
+<nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+<a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">Firebase and Cloud Firestore</a><span>/</span><span>Chapter 09 · Lesson 05</span>
+</nav>
+<header class="lesson-header">
+<p class="eyebrow">
+              Chapter 09 · Transactions, Batched Writes, Atomic Field
+              Operations, Retries, and Contention
+            </p>
+<h1>
+              Load-Test a Contended Workflow and Redesign It to Meet Throughput
+              Without Violating Correctness
+            </h1>
+<p>
+              Load-test AtlasMart contention safely, record retries and tail
+              latency, and redesign throughput bottlenecks without weakening
+              correctness.
+            </p>
+<div class="lesson-meta">
+<span>Intermediate</span><span>150–180 minutes</span><span>Contention lab · tail latency</span><span>Firebase JS 12.19.0 · Admin 14.4.0 · CLI 15.30.0</span><span>Last reviewed: September 2026</span>
+</div>
+</header>
+<nav aria-label="On this page" class="lesson-toc">
+<strong>On this page</strong>
+<ol data-generated-toc=""></ol>
+</nav>
+<div class="lesson-content">
+<section>
+<h2>Learning outcomes</h2>
+<div class="objectives">
+<div class="objective">
+<span>01</span>
+<p>
+                    Build a bounded, repeatable contention harness that records
+                    success, errors, retries and latency without fabricating
+                    production claims.
+                  </p>
+</div>
+<div class="objective">
+<span>02</span>
+<p>
+                    Compare a hot transactional document, atomic transform and
+                    sharded counter under the same local fixture.
+                  </p>
+</div>
+<div class="objective">
+<span>03</span>
+<p>
+                    Preserve a strict inventory invariant while moving
+                    non-invariant metrics away from the hot transaction path.
+                  </p>
+</div>
+<div class="objective">
+<span>04</span>
+<p>
+                    Write a production validation plan that separates emulator
+                    correctness evidence from real-region performance/cost
+                    evidence.
+                  </p>
+</div>
+</div><div class="callout warning course-consistency-note"><strong>Execution and safety note</strong><p>Use the Emulator Suite, a Firebase demo project, or an isolated test project for destructive, security-sensitive, billing-sensitive, migration, backup/restore, or write-heavy exercises unless the lesson explicitly marks managed verification as required. Treat shown output as expected evidence unless it is explicitly identified as captured output, and re-check current Firebase/Google Cloud edition, mode, quota, pricing, and security documentation before production execution.</p></div>
+<div class="callout">
+<strong>Chapter 09 reproducibility baseline · reviewed 16 September
+                  2026</strong>
+<p>
+                  AtlasMart continues the same environment used in Chapters
+                  01–08: project ID <code>demo-atlasmart-firestore</code>,
+                  Standard edition / Native mode /
+                  <code>(default)</code> database for the mandatory lab,
+                  Firestore emulator <code>127.0.0.1:8080</code>, Authentication
+                  emulator <code>127.0.0.1:9099</code>, Emulator UI
+                  <code>127.0.0.1:4000</code>, Firebase CLI
+                  <code>15.30.0</code>, Firebase JavaScript SDK
+                  <code>12.19.0</code>, Firebase Admin Node SDK
+                  <code>14.4.0</code> (bundling
+                  <code>@google-cloud/firestore</code> 9.1.0), and Node.js 22+.
+                  The mandatory exercises use only local/demo resources.
+                  Production location, IAM credentials, billing, real lock
+                  scheduling, multi-region latency and tail-throughput behavior
+                  are not inferred from emulator results.
+                </p>
+</div>
+<div class="callout warning">
+<strong>Evidence boundary</strong>
+<p>
+                  The Emulator Suite is appropriate for deterministic
+                  correctness tests, Security Rules tests, retry-safe
+                  application logic and controlled conflicting writes, but it is
+                  not a production contention benchmark. Record your own attempt
+                  counts and latencies. Do not publish emulator p95/p99 as a
+                  Firestore service SLO. For Enterprise comparisons, the
+                  mandatory path is a deterministic analysis: Standard server
+                  libraries default to pessimistic concurrency, Enterprise
+                  server libraries default to optimistic concurrency, while
+                  mobile/web transactions emulate optimistic concurrency
+                  regardless of the database setting. Pipeline DML is not a
+                  replacement for Core transactions: current Pipeline
+                  <code>update</code>/<code>delete</code> stages execute outside
+                  transactions and can partially succeed across documents.
+                </p>
+</div>
+</section>
+<section>
+<h2>
+                1. The AtlasMart performance question must start with correctness
+              </h2>
+<p>
+                “Make it faster” is underspecified. AtlasMart has two different
+                workloads: <strong>inventory reservation</strong>, where stock
+                must never go below zero, and
+                <strong>order-count telemetry</strong>, where increments commute
+                and can be sharded. A redesign that makes the benchmark green by
+                weakening the invariant is a failure.
+              </p>
+<table class="data-table">
+<thead>
+<tr>
+<th>Metric</th>
+<th>Why record it</th>
+<th>Correct interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Committed reservations</td>
+<td>Business correctness</td>
+<td>Must never exceed initial stock</td>
+</tr>
+<tr>
+<td>Transaction callback attempts</td>
+<td>Contention/retry pressure</td>
+<td>
+                      More attempts can mean conflicts; emulator count is not
+                      production forecast
+                    </td>
+</tr>
+<tr>
+<td>ABORTED/other failures</td>
+<td>Operational reliability</td>
+<td>Classify by code and workload stage</td>
+</tr>
+<tr>
+<td>p50/p95/p99 duration</td>
+<td>Tail behavior for this exact run</td>
+<td>
+                      Only meaningful with sample size/environment disclosed
+                    </td>
+</tr>
+<tr>
+<td>Final shard histogram</td>
+<td>Write distribution</td>
+<td>Shows whether writes actually spread</td>
+</tr>
+<tr>
+<td>Reads/writes per logical operation</td>
+<td>Amplification/cost proxy</td>
+<td>
+                      Translate to billing only with the correct edition pricing
+                      model
+                    </td>
+</tr>
+</tbody>
+</table>
+</section>
+<section>
+<h2>2. Harness design: one fixture, several concurrency levels</h2>
+<p>
+                Run short levels such as 1, 4, 8 and 16 concurrent workers with
+                a fixed number of logical operations. Reset data between
+                scenarios. Warm up once before recording. Record raw samples to
+                JSON/CSV. The emulator is the mandatory safe target; an optional
+                production test requires an isolated billed project, explicit
+                region, cost cap and cleanup.
+              </p>
+<div class="code-window" data-code-block="" data-language="javascript">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>percentile helper
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code class="language-javascript"><span class="code-line">function percentile(sorted, p) {</span><span class="code-line">  if (!sorted.length) return null;</span><span class="code-line">  const i=Math.min(sorted.length-1, Math.ceil(p*sorted.length)-1);</span><span class="code-line">  return sorted[i];</span><span class="code-line">}</span><span class="code-line">function summarize(samples) {</span><span class="code-line">  const ok=samples.filter(x=&gt;x.ok);</span><span class="code-line">  const ms=ok.map(x=&gt;x.ms).sort((a,b)=&gt;a-b);</span><span class="code-line">  return {</span><span class="code-line">    count:samples.length,</span><span class="code-line">    ok:ok.length,</span><span class="code-line">    failed:samples.length-ok.length,</span><span class="code-line">    p50:percentile(ms,0.50),</span><span class="code-line">    p95:percentile(ms,0.95),</span><span class="code-line">    p99:percentile(ms,0.99)</span><span class="code-line">  };</span><span class="code-line">}</span></code></pre>
+</div>
+</section>
+<section>
+<h2>3. Scenario A: strict inventory transaction</h2>
+<div class="code-window" data-code-block="" data-language="javascript">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>inventory scenario
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code class="language-javascript"><span class="code-line">async function runInventoryScenario({workers, initialStock}) {</span><span class="code-line">  const ref=db.doc("catalogItems/p-load");</span><span class="code-line">  await ref.set({stock:initialStock,sku:"P-LOAD",schemaVersion:2});</span><span class="code-line">  let attempts=0;</span><span class="code-line">  const samples=await Promise.all(Array.from({length:workers},(_,i)=&gt;(async()=&gt;{</span><span class="code-line">    const t0=performance.now();</span><span class="code-line">    try {</span><span class="code-line">      const reserved=await db.runTransaction(async tx=&gt;{</span><span class="code-line">        attempts++;</span><span class="code-line">        const s=await tx.get(ref);</span><span class="code-line">        const stock=s.get("stock");</span><span class="code-line">        if (stock &lt; 1) return false;</span><span class="code-line">        tx.update(ref,{stock:stock-1});</span><span class="code-line">        return true;</span><span class="code-line">      });</span><span class="code-line">      return {ok:true,reserved,ms:performance.now()-t0};</span><span class="code-line">    } catch(e) {</span><span class="code-line">      return {ok:false,code:e.code??"unknown",ms:performance.now()-t0};</span><span class="code-line">    }</span><span class="code-line">  })()));</span><span class="code-line">  const final=(await ref.get()).get("stock");</span><span class="code-line">  const committed=samples.filter(x=&gt;x.ok&amp;&amp;x.reserved).length;</span><span class="code-line">  if (committed &gt; initialStock || final !== initialStock-committed) throw new Error("inventory invariant violated");</span><span class="code-line">  return {attempts,final,committed,samples};</span><span class="code-line">}</span></code></pre>
+</div>
+<p>
+                This is deliberately a hot document because all reservations for
+                one SKU coordinate there. Keep it hot if that is the true
+                invariant; do not “fix” the benchmark by allowing oversell.
+              </p>
+</section>
+<section>
+<h2>
+                4. Scenario B: hot telemetry transform, then sharded telemetry
+              </h2>
+<div class="code-window" data-code-block="" data-language="javascript">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>counter
+                    scenarios
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code class="language-javascript"><span class="code-line">async function runHotCounter(workers) {</span><span class="code-line">  const ref=db.doc("metrics/hot-orders");</span><span class="code-line">  await ref.set({count:0});</span><span class="code-line">  const samples=await Promise.all(Array.from({length:workers},async()=&gt;{</span><span class="code-line">    const t0=performance.now();</span><span class="code-line">    try { await ref.update({count:FieldValue.increment(1)}); return {ok:true,ms:performance.now()-t0}; }</span><span class="code-line">    catch(e){ return {ok:false,code:e.code??"unknown",ms:performance.now()-t0}; }</span><span class="code-line">  }));</span><span class="code-line">  return {samples,total:(await ref.get()).get("count")};</span><span class="code-line">}</span><span class="code-line"></span><span class="code-line">async function runShardedCounter(workers, shards=10) {</span><span class="code-line">  for(let i=0;i&lt;shards;i++) await db.doc(`counters/load/shards/${i}`).set({count:0});</span><span class="code-line">  const samples=await Promise.all(Array.from({length:workers},async(_,i)=&gt;{</span><span class="code-line">    const shard=i % shards; // deterministic distribution for the benchmark</span><span class="code-line">    const ref=db.doc(`counters/load/shards/${shard}`);</span><span class="code-line">    const t0=performance.now();</span><span class="code-line">    try { await ref.update({count:FieldValue.increment(1)}); return {ok:true,shard,ms:performance.now()-t0}; }</span><span class="code-line">    catch(e){ return {ok:false,shard,code:e.code??"unknown",ms:performance.now()-t0}; }</span><span class="code-line">  }));</span><span class="code-line">  return {samples,total:await readExactCounter("load",shards)};</span><span class="code-line">}</span></code></pre>
+</div>
+<p>
+                The benchmark asks a narrower question: does spreading
+                commutative telemetry writes reduce concentration under this
+                fixture? It does not imply that inventory should use the same
+                model.
+              </p>
+</section>
+<section>
+<h2>
+                5. Generate a reproducible report instead of narrating impressions
+              </h2>
+<div class="code-window" data-code-block="" data-language="javascript">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>runner
+                    skeleton
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code class="language-javascript"><span class="code-line">import { writeFile } from "node:fs/promises";</span><span class="code-line">const levels=[1,4,8,16];</span><span class="code-line">const report=[];</span><span class="code-line">for (const workers of levels) {</span><span class="code-line">  const inv=await runInventoryScenario({workers,initialStock:Math.ceil(workers/2)});</span><span class="code-line">  const hot=await runHotCounter(workers*10);</span><span class="code-line">  const sharded=await runShardedCounter(workers*10,10);</span><span class="code-line">  report.push({</span><span class="code-line">    workers,</span><span class="code-line">    inventory:{attempts:inv.attempts,committed:inv.committed,final:inv.final,...summarize(inv.samples)},</span><span class="code-line">    hotCounter:{total:hot.total,...summarize(hot.samples)},</span><span class="code-line">    shardedCounter:{total:sharded.total,...summarize(sharded.samples)}</span><span class="code-line">  });</span><span class="code-line">}</span><span class="code-line">await writeFile("ch09-contention-report.json", JSON.stringify({</span><span class="code-line">  generatedAt:new Date().toISOString(),</span><span class="code-line">  target:"Firestore Emulator Suite",</span><span class="code-line">  projectId:"demo-atlasmart-firestore",</span><span class="code-line">  firestorePort:8080,</span><span class="code-line">  node:process.version,</span><span class="code-line">  firebaseAdmin:"14.4.0",</span><span class="code-line">  firebaseTools:"15.30.0",</span><span class="code-line">  report</span><span class="code-line">},null,2));</span><span class="code-line">console.table(report.map(r=&gt;({workers:r.workers,inventoryP95:r.inventory.p95,hotP95:r.hotCounter.p95,shardedP95:r.shardedCounter.p95})));</span></code></pre>
+</div>
+<p>
+                Keep the raw report. If you later run an optional real-project
+                benchmark, produce a separate file that includes edition, mode,
+                database ID, location, concurrency mode, client library version,
+                billing dimensions, warm-up, document/index shape and cleanup
+                timestamp. Never merge emulator and production samples into one
+                percentile.
+              </p>
+</section>
+<section>
+<h2>6. Interpret tail latency without cargo-cult thresholds</h2>
+<p>
+                A p95 increase under contention means that the slowest 5% of
+                observed successful operations in <em>that run</em> crossed the
+                p95 boundary. It does not establish a universal Firestore
+                threshold. Look for correlated retry counts,
+                <code>ABORTED</code> errors and hot-key concentration. If a
+                transaction remains correct but too contended, reduce the
+                read/write set, partition independent invariants, or change the
+                workflow so fewer requests require the same synchronous
+                lock/version check.
+              </p>
+</section>
+<section>
+<h2>7. Wrong approach: retry every failure forever</h2>
+<p>
+                Unbounded application retries can amplify a hotspot and repeat
+                surrounding side effects. Firestore SDKs already perform bounded
+                transaction retries. The application should classify errors, cap
+                its own retries, use backoff/jitter when appropriate, preserve
+                idempotency, and surface a recoverable business outcome such as
+                “reservation could not be confirmed; please retry.”
+              </p>
+<div class="callout warning">
+<strong>Retry budget</strong>
+<p>
+                  A retry policy is part of the workload, not a magical
+                  reliability switch. Record retry count and elapsed time. Stop
+                  when the business deadline or client request budget is
+                  exhausted, and never repeat a non-idempotent external action
+                  simply because the database returned a transient error.
+                </p>
+</div>
+</section>
+<section>
+<h2>8. Reproducible AtlasMart lab</h2>
+<div class="code-window" data-code-block="" data-language="json">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>package.json
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code class="language-json"><span class="code-line">{</span><span class="code-line">  "name": "atlasmart-firestore-ch09",</span><span class="code-line">  "private": true,</span><span class="code-line">  "type": "module",</span><span class="code-line">  "engines": { "node": "&gt;=22" },</span><span class="code-line">  "dependencies": {</span><span class="code-line">    "firebase-admin": "14.4.0"</span><span class="code-line">  },</span><span class="code-line">  "devDependencies": {</span><span class="code-line">    "firebase-tools": "15.30.0"</span><span class="code-line">  }</span><span class="code-line">}</span></code></pre>
+</div>
+<div class="code-window" data-code-block="" data-language="json">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>firebase.json
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code class="language-json"><span class="code-line">{</span><span class="code-line">  "firestore": {</span><span class="code-line">    "rules": "firestore.rules",</span><span class="code-line">    "indexes": "firestore.indexes.json"</span><span class="code-line">  },</span><span class="code-line">  "emulators": {</span><span class="code-line">    "firestore": { "port": 8080 },</span><span class="code-line">    "auth": { "port": 9099 },</span><span class="code-line">    "ui": { "enabled": true, "port": 4000 }</span><span class="code-line">  }</span><span class="code-line">}</span></code></pre>
+</div>
+<div class="code-window" data-code-block="" data-language="javascript">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>firestore.rules
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code class="language-javascript"><span class="code-line">rules_version = '2';</span><span class="code-line">service cloud.firestore {</span><span class="code-line">  match /databases/{database}/documents {</span><span class="code-line">    match /catalogItems/{productId} { allow read: if true; allow write: if false; }</span><span class="code-line">    match /profiles/{uid} { allow read, write: if request.auth != null &amp;&amp; request.auth.uid == uid; }</span><span class="code-line">    match /orders/{orderId} { allow read: if request.auth != null &amp;&amp; resource.data.customerId == request.auth.uid; allow write: if false; }</span><span class="code-line">    match /{document=**} { allow read, write: if false; }</span><span class="code-line">  }</span><span class="code-line">}</span></code></pre>
+</div>
+<div class="code-window" data-code-block="" data-language="bash">
+<div class="code-head">
+<div class="code-title">
+<span class="code-dots"><i></i><i></i><i></i></span>local
+                    setup
+                  </div>
+<button class="copy-code" data-copy-code="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  </button>
+</div>
+<pre><code class="language-bash"><span class="code-line">mkdir atlasmart-firestore-ch09 &amp;&amp; cd atlasmart-firestore-ch09</span><span class="code-line">npm init -y</span><span class="code-line">npm install firebase-admin@14.4.0</span><span class="code-line">npm install --save-dev firebase-tools@15.30.0</span><span class="code-line"># Save firebase.json, firestore.rules and firestore.indexes.json from this lesson.</span><span class="code-line">printf '{"indexes":[],"fieldOverrides":[]}' &gt; firestore.indexes.json</span><span class="code-line">npx firebase-tools@15.30.0 emulators:start --project demo-atlasmart-firestore --only firestore,auth</span></code></pre>
+</div>
+<p>
+                Run the three scenarios at the bounded concurrency levels and
+                save <code>ch09-contention-report.json</code>. Assertions:
+                inventory never oversells; hot and sharded counter totals equal
+                the number of successful logical increments; every failure is
+                classified; no external side effect occurs inside a retryable
+                callback. Then deliberately increase contention locally and
+                observe how attempt counts/tail latency change on your machine.
+              </p>
+<p>
+                Optional production exercise: only in an isolated project with
+                billing intentionally enabled, a fixed database/region, a small
+                operation cap, and immediate cleanup. Inspect the server
+                concurrency mode first. Do not assume Standard emulator behavior
+                predicts Enterprise optimistic-server behavior.
+              </p>
+</section>
+<section>
+<h2>Production judgment and Chapter 10 bridge</h2>
+<p>
+                The best design keeps strict invariants strict and moves
+                commutative or eventually consistent work off the synchronous
+                hot path. Inventory may remain transactional; analytics counters
+                can be sharded; external effects need idempotency/outbox
+                patterns. Chapter 10 broadens this from one transaction to
+                complete business workflows: reservations, expiration,
+                compensation, event retries and recovery.
+              </p>
+</section>
+<section>
+<h2>Knowledge check</h2>
+<ol>
+<li>
+                  Why can a sharded counter benchmark improve while inventory
+                  remains transactional?
+                </li>
+<li>What must accompany any reported p95/p99?</li>
+<li>Should the application retry ABORTED forever?</li>
+<li>What does the emulator benchmark prove?</li>
+<li>What is a successful redesign?</li>
+</ol>
+<details class="answer-toggle">
+<summary>Review the answers</summary>
+<div>
+<p>
+<strong>1.</strong> They have different correctness
+                    requirements: counter increments commute, while inventory
+                    must preserve a strict stock invariant.
+                  </p>
+<p>
+<strong>2.</strong> Raw sample size and environment details
+                    such as emulator/production target, versions, concurrency,
+                    warm-up, data/index shape, edition/mode/region as
+                    applicable.
+                  </p>
+<p>
+<strong>3.</strong> No. Use bounded retries/backoff within a
+                    business deadline and keep surrounding actions idempotent.
+                  </p>
+<p>
+<strong>4.</strong> Correctness and comparative behavior for
+                    the pinned local fixture, not production service throughput,
+                    lock scheduling or SLOs.
+                  </p>
+<p>
+<strong>5.</strong> One that improves the required
+                    operational target without weakening the business invariant
+                    or hiding cost/amplification elsewhere.
+                  </p>
+</div>
+</details>
+</section>
+<section>
+<h2>Summary</h2>
+<p>
+                Contention testing is useful only when correctness assertions
+                travel with the performance metrics. AtlasMart now has a
+                measured path from transaction retries to transforms,
+                distributed counters and idempotent workflows—the foundation for
+                the broader atomicity patterns in Chapter 10.
+              </p>
+</section>
+<section>
+<h2>Authoritative references</h2>
+<ul class="reference-list">
+<li>
+<a href="https://firebase.google.com/docs/firestore/manage-data/transactions" rel="noopener" target="_blank">Transactions and batched writes</a>
+                  — atomicity, retry rules, offline boundary, batch behavior and
+                  failure conditions.
+                </li>
+<li>
+<a href="https://firebase.google.com/docs/firestore/transaction-data-contention" rel="noopener" target="_blank">Transaction serializability and isolation</a>
+                  — Standard/Enterprise concurrency defaults, mobile/web
+                  optimistic emulation, server locking and contention errors.
+                </li>
+<li>
+<a href="https://firebase.google.com/docs/firestore/quotas" rel="noopener" target="_blank">Usage and limits</a>
+                  — transaction time/request/field-transform and Security Rules
+                  access-call limits.
+                </li>
+<li>
+<a href="https://firebase.google.com/docs/firestore/solutions/counters" rel="noopener" target="_blank">Distributed counters</a>
+                  — shard-based write distribution and read/cost tradeoffs.
+                </li>
+<li>
+<a href="https://firebase.google.com/docs/firestore/best-practices" rel="noopener" target="_blank">Firestore best practices</a>
+                  — hotspot, transaction size and scale guidance.
+                </li>
+<li>
+<a href="https://firebase.google.com/docs/firestore/enterprise/pipelines-overview" rel="noopener" target="_blank">Enterprise Native Core/Pipeline overview</a>
+                  — operation-family boundaries.
+                </li>
+<li>
+<a href="https://firebase.google.com/docs/firestore/pipelines/dml" rel="noopener" target="_blank">Pipeline DML</a>
+                  — Preview update/delete semantics and non-transactional
+                  partial-success boundary.
+                </li>
+<li>
+<a href="https://firebase.google.com/support/release-notes/js" rel="noopener" target="_blank">Firebase JavaScript SDK release notes</a>
+                  — 12.19.0 baseline.
+                </li>
+<li>
+<a href="https://firebase.google.com/support/release-notes/admin/node" rel="noopener" target="_blank">Firebase Admin Node.js release notes</a>
+                  — 14.4.0, <code>@google-cloud/firestore</code> 9.1.0 and
+                  Node.js 22+ baseline.
+                </li>
+<li>
+<a href="https://firebase.google.com/support/release-notes/cli" rel="noopener" target="_blank">Firebase CLI release notes</a>
+                  — 15.30.0 baseline.
+                </li>
+</ul>
+</section>
+</div>
+<nav aria-label="Lesson navigation" class="lesson-nav">
+<a class="prev" href="Lesson4.html"><small>Previous lesson</small><strong>Hot Documents, High-Contention Counters, Sharded/Distributed
+                Counter Patterns, and Idempotency</strong></a><a class="next" href="../Chapter10/Lesson1.html"><small>Next lesson</small><strong>Define the True Atomic Boundary: One Document, Transaction Set,
+                or Eventual Multi-Step Workflow</strong></a>
+</nav>
+</article>
+<div class="lesson-support">
+<section aria-labelledby="support-title" class="support-section section-shell">
+<div class="support-grid reveal">
+<div>
+<p class="eyebrow">Keep knowledge open</p>
+<h2 id="support-title">Help the academy stay free and grow.</h2>
+<p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+<div aria-label="Author links" class="social-row">
+<a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="M15 3h6v6"></path>
+<path d="M10 14 21 3"></path>
+<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+</svg>
+</a>
+<a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="M15 3h6v6"></path>
+<path d="M10 14 21 3"></path>
+<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+</svg>
+</a>
+<a href="https://mohammadijoo.github.io/" rel="noopener" target="_blank">Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="M15 3h6v6"></path>
+<path d="M10 14 21 3"></path>
+<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+</svg>
+</a>
+</div>
+</div>
+<div class="donation-card">
+<div class="donation-head">
+<span>ETH</span><small>Ethereum / ERC-20 only</small>
+</div>
+<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
+<button class="button secondary compact" data-copy-donation="" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<rect height="11" rx="2" width="11" x="8" y="8"></rect>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy address
+                </button>
+<p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="section-shell footer-inner">
+<div>
+<strong>Big Data Academy</strong>
+<p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+</div>
+<small>Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small>
+</div>
+</footer>
+<script src="../../../assets/js/main.js"></script>
+<script src="../firebase-firestore-code-bootstrap.js?v=20260920.1"></script><script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+</body>
+</html>

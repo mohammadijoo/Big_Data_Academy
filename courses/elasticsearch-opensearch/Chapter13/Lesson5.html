@@ -139,9 +139,8 @@
             </summary>
             <div>
               <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
-                ><span>01</span>Inverted-Index Search vs
-                Relational / Document / Vector Databases: Workload Fit and
-                Architectural Tradeoffs</a
+                ><span>01</span>Inverted-Index Search vs Relational / Document /
+                Vector Databases: Workload Fit and Architectural Tradeoffs</a
               ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
                 ><span>02</span>Elasticsearch and OpenSearch Lineage,
                 Licensing/Ecosystem Differences, APIs, and Compatibility
@@ -1041,14 +1040,20 @@
                   are used.
                 </p>
               </div>
-            
+
               <div class="callout warning course-execution-note">
                 <strong>Execution and safety note</strong>
                 <p>
-                  Run mutating, destructive, security, lifecycle, snapshot, failure-injection, and load-test commands only in the disposable AtlasMart lab or an equivalently isolated environment. Verify the target cluster, index, tenant, credentials, and rollback path before execution; treat shown output as an expected invariant unless the lesson explicitly labels it as captured evidence.
+                  Run mutating, destructive, security, lifecycle, snapshot,
+                  failure-injection, and load-test commands only in the
+                  disposable AtlasMart lab or an equivalently isolated
+                  environment. Verify the target cluster, index, tenant,
+                  credentials, and rollback path before execution; treat shown
+                  output as an expected invariant unless the lesson explicitly
+                  labels it as captured evidence.
                 </p>
               </div>
-</section>
+            </section>
             <section>
               <h2>1. Start from service objectives and measured workload</h2>
               <p>
@@ -1067,54 +1072,54 @@
                 discover the forecast was optimistic.
               </p>
               <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>AtlasMart planning field</th>
-                      <th>Example placeholder</th>
-                      <th>Replace with</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Primary store today</td>
-                      <td><code>600 GiB</code></td>
-                      <td>Measured primary-store bytes.</td>
-                    </tr>
-                    <tr>
-                      <td>12-month high case</td>
-                      <td><code>1.2 TiB</code></td>
-                      <td>Forecast + uncertainty.</td>
-                    </tr>
-                    <tr>
-                      <td>Peak writes</td>
-                      <td><code>8k docs/s</code></td>
-                      <td>Observed p95/p99 interval.</td>
-                    </tr>
-                    <tr>
-                      <td>Peak searches</td>
-                      <td><code>500 qps</code></td>
-                      <td>Query-class mix and concurrency.</td>
-                    </tr>
-                    <tr>
-                      <td>Search objective</td>
-                      <td><code>p99 &lt; 350 ms</code></td>
-                      <td>Application SLO by query class.</td>
-                    </tr>
-                    <tr>
-                      <td>Single-node recovery RTO</td>
-                      <td><code>&lt; 30 min</code></td>
-                      <td>Business/operations objective.</td>
-                    </tr>
-                    <tr>
-                      <td>Zone-loss policy</td>
-                      <td>
-                        Serve within SLO; replicas may be yellow under forced
-                        awareness
-                      </td>
-                      <td>Explicit degraded-mode contract.</td>
-                    </tr>
-                  </tbody>
-                </table>
+                <thead>
+                  <tr>
+                    <th>AtlasMart planning field</th>
+                    <th>Example placeholder</th>
+                    <th>Replace with</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Primary store today</td>
+                    <td><code>600 GiB</code></td>
+                    <td>Measured primary-store bytes.</td>
+                  </tr>
+                  <tr>
+                    <td>12-month high case</td>
+                    <td><code>1.2 TiB</code></td>
+                    <td>Forecast + uncertainty.</td>
+                  </tr>
+                  <tr>
+                    <td>Peak writes</td>
+                    <td><code>8k docs/s</code></td>
+                    <td>Observed p95/p99 interval.</td>
+                  </tr>
+                  <tr>
+                    <td>Peak searches</td>
+                    <td><code>500 qps</code></td>
+                    <td>Query-class mix and concurrency.</td>
+                  </tr>
+                  <tr>
+                    <td>Search objective</td>
+                    <td><code>p99 &lt; 350 ms</code></td>
+                    <td>Application SLO by query class.</td>
+                  </tr>
+                  <tr>
+                    <td>Single-node recovery RTO</td>
+                    <td><code>&lt; 30 min</code></td>
+                    <td>Business/operations objective.</td>
+                  </tr>
+                  <tr>
+                    <td>Zone-loss policy</td>
+                    <td>
+                      Serve within SLO; replicas may be yellow under forced
+                      awareness
+                    </td>
+                    <td>Explicit degraded-mode contract.</td>
+                  </tr>
+                </tbody>
+              </table>
             </section>
             <section>
               <h2>2. Build a transparent model—not a magic calculator</h2>
@@ -1262,53 +1267,52 @@ print("one 2-node zone lost:", survivor_disk_pct(2400, 1000, 6, 2))
                 if the local machine cannot host the topology.
               </p>
               <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>Scenario</th>
-                      <th>Expected platform state</th>
-                      <th>Pass evidence</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>No failure</td>
-                      <td>All required copies started</td>
-                      <td>Baseline p50/p95/p99 + no sustained rejection.</td>
-                    </tr>
-                    <tr>
-                      <td>One data node lost</td>
-                      <td>Missing copies recover/relocate legally</td>
-                      <td>
-                        RTO met; p99 and error budget stay within degraded
-                        target.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>One zone lost, awareness only</td>
-                      <td>Copies may rebuild in surviving zones</td>
-                      <td>
-                        Survivor disk/CPU remain below safety bound; recovery
-                        finishes.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>One zone lost, forced awareness</td>
-                      <td>Some replicas may remain unassigned/yellow</td>
-                      <td>
-                        Service remains within SLO; reason for each unassigned
-                        replica is expected.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Skewed routing load</td>
-                      <td>One key intentionally dominates</td>
-                      <td>
-                        No single shard exceeds defined queue/latency/headroom
-                        limit.
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                <thead>
+                  <tr>
+                    <th>Scenario</th>
+                    <th>Expected platform state</th>
+                    <th>Pass evidence</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>No failure</td>
+                    <td>All required copies started</td>
+                    <td>Baseline p50/p95/p99 + no sustained rejection.</td>
+                  </tr>
+                  <tr>
+                    <td>One data node lost</td>
+                    <td>Missing copies recover/relocate legally</td>
+                    <td>
+                      RTO met; p99 and error budget stay within degraded target.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>One zone lost, awareness only</td>
+                    <td>Copies may rebuild in surviving zones</td>
+                    <td>
+                      Survivor disk/CPU remain below safety bound; recovery
+                      finishes.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>One zone lost, forced awareness</td>
+                    <td>Some replicas may remain unassigned/yellow</td>
+                    <td>
+                      Service remains within SLO; reason for each unassigned
+                      replica is expected.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Skewed routing load</td>
+                    <td>One key intentionally dominates</td>
+                    <td>
+                      No single shard exceeds defined queue/latency/headroom
+                      limit.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </section>
             <section>
               <h2>5. Execute with observable APIs and application metrics</h2>
@@ -1634,7 +1638,7 @@ POST _cluster/allocation/explain
                         d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
                       ></path></svg></a
                   ><a
-                    href="https://mohammadijoo.ir/"
+                    href="https://mohammadijoo.github.io/"
                     rel="noopener"
                     target="_blank"
                     >Website

@@ -139,9 +139,8 @@
             </summary>
             <div>
               <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
-                ><span>01</span>Inverted-Index Search vs
-                Relational / Document / Vector Databases: Workload Fit and
-                Architectural Tradeoffs</a
+                ><span>01</span>Inverted-Index Search vs Relational / Document /
+                Vector Databases: Workload Fit and Architectural Tradeoffs</a
               ><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
                 ><span>02</span>Elasticsearch and OpenSearch Lineage,
                 Licensing/Ecosystem Differences, APIs, and Compatibility
@@ -1076,67 +1075,64 @@
                 shard/indexing/search rates and client concurrency.
               </p>
               <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>Evidence family</th>
-                      <th>What to capture</th>
-                      <th>What it can falsify</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Client</td>
-                      <td>
-                        Request rate, concurrency, p50/p95/p99, status/errors,
-                        retries, payload/query mix.
-                      </td>
-                      <td>
-                        Server-only theories when load/retry behavior changed
-                        first.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>JVM</td>
-                      <td>Heap used/max, GC collections/time, JVM identity.</td>
-                      <td>
-                        “GC caused it” if GC remains stable across the incident.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Execution</td>
-                      <td>
-                        Thread-pool active/queue/rejected/completed; tasks/hot
-                        threads.
-                      </td>
-                      <td>“No saturation” when queues/rejections rise.</td>
-                    </tr>
-                    <tr>
-                      <td>Protection</td>
-                      <td>
-                        Breaker trips/estimates; indexing pressure; OpenSearch
-                        backpressure stats.
-                      </td>
-                      <td>“The cluster had plenty of admission headroom.”</td>
-                    </tr>
-                    <tr>
-                      <td>Storage/index</td>
-                      <td>
-                        Merge/refresh/search/indexing stats; disk/host
-                        telemetry.
-                      </td>
-                      <td>
-                        Heap-only theory when I/O wait/storage tail rises.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Topology</td>
-                      <td>Shard counts/routing/skew/node health/recovery.</td>
-                      <td>
-                        Uniform-load theory when one hot shard/node dominates.
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                <thead>
+                  <tr>
+                    <th>Evidence family</th>
+                    <th>What to capture</th>
+                    <th>What it can falsify</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Client</td>
+                    <td>
+                      Request rate, concurrency, p50/p95/p99, status/errors,
+                      retries, payload/query mix.
+                    </td>
+                    <td>
+                      Server-only theories when load/retry behavior changed
+                      first.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>JVM</td>
+                    <td>Heap used/max, GC collections/time, JVM identity.</td>
+                    <td>
+                      “GC caused it” if GC remains stable across the incident.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Execution</td>
+                    <td>
+                      Thread-pool active/queue/rejected/completed; tasks/hot
+                      threads.
+                    </td>
+                    <td>“No saturation” when queues/rejections rise.</td>
+                  </tr>
+                  <tr>
+                    <td>Protection</td>
+                    <td>
+                      Breaker trips/estimates; indexing pressure; OpenSearch
+                      backpressure stats.
+                    </td>
+                    <td>“The cluster had plenty of admission headroom.”</td>
+                  </tr>
+                  <tr>
+                    <td>Storage/index</td>
+                    <td>
+                      Merge/refresh/search/indexing stats; disk/host telemetry.
+                    </td>
+                    <td>Heap-only theory when I/O wait/storage tail rises.</td>
+                  </tr>
+                  <tr>
+                    <td>Topology</td>
+                    <td>Shard counts/routing/skew/node health/recovery.</td>
+                    <td>
+                      Uniform-load theory when one hot shard/node dominates.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </section>
             <section>
               <h2>2. One API evidence bundle</h2>
@@ -1209,57 +1205,55 @@ GET _cluster/settings?include_defaults=true&amp;flat_settings=true</code></pre>
             <section>
               <h2>4. A decision matrix for common saturation shapes</h2>
               <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>Observed shape</th>
-                      <th>Likely mechanism to test</th>
-                      <th>Do not jump straight to</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Heap climbs + GC time/pauses + breaker pressure</td>
-                      <td>
-                        Heap-heavy query/aggregation, fielddata, oversized
-                        caches, concurrency, cluster state.
-                      </td>
-                      <td>Bigger heap / disabled breaker.</td>
-                    </tr>
-                    <tr>
-                      <td>CPU high + search hot threads + queue/rejections</td>
-                      <td>
-                        Expensive query, shard fan-out, script/aggregation cost,
-                        excessive concurrency.
-                      </td>
-                      <td>Bigger queue.</td>
-                    </tr>
-                    <tr>
-                      <td>
-                        CPU moderate + disk wait/merge high + latency high
-                      </td>
-                      <td>Storage/merge/recovery or cold filesystem cache.</td>
-                      <td>More search threads.</td>
-                    </tr>
-                    <tr>
-                      <td>Write rejections + indexing pressure + hot shard</td>
-                      <td>
-                        Bulk size/concurrency, routing skew, replica/storage
-                        drain rate.
-                      </td>
-                      <td>Raise indexing-pressure limit.</td>
-                    </tr>
-                    <tr>
-                      <td>OpenSearch search-backpressure cancellations</td>
-                      <td>Resource-intensive search under node duress.</td>
-                      <td>Disable cancellation protection.</td>
-                    </tr>
-                    <tr>
-                      <td>Low cache hit rate but SLO healthy</td>
-                      <td>Dynamic workload where caching may not matter.</td>
-                      <td>Increase cache sizes simply to improve hit rate.</td>
-                    </tr>
-                  </tbody>
-                </table>
+                <thead>
+                  <tr>
+                    <th>Observed shape</th>
+                    <th>Likely mechanism to test</th>
+                    <th>Do not jump straight to</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Heap climbs + GC time/pauses + breaker pressure</td>
+                    <td>
+                      Heap-heavy query/aggregation, fielddata, oversized caches,
+                      concurrency, cluster state.
+                    </td>
+                    <td>Bigger heap / disabled breaker.</td>
+                  </tr>
+                  <tr>
+                    <td>CPU high + search hot threads + queue/rejections</td>
+                    <td>
+                      Expensive query, shard fan-out, script/aggregation cost,
+                      excessive concurrency.
+                    </td>
+                    <td>Bigger queue.</td>
+                  </tr>
+                  <tr>
+                    <td>CPU moderate + disk wait/merge high + latency high</td>
+                    <td>Storage/merge/recovery or cold filesystem cache.</td>
+                    <td>More search threads.</td>
+                  </tr>
+                  <tr>
+                    <td>Write rejections + indexing pressure + hot shard</td>
+                    <td>
+                      Bulk size/concurrency, routing skew, replica/storage drain
+                      rate.
+                    </td>
+                    <td>Raise indexing-pressure limit.</td>
+                  </tr>
+                  <tr>
+                    <td>OpenSearch search-backpressure cancellations</td>
+                    <td>Resource-intensive search under node duress.</td>
+                    <td>Disable cancellation protection.</td>
+                  </tr>
+                  <tr>
+                    <td>Low cache hit rate but SLO healthy</td>
+                    <td>Dynamic workload where caching may not matter.</td>
+                    <td>Increase cache sizes simply to improve hit rate.</td>
+                  </tr>
+                </tbody>
+              </table>
             </section>
             <section>
               <h2>5. Build the resource-bounded AtlasMart mixed workload</h2>
@@ -1399,58 +1393,58 @@ GET _cluster/settings?include_defaults=true&amp;flat_settings=true</code></pre>
             <section>
               <h2>8. What to scale and what to tune</h2>
               <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>Finding</th>
-                      <th>Primary durable actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Bad query/mapping shape</td>
-                      <td>
-                        Fix query, mapping/analyzer, aggregation/pagination
-                        strategy; add regression tests.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Client-driven overload</td>
-                      <td>
-                        Bound concurrency/bulk size; backoff+jitter;
-                        queue/shed/defer noncritical work.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Hot tenant/shard</td>
-                      <td>
-                        Routing/model fix, tenant budgets/isolation,
-                        rebalance/reindex if justified.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Legitimate CPU-bound capacity shortage</td>
-                      <td>
-                        Scale/resize after query efficiency and admission
-                        controls are validated.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Storage/merge bottleneck</td>
-                      <td>
-                        Storage/headroom/lifecycle/refresh/merge investigation
-                        from Chapter 14; do not hide with heap.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Heap-heavy legitimate working set</td>
-                      <td>
-                        Mapping/cache/query repair first; then supported
-                        heap/capacity evaluation with filesystem-cache headroom
-                        preserved.
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                <thead>
+                  <tr>
+                    <th>Finding</th>
+                    <th>Primary durable actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Bad query/mapping shape</td>
+                    <td>
+                      Fix query, mapping/analyzer, aggregation/pagination
+                      strategy; add regression tests.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Client-driven overload</td>
+                    <td>
+                      Bound concurrency/bulk size; backoff+jitter;
+                      queue/shed/defer noncritical work.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Hot tenant/shard</td>
+                    <td>
+                      Routing/model fix, tenant budgets/isolation,
+                      rebalance/reindex if justified.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Legitimate CPU-bound capacity shortage</td>
+                    <td>
+                      Scale/resize after query efficiency and admission controls
+                      are validated.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Storage/merge bottleneck</td>
+                    <td>
+                      Storage/headroom/lifecycle/refresh/merge investigation
+                      from Chapter 14; do not hide with heap.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Heap-heavy legitimate working set</td>
+                    <td>
+                      Mapping/cache/query repair first; then supported
+                      heap/capacity evaluation with filesystem-cache headroom
+                      preserved.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </section>
             <section>
               <h2>9. Operational and security boundaries</h2>
@@ -1762,7 +1756,7 @@ GET _cluster/settings?include_defaults=true&amp;flat_settings=true</code></pre>
                         d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
                       ></path></svg></a
                   ><a
-                    href="https://mohammadijoo.ir/"
+                    href="https://mohammadijoo.github.io/"
                     rel="noopener"
                     target="_blank"
                     >Website
