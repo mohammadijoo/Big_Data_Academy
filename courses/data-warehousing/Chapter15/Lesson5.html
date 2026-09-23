@@ -1,0 +1,1264 @@
+<!doctype html>
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Run an end-to-end AtlasMart CDC acceptance test that crashes mid-batch, restarts, redelivers duplicates, applies a late event and delete, blocks a breaking schema event, and proves deterministic convergence."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Prove an Incremental Pipeline Handles Restart, Duplicate Delivery, Late
+      Data, Deletes, and Reprocessing | Data Warehousing and Dimensional
+      Modeling | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <style data-dw-course-consistency>
+      .lesson-header h1, .lesson-content h2, .lesson-content h3,
+      .lesson-content p, .lesson-content li, .lesson-content th,
+      .lesson-content td, .lesson-nav strong, .sidebar-lesson {
+        overflow-wrap: anywhere;
+      }
+      .lesson-content code:not(pre code) {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        white-space: normal;
+      }
+      .lesson-content > *, .objective, .callout, .checkpoint, .code-window {
+        min-width: 0;
+        max-width: 100%;
+      }
+      @media (max-width: 700px) {
+        .lesson-toc ol { columns: 1; }
+        .lesson-content th, .lesson-content td { word-break: break-word; }
+      }
+    </style>
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">DW</span>
+<div>
+<small>Course 17</small><strong>Data Warehousing and Dimensional Modeling</strong>
+</div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">
+            ×
+          </button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewBox="0 0 24 24">
+<circle cx="11" cy="11" r="7"></circle>
+<path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 150 lessons..." type="search"/></label>
+<nav aria-label="Data Warehousing and Dimensional Modeling curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter">
+<summary>
+<span>01</span>Data Warehouse Foundations: OLTP vs OLAP,
+              Analytical Workloads, Architecture, and Lab Dataset
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>Operational vs Analytical Systems: Transaction
+                Shape, History, Concurrency, Query Complexity, and Data
+                Freshness<i>Current</i></a><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Warehouse, Data Mart, ODS, Data Lake, Lakehouse,
+                Semantic Layer, and BI Platform: Responsibilities and
+                Boundaries</a><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>Classic Enterprise Warehouse, Dimensional Bus,
+                Modern ELT, and Lakehouse-Centric Architectural Styles</a><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Batch, Micro-Batch, Streaming/CDC, and
+                Near-Real-Time Warehousing: Freshness vs Complexity Tradeoffs</a><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Define a Course Case Study with Source Systems,
+                Business Processes, KPIs, SLAs, Security, and Data Quality
+                Expectations</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>02</span>Requirements Engineering: Business Processes,
+              Questions, Metrics, Dimensions, and Grain
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>Start from Decisions and Questions:
+                Stakeholders, Use Cases, Reports, Explorations, and Data
+                Products</a><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Identify Business Processes and Events Before
+                Designing Tables</a><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>Declare Grain in One Precise Sentence and Reject
+                Mixed-Grain Facts</a><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Separate Measures, Dimensions, Descriptive
+                Attributes, Degenerate Dimensions, and Operational Metadata</a><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Build a Requirements-to-Model Traceability
+                Matrix Linking Every KPI and Slice to Source and Grain</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>03</span>Dimensional Modeling Foundations: Facts,
+              Dimensions, Star Schemas, and Query Semantics
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>Why Star Schemas Optimize Understandability and
+                Analytical Access Patterns</a><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Fact Tables vs Dimension Tables: Keys, Measures,
+                Descriptors, Width, and Growth Behavior</a><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>Foreign-Key Relationships, Surrogate Keys,
+                Referential Integrity, and Orphan Handling</a><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>Star vs Snowflake vs Flat Wide Tables: Semantic,
+                Performance, Maintenance, and Tooling Tradeoffs</a><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>Model a Sales/Orders Process as a Star Schema
+                and Validate Common BI Queries Against the Declared Grain</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>04</span>Fact Table Design: Additive, Semi-Additive,
+              Non-Additive Measures, and Factless Facts
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>Additive Measures and Safe Summation Across
+                Dimensions</a><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>Semi-Additive Balances/Snapshots: Why Time Often
+                Requires Different Aggregation</a><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>Ratios, Percentages, Averages, Distinct Counts,
+                and Other Non-Additive Metrics</a><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Factless Fact Tables for Coverage, Eligibility,
+                Attendance, Conditions, and Event Occurrence</a><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>Audit a Metric Catalog for Double Counting,
+                Incorrect Grain, and Unsafe Aggregation</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>05</span>Dimension Design: Descriptive Context, Hierarchies,
+              Attributes, and Analytical Usability
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>Dimension Attributes as Human-Readable
+                Analytical Context, Not Operational Normalization Exercises</a><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Natural/Business Keys vs Surrogate Keys, Unknown
+                Members, and Durable Identity</a><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>Hierarchies, Levels, Ragged/Unbalanced
+                Hierarchies, and Drill Paths</a><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Wide Denormalized Dimensions vs Snowflaking,
+                Outriggers, and Maintenance Tradeoffs</a><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Design a Customer/Product/Geography Dimension
+                Set for Usability, History, and Governance</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>06</span>Conformed Dimensions, Enterprise Bus Architecture,
+              and Cross-Process Analytics
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>Conformed Dimensions and Facts: Shared Meaning
+                Across Business Processes</a><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>Bus Matrix: Rows as Processes, Columns as
+                Dimensions, and Incremental Warehouse Delivery</a><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Enterprise Definitions, Stewardship,
+                Master/Reference Data, and Preventing Metric Drift</a><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Shared Date/Product/Customer Dimensions Across
+                Marts with Different Grain</a><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Build a Bus Matrix and Identify Where Supposedly
+                Shared Dimensions Are Not Actually Conformed</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>07</span>Slowly Changing Dimensions: Types 0–7, History, and
+              Effective Dating
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>Type 0/1/2/3 Fundamentals: Preserve, Overwrite,
+                Add Version Rows, or Carry Alternate Values</a><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Type 2 Mechanics: Effective/Expiration Dates,
+                Current Flag, Surrogate Keys, and Non-Overlapping Windows</a><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Hybrid SCD Patterns (Types 4–7),
+                Mini-Dimensions, and Current-vs-Historical Attribute
+                Requirements</a><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Detect Changes Reliably: Hashes, Column
+                Comparison, Source CDC, Null Semantics, and Late Corrections</a><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Implement and Test an SCD2 Load Including Repeat
+                Runs, Backdated Changes, Deletes, and Unknown Members</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>08</span>Special Dimension Patterns: Date/Time,
+              Role-Playing, Junk, Degenerate, Mini, and Inferred Members
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>Date Dimension Rich Attributes, Fiscal
+                Calendars, Holidays, Weeks, and Why Date Is More Than a
+                Timestamp</a><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>Role-Playing Dimensions for Order/Ship/Due Dates
+                and Other Reused Context</a><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Junk Dimensions for Low-Cardinality Flags and
+                Degenerate Dimensions for Transaction Identifiers</a><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>Mini-Dimensions for Rapidly Changing Attributes
+                and Profile/Segment History</a><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Inferred/Early-Arriving Dimension Members and
+                Safe Completion When Source Details Arrive Later</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>09</span>Bridge Tables and Many-to-Many Analytical
+              Relationships
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>Why Direct Many-to-Many Joins Can Duplicate
+                Facts and Corrupt Metrics</a><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>Bridge Tables for Multivalued Dimensions,
+                Groups, Memberships, and Hierarchies</a><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Weighting/Allocation Factors and When Allocated
+                Measures Are Business Rules, Not Technical Tricks</a><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Temporal Membership in Bridges, Effective
+                Dating, and Historical Reconstruction</a><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Validate Many-to-Many Queries with Control
+                Totals to Prove No Double Counting</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>10</span>Transaction, Periodic Snapshot, and Accumulating
+              Snapshot Fact Tables
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Transaction Facts for Atomic Events and
+                Immutable Business Activity</a><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Periodic Snapshots for Inventory, Account
+                Balances, Daily State, and Semi-Additive Metrics</a><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Accumulating Snapshots for Pipeline/Workflow
+                Milestones, Reopened Processes, and Updating Rows</a><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Choosing Multiple Fact Tables for One Business
+                Process Instead of Forcing One Universal Grain</a><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>Model an Order Fulfillment Process Using
+                Transaction + Periodic + Accumulating Facts and Compare
+                Questions Supported</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>11</span>Surrogate Keys, Late-Arriving Facts/Dimensions,
+              Deletes, Restatements, and History Corrections
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Surrogate Key Assignment, Natural Key Reuse,
+                Source-System Key Collisions, and Durable Identity</a><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Late-Arriving Facts: Resolve Dimension Version
+                as of Event Time Without Assigning Current History
+                Incorrectly</a><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Late-Arriving Dimension Changes, Backdated SCD2
+                Splits, and Historical Restatement Policies</a><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>Source Deletes, Soft Deletes, Inactivation, GDPR
+                Erasure, and Analytical Auditability</a><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Design a Correction Workflow that Preserves
+                Reproducibility While Supporting Authorized Restatements</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>12</span>Source System Profiling, Data Contracts, Lineage,
+              and Ingestion Readiness
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>Inventory Sources, Owners, Extraction Methods,
+                Change Mechanisms, SLAs, and Failure Modes</a><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Profile Nulls, Uniqueness, Ranges,
+                Distributions, Referential Integrity, Duplicates, and Drift</a><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Source-to-Target Mapping Specifications,
+                Transform Rules, Data Types, Units, Time Zones, and Codes</a><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>Data Contracts and Schema Change Detection:
+                Compatible vs Breaking Changes</a><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Build a Source Readiness Report and Reject
+                Ambiguous Semantics Before Pipeline Development</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>13</span>Data Quality Engineering: Validation,
+              Standardization, Matching, Reconciliation, and Quarantine
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>Define Data Quality Dimensions: Completeness,
+                Validity, Uniqueness, Consistency, Timeliness, and Accuracy</a><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>Standardize Names, Codes, Units, Time Zones,
+                Encodings, and Reference Data</a><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>Deduplication and Entity Matching:
+                Deterministic/Probabilistic Concepts and Stewardship
+                Boundaries</a><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Quarantine Bad Records, Preserve Raw Evidence,
+                Repair/Reprocess, and Avoid Silent Coercion</a><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Build Reconciliation Tests from Source
+                Counts/Sums/Checksums to Warehouse Facts and Dimensions</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>14</span>ETL vs ELT Architecture: Staging, Raw, Integration,
+              Presentation, and Transform Ownership
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>ETL vs ELT: Compute Location, Pushdown,
+                Auditability, Cost, Lock-In, and Tooling Tradeoffs</a><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>Landing/Raw/Staging/Integration/Presentation
+                Layers and When Each Layer Adds Value</a><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Immutable Raw Data, Replayability, Audit
+                Columns, Batch IDs, Load Timestamps, and Lineage</a><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Transformation Modularity, Reusable Intermediate
+                Models, Dependency Graphs, and Environment Promotion</a><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Design a Layered Pipeline for the Case Study and
+                Justify Every Persisted Intermediate Dataset</a>
+</div>
+</details>
+<details class="sidebar-chapter" open="">
+<summary>
+<span>15</span>Incremental Loading, CDC, Watermarks, High-Water
+              Marks, and Idempotency
+            </summary>
+<div>
+<a class="sidebar-lesson" href="Lesson1.html"><span>01</span>Full Refresh vs Incremental Loads: Volume,
+                Freshness, Correctness, and Recovery Tradeoffs</a><a class="sidebar-lesson" href="Lesson2.html"><span>02</span>Timestamp/Sequence Watermarks, Overlap Windows,
+                Clock Skew, Missing Rows, and Source Update Semantics</a><a class="sidebar-lesson" href="Lesson3.html"><span>03</span>Log-Based CDC: Inserts/Updates/Deletes,
+                Before/After Images, Ordering, Transactions, and Schema
+                Evolution</a><a class="sidebar-lesson" href="Lesson4.html"><span>04</span>Idempotent Merge/Upsert Patterns, Batch
+                Identity, Deduplication, and Retry Safety</a><a aria-current="page" class="sidebar-lesson is-current" href="Lesson5.html"><span>05</span>Prove an Incremental Pipeline Handles Restart,
+                Duplicate Delivery, Late Data, Deletes, and Reprocessing</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>16</span>Orchestration, Dependencies, Scheduling, Backfills,
+              SLAs, and Failure Recovery
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>DAGs, Dependencies, Data Availability
+                Sensors/Checks, and Avoiding Clock-Only Scheduling</a><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>Retries, Timeouts, Idempotent Tasks, Partial
+                Failure, Compensation, and Operator Intervention</a><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>Partition-Aware Backfills, Historical
+                Reprocessing, Resource Isolation, and Protecting Current
+                Loads</a><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>SLAs/SLOs for Freshness, Completeness, Duration,
+                and Downstream Availability</a><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Design an Operational Runbook for a Failed Daily
+                Load Including Root Cause, Repair, Replay, and Communication</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>17</span>Physical Warehouse Design: Schemas, Tables,
+              Constraints, Partitioning, Clustering, and Distribution
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Logical Dimensional Model vs Physical
+                Implementation in Row Stores, Column Stores, and Cloud
+                Warehouses</a><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Schema/Database Organization, Naming, Ownership,
+                Constraints, and Environment/Domain Boundaries</a><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Partitioning by Date/Range/Hash: Pruning,
+                Retention, Backfill, Small Partitions, and Skew</a><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Clustering/Sort Keys, Distribution/Partition
+                Keys, Co-Location, and Engine-Specific Alternatives</a><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Create a Physical Design from Workload Evidence
+                Rather Than Copying Generic Partition Recommendations</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>18</span>Columnar Storage, Compression, Encoding, Vectorized
+              Execution, and Analytical Scan Economics
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Row vs Column Storage: Projection, Compression,
+                CPU, Updates, and Analytical Workloads</a><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Column Encodings,
+                Dictionary/Run-Length/Delta-Like Compression Concepts and Data
+                Distribution</a><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Predicate/Projection Pushdown, Zone Maps/Min-Max
+                Statistics, Partition Pruning, and Data Skipping</a><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Vectorized Execution, Batch Processing, SIMD
+                Concepts, and Why Analytical Engines Differ from OLTP DBMSs</a><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Estimate Scan Bytes/CPU and Redesign Table
+                Layout to Reduce Work Without Corrupting the Logical Model</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>19</span>Materialized Views, Aggregate Tables, Cubes, and
+              Precomputation
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>When Precomputation Beats Repeated Raw Fact
+                Scans: Latency, Freshness, and Maintenance Cost</a><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Aggregate Fact Tables at Higher Grain and
+                Semantic Rules for Reconciliation to Base Facts</a><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Materialized View Refresh Strategies,
+                Incremental Refresh Concepts, and Dependency Management</a><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>OLAP Cubes/Pre-Aggregation, Sparse Dimensional
+                Combinations, and Modern Semantic Acceleration</a><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Design an Acceleration Layer with Clear
+                Freshness and Correctness Contracts</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>20</span>Semantic Layers, Metrics, Dimensions, Measures, and
+              BI Contracts
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Why a Warehouse Schema Alone Does Not Guarantee
+                Consistent Business Metrics</a><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Central Metric Definitions, Measures vs Metrics,
+                Filters, Time Windows, Currency/Unit Semantics, and Ownership</a><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Semantic Models, Relationships, Drill Paths,
+                Row-Level Security, and Tool Independence</a><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Metric Versioning, Deprecation, Tests,
+                Documentation, and Preventing Dashboard-Specific Business
+                Logic</a><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Build a Governed Metric for Revenue/Active
+                Customer/Retention and Trace It to Facts, Dimensions, and
+                Sources</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>21</span>Data Marts, Domain Data Products, Self-Service
+              Analytics, and Ownership
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>Dependent vs Independent Marts and Why
+                Independent Silos Break Conformance</a><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>Domain-Oriented Marts/Data Products with Shared
+                Enterprise Dimensions and Metrics</a><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Wide Reporting Tables vs Reusable Dimensional
+                Marts: Speed, Duplication, and Semantic Drift</a><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>Self-Service Sandboxes, Certified Data,
+                Promotion, Ownership, and Access Boundaries</a><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>Design a Marketing/Finance/Operations Mart
+                Strategy that Reuses Conformed Data Without Blocking Domain
+                Delivery</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>22</span>Security, Privacy, Row/Column Policies, Masking,
+              and Least-Privilege Analytics
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Authentication, Roles, Groups, Service
+                Identities, Separation of Duties, and Environment Isolation</a><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>Row-Level/Column-Level Security, Dynamic
+                Masking, Tokenization, and Policy Placement</a><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>PII Classification, Purpose Limitation,
+                Retention, Consent, and Right-to-Delete in Historical
+                Warehouses</a><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Secure Views/Semantic Layer Policies vs Physical
+                Data Access and Avoiding Bypass Paths</a><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Threat-Model a Warehouse Including BI Exports,
+                Shared Credentials, Staging Data, Backups, and Over-Broad
+                Analyst Roles</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>23</span>Metadata, Data Catalogs, Lineage, Documentation,
+              Ownership, and Governance
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter23/Lesson1.html"><span>01</span>Technical vs Business Metadata, Data Dictionary,
+                Schema Registry, Metric Catalog, and Glossary</a><a class="sidebar-lesson" href="../Chapter23/Lesson2.html"><span>02</span>Column/Table/Job Lineage from Source to
+                Dashboard and Impact Analysis for Changes</a><a class="sidebar-lesson" href="../Chapter23/Lesson3.html"><span>03</span>Owners, Stewards, SLAs, Certification,
+                Deprecation, and Data Product Contracts</a><a class="sidebar-lesson" href="../Chapter23/Lesson4.html"><span>04</span>Automated Documentation from Code/Models vs
+                Human Business Context and Review</a><a class="sidebar-lesson" href="../Chapter23/Lesson5.html"><span>05</span>Build an Impact Analysis for a Source Column
+                Change and Identify Every Model, Metric, Report, and Consumer at
+                Risk</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>24</span>Testing Analytical Pipelines: Unit, Schema,
+              Quality, Reconciliation, and Regression Tests
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter24/Lesson1.html"><span>01</span>Schema/Contract Tests: Types, Nullability, Keys,
+                Accepted Values, and Relationships</a><a class="sidebar-lesson" href="../Chapter24/Lesson2.html"><span>02</span>Data Quality/Business Tests: Invariants, Ranges,
+                Freshness, Duplicates, and Referential Integrity</a><a class="sidebar-lesson" href="../Chapter24/Lesson3.html"><span>03</span>SCD/Incremental/CDC Tests for History, Late
+                Data, Deletes, Idempotency, and Restart</a><a class="sidebar-lesson" href="../Chapter24/Lesson4.html"><span>04</span>Metric/Reconciliation Tests Against Trusted
+                Source Totals and Prior Period Expectations</a><a class="sidebar-lesson" href="../Chapter24/Lesson5.html"><span>05</span>Create CI + Production Data Tests with Severity,
+                Quarantine, Alerting, and Waiver Governance</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>25</span>Observability and Data Reliability: Freshness,
+              Volume, Schema, Lineage, and Incident Response
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter25/Lesson1.html"><span>01</span>Pipeline Metrics: Duration, Records/Bytes,
+                Error/Reject Counts, Lag, Retries, and Resource Use</a><a class="sidebar-lesson" href="../Chapter25/Lesson2.html"><span>02</span>Data Observability: Freshness, Volume,
+                Distribution, Schema, Lineage, and Quality Changes</a><a class="sidebar-lesson" href="../Chapter25/Lesson3.html"><span>03</span>End-to-End Data SLOs from Source Availability to
+                Certified Dashboard/Data Product</a><a class="sidebar-lesson" href="../Chapter25/Lesson4.html"><span>04</span>Incident Triage: Source Failure vs Pipeline Bug
+                vs Warehouse Performance vs Semantic Error</a><a class="sidebar-lesson" href="../Chapter25/Lesson5.html"><span>05</span>Build a Data Incident Runbook with Detection,
+                Blast Radius, Consumer Communication, Repair, Backfill, and
+                Postmortem</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>26</span>Performance Engineering and Workload Management:
+              Scan Reduction, Joins, Aggregations, and Concurrency
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter26/Lesson1.html"><span>01</span>Profile Representative BI/Ad-Hoc/ELT Workloads
+                by Scan, Join, Shuffle, Spill, Queue, and Tail Latency</a><a class="sidebar-lesson" href="../Chapter26/Lesson2.html"><span>02</span>Join Strategies and Dimensional Modeling
+                Benefits: Broadcast/Hash/Merge Concepts, Cardinality, and
+                Skew</a><a class="sidebar-lesson" href="../Chapter26/Lesson3.html"><span>03</span>Partition/Cluster Pruning, Predicate Pushdown,
+                Materialization, Approximation, and Query Rewrites</a><a class="sidebar-lesson" href="../Chapter26/Lesson4.html"><span>04</span>Workload Management, Queues/Warehouses/Resource
+                Groups, Concurrency Scaling, and Noisy-Neighbor Isolation</a><a class="sidebar-lesson" href="../Chapter26/Lesson5.html"><span>05</span>Benchmark Before/After Changes and Track
+                Performance Regression per Metric/Data Product</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>27</span>Cloud Warehouses and Serverless Analytics:
+              Separation of Storage/Compute, Elasticity, and Cost
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter27/Lesson1.html"><span>01</span>Shared-Nothing vs Disaggregated Storage/Compute
+                vs Serverless Warehouses: Architectural Consequences</a><a class="sidebar-lesson" href="../Chapter27/Lesson2.html"><span>02</span>Elastic Compute, Autoscaling, Concurrency,
+                Pausing, Warehouses/Clusters, and Cold-Start Tradeoffs</a><a class="sidebar-lesson" href="../Chapter27/Lesson3.html"><span>03</span>Object Storage, Columnar Formats, Metadata
+                Services, Caching, and Remote Shuffle Concepts</a><a class="sidebar-lesson" href="../Chapter27/Lesson4.html"><span>04</span>Cost Models:
+                Scan/Compute/Credits/Slots/Storage/Egress and How Physical
+                Design Changes Spend</a><a class="sidebar-lesson" href="../Chapter27/Lesson5.html"><span>05</span>Translate the Vendor-Neutral Model into a Cloud
+                Warehouse and Document Which Optimizations Are
+                Engine-Specific</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>28</span>Lakehouse Coexistence: Open Table Formats,
+              Medallion Layers, Warehouse Serving, and Federation
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter28/Lesson1.html"><span>01</span>Warehouse vs Lakehouse: Governance,
+                Transactions, Performance, Open Formats, and Ecosystem
+                Tradeoffs</a><a class="sidebar-lesson" href="../Chapter28/Lesson2.html"><span>02</span>Bronze/Silver/Gold Layering vs Dimensional
+                Models: Complementary Concepts, Not Automatic Replacements</a><a class="sidebar-lesson" href="../Chapter28/Lesson3.html"><span>03</span>Apache Iceberg/Delta/Hudi Table-Format Concepts,
+                Snapshot Metadata, Schema Evolution, and Warehouse
+                Interoperability</a><a class="sidebar-lesson" href="../Chapter28/Lesson4.html"><span>04</span>Federated Query vs Data Movement, One-Copy
+                Dreams, Performance, Consistency, and Governance</a><a class="sidebar-lesson" href="../Chapter28/Lesson5.html"><span>05</span>Design a Hybrid Lakehouse+Warehouse Architecture
+                with Clear System of Record, Serving, and Data-Movement
+                Boundaries</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>29</span>Migration and Modernization: Legacy EDW, Mart
+              Consolidation, Cloud Moves, and Semantic Preservation
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter29/Lesson1.html"><span>01</span>Inventory Schemas, ETL Jobs, Reports, Stored
+                Procedures, Dependencies, SLAs, and Hidden Business Logic</a><a class="sidebar-lesson" href="../Chapter29/Lesson2.html"><span>02</span>Rehost/Replatform/Refactor Strategies and Why
+                Moving Tables Without Semantics Preserves Technical Debt</a><a class="sidebar-lesson" href="../Chapter29/Lesson3.html"><span>03</span>Parallel Run, Dual Loads, Historical Backfill,
+                CDC Cutover, and Data Reconciliation</a><a class="sidebar-lesson" href="../Chapter29/Lesson4.html"><span>04</span>Preserve/Version Metrics and Semantic Behavior
+                Across Old/New Platforms</a><a class="sidebar-lesson" href="../Chapter29/Lesson5.html"><span>05</span>Build a Migration Acceptance Plan Covering Data,
+                Query Results, Performance, Cost, Security, and Rollback</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>30</span>Production Capstone: Deliver a Governed, Testable,
+              Performant Analytical Warehouse
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter30/Lesson1.html"><span>01</span>Define Business Processes, Bus Matrix, Grain,
+                Facts, Dimensions, Metrics, Source Contracts, SLAs, and Security
+                Requirements</a><a class="sidebar-lesson" href="../Chapter30/Lesson2.html"><span>02</span>Implement Dimensional Models, SCDs/Snapshots,
+                Incremental/CDC Loads, Data Quality, Orchestration, and Semantic
+                Metrics</a><a class="sidebar-lesson" href="../Chapter30/Lesson3.html"><span>03</span>Choose Physical Layout, Materialization, Marts,
+                Workload Isolation, and Cloud/Lakehouse Integration from
+                Measurements</a><a class="sidebar-lesson" href="../Chapter30/Lesson4.html"><span>04</span>Test, Reconcile, Load-Test, Secure, Observe,
+                Backfill, Recover, and Execute a Data Incident/DR Exercise</a><a class="sidebar-lesson" href="../Chapter30/Lesson5.html"><span>05</span>Present the Warehouse as an Evidence-Based Data
+                Product with Lineage, Costs, Known Limitations, Ownership, and
+                Evolution Roadmap</a>
+</div>
+</details>
+</nav>
+</aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 15 · Lesson 05</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html"
+              >Data Warehousing and Dimensional Modeling</a
+            ><span>/</span><span>Chapter 15 · Lesson 05</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 15 · Incremental Loading, CDC, Watermarks, High-Water
+              Marks, and Idempotency
+            </p>
+            <h1>
+              Prove an Incremental Pipeline Handles Restart, Duplicate Delivery,
+              Late Data, Deletes, and Reprocessing
+            </h1>
+            <p>
+              Run an end-to-end AtlasMart CDC acceptance test that crashes
+              mid-batch, restarts, redelivers duplicates, applies a late event
+              and delete, blocks a breaking schema event, and proves
+              deterministic convergence.
+            </p>
+            <div class="lesson-meta">
+              <span>Intermediate → Advanced</span><span>145–175 minutes</span
+              ><span>Incremental acceptance lab</span
+              ><span>Python 3 stdlib + sqlite3 · local/synthetic</span
+              ><span>Last reviewed: September 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                This lesson turns the chapter into one acceptance exercise. The
+                requirement is stronger than “the script finishes”: every state
+                transition must be explainable from source identity, cursor
+                state, target controls, tombstones, customer dimension state,
+                and a canonical checksum.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Execute the complete local AtlasMart CDC simulation from a
+                    clean directory and record runtime versions.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Verify crash rollback leaves both target controls and
+                    committed watermark unchanged.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Verify restart applies six logical changes despite eight
+                    deliveries and converges to the expected
+                    fact/dimension/tombstone state.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Verify a complete redelivery does not change the target
+                    checksum and a breaking schema event cannot advance the
+                    cursor.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Translate the local evidence into a production acceptance
+                    checklist covering source guarantees, reconciliation,
+                    observability, security, and rollback.
+                  </p>
+                </div>
+              </div>
+              <div class="callout">
+                <strong>Chapter 15 continuity contract</strong>
+                <p>
+                  Chapter 15 begins from the accepted Chapter 14 presentation
+                  state: eight current paid order-line facts, five paid orders,
+                  ten units, 690 USD paid GMV, 425 USD cost-at-sale, and 265 USD
+                  gross profit. The committed ERP change-stream cursor starts at
+                  source sequence 200. This chapter deliberately changes the
+                  current analytical state through six governed CDC events
+                  (sequences 201–206); after successful commit the target is
+                  nine paid lines, seven orders, eleven units, 740 USD GMV, 450
+                  USD cost, and 290 USD gross profit. The change is explicit and
+                  reconciled rather than silently replacing earlier controls.
+                </p>
+              </div>
+              <div class="callout warning">
+                <strong>Execution and guarantee boundary</strong>
+                <p>
+                  The mandatory lab is synthetic, local, and free. It uses
+                  Python 3 standard library and its bundled
+                  <code>sqlite3</code> module. Generation-time validation ran
+                  with Python 3.13.5 and SQLite 3.46.1; learners should record
+                  their own versions. The source sequence is a simulated ordered
+                  commit position, not a claim that every source database
+                  exposes an identical integer cursor. The lab demonstrates
+                  cursor, retry, ordering, tombstone, and schema-gate mechanics;
+                  it does not reproduce a production write-ahead log, broker,
+                  connector, distributed transaction, cloud service, or
+                  transport-level exactly-once guarantee.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>1. Lab setup and assumptions</h2>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Assumption</th>
+                      <th>Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Execution</td>
+                      <td>
+                        Local Python 3 standard library + sqlite3; no
+                        packages/services required.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Target</td>
+                      <td>
+                        SQLite current-state fact/customer tables plus
+                        tombstone, processed-event, cursor, and batch-audit
+                        tables.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Starting cursor</td>
+                      <td>ERP simulated source sequence 200.</td>
+                    </tr>
+                    <tr>
+                      <td>Fact grain</td>
+                      <td>
+                        One current paid sales row per (order_id, line_no).
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Change ordering</td>
+                      <td>
+                        source_seq is the authoritative simulated ordered change
+                        position.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Business time</td>
+                      <td>
+                        event_ts remains the analytical/history timestamp and
+                        may be older than ingestion.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Security</td>
+                      <td>
+                        Synthetic identities and values only; no production
+                        credentials/PII.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Expected baseline</td>
+                      <td>
+                        8 lines, 5 orders, 10 units, 690 GMV, 425 cost, 265
+                        gross profit.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Expected final</td>
+                      <td>
+                        9 lines, 7 orders, 11 units, 740 GMV, 450 cost, 290
+                        gross profit; watermark 206.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="python"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >record_versions.py
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-python"><span class="code-line">import sys, sqlite3</span><span class="code-line">print(sys.version)</span><span class="code-line">print(sqlite3.sqlite_version)</span><span class="code-line"># Generation-time validation: Python 3.13.5 / SQLite 3.46.1.</span><span class="code-line"># Record your own versions; do not assume they are identical.</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>2. Save and run the complete acceptance harness</h2>
+              <p>
+                Save the following as <code>atlasmart_ch15.py</code> in an empty
+                working directory, then run
+                <code>python atlasmart_ch15.py</code>. It creates
+                <code>atlasmart_ch15_lab/warehouse.db</code> and
+                <code>acceptance_summary.json</code>.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="python"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >atlasmart_ch15.py
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-python"><span class="code-line">from __future__ import annotations</span><span class="code-line">import hashlib, json, os, shutil, sqlite3</span><span class="code-line">from pathlib import Path</span><span class="code-line"></span><span class="code-line">BASELINE_SEQ = 200</span><span class="code-line">BASELINE_SALES = [</span><span class="code-line">    ("O1000",1,"2026-09-18T15:00:00Z","C001","P200",1,75,45,"paid",120),</span><span class="code-line">    ("O1001",1,"2026-09-18T09:15:00Z","C001","P100",2,100,60,"paid",121),</span><span class="code-line">    ("O1001",2,"2026-09-18T09:15:00Z","C001","P200",1,25,15,"paid",122),</span><span class="code-line">    ("O1002",1,"2026-09-18T11:30:00Z","C002","P300",1,190,125,"paid",180),</span><span class="code-line">    ("O1003",1,"2026-09-19T15:00:00Z","C001","P400",1,100,60,"paid",123),</span><span class="code-line">    ("O1003",2,"2026-09-19T15:00:00Z","C001","P200",2,50,30,"paid",124),</span><span class="code-line">    ("O1005",1,"2026-09-20T07:10:00Z","C004","P100",1,50,30,"paid",125),</span><span class="code-line">    ("O1005",2,"2026-09-20T07:10:00Z","C004","P400",1,100,60,"paid",126),</span><span class="code-line">]</span><span class="code-line">BASELINE_CUSTOMERS = [</span><span class="code-line">    ("C001","Ada Retail","SMB",110),</span><span class="code-line">    ("C002","Ben Home","Consumer",111),</span><span class="code-line">    ("C003","Cyra Labs","Enterprise",112),</span><span class="code-line">    ("C004","Dara Studio","Consumer",113),</span><span class="code-line">]</span><span class="code-line"></span><span class="code-line"># source_updated_at is deliberately not monotonic by source_seq; seq 205 is clock-skewed backward.</span><span class="code-line">EVENTS = [</span><span class="code-line">    {"event_id":"e201","source_seq":201,"schema_version":1,"entity":"sale","op":"I","key":"O1006|1","event_ts":"2026-09-21T08:00:00Z","source_updated_at":"2026-09-21T08:01:00Z","after":{"order_id":"O1006","line_no":1,"customer_id":"C002","product_id":"P100","quantity":1,"extended_amount":60,"extended_cost":35,"status":"paid"}},</span><span class="code-line">    {"event_id":"e202","source_seq":202,"schema_version":1,"entity":"sale","op":"U","key":"O1003|2","event_ts":"2026-09-19T15:00:00Z","source_updated_at":"2026-09-21T08:02:00Z","before":{"extended_amount":50,"extended_cost":30},"after":{"order_id":"O1003","line_no":2,"customer_id":"C001","product_id":"P200","quantity":2,"extended_amount":55,"extended_cost":30,"status":"paid"}},</span><span class="code-line">    {"event_id":"e203","source_seq":203,"schema_version":1,"entity":"customer","op":"U","key":"C002","event_ts":"2026-09-21T08:03:00Z","source_updated_at":"2026-09-21T08:03:00Z","before":{"segment":"Consumer"},"after":{"customer_id":"C002","name":"Ben Home","segment":"Growth"}},</span><span class="code-line">    {"event_id":"e204","source_seq":204,"schema_version":1,"entity":"sale","op":"D","key":"O1005|2","event_ts":"2026-09-20T07:10:00Z","source_updated_at":"2026-09-21T08:04:00Z","before":{"order_id":"O1005","line_no":2,"extended_amount":100,"extended_cost":60}},</span><span class="code-line">    {"event_id":"e205","source_seq":205,"schema_version":1,"entity":"sale","op":"I","key":"O0999|1","event_ts":"2026-09-17T13:00:00Z","source_updated_at":"2026-09-21T07:59:58Z","after":{"order_id":"O0999","line_no":1,"customer_id":"C003","product_id":"P300","quantity":1,"extended_amount":80,"extended_cost":50,"status":"paid"}},</span><span class="code-line">    {"event_id":"e206","source_seq":206,"schema_version":1,"entity":"sale","op":"U","key":"O1002|1","event_ts":"2026-09-18T11:30:00Z","source_updated_at":"2026-09-21T08:05:00Z","before":{"extended_amount":190,"extended_cost":125},"after":{"order_id":"O1002","line_no":1,"customer_id":"C002","product_id":"P300","quantity":1,"extended_amount":195,"extended_cost":125,"status":"paid"}},</span><span class="code-line">]</span><span class="code-line">BREAKING_EVENT = {"event_id":"e207","source_seq":207,"schema_version":2,"entity":"sale","op":"U","key":"O1001|1","event_ts":"2026-09-18T09:15:00Z","source_updated_at":"2026-09-21T08:06:00Z","after":{"order_id":"O1001","line_no":1,"extended_amount_cents":10000}}</span><span class="code-line"></span><span class="code-line">def canonical_hash(rows) -&gt; str:</span><span class="code-line">    payload=json.dumps(rows, sort_keys=True, separators=(",",":"), ensure_ascii=False)</span><span class="code-line">    return hashlib.sha256(payload.encode("utf-8")).hexdigest()</span><span class="code-line"></span><span class="code-line">def create_db(path: Path) -&gt; sqlite3.Connection:</span><span class="code-line">    if path.exists(): path.unlink()</span><span class="code-line">    conn=sqlite3.connect(path)</span><span class="code-line">    conn.execute("PRAGMA foreign_keys=ON")</span><span class="code-line">    conn.executescript("""</span><span class="code-line">    CREATE TABLE fact_sales_current(</span><span class="code-line">      order_id TEXT NOT NULL, line_no INTEGER NOT NULL, event_ts TEXT NOT NULL,</span><span class="code-line">      customer_id TEXT NOT NULL, product_id TEXT NOT NULL, quantity INTEGER NOT NULL,</span><span class="code-line">      extended_amount INTEGER NOT NULL, extended_cost INTEGER NOT NULL, status TEXT NOT NULL,</span><span class="code-line">      source_seq INTEGER NOT NULL, PRIMARY KEY(order_id,line_no)</span><span class="code-line">    );</span><span class="code-line">    CREATE TABLE dim_customer_current(</span><span class="code-line">      customer_id TEXT PRIMARY KEY, name TEXT NOT NULL, segment TEXT NOT NULL, source_seq INTEGER NOT NULL</span><span class="code-line">    );</span><span class="code-line">    CREATE TABLE sales_tombstone(</span><span class="code-line">      order_id TEXT NOT NULL, line_no INTEGER NOT NULL, deleted_source_seq INTEGER NOT NULL,</span><span class="code-line">      event_id TEXT NOT NULL UNIQUE, PRIMARY KEY(order_id,line_no,deleted_source_seq)</span><span class="code-line">    );</span><span class="code-line">    CREATE TABLE processed_event(</span><span class="code-line">      event_id TEXT PRIMARY KEY, source_seq INTEGER NOT NULL UNIQUE, entity TEXT NOT NULL, op TEXT NOT NULL,</span><span class="code-line">      payload_sha256 TEXT NOT NULL</span><span class="code-line">    );</span><span class="code-line">    CREATE TABLE pipeline_state(</span><span class="code-line">      stream_name TEXT PRIMARY KEY, committed_watermark INTEGER NOT NULL, last_batch_id TEXT,</span><span class="code-line">      updated_at TEXT NOT NULL</span><span class="code-line">    );</span><span class="code-line">    CREATE TABLE batch_audit(</span><span class="code-line">      batch_id TEXT PRIMARY KEY, low_watermark INTEGER NOT NULL, high_watermark INTEGER NOT NULL,</span><span class="code-line">      delivery_count INTEGER NOT NULL, distinct_event_count INTEGER NOT NULL,</span><span class="code-line">      status TEXT NOT NULL, target_sha256 TEXT, committed_at TEXT</span><span class="code-line">    );</span><span class="code-line">    """)</span><span class="code-line">    conn.executemany("INSERT INTO fact_sales_current VALUES (?,?,?,?,?,?,?,?,?,?)", BASELINE_SALES)</span><span class="code-line">    conn.executemany("INSERT INTO dim_customer_current VALUES (?,?,?,?)", BASELINE_CUSTOMERS)</span><span class="code-line">    conn.execute("INSERT INTO pipeline_state VALUES ('erp_cdc',?,?,?)",(BASELINE_SEQ,'baseline','2026-09-21T00:00:00Z'))</span><span class="code-line">    conn.commit()</span><span class="code-line">    return conn</span><span class="code-line"></span><span class="code-line">def sales_controls(conn):</span><span class="code-line">    return conn.execute("""</span><span class="code-line">      SELECT count(*), count(DISTINCT order_id), sum(quantity), sum(extended_amount),</span><span class="code-line">             sum(extended_cost), sum(extended_amount-extended_cost)</span><span class="code-line">      FROM fact_sales_current WHERE status='paid'</span><span class="code-line">    """).fetchone()</span><span class="code-line"></span><span class="code-line">def target_hash(conn):</span><span class="code-line">    sales=conn.execute("SELECT * FROM fact_sales_current ORDER BY order_id,line_no").fetchall()</span><span class="code-line">    customers=conn.execute("SELECT * FROM dim_customer_current ORDER BY customer_id").fetchall()</span><span class="code-line">    tomb=conn.execute("SELECT * FROM sales_tombstone ORDER BY deleted_source_seq").fetchall()</span><span class="code-line">    return canonical_hash({"sales":sales,"customers":customers,"tombstones":tomb})</span><span class="code-line"></span><span class="code-line">def validate_event(e):</span><span class="code-line">    if e.get("schema_version") != 1:</span><span class="code-line">        raise ValueError(f"unsupported schema_version={e.get('schema_version')} at source_seq={e.get('source_seq')}")</span><span class="code-line">    for k in ("event_id","source_seq","entity","op","key","event_ts","source_updated_at"):</span><span class="code-line">        if k not in e: raise ValueError(f"missing {k}")</span><span class="code-line">    if e["entity"] not in {"sale","customer"}: raise ValueError("unsupported entity")</span><span class="code-line">    if e["op"] not in {"I","U","D"}: raise ValueError("unsupported op")</span><span class="code-line"></span><span class="code-line">def payload_hash(e):</span><span class="code-line">    return canonical_hash(e)</span><span class="code-line"></span><span class="code-line">def apply_event(conn, e):</span><span class="code-line">    validate_event(e)</span><span class="code-line">    h=payload_hash(e)</span><span class="code-line">    # Dedupe is event-identity based. A repeated event_id with a different payload is a hard conflict.</span><span class="code-line">    row=conn.execute("SELECT payload_sha256 FROM processed_event WHERE event_id=?",(e["event_id"],)).fetchone()</span><span class="code-line">    if row:</span><span class="code-line">        if row[0] != h: raise ValueError("conflicting duplicate event_id")</span><span class="code-line">        return "duplicate"</span><span class="code-line">    # Source sequence is unique in this simulated ordered log.</span><span class="code-line">    seqrow=conn.execute("SELECT event_id,payload_sha256 FROM processed_event WHERE source_seq=?",(e["source_seq"],)).fetchone()</span><span class="code-line">    if seqrow:</span><span class="code-line">        if seqrow != (e["event_id"], h): raise ValueError("conflicting source_seq")</span><span class="code-line">        return "duplicate"</span><span class="code-line"></span><span class="code-line">    if e["entity"]=="sale":</span><span class="code-line">        oid,line=e["key"].split("|"); line=int(line)</span><span class="code-line">        if e["op"] in {"I","U"}:</span><span class="code-line">            a=e["after"]</span><span class="code-line">            current=conn.execute("SELECT source_seq FROM fact_sales_current WHERE order_id=? AND line_no=?",(oid,line)).fetchone()</span><span class="code-line">            if current is None or e["source_seq"] &gt; current[0]:</span><span class="code-line">                conn.execute("""</span><span class="code-line">                  INSERT INTO fact_sales_current(order_id,line_no,event_ts,customer_id,product_id,quantity,extended_amount,extended_cost,status,source_seq)</span><span class="code-line">                  VALUES(?,?,?,?,?,?,?,?,?,?)</span><span class="code-line">                  ON CONFLICT(order_id,line_no) DO UPDATE SET</span><span class="code-line">                    event_ts=excluded.event_ts, customer_id=excluded.customer_id, product_id=excluded.product_id,</span><span class="code-line">                    quantity=excluded.quantity, extended_amount=excluded.extended_amount,</span><span class="code-line">                    extended_cost=excluded.extended_cost, status=excluded.status, source_seq=excluded.source_seq</span><span class="code-line">                  WHERE excluded.source_seq &gt; fact_sales_current.source_seq</span><span class="code-line">                """,(oid,line,e["event_ts"],a["customer_id"],a["product_id"],a["quantity"],a["extended_amount"],a["extended_cost"],a["status"],e["source_seq"]))</span><span class="code-line">        else:</span><span class="code-line">            current=conn.execute("SELECT source_seq FROM fact_sales_current WHERE order_id=? AND line_no=?",(oid,line)).fetchone()</span><span class="code-line">            if current is not None and e["source_seq"] &gt; current[0]:</span><span class="code-line">                conn.execute("DELETE FROM fact_sales_current WHERE order_id=? AND line_no=?",(oid,line))</span><span class="code-line">            conn.execute("INSERT OR IGNORE INTO sales_tombstone VALUES (?,?,?,?)",(oid,line,e["source_seq"],e["event_id"]))</span><span class="code-line">    else:</span><span class="code-line">        a=e["after"]</span><span class="code-line">        conn.execute("""</span><span class="code-line">          INSERT INTO dim_customer_current(customer_id,name,segment,source_seq) VALUES(?,?,?,?)</span><span class="code-line">          ON CONFLICT(customer_id) DO UPDATE SET name=excluded.name,segment=excluded.segment,source_seq=excluded.source_seq</span><span class="code-line">          WHERE excluded.source_seq &gt; dim_customer_current.source_seq</span><span class="code-line">        """,(a["customer_id"],a["name"],a["segment"],e["source_seq"]))</span><span class="code-line">    conn.execute("INSERT INTO processed_event VALUES (?,?,?,?,?)",(e["event_id"],e["source_seq"],e["entity"],e["op"],h))</span><span class="code-line">    return "applied"</span><span class="code-line"></span><span class="code-line">def process_batch(conn, deliveries, batch_id, crash_after=None):</span><span class="code-line">    low=conn.execute("SELECT committed_watermark FROM pipeline_state WHERE stream_name='erp_cdc'").fetchone()[0]</span><span class="code-line">    candidate=[e for e in deliveries if e["source_seq"]&gt;low]</span><span class="code-line">    high=max([e["source_seq"] for e in candidate], default=low)</span><span class="code-line">    before_hash=target_hash(conn)</span><span class="code-line">    try:</span><span class="code-line">        conn.execute("BEGIN")</span><span class="code-line">        # Audit row is part of same transaction here; production systems may keep separate durable run telemetry.</span><span class="code-line">        conn.execute("INSERT INTO batch_audit VALUES (?,?,?,?,?,?,?,?)",</span><span class="code-line">                     (batch_id,low,high,len(deliveries),len({e['event_id'] for e in candidate}),'running',None,None))</span><span class="code-line">        applied=dupes=0</span><span class="code-line">        for i,e in enumerate(sorted(candidate, key=lambda x:(x["source_seq"],x["event_id"])),1):</span><span class="code-line">            outcome=apply_event(conn,e)</span><span class="code-line">            applied += outcome=="applied"; dupes += outcome=="duplicate"</span><span class="code-line">            if crash_after is not None and i==crash_after:</span><span class="code-line">                raise RuntimeError(f"simulated crash after delivery {i}")</span><span class="code-line">        # Critical rule: watermark moves in the same transaction as target changes.</span><span class="code-line">        conn.execute("UPDATE pipeline_state SET committed_watermark=?,last_batch_id=?,updated_at=? WHERE stream_name='erp_cdc'",</span><span class="code-line">                     (high,batch_id,'2026-09-21T08:10:00Z'))</span><span class="code-line">        th=target_hash(conn)</span><span class="code-line">        conn.execute("UPDATE batch_audit SET status='committed',target_sha256=?,committed_at=? WHERE batch_id=?",</span><span class="code-line">                     (th,'2026-09-21T08:10:00Z',batch_id))</span><span class="code-line">        conn.commit()</span><span class="code-line">        return {"status":"committed","low":low,"high":high,"applied":applied,"duplicates":dupes,"target_sha256":th}</span><span class="code-line">    except Exception:</span><span class="code-line">        conn.rollback()</span><span class="code-line">        assert target_hash(conn)==before_hash</span><span class="code-line">        raise</span><span class="code-line"></span><span class="code-line">def timestamp_watermark_demo():</span><span class="code-line">    # If the cursor had advanced to 08:04 based only on source_updated_at, the seq-205 event would be missed.</span><span class="code-line">    cursor="2026-09-21T08:04:00Z"</span><span class="code-line">    missed=[e["event_id"] for e in EVENTS if e["source_seq"]&gt;204 and e["source_updated_at"]&lt;=cursor]</span><span class="code-line">    overlap_cursor="2026-09-21T07:59:00Z"</span><span class="code-line">    reread=[e["event_id"] for e in EVENTS if e["source_updated_at"]&gt;overlap_cursor]</span><span class="code-line">    return missed,reread</span><span class="code-line"></span><span class="code-line">def main():</span><span class="code-line">    root=Path(os.environ.get("ATLASMART_LAB_HOME","atlasmart_ch15_lab"))</span><span class="code-line">    if root.exists(): shutil.rmtree(root)</span><span class="code-line">    root.mkdir(parents=True)</span><span class="code-line">    conn=create_db(root/"warehouse.db")</span><span class="code-line">    baseline=sales_controls(conn); baseline_hash=target_hash(conn)</span><span class="code-line">    assert baseline==(8,5,10,690,425,265), baseline</span><span class="code-line">    assert conn.execute("SELECT committed_watermark FROM pipeline_state").fetchone()[0]==200</span><span class="code-line"></span><span class="code-line">    # At-least-once delivery fixture includes duplicates; order of delivery is not trusted.</span><span class="code-line">    deliveries=[EVENTS[0],EVENTS[1],EVENTS[1],EVENTS[2],EVENTS[3],EVENTS[4],EVENTS[0],EVENTS[5]]</span><span class="code-line"></span><span class="code-line">    crashed=False</span><span class="code-line">    try:</span><span class="code-line">        process_batch(conn,deliveries,"B20260921-CDC-A",crash_after=3)</span><span class="code-line">    except RuntimeError as e:</span><span class="code-line">        crashed=True</span><span class="code-line">        crash_message=str(e)</span><span class="code-line">    assert crashed</span><span class="code-line">    after_crash=sales_controls(conn)</span><span class="code-line">    after_crash_hash=target_hash(conn)</span><span class="code-line">    wm_after_crash=conn.execute("SELECT committed_watermark FROM pipeline_state").fetchone()[0]</span><span class="code-line">    assert after_crash==baseline and after_crash_hash==baseline_hash and wm_after_crash==200</span><span class="code-line"></span><span class="code-line">    result=process_batch(conn,deliveries,"B20260921-CDC-B")</span><span class="code-line">    final=sales_controls(conn)</span><span class="code-line">    final_hash=target_hash(conn)</span><span class="code-line">    wm=conn.execute("SELECT committed_watermark FROM pipeline_state").fetchone()[0]</span><span class="code-line">    c002=conn.execute("SELECT segment,source_seq FROM dim_customer_current WHERE customer_id='C002'").fetchone()</span><span class="code-line">    tomb=conn.execute("SELECT order_id,line_no,deleted_source_seq FROM sales_tombstone").fetchall()</span><span class="code-line">    assert final==(9,7,11,740,450,290), final</span><span class="code-line">    assert wm==206 and c002==("Growth",203)</span><span class="code-line">    assert tomb==[("O1005",2,204)]</span><span class="code-line">    # Rerun/redelivery is safe: everything is &lt;= committed watermark, so no target change.</span><span class="code-line">    rerun=process_batch(conn,deliveries,"B20260921-CDC-C")</span><span class="code-line">    assert sales_controls(conn)==final and target_hash(conn)==final_hash and rerun["high"]==206</span><span class="code-line"></span><span class="code-line">    missed,reread=timestamp_watermark_demo()</span><span class="code-line">    assert missed==["e205"] and "e205" in reread</span><span class="code-line"></span><span class="code-line">    # Breaking schema event must not move target or watermark.</span><span class="code-line">    pre_break_hash=target_hash(conn); pre_break_wm=wm</span><span class="code-line">    schema_blocked=False</span><span class="code-line">    try:</span><span class="code-line">        process_batch(conn,[BREAKING_EVENT],"B20260921-CDC-D")</span><span class="code-line">    except ValueError as e:</span><span class="code-line">        schema_blocked=True; schema_message=str(e)</span><span class="code-line">    assert schema_blocked</span><span class="code-line">    assert target_hash(conn)==pre_break_hash</span><span class="code-line">    assert conn.execute("SELECT committed_watermark FROM pipeline_state").fetchone()[0]==pre_break_wm</span><span class="code-line"></span><span class="code-line">    summary={</span><span class="code-line">      "baseline_controls":baseline,"baseline_watermark":200,"baseline_sha256":baseline_hash,</span><span class="code-line">      "crash":crash_message,"watermark_after_crash":wm_after_crash,"controls_after_crash":after_crash,</span><span class="code-line">      "commit_result":result,"final_controls":final,"final_watermark":wm,"final_sha256":final_hash,</span><span class="code-line">      "c002":c002,"tombstones":tomb,"rerun":rerun,</span><span class="code-line">      "timestamp_cursor_missed":missed,"overlap_reread":reread,</span><span class="code-line">      "schema_blocked":schema_message,</span><span class="code-line">      "python_sqlite":sqlite3.sqlite_version,</span><span class="code-line">    }</span><span class="code-line">    (root/"acceptance_summary.json").write_text(json.dumps(summary,indent=2),encoding="utf-8")</span><span class="code-line">    print("baseline controls:",baseline,"watermark:",200)</span><span class="code-line">    print("crash:",crash_message)</span><span class="code-line">    print("after crash controls:",after_crash,"watermark:",wm_after_crash,"hash_unchanged:",after_crash_hash==baseline_hash)</span><span class="code-line">    print("commit:",result)</span><span class="code-line">    print("final controls:",final,"watermark:",wm)</span><span class="code-line">    print("customer C002:",c002)</span><span class="code-line">    print("tombstones:",tomb)</span><span class="code-line">    print("timestamp-only cursor would miss:",missed)</span><span class="code-line">    print("overlap window rereads:",reread)</span><span class="code-line">    print("rerun target unchanged:",target_hash(conn)==final_hash)</span><span class="code-line">    print("schema gate:",schema_message,"watermark_unchanged:",conn.execute("SELECT committed_watermark FROM pipeline_state").fetchone()[0]==206)</span><span class="code-line">    print("final_sha256:",final_hash)</span><span class="code-line">    print("cleanup: remove",root)</span><span class="code-line">    conn.close()</span><span class="code-line"></span><span class="code-line">if __name__=="__main__":</span><span class="code-line">    main()</span></code></pre>
+              </div>
+              <p>Expected key output from generation-time execution:</p>
+              <div class="code-window" data-code-block="" data-language="text">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >expected_output.txt
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-text"><span class="code-line">baseline controls: (8, 5, 10, 690, 425, 265) watermark: 200</span><span class="code-line">crash: simulated crash after delivery 3</span><span class="code-line">after crash controls: (8, 5, 10, 690, 425, 265) watermark: 200 hash_unchanged: True</span><span class="code-line">commit: {'status': 'committed', 'low': 200, 'high': 206, 'applied': 6, 'duplicates': 2, ...}</span><span class="code-line">final controls: (9, 7, 11, 740, 450, 290) watermark: 206</span><span class="code-line">customer C002: ('Growth', 203)</span><span class="code-line">tombstones: [('O1005', 2, 204)]</span><span class="code-line">timestamp-only cursor would miss: ['e205']</span><span class="code-line">rerun target unchanged: True</span><span class="code-line">schema gate: unsupported schema_version=2 at source_seq=207 watermark_unchanged: True</span><span class="code-line">final_sha256: 3e0885d67598cc472a4678334b7f4a23e87eeb314efa4a6c405b2db4c43fc3ff</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>3. What each acceptance result proves</h2>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Evidence</th>
+                      <th>What it proves</th>
+                      <th>What it does not prove</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Crash keeps watermark 200 and baseline hash</td>
+                      <td>
+                        Target/cursor transaction rolled back in this SQLite
+                        harness.
+                      </td>
+                      <td>Distributed sink + external checkpoint atomicity.</td>
+                    </tr>
+                    <tr>
+                      <td>6 applied / 2 duplicates</td>
+                      <td>
+                        Stable event identities suppress duplicate business
+                        effects.
+                      </td>
+                      <td>That the transport itself is exactly once.</td>
+                    </tr>
+                    <tr>
+                      <td>Late e205 appears in final target</td>
+                      <td>
+                        Sequence cursor admits a business event older than
+                        current watermark time.
+                      </td>
+                      <td>
+                        That any real source sequence has identical semantics.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>O1005/2 tombstone at 204</td>
+                      <td>Delete was observed and current row removed once.</td>
+                      <td>
+                        Organization-specific retention/privacy compliance.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>C002 = Growth, seq 203</td>
+                      <td>
+                        Dimension current state converged under sequence guard.
+                      </td>
+                      <td>
+                        Complete SCD2 history; Chapter 7 remains the history
+                        design reference.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Rerun hash unchanged</td>
+                      <td>
+                        Complete redelivery after commit is target-idempotent
+                        for this fixture.
+                      </td>
+                      <td>Universal idempotency for arbitrary side effects.</td>
+                    </tr>
+                    <tr>
+                      <td>e207 blocked, watermark still 206</td>
+                      <td>
+                        Unsupported schema cannot be skipped by cursor
+                        advancement.
+                      </td>
+                      <td>Automatic migration strategy for schema v2.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section>
+              <h2>4. Controlled production-failure checklist</h2>
+              <p>
+                Before accepting a real incremental pipeline, inject or simulate
+                the failures that its architecture claims to survive:
+              </p>
+              <ul>
+                <li>
+                  Crash after target mutation but before cursor commit, and the
+                  reverse if target/checkpoint cannot be one transaction.
+                </li>
+                <li>Duplicate delivery before and after worker restart.</li>
+                <li>
+                  Late business event, stale update, and out-of-order network
+                  delivery.
+                </li>
+                <li>
+                  Source delete, restore/recreate, key reuse, and correction.
+                </li>
+                <li>
+                  Equal timestamp/tied cursor values and clock skew if a time
+                  cursor is used.
+                </li>
+                <li>
+                  Schema-compatible addition and schema-breaking
+                  rename/type/unit change.
+                </li>
+                <li>
+                  Connector/source retention gap that makes the stored offset
+                  unrecoverable.
+                </li>
+                <li>
+                  Downstream consumer failure after current target commit but
+                  before certification/publication.
+                </li>
+              </ul>
+              <p>
+                Record counts, sums, key sets, tombstones, watermark, lag,
+                retries, rejection counts, and canonical checksums. A green
+                process exit alone is not acceptance evidence.
+              </p>
+            </section>
+            <section>
+              <h2>5. Reprocessing, backfill, and rollback boundaries</h2>
+              <p>
+                Reprocessing may mean redelivering the same change range,
+                rebuilding one target partition from immutable evidence, or
+                restoring from a prior checkpoint and replaying forward. Each
+                has different cost and blast radius. Chapter 14's immutable raw
+                evidence provides a bounded replay path; Chapter 15 adds the
+                cursor and processed-event state that must be reset or
+                reconstructed consistently.
+              </p>
+              <p>
+                Do not “roll back” by simply decrementing a watermark while
+                leaving newer target mutations in place. Either restore a
+                mutually consistent target/checkpoint snapshot, or execute a
+                governed compensating/rebuild procedure with reconciliation.
+              </p>
+            </section>
+            <section>
+              <h2>6. Cleanup/reset</h2>
+              <div class="code-window" data-code-block="" data-language="bash">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >cleanup.sh
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-bash"><span class="code-line"># Linux/macOS/Git Bash</span><span class="code-line">rm -rf atlasmart_ch15_lab</span><span class="code-line">rm -f atlasmart_ch15.py</span><span class="code-line"></span><span class="code-line"># PowerShell</span><span class="code-line"># Remove-Item -Recurse -Force .\atlasmart_ch15_lab</span><span class="code-line"># Remove-Item -Force .\atlasmart_ch15.py</span></code></pre>
+              </div>
+              <p>
+                Cleanup removes only the synthetic local harness. In production,
+                checkpoint/tombstone/audit cleanup is a retention and recovery
+                design decision; deleting it casually can destroy replay
+                evidence.
+              </p>
+            </section>
+            <section>
+              <h2>7. Bridge to Chapter 16</h2>
+              <p>
+                Chapter 15 establishes that one incremental task can recover
+                safely. Chapter 16 moves outward to orchestration: dependency
+                graphs, data-availability checks, retries/timeouts,
+                partition-aware backfills, SLAs/SLOs, partial failure, and
+                operator runbooks. An orchestrator cannot repair a
+                non-idempotent task; it only retries the behavior you designed
+                here.
+              </p>
+            </section>
+            <section>
+              <h2>Knowledge check</h2>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>What must remain unchanged after the simulated crash?</li>
+                  <li>What is the expected committed state after seq 206?</li>
+                  <li>Why is e205 important?</li>
+                  <li>What happens on complete redelivery after commit?</li>
+                  <li>Why does e207 not advance the watermark?</li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      <strong>1.</strong> Baseline target controls, target hash,
+                      and watermark 200.
+                    </p>
+                    <p>
+                      <strong>2.</strong> 9 lines, 7 orders, 11 units, 740 GMV,
+                      450 cost, 290 gross profit, watermark 206.
+                    </p>
+                    <p>
+                      <strong>3.</strong> It proves business/event time and
+                      source_updated_at can be older even though the ordered
+                      source change is new.
+                    </p>
+                    <p>
+                      <strong>4.</strong> No target change; the canonical target
+                      checksum remains identical.
+                    </p>
+                    <p>
+                      <strong>5.</strong> Its unsupported schema version blocks
+                      the transaction before commit.
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <ul class="reference-list">
+                <li>
+                  <a
+                    href="https://docs.python.org/3/library/sqlite3.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Python documentation — sqlite3</a
+                  ><span
+                    >Local DB-API harness used to make commit/rollback and
+                    deterministic retry behavior observable.</span
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.sqlite.org/lang_transaction.html"
+                    rel="noopener"
+                    target="_blank"
+                    >SQLite — Transaction</a
+                  ><span
+                    >Transaction boundaries used by the local acceptance lab;
+                    production engines have their own semantics.</span
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.sqlite.org/lang_upsert.html"
+                    rel="noopener"
+                    target="_blank"
+                    >SQLite — UPSERT</a
+                  ><span
+                    >Exact local <code>ON CONFLICT ... DO UPDATE</code> syntax
+                    used for sequence-guarded convergence.</span
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.sqlite.org/lang_delete.html"
+                    rel="noopener"
+                    target="_blank"
+                    >SQLite — DELETE</a
+                  ><span
+                    >Local current-state delete mechanics; the lab separately
+                    preserves a tombstone as CDC evidence.</span
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://debezium.io/documentation/reference/stable/"
+                    rel="noopener"
+                    target="_blank"
+                    >Debezium documentation</a
+                  ><span
+                    >Optional later-course reference for real CDC
+                    connector/envelope semantics. Debezium is not required by
+                    this chapter or local lab.</span
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.postgresql.org/docs/current/logicaldecoding.html"
+                    rel="noopener"
+                    target="_blank"
+                    >PostgreSQL — Logical Decoding</a
+                  ><span
+                    >Example of a real database change-stream mechanism;
+                    PostgreSQL-specific details are not generalized to all
+                    engines.</span
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.kimballgroup.com/data-warehouse-business-intelligence-resources/kimball-techniques/dimensional-modeling-techniques/"
+                    rel="noopener"
+                    target="_blank"
+                    >Kimball Group — Dimensional Modeling Techniques</a
+                  ><span
+                    >Dimensional grain/history semantics that incremental
+                    loading must preserve.</span
+                  >
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav class="lesson-nav" aria-label="Lesson navigation">
+  <a class="prev" href="Lesson4.html">
+    <small>Previous lesson</small>
+    <strong>Idempotent Merge/Upsert Patterns, Batch Identity, Deduplication,
+              and Retry Safety</strong>
+  </a>
+  <a class="next" href="../Chapter16/Lesson1.html">
+    <small>Next lesson</small>
+    <strong>DAGs, Dependencies, Data Availability Sensors/Checks, and Avoiding
+              Clock-Only Scheduling</strong>
+  </a>
+</nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://mohammadijoo.github.io/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <small
+          >Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>

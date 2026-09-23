@@ -1,0 +1,1163 @@
+<!doctype html>
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Model AtlasMart inventory as a periodic snapshot and prove why on-hand balances are additive across products but not blindly additive across snapshot dates."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Semi-Additive Balances/Snapshots: Why Time Often Requires Different
+      Aggregation | Data Warehousing and Dimensional Modeling | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <style data-dw-course-consistency>
+      .lesson-header h1, .lesson-content h2, .lesson-content h3,
+      .lesson-content p, .lesson-content li, .lesson-content th,
+      .lesson-content td, .lesson-nav strong, .sidebar-lesson {
+        overflow-wrap: anywhere;
+      }
+      .lesson-content code:not(pre code) {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        white-space: normal;
+      }
+      .lesson-content > *, .objective, .callout, .checkpoint, .code-window {
+        min-width: 0;
+        max-width: 100%;
+      }
+      @media (max-width: 700px) {
+        .lesson-toc ol { columns: 1; }
+        .lesson-content th, .lesson-content td { word-break: break-word; }
+      }
+    </style>
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">DW</span>
+<div>
+<small>Course 17</small><strong>Data Warehousing and Dimensional Modeling</strong>
+</div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">
+            ×
+          </button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewBox="0 0 24 24">
+<circle cx="11" cy="11" r="7"></circle>
+<path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 150 lessons..." type="search"/></label>
+<nav aria-label="Data Warehousing and Dimensional Modeling curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter">
+<summary>
+<span>01</span>Data Warehouse Foundations: OLTP vs OLAP,
+              Analytical Workloads, Architecture, and Lab Dataset
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>Operational vs Analytical Systems: Transaction
+                Shape, History, Concurrency, Query Complexity, and Data
+                Freshness<i>Current</i></a><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Warehouse, Data Mart, ODS, Data Lake, Lakehouse,
+                Semantic Layer, and BI Platform: Responsibilities and
+                Boundaries</a><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>Classic Enterprise Warehouse, Dimensional Bus,
+                Modern ELT, and Lakehouse-Centric Architectural Styles</a><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Batch, Micro-Batch, Streaming/CDC, and
+                Near-Real-Time Warehousing: Freshness vs Complexity Tradeoffs</a><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Define a Course Case Study with Source Systems,
+                Business Processes, KPIs, SLAs, Security, and Data Quality
+                Expectations</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>02</span>Requirements Engineering: Business Processes,
+              Questions, Metrics, Dimensions, and Grain
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>Start from Decisions and Questions:
+                Stakeholders, Use Cases, Reports, Explorations, and Data
+                Products</a><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Identify Business Processes and Events Before
+                Designing Tables</a><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>Declare Grain in One Precise Sentence and Reject
+                Mixed-Grain Facts</a><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Separate Measures, Dimensions, Descriptive
+                Attributes, Degenerate Dimensions, and Operational Metadata</a><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Build a Requirements-to-Model Traceability
+                Matrix Linking Every KPI and Slice to Source and Grain</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>03</span>Dimensional Modeling Foundations: Facts,
+              Dimensions, Star Schemas, and Query Semantics
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>Why Star Schemas Optimize Understandability and
+                Analytical Access Patterns</a><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Fact Tables vs Dimension Tables: Keys, Measures,
+                Descriptors, Width, and Growth Behavior</a><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>Foreign-Key Relationships, Surrogate Keys,
+                Referential Integrity, and Orphan Handling</a><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>Star vs Snowflake vs Flat Wide Tables: Semantic,
+                Performance, Maintenance, and Tooling Tradeoffs</a><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>Model a Sales/Orders Process as a Star Schema
+                and Validate Common BI Queries Against the Declared Grain</a>
+</div>
+</details>
+<details class="sidebar-chapter" open="">
+<summary>
+<span>04</span>Fact Table Design: Additive, Semi-Additive,
+              Non-Additive Measures, and Factless Facts
+            </summary>
+<div>
+<a class="sidebar-lesson" href="Lesson1.html"><span>01</span>Additive Measures and Safe Summation Across
+                Dimensions</a><a aria-current="page" class="sidebar-lesson is-current" href="Lesson2.html"><span>02</span>Semi-Additive Balances/Snapshots: Why Time Often
+                Requires Different Aggregation</a><a class="sidebar-lesson" href="Lesson3.html"><span>03</span>Ratios, Percentages, Averages, Distinct Counts,
+                and Other Non-Additive Metrics</a><a class="sidebar-lesson" href="Lesson4.html"><span>04</span>Factless Fact Tables for Coverage, Eligibility,
+                Attendance, Conditions, and Event Occurrence</a><a class="sidebar-lesson" href="Lesson5.html"><span>05</span>Audit a Metric Catalog for Double Counting,
+                Incorrect Grain, and Unsafe Aggregation</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>05</span>Dimension Design: Descriptive Context, Hierarchies,
+              Attributes, and Analytical Usability
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>Dimension Attributes as Human-Readable
+                Analytical Context, Not Operational Normalization Exercises</a><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Natural/Business Keys vs Surrogate Keys, Unknown
+                Members, and Durable Identity</a><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>Hierarchies, Levels, Ragged/Unbalanced
+                Hierarchies, and Drill Paths</a><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Wide Denormalized Dimensions vs Snowflaking,
+                Outriggers, and Maintenance Tradeoffs</a><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Design a Customer/Product/Geography Dimension
+                Set for Usability, History, and Governance</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>06</span>Conformed Dimensions, Enterprise Bus Architecture,
+              and Cross-Process Analytics
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>Conformed Dimensions and Facts: Shared Meaning
+                Across Business Processes</a><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>Bus Matrix: Rows as Processes, Columns as
+                Dimensions, and Incremental Warehouse Delivery</a><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Enterprise Definitions, Stewardship,
+                Master/Reference Data, and Preventing Metric Drift</a><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Shared Date/Product/Customer Dimensions Across
+                Marts with Different Grain</a><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Build a Bus Matrix and Identify Where Supposedly
+                Shared Dimensions Are Not Actually Conformed</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>07</span>Slowly Changing Dimensions: Types 0–7, History, and
+              Effective Dating
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>Type 0/1/2/3 Fundamentals: Preserve, Overwrite,
+                Add Version Rows, or Carry Alternate Values</a><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Type 2 Mechanics: Effective/Expiration Dates,
+                Current Flag, Surrogate Keys, and Non-Overlapping Windows</a><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Hybrid SCD Patterns (Types 4–7),
+                Mini-Dimensions, and Current-vs-Historical Attribute
+                Requirements</a><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Detect Changes Reliably: Hashes, Column
+                Comparison, Source CDC, Null Semantics, and Late Corrections</a><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Implement and Test an SCD2 Load Including Repeat
+                Runs, Backdated Changes, Deletes, and Unknown Members</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>08</span>Special Dimension Patterns: Date/Time,
+              Role-Playing, Junk, Degenerate, Mini, and Inferred Members
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>Date Dimension Rich Attributes, Fiscal
+                Calendars, Holidays, Weeks, and Why Date Is More Than a
+                Timestamp</a><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>Role-Playing Dimensions for Order/Ship/Due Dates
+                and Other Reused Context</a><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Junk Dimensions for Low-Cardinality Flags and
+                Degenerate Dimensions for Transaction Identifiers</a><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>Mini-Dimensions for Rapidly Changing Attributes
+                and Profile/Segment History</a><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Inferred/Early-Arriving Dimension Members and
+                Safe Completion When Source Details Arrive Later</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>09</span>Bridge Tables and Many-to-Many Analytical
+              Relationships
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>Why Direct Many-to-Many Joins Can Duplicate
+                Facts and Corrupt Metrics</a><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>Bridge Tables for Multivalued Dimensions,
+                Groups, Memberships, and Hierarchies</a><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Weighting/Allocation Factors and When Allocated
+                Measures Are Business Rules, Not Technical Tricks</a><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Temporal Membership in Bridges, Effective
+                Dating, and Historical Reconstruction</a><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Validate Many-to-Many Queries with Control
+                Totals to Prove No Double Counting</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>10</span>Transaction, Periodic Snapshot, and Accumulating
+              Snapshot Fact Tables
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Transaction Facts for Atomic Events and
+                Immutable Business Activity</a><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Periodic Snapshots for Inventory, Account
+                Balances, Daily State, and Semi-Additive Metrics</a><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Accumulating Snapshots for Pipeline/Workflow
+                Milestones, Reopened Processes, and Updating Rows</a><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Choosing Multiple Fact Tables for One Business
+                Process Instead of Forcing One Universal Grain</a><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>Model an Order Fulfillment Process Using
+                Transaction + Periodic + Accumulating Facts and Compare
+                Questions Supported</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>11</span>Surrogate Keys, Late-Arriving Facts/Dimensions,
+              Deletes, Restatements, and History Corrections
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Surrogate Key Assignment, Natural Key Reuse,
+                Source-System Key Collisions, and Durable Identity</a><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Late-Arriving Facts: Resolve Dimension Version
+                as of Event Time Without Assigning Current History
+                Incorrectly</a><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Late-Arriving Dimension Changes, Backdated SCD2
+                Splits, and Historical Restatement Policies</a><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>Source Deletes, Soft Deletes, Inactivation, GDPR
+                Erasure, and Analytical Auditability</a><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Design a Correction Workflow that Preserves
+                Reproducibility While Supporting Authorized Restatements</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>12</span>Source System Profiling, Data Contracts, Lineage,
+              and Ingestion Readiness
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>Inventory Sources, Owners, Extraction Methods,
+                Change Mechanisms, SLAs, and Failure Modes</a><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Profile Nulls, Uniqueness, Ranges,
+                Distributions, Referential Integrity, Duplicates, and Drift</a><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Source-to-Target Mapping Specifications,
+                Transform Rules, Data Types, Units, Time Zones, and Codes</a><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>Data Contracts and Schema Change Detection:
+                Compatible vs Breaking Changes</a><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Build a Source Readiness Report and Reject
+                Ambiguous Semantics Before Pipeline Development</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>13</span>Data Quality Engineering: Validation,
+              Standardization, Matching, Reconciliation, and Quarantine
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>Define Data Quality Dimensions: Completeness,
+                Validity, Uniqueness, Consistency, Timeliness, and Accuracy</a><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>Standardize Names, Codes, Units, Time Zones,
+                Encodings, and Reference Data</a><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>Deduplication and Entity Matching:
+                Deterministic/Probabilistic Concepts and Stewardship
+                Boundaries</a><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Quarantine Bad Records, Preserve Raw Evidence,
+                Repair/Reprocess, and Avoid Silent Coercion</a><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Build Reconciliation Tests from Source
+                Counts/Sums/Checksums to Warehouse Facts and Dimensions</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>14</span>ETL vs ELT Architecture: Staging, Raw, Integration,
+              Presentation, and Transform Ownership
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>ETL vs ELT: Compute Location, Pushdown,
+                Auditability, Cost, Lock-In, and Tooling Tradeoffs</a><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>Landing/Raw/Staging/Integration/Presentation
+                Layers and When Each Layer Adds Value</a><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Immutable Raw Data, Replayability, Audit
+                Columns, Batch IDs, Load Timestamps, and Lineage</a><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Transformation Modularity, Reusable Intermediate
+                Models, Dependency Graphs, and Environment Promotion</a><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Design a Layered Pipeline for the Case Study and
+                Justify Every Persisted Intermediate Dataset</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>15</span>Incremental Loading, CDC, Watermarks, High-Water
+              Marks, and Idempotency
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Full Refresh vs Incremental Loads: Volume,
+                Freshness, Correctness, and Recovery Tradeoffs</a><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Timestamp/Sequence Watermarks, Overlap Windows,
+                Clock Skew, Missing Rows, and Source Update Semantics</a><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>Log-Based CDC: Inserts/Updates/Deletes,
+                Before/After Images, Ordering, Transactions, and Schema
+                Evolution</a><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>Idempotent Merge/Upsert Patterns, Batch
+                Identity, Deduplication, and Retry Safety</a><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Prove an Incremental Pipeline Handles Restart,
+                Duplicate Delivery, Late Data, Deletes, and Reprocessing</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>16</span>Orchestration, Dependencies, Scheduling, Backfills,
+              SLAs, and Failure Recovery
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>DAGs, Dependencies, Data Availability
+                Sensors/Checks, and Avoiding Clock-Only Scheduling</a><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>Retries, Timeouts, Idempotent Tasks, Partial
+                Failure, Compensation, and Operator Intervention</a><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>Partition-Aware Backfills, Historical
+                Reprocessing, Resource Isolation, and Protecting Current
+                Loads</a><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>SLAs/SLOs for Freshness, Completeness, Duration,
+                and Downstream Availability</a><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Design an Operational Runbook for a Failed Daily
+                Load Including Root Cause, Repair, Replay, and Communication</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>17</span>Physical Warehouse Design: Schemas, Tables,
+              Constraints, Partitioning, Clustering, and Distribution
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Logical Dimensional Model vs Physical
+                Implementation in Row Stores, Column Stores, and Cloud
+                Warehouses</a><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Schema/Database Organization, Naming, Ownership,
+                Constraints, and Environment/Domain Boundaries</a><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Partitioning by Date/Range/Hash: Pruning,
+                Retention, Backfill, Small Partitions, and Skew</a><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Clustering/Sort Keys, Distribution/Partition
+                Keys, Co-Location, and Engine-Specific Alternatives</a><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Create a Physical Design from Workload Evidence
+                Rather Than Copying Generic Partition Recommendations</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>18</span>Columnar Storage, Compression, Encoding, Vectorized
+              Execution, and Analytical Scan Economics
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Row vs Column Storage: Projection, Compression,
+                CPU, Updates, and Analytical Workloads</a><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Column Encodings,
+                Dictionary/Run-Length/Delta-Like Compression Concepts and Data
+                Distribution</a><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Predicate/Projection Pushdown, Zone Maps/Min-Max
+                Statistics, Partition Pruning, and Data Skipping</a><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Vectorized Execution, Batch Processing, SIMD
+                Concepts, and Why Analytical Engines Differ from OLTP DBMSs</a><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Estimate Scan Bytes/CPU and Redesign Table
+                Layout to Reduce Work Without Corrupting the Logical Model</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>19</span>Materialized Views, Aggregate Tables, Cubes, and
+              Precomputation
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>When Precomputation Beats Repeated Raw Fact
+                Scans: Latency, Freshness, and Maintenance Cost</a><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Aggregate Fact Tables at Higher Grain and
+                Semantic Rules for Reconciliation to Base Facts</a><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Materialized View Refresh Strategies,
+                Incremental Refresh Concepts, and Dependency Management</a><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>OLAP Cubes/Pre-Aggregation, Sparse Dimensional
+                Combinations, and Modern Semantic Acceleration</a><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Design an Acceleration Layer with Clear
+                Freshness and Correctness Contracts</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>20</span>Semantic Layers, Metrics, Dimensions, Measures, and
+              BI Contracts
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Why a Warehouse Schema Alone Does Not Guarantee
+                Consistent Business Metrics</a><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Central Metric Definitions, Measures vs Metrics,
+                Filters, Time Windows, Currency/Unit Semantics, and Ownership</a><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Semantic Models, Relationships, Drill Paths,
+                Row-Level Security, and Tool Independence</a><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Metric Versioning, Deprecation, Tests,
+                Documentation, and Preventing Dashboard-Specific Business
+                Logic</a><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Build a Governed Metric for Revenue/Active
+                Customer/Retention and Trace It to Facts, Dimensions, and
+                Sources</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>21</span>Data Marts, Domain Data Products, Self-Service
+              Analytics, and Ownership
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>Dependent vs Independent Marts and Why
+                Independent Silos Break Conformance</a><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>Domain-Oriented Marts/Data Products with Shared
+                Enterprise Dimensions and Metrics</a><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Wide Reporting Tables vs Reusable Dimensional
+                Marts: Speed, Duplication, and Semantic Drift</a><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>Self-Service Sandboxes, Certified Data,
+                Promotion, Ownership, and Access Boundaries</a><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>Design a Marketing/Finance/Operations Mart
+                Strategy that Reuses Conformed Data Without Blocking Domain
+                Delivery</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>22</span>Security, Privacy, Row/Column Policies, Masking,
+              and Least-Privilege Analytics
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Authentication, Roles, Groups, Service
+                Identities, Separation of Duties, and Environment Isolation</a><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>Row-Level/Column-Level Security, Dynamic
+                Masking, Tokenization, and Policy Placement</a><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>PII Classification, Purpose Limitation,
+                Retention, Consent, and Right-to-Delete in Historical
+                Warehouses</a><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Secure Views/Semantic Layer Policies vs Physical
+                Data Access and Avoiding Bypass Paths</a><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Threat-Model a Warehouse Including BI Exports,
+                Shared Credentials, Staging Data, Backups, and Over-Broad
+                Analyst Roles</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>23</span>Metadata, Data Catalogs, Lineage, Documentation,
+              Ownership, and Governance
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter23/Lesson1.html"><span>01</span>Technical vs Business Metadata, Data Dictionary,
+                Schema Registry, Metric Catalog, and Glossary</a><a class="sidebar-lesson" href="../Chapter23/Lesson2.html"><span>02</span>Column/Table/Job Lineage from Source to
+                Dashboard and Impact Analysis for Changes</a><a class="sidebar-lesson" href="../Chapter23/Lesson3.html"><span>03</span>Owners, Stewards, SLAs, Certification,
+                Deprecation, and Data Product Contracts</a><a class="sidebar-lesson" href="../Chapter23/Lesson4.html"><span>04</span>Automated Documentation from Code/Models vs
+                Human Business Context and Review</a><a class="sidebar-lesson" href="../Chapter23/Lesson5.html"><span>05</span>Build an Impact Analysis for a Source Column
+                Change and Identify Every Model, Metric, Report, and Consumer at
+                Risk</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>24</span>Testing Analytical Pipelines: Unit, Schema,
+              Quality, Reconciliation, and Regression Tests
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter24/Lesson1.html"><span>01</span>Schema/Contract Tests: Types, Nullability, Keys,
+                Accepted Values, and Relationships</a><a class="sidebar-lesson" href="../Chapter24/Lesson2.html"><span>02</span>Data Quality/Business Tests: Invariants, Ranges,
+                Freshness, Duplicates, and Referential Integrity</a><a class="sidebar-lesson" href="../Chapter24/Lesson3.html"><span>03</span>SCD/Incremental/CDC Tests for History, Late
+                Data, Deletes, Idempotency, and Restart</a><a class="sidebar-lesson" href="../Chapter24/Lesson4.html"><span>04</span>Metric/Reconciliation Tests Against Trusted
+                Source Totals and Prior Period Expectations</a><a class="sidebar-lesson" href="../Chapter24/Lesson5.html"><span>05</span>Create CI + Production Data Tests with Severity,
+                Quarantine, Alerting, and Waiver Governance</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>25</span>Observability and Data Reliability: Freshness,
+              Volume, Schema, Lineage, and Incident Response
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter25/Lesson1.html"><span>01</span>Pipeline Metrics: Duration, Records/Bytes,
+                Error/Reject Counts, Lag, Retries, and Resource Use</a><a class="sidebar-lesson" href="../Chapter25/Lesson2.html"><span>02</span>Data Observability: Freshness, Volume,
+                Distribution, Schema, Lineage, and Quality Changes</a><a class="sidebar-lesson" href="../Chapter25/Lesson3.html"><span>03</span>End-to-End Data SLOs from Source Availability to
+                Certified Dashboard/Data Product</a><a class="sidebar-lesson" href="../Chapter25/Lesson4.html"><span>04</span>Incident Triage: Source Failure vs Pipeline Bug
+                vs Warehouse Performance vs Semantic Error</a><a class="sidebar-lesson" href="../Chapter25/Lesson5.html"><span>05</span>Build a Data Incident Runbook with Detection,
+                Blast Radius, Consumer Communication, Repair, Backfill, and
+                Postmortem</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>26</span>Performance Engineering and Workload Management:
+              Scan Reduction, Joins, Aggregations, and Concurrency
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter26/Lesson1.html"><span>01</span>Profile Representative BI/Ad-Hoc/ELT Workloads
+                by Scan, Join, Shuffle, Spill, Queue, and Tail Latency</a><a class="sidebar-lesson" href="../Chapter26/Lesson2.html"><span>02</span>Join Strategies and Dimensional Modeling
+                Benefits: Broadcast/Hash/Merge Concepts, Cardinality, and
+                Skew</a><a class="sidebar-lesson" href="../Chapter26/Lesson3.html"><span>03</span>Partition/Cluster Pruning, Predicate Pushdown,
+                Materialization, Approximation, and Query Rewrites</a><a class="sidebar-lesson" href="../Chapter26/Lesson4.html"><span>04</span>Workload Management, Queues/Warehouses/Resource
+                Groups, Concurrency Scaling, and Noisy-Neighbor Isolation</a><a class="sidebar-lesson" href="../Chapter26/Lesson5.html"><span>05</span>Benchmark Before/After Changes and Track
+                Performance Regression per Metric/Data Product</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>27</span>Cloud Warehouses and Serverless Analytics:
+              Separation of Storage/Compute, Elasticity, and Cost
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter27/Lesson1.html"><span>01</span>Shared-Nothing vs Disaggregated Storage/Compute
+                vs Serverless Warehouses: Architectural Consequences</a><a class="sidebar-lesson" href="../Chapter27/Lesson2.html"><span>02</span>Elastic Compute, Autoscaling, Concurrency,
+                Pausing, Warehouses/Clusters, and Cold-Start Tradeoffs</a><a class="sidebar-lesson" href="../Chapter27/Lesson3.html"><span>03</span>Object Storage, Columnar Formats, Metadata
+                Services, Caching, and Remote Shuffle Concepts</a><a class="sidebar-lesson" href="../Chapter27/Lesson4.html"><span>04</span>Cost Models:
+                Scan/Compute/Credits/Slots/Storage/Egress and How Physical
+                Design Changes Spend</a><a class="sidebar-lesson" href="../Chapter27/Lesson5.html"><span>05</span>Translate the Vendor-Neutral Model into a Cloud
+                Warehouse and Document Which Optimizations Are
+                Engine-Specific</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>28</span>Lakehouse Coexistence: Open Table Formats,
+              Medallion Layers, Warehouse Serving, and Federation
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter28/Lesson1.html"><span>01</span>Warehouse vs Lakehouse: Governance,
+                Transactions, Performance, Open Formats, and Ecosystem
+                Tradeoffs</a><a class="sidebar-lesson" href="../Chapter28/Lesson2.html"><span>02</span>Bronze/Silver/Gold Layering vs Dimensional
+                Models: Complementary Concepts, Not Automatic Replacements</a><a class="sidebar-lesson" href="../Chapter28/Lesson3.html"><span>03</span>Apache Iceberg/Delta/Hudi Table-Format Concepts,
+                Snapshot Metadata, Schema Evolution, and Warehouse
+                Interoperability</a><a class="sidebar-lesson" href="../Chapter28/Lesson4.html"><span>04</span>Federated Query vs Data Movement, One-Copy
+                Dreams, Performance, Consistency, and Governance</a><a class="sidebar-lesson" href="../Chapter28/Lesson5.html"><span>05</span>Design a Hybrid Lakehouse+Warehouse Architecture
+                with Clear System of Record, Serving, and Data-Movement
+                Boundaries</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>29</span>Migration and Modernization: Legacy EDW, Mart
+              Consolidation, Cloud Moves, and Semantic Preservation
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter29/Lesson1.html"><span>01</span>Inventory Schemas, ETL Jobs, Reports, Stored
+                Procedures, Dependencies, SLAs, and Hidden Business Logic</a><a class="sidebar-lesson" href="../Chapter29/Lesson2.html"><span>02</span>Rehost/Replatform/Refactor Strategies and Why
+                Moving Tables Without Semantics Preserves Technical Debt</a><a class="sidebar-lesson" href="../Chapter29/Lesson3.html"><span>03</span>Parallel Run, Dual Loads, Historical Backfill,
+                CDC Cutover, and Data Reconciliation</a><a class="sidebar-lesson" href="../Chapter29/Lesson4.html"><span>04</span>Preserve/Version Metrics and Semantic Behavior
+                Across Old/New Platforms</a><a class="sidebar-lesson" href="../Chapter29/Lesson5.html"><span>05</span>Build a Migration Acceptance Plan Covering Data,
+                Query Results, Performance, Cost, Security, and Rollback</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>30</span>Production Capstone: Deliver a Governed, Testable,
+              Performant Analytical Warehouse
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter30/Lesson1.html"><span>01</span>Define Business Processes, Bus Matrix, Grain,
+                Facts, Dimensions, Metrics, Source Contracts, SLAs, and Security
+                Requirements</a><a class="sidebar-lesson" href="../Chapter30/Lesson2.html"><span>02</span>Implement Dimensional Models, SCDs/Snapshots,
+                Incremental/CDC Loads, Data Quality, Orchestration, and Semantic
+                Metrics</a><a class="sidebar-lesson" href="../Chapter30/Lesson3.html"><span>03</span>Choose Physical Layout, Materialization, Marts,
+                Workload Isolation, and Cloud/Lakehouse Integration from
+                Measurements</a><a class="sidebar-lesson" href="../Chapter30/Lesson4.html"><span>04</span>Test, Reconcile, Load-Test, Secure, Observe,
+                Backfill, Recover, and Execute a Data Incident/DR Exercise</a><a class="sidebar-lesson" href="../Chapter30/Lesson5.html"><span>05</span>Present the Warehouse as an Evidence-Based Data
+                Product with Lineage, Costs, Known Limitations, Ownership, and
+                Evolution Roadmap</a>
+</div>
+</details>
+</nav>
+</aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 04 · Lesson 02</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html"
+              >Data Warehousing and Dimensional Modeling</a
+            ><span>/</span><span>Chapter 04 · Lesson 02</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 04 · Fact Table Design: Additive, Semi-Additive,
+              Non-Additive Measures, and Factless Facts
+            </p>
+            <h1>
+              Semi-Additive Balances/Snapshots: Why Time Often Requires
+              Different Aggregation
+            </h1>
+            <p>
+              Model AtlasMart inventory as a periodic snapshot and prove why
+              on-hand balances are additive across products but not blindly
+              additive across snapshot dates.
+            </p>
+            <div class="lesson-meta">
+              <span>Intermediate → Advanced</span><span>105–125 minutes</span
+              ><span>Periodic-snapshot balance lab</span
+              ><span>Python stdlib sqlite3 · local/synthetic</span
+              ><span>Last reviewed: September 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                Inventory answers “how much do we have at a point in time?”
+                rather than “how much activity happened over a period.” That
+                difference changes aggregation semantics even though the column
+                is a perfectly ordinary integer.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Define periodic-snapshot grain and distinguish stock from
+                    flow measurements.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Explain why inventory balances are additive across products
+                    at one time but semi-additive across time.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Implement two deterministic AtlasMart inventory snapshots
+                    while preserving the existing 137-unit control for September
+                    20.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Write end-of-period and average-balance queries without
+                    summing duplicate time states.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Detect and repair the classic error of adding balances
+                    across snapshot dates.
+                  </p>
+                </div>
+              </div>
+              <div class="callout">
+                <strong>Chapter 04 continuity contract</strong>
+                <p>
+                  The Chapter 03 sales fact remains one row per paid order line:
+                  7 rows, 4 paid orders, 9 units, and 625 paid GMV. Chapter 04
+                  does not change that grain. It adds explicitly documented
+                  measurement fixtures only where this chapter needs them:
+                  synthetic cost-at-sale evidence, a two-day inventory periodic
+                  snapshot, channel-session denominators, and
+                  promotion-eligibility coverage. Every new structure is
+                  reconciled back to the established source/control values
+                  before it is used.
+                </p>
+              </div>
+              <div class="callout warning">
+                <strong>Execution scope</strong>
+                <p>
+                  The mandatory labs use Python's standard-library
+                  <code>sqlite3</code> module and synthetic local data. They are
+                  semantic correctness labs, not performance benchmarks. Record
+                  the actual Python and SQLite versions from your machine; query
+                  speed, optimizer behavior, decimal representation, and
+                  physical storage behavior are engine-specific.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>1. Flow facts and stock facts answer different questions</h2>
+              <p>
+                Sales quantity is a <em>flow</em>: nine units sold across
+                separate order-line events can be accumulated over a date range.
+                Inventory on hand is a <em>stock</em>: each snapshot restates
+                the current balance. Summing two daily balances counts some
+                physical units more than once simply because they existed on two
+                dates.
+              </p>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Question</th>
+                    <th>Valid aggregation</th>
+                    <th>Why</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Units on hand on 2026-09-20</td>
+                    <td>SUM across products within the chosen snapshot</td>
+                    <td>
+                      Each product balance is a disjoint component of that
+                      point-in-time total
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>End-of-period inventory for a range</td>
+                    <td>
+                      Choose the last applicable snapshot, then SUM products
+                    </td>
+                    <td>Time is selected, not accumulated</td>
+                  </tr>
+                  <tr>
+                    <td>Average daily inventory</td>
+                    <td>
+                      Average comparable daily totals or entity balances under
+                      an explicit rule
+                    </td>
+                    <td>Each snapshot gets a defined weight</td>
+                  </tr>
+                  <tr>
+                    <td>Inventory across 2026-09-19 and 2026-09-20</td>
+                    <td>Do not SUM balances across dates</td>
+                    <td>The same stock can persist across both dates</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+            <section>
+              <h2>2. Build a periodic snapshot at one product per day</h2>
+              <p>
+                The grain is
+                <strong>one row per product per inventory snapshot date</strong
+                >. Chapter 01 established the September 20 product balances 40,
+                60, 12, and 25, totaling 137. Chapter 04 adds a synthetic
+                September 19 comparison snapshot totaling 146 solely to
+                demonstrate time behavior.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >inventory_snapshot.sql
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-sql"><span class="code-line">PRAGMA foreign_keys = ON;</span><span class="code-line">DROP TABLE IF EXISTS fact_sales;</span><span class="code-line">DROP TABLE IF EXISTS dim_store;</span><span class="code-line">DROP TABLE IF EXISTS dim_product;</span><span class="code-line">DROP TABLE IF EXISTS dim_customer;</span><span class="code-line">DROP TABLE IF EXISTS dim_date;</span><span class="code-line">CREATE TABLE dim_date (</span><span class="code-line">  date_key INTEGER PRIMARY KEY,</span><span class="code-line">  full_date TEXT NOT NULL UNIQUE,</span><span class="code-line">  calendar_year INTEGER NOT NULL,</span><span class="code-line">  calendar_month INTEGER NOT NULL,</span><span class="code-line">  day_of_month INTEGER NOT NULL,</span><span class="code-line">  day_name TEXT NOT NULL</span><span class="code-line">);</span><span class="code-line">CREATE TABLE dim_customer (</span><span class="code-line">  customer_key INTEGER PRIMARY KEY,</span><span class="code-line">  customer_id TEXT NOT NULL UNIQUE,</span><span class="code-line">  customer_name TEXT NOT NULL,</span><span class="code-line">  segment TEXT NOT NULL,</span><span class="code-line">  region TEXT NOT NULL</span><span class="code-line">);</span><span class="code-line">CREATE TABLE dim_product (</span><span class="code-line">  product_key INTEGER PRIMARY KEY,</span><span class="code-line">  product_id TEXT NOT NULL UNIQUE,</span><span class="code-line">  product_name TEXT NOT NULL,</span><span class="code-line">  category TEXT NOT NULL</span><span class="code-line">);</span><span class="code-line">CREATE TABLE dim_store (</span><span class="code-line">  store_key INTEGER PRIMARY KEY,</span><span class="code-line">  store_id TEXT NOT NULL UNIQUE,</span><span class="code-line">  store_name TEXT NOT NULL,</span><span class="code-line">  store_type TEXT NOT NULL</span><span class="code-line">);</span><span class="code-line">CREATE TABLE fact_sales (</span><span class="code-line">  sales_key INTEGER PRIMARY KEY,</span><span class="code-line">  date_key INTEGER NOT NULL REFERENCES dim_date(date_key),</span><span class="code-line">  customer_key INTEGER NOT NULL REFERENCES dim_customer(customer_key),</span><span class="code-line">  product_key INTEGER NOT NULL REFERENCES dim_product(product_key),</span><span class="code-line">  store_key INTEGER NOT NULL REFERENCES dim_store(store_key),</span><span class="code-line">  order_id TEXT NOT NULL,</span><span class="code-line">  line_no INTEGER NOT NULL,</span><span class="code-line">  quantity INTEGER NOT NULL CHECK (quantity &gt; 0),</span><span class="code-line">  unit_price NUMERIC NOT NULL CHECK (unit_price &gt;= 0),</span><span class="code-line">  extended_amount NUMERIC NOT NULL CHECK (extended_amount &gt;= 0),</span><span class="code-line">  source_batch_id TEXT NOT NULL,</span><span class="code-line">  UNIQUE(order_id, line_no)</span><span class="code-line">);</span><span class="code-line">INSERT INTO dim_date VALUES</span><span class="code-line">(20260918,'2026-09-18',2026,9,18,'Friday'),</span><span class="code-line">(20260919,'2026-09-19',2026,9,19,'Saturday'),</span><span class="code-line">(20260920,'2026-09-20',2026,9,20,'Sunday');</span><span class="code-line">INSERT INTO dim_customer VALUES</span><span class="code-line">(0,'__UNKNOWN__','Unknown customer','Unknown','Unknown'),</span><span class="code-line">(101,'C001','Ada Retail','SMB','North'),</span><span class="code-line">(102,'C002','Ben Home','Consumer','West'),</span><span class="code-line">(103,'C003','Cyra Labs','Enterprise','East'),</span><span class="code-line">(104,'C004','Dara Studio','Consumer','South');</span><span class="code-line">INSERT INTO dim_product VALUES</span><span class="code-line">(0,'__UNKNOWN__','Unknown product','Unknown'),</span><span class="code-line">(201,'P100','Keyboard','Accessories'),</span><span class="code-line">(202,'P200','Mouse','Accessories'),</span><span class="code-line">(203,'P300','Monitor','Displays'),</span><span class="code-line">(204,'P400','Dock','Accessories');</span><span class="code-line">INSERT INTO dim_store VALUES</span><span class="code-line">(0,'__UNKNOWN__','Unknown selling location','Unknown'),</span><span class="code-line">(301,'S-WEB','Web Store','Digital'),</span><span class="code-line">(302,'S-MOBILE','Mobile Store','Digital'),</span><span class="code-line">(303,'S-SALES','Assisted Sales','Assisted');</span><span class="code-line">INSERT INTO fact_sales VALUES</span><span class="code-line">(1,20260918,101,201,301,'O1001',1,2,50,100,'BATCH-CH03-001'),</span><span class="code-line">(2,20260918,101,202,301,'O1001',2,1,25,25,'BATCH-CH03-001'),</span><span class="code-line">(3,20260918,102,203,302,'O1002',1,1,200,200,'BATCH-CH03-001'),</span><span class="code-line">(4,20260919,101,204,301,'O1003',1,1,100,100,'BATCH-CH03-001'),</span><span class="code-line">(5,20260919,101,202,301,'O1003',2,2,25,50,'BATCH-CH03-001'),</span><span class="code-line">(6,20260920,104,201,302,'O1005',1,1,50,50,'BATCH-CH03-001'),</span><span class="code-line">(7,20260920,104,204,302,'O1005',2,1,100,100,'BATCH-CH03-001');</span><span class="code-line"></span><span class="code-line">DROP TABLE IF EXISTS fact_inventory_snapshot;</span><span class="code-line">CREATE TABLE fact_inventory_snapshot (</span><span class="code-line">  snapshot_date_key INTEGER NOT NULL REFERENCES dim_date(date_key),</span><span class="code-line">  product_key INTEGER NOT NULL REFERENCES dim_product(product_key),</span><span class="code-line">  on_hand_units INTEGER NOT NULL CHECK (on_hand_units &gt;= 0),</span><span class="code-line">  source_batch_id TEXT NOT NULL,</span><span class="code-line">  PRIMARY KEY (snapshot_date_key, product_key)</span><span class="code-line">);</span><span class="code-line">INSERT INTO fact_inventory_snapshot VALUES</span><span class="code-line">(20260919,201,42,'INV-20260919'),</span><span class="code-line">(20260919,202,63,'INV-20260919'),</span><span class="code-line">(20260919,203,13,'INV-20260919'),</span><span class="code-line">(20260919,204,28,'INV-20260919'),</span><span class="code-line">(20260920,201,40,'INV-20260920'),</span><span class="code-line">(20260920,202,60,'INV-20260920'),</span><span class="code-line">(20260920,203,12,'INV-20260920'),</span><span class="code-line">(20260920,204,25,'INV-20260920');</span></code></pre>
+              </div>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>SQL ·
+                    valid per-snapshot totals
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-sql"><span class="code-line">SELECT d.full_date, SUM(i.on_hand_units) AS on_hand_units</span><span class="code-line">FROM fact_inventory_snapshot i</span><span class="code-line">JOIN dim_date d ON d.date_key=i.snapshot_date_key</span><span class="code-line">GROUP BY d.full_date</span><span class="code-line">ORDER BY d.full_date;</span><span class="code-line">-- 2026-09-19 | 146</span><span class="code-line">-- 2026-09-20 | 137</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>3. Controlled failure — sum balances across time</h2>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>SQL ·
+                    wrong time aggregation
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-sql"><span class="code-line">SELECT SUM(on_hand_units) AS wrong_two_day_inventory</span><span class="code-line">FROM fact_inventory_snapshot;</span><span class="code-line">-- 283: arithmetic is correct, business meaning is wrong.</span></code></pre>
+              </div>
+              <p>
+                There were not 283 units “in inventory” over the two-day window
+                in the same sense that 625 dollars of paid sales occurred. The
+                283 result is the sum of repeated states. The repair depends on
+                the question.
+              </p>
+              <div class="code-window" data-code-block="" data-language="sql">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>SQL ·
+                    end-of-period and average daily balance
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-sql"><span class="code-line">-- End-of-period balance for the selected window.</span><span class="code-line">WITH last_day AS (SELECT MAX(snapshot_date_key) AS date_key FROM fact_inventory_snapshot)</span><span class="code-line">SELECT SUM(i.on_hand_units) AS ending_units</span><span class="code-line">FROM fact_inventory_snapshot i JOIN last_day d ON d.date_key=i.snapshot_date_key;</span><span class="code-line">-- 137</span><span class="code-line"></span><span class="code-line">-- Average of the complete daily totals in this fixture.</span><span class="code-line">WITH daily AS (</span><span class="code-line">  SELECT snapshot_date_key, SUM(on_hand_units) AS units</span><span class="code-line">  FROM fact_inventory_snapshot GROUP BY snapshot_date_key</span><span class="code-line">)</span><span class="code-line">SELECT AVG(units) AS average_daily_units FROM daily;</span><span class="code-line">-- 141.5</span></code></pre>
+              </div>
+              <p>
+                In production, missing snapshots, intraday snapshots, time-zone
+                boundaries, and different weighting requirements can change the
+                average-balance rule. The rule belongs in the metric definition.
+              </p>
+            </section>
+            <section>
+              <h2>4. Semi-additive means “name the forbidden dimension”</h2>
+              <p>
+                A useful aggregation contract does not stop at the label
+                <em>semi-additive</em>. It states exactly where addition is
+                safe. For <code>on_hand_units</code>, addition is safe across
+                product (and, if modeled, warehouse/location) within the same
+                snapshot. Across the date dimension the default aggregation is
+                not SUM; consumers need a last-value, first-value,
+                average-balance, minimum, maximum, or another explicitly
+                governed temporal rule.
+              </p>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Metric</th>
+                    <th>Across product</th>
+                    <th>Across date</th>
+                    <th>Required time rule</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>on_hand_units</td>
+                    <td>SUM</td>
+                    <td>Not SUM</td>
+                    <td>
+                      Latest snapshot for ending balance; explicit averaging
+                      policy for averages
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>paid_units</td>
+                    <td>SUM</td>
+                    <td>SUM</td>
+                    <td>Normal accumulation of transaction events</td>
+                  </tr>
+                  <tr>
+                    <td>paid_gmv</td>
+                    <td>SUM</td>
+                    <td>SUM</td>
+                    <td>Normal accumulation of transaction events</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+            <section>
+              <h2>5. Hands-on lab — prove the time rule</h2>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="python"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >verify_inventory_semantics.py
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-python"><span class="code-line">import sqlite3</span><span class="code-line">conn=sqlite3.connect(":memory:")</span><span class="code-line">conn.executescript("PRAGMA foreign_keys = ON;\nDROP TABLE IF EXISTS fact_sales;\nDROP TABLE IF EXISTS dim_store;\nDROP TABLE IF EXISTS dim_product;\nDROP TABLE IF EXISTS dim_customer;\nDROP TABLE IF EXISTS dim_date;\nCREATE TABLE dim_date (\n  date_key INTEGER PRIMARY KEY,\n  full_date TEXT NOT NULL UNIQUE,\n  calendar_year INTEGER NOT NULL,\n  calendar_month INTEGER NOT NULL,\n  day_of_month INTEGER NOT NULL,\n  day_name TEXT NOT NULL\n);\nCREATE TABLE dim_customer (\n  customer_key INTEGER PRIMARY KEY,\n  customer_id TEXT NOT NULL UNIQUE,\n  customer_name TEXT NOT NULL,\n  segment TEXT NOT NULL,\n  region TEXT NOT NULL\n);\nCREATE TABLE dim_product (\n  product_key INTEGER PRIMARY KEY,\n  product_id TEXT NOT NULL UNIQUE,\n  product_name TEXT NOT NULL,\n  category TEXT NOT NULL\n);\nCREATE TABLE dim_store (\n  store_key INTEGER PRIMARY KEY,\n  store_id TEXT NOT NULL UNIQUE,\n  store_name TEXT NOT NULL,\n  store_type TEXT NOT NULL\n);\nCREATE TABLE fact_sales (\n  sales_key INTEGER PRIMARY KEY,\n  date_key INTEGER NOT NULL REFERENCES dim_date(date_key),\n  customer_key INTEGER NOT NULL REFERENCES dim_customer(customer_key),\n  product_key INTEGER NOT NULL REFERENCES dim_product(product_key),\n  store_key INTEGER NOT NULL REFERENCES dim_store(store_key),\n  order_id TEXT NOT NULL,\n  line_no INTEGER NOT NULL,\n  quantity INTEGER NOT NULL CHECK (quantity &gt; 0),\n  unit_price NUMERIC NOT NULL CHECK (unit_price &gt;= 0),\n  extended_amount NUMERIC NOT NULL CHECK (extended_amount &gt;= 0),\n  source_batch_id TEXT NOT NULL,\n  UNIQUE(order_id, line_no)\n);\nINSERT INTO dim_date VALUES\n(20260918,'2026-09-18',2026,9,18,'Friday'),\n(20260919,'2026-09-19',2026,9,19,'Saturday'),\n(20260920,'2026-09-20',2026,9,20,'Sunday');\nINSERT INTO dim_customer VALUES\n(0,'__UNKNOWN__','Unknown customer','Unknown','Unknown'),\n(101,'C001','Ada Retail','SMB','North'),\n(102,'C002','Ben Home','Consumer','West'),\n(103,'C003','Cyra Labs','Enterprise','East'),\n(104,'C004','Dara Studio','Consumer','South');\nINSERT INTO dim_product VALUES\n(0,'__UNKNOWN__','Unknown product','Unknown'),\n(201,'P100','Keyboard','Accessories'),\n(202,'P200','Mouse','Accessories'),\n(203,'P300','Monitor','Displays'),\n(204,'P400','Dock','Accessories');\nINSERT INTO dim_store VALUES\n(0,'__UNKNOWN__','Unknown selling location','Unknown'),\n(301,'S-WEB','Web Store','Digital'),\n(302,'S-MOBILE','Mobile Store','Digital'),\n(303,'S-SALES','Assisted Sales','Assisted');\nINSERT INTO fact_sales VALUES\n(1,20260918,101,201,301,'O1001',1,2,50,100,'BATCH-CH03-001'),\n(2,20260918,101,202,301,'O1001',2,1,25,25,'BATCH-CH03-001'),\n(3,20260918,102,203,302,'O1002',1,1,200,200,'BATCH-CH03-001'),\n(4,20260919,101,204,301,'O1003',1,1,100,100,'BATCH-CH03-001'),\n(5,20260919,101,202,301,'O1003',2,2,25,50,'BATCH-CH03-001'),\n(6,20260920,104,201,302,'O1005',1,1,50,50,'BATCH-CH03-001'),\n(7,20260920,104,204,302,'O1005',2,1,100,100,'BATCH-CH03-001');")</span><span class="code-line">conn.executescript("DROP TABLE IF EXISTS fact_inventory_snapshot;\nCREATE TABLE fact_inventory_snapshot (\n  snapshot_date_key INTEGER NOT NULL REFERENCES dim_date(date_key),\n  product_key INTEGER NOT NULL REFERENCES dim_product(product_key),\n  on_hand_units INTEGER NOT NULL CHECK (on_hand_units &gt;= 0),\n  source_batch_id TEXT NOT NULL,\n  PRIMARY KEY (snapshot_date_key, product_key)\n);\nINSERT INTO fact_inventory_snapshot VALUES\n(20260919,201,42,'INV-20260919'),\n(20260919,202,63,'INV-20260919'),\n(20260919,203,13,'INV-20260919'),\n(20260919,204,28,'INV-20260919'),\n(20260920,201,40,'INV-20260920'),\n(20260920,202,60,'INV-20260920'),\n(20260920,203,12,'INV-20260920'),\n(20260920,204,25,'INV-20260920');")</span><span class="code-line">daily=conn.execute("""SELECT snapshot_date_key,SUM(on_hand_units)</span><span class="code-line">FROM fact_inventory_snapshot GROUP BY snapshot_date_key ORDER BY snapshot_date_key""").fetchall()</span><span class="code-line">print("daily totals =", daily)</span><span class="code-line">assert daily == [(20260919,146),(20260920,137)]</span><span class="code-line">wrong=conn.execute("SELECT SUM(on_hand_units) FROM fact_inventory_snapshot").fetchone()[0]</span><span class="code-line">assert wrong == 283</span><span class="code-line">latest=conn.execute("""SELECT SUM(on_hand_units) FROM fact_inventory_snapshot</span><span class="code-line">WHERE snapshot_date_key=(SELECT MAX(snapshot_date_key) FROM fact_inventory_snapshot)""").fetchone()[0]</span><span class="code-line">assert latest == 137</span><span class="code-line">avg=sum(v for _,v in daily)/len(daily)</span><span class="code-line">assert avg == 141.5</span><span class="code-line">print("wrong_sum=",wrong,"ending=",latest,"avg_daily=",avg)</span><span class="code-line">print("semi-additive assertions: PASS")</span></code></pre>
+              </div>
+              <p>
+                <strong>Verification:</strong> the test must intentionally prove
+                that the wrong sum is 283 while the governed ending balance
+                remains 137. That difference is the lesson.
+              </p>
+            </section>
+            <section>
+              <h2>6. Production judgment and bridge</h2>
+              <p>
+                Do not encode “SUM” as the universal default for every numeric
+                fact in a BI layer. Snapshot measures need time-aware semantics,
+                complete-period assumptions, and explicit handling for sparse
+                observations. A dashboard that silently sums balances over
+                months can be perfectly fast and perfectly wrong.
+              </p>
+              <p>
+                The next lesson generalizes the same principle to ratios,
+                percentages, averages, and distinct counts, where aggregation
+                must be reconstructed from atomic components or entity sets.
+              </p>
+            </section>
+            <section>
+              <h2>Knowledge check</h2>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>
+                    Why is on_hand_units semi-additive rather than fully
+                    additive?
+                  </li>
+                  <li>What is the grain of fact_inventory_snapshot?</li>
+                  <li>What does 283 represent in the two-day fixture?</li>
+                  <li>How do you compute the ending balance?</li>
+                  <li>
+                    Can AVG(on_hand_units) over all product rows automatically
+                    be called average inventory?
+                  </li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      <strong>1.</strong> It can be summed across products
+                      within one snapshot, but summing repeated balances across
+                      dates double counts state.
+                    </p>
+                    <p>
+                      <strong>2.</strong> One row per product per inventory
+                      snapshot date.
+                    </p>
+                    <p>
+                      <strong>3.</strong> The arithmetic sum of both days’
+                      product balances; it is deliberately not a valid
+                      point-in-time inventory metric.
+                    </p>
+                    <p>
+                      <strong>4.</strong> Select the appropriate last snapshot
+                      for the period, then sum balances across the required
+                      non-time dimensions.
+                    </p>
+                    <p>
+                      <strong>5.</strong> Not without a definition. You must
+                      specify whether the intended metric is an average of daily
+                      totals, per-product balances, time-weighted states, or
+                      another policy.
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section>
+              <h2>Summary and next step</h2>
+              <p>
+                AtlasMart’s September 20 inventory control remains 137 units.
+                The added September 19 snapshot shows why repeated states
+                require a temporal aggregation rule rather than a blind SUM.
+              </p>
+              <p>
+                Next:
+                <strong
+                  >Ratios, Percentages, Averages, Distinct Counts, and Other
+                  Non-Additive Metrics</strong
+                >.
+              </p>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <ul class="reference-list">
+                <li>
+                  <a
+                    href="https://www.kimballgroup.com/data-warehouse-business-intelligence-resources/kimball-techniques/dimensional-modeling-techniques/periodic-snapshot-fact-table/"
+                    rel="noopener"
+                    target="_blank"
+                    >Kimball Group — Periodic Snapshot Fact Tables</a
+                  >
+                  — Periodic-snapshot grain and repeated period rows.
+                </li>
+              </ul>
+              <ul class="reference-list">
+                <li>
+                  <a
+                    href="https://www.kimballgroup.com/data-warehouse-business-intelligence-resources/kimball-techniques/dimensional-modeling-techniques/additive-semi-additive-non-additive-fact/"
+                    rel="noopener"
+                    target="_blank"
+                    >Kimball Group — Additive, Semi-Additive, and Non-Additive
+                    Facts</a
+                  >
+                  — Definitions and the guidance to retain additive components
+                  for derived non-additive facts.
+                </li>
+                <li>
+                  <a
+                    href="https://www.kimballgroup.com/data-warehouse-business-intelligence-resources/kimball-techniques/dimensional-modeling-techniques/fact-table-structure/"
+                    rel="noopener"
+                    target="_blank"
+                    >Kimball Group — Fact Table Structure</a
+                  >
+                  — Fact-table grain and measurement-event framing.
+                </li>
+                <li>
+                  <a
+                    href="https://www.sqlite.org/lang_aggfunc.html"
+                    rel="noopener"
+                    target="_blank"
+                    >SQLite — Aggregate Functions</a
+                  >
+                  — Exact behavior of SUM, AVG, COUNT, and DISTINCT in the local
+                  execution harness.
+                </li>
+                <li>
+                  <a
+                    href="https://docs.python.org/3/library/sqlite3.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Python sqlite3 documentation</a
+                  >
+                  — Standard-library API used by the deterministic labs.
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav class="lesson-nav" aria-label="Lesson navigation">
+  <a class="prev" href="Lesson1.html">
+    <small>Previous lesson</small>
+    <strong>Additive Measures and Safe Summation Across Dimensions</strong>
+  </a>
+  <a class="next" href="Lesson3.html">
+    <small>Next lesson</small>
+    <strong>Ratios, Percentages, Averages, Distinct Counts, and Other
+              Non-Additive Metrics</strong>
+  </a>
+</nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://mohammadijoo.github.io/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <small
+          >Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>

@@ -1,20 +1,31 @@
-<!DOCTYPE html>
+<!doctype html>
 
 <html data-theme="dark" lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta content="width=device-width,initial-scale=1" name="viewport"/>
-<meta content="Reason about Firestore listener fan-out, query selectivity, reconnect behavior, Standard versus Enterprise realtime billing, bandwidth, and when realtime is the wrong tool." name="description"/>
-<meta content="Abolfazl Mohammadijoo" name="author"/>
-<meta content="dark light" name="color-scheme"/>
-<meta content="#05070b" name="theme-color"/>
-<title>
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Reason about Firestore listener fan-out, query selectivity, reconnect behavior, Standard versus Enterprise realtime billing, bandwidth, and when realtime is the wrong tool."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
       Listener Fan-Out at Scale, Query Selectivity, Reconnects, Resume Behavior,
       and Bandwidth/Read Cost | Firebase and Cloud Firestore | Big Data Academy
     </title>
-<link href="../../../assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
-<link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet"/><link href="../firebase-firestore-consistency.css?v=20260920.1" rel="stylesheet"/>
-<script>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <link
+      href="../firebase-firestore-consistency.css?v=20260920.1"
+      rel="stylesheet"
+    />
+    <script>
       try {
         const t = localStorage.getItem("big-data-academy-theme");
         if (t) document.documentElement.dataset.theme = t;
@@ -22,660 +33,1006 @@
           document.documentElement.dataset.theme = "light";
       } catch (e) {}
     </script>
-</head>
-<body class="lesson-page">
-<div class="reading-progress" data-reading-progress=""></div>
-<div aria-hidden="true" class="site-grid"></div>
-<a class="skip-link" href="#main-content">Skip to content</a>
-<header class="site-header" data-header="">
-<div class="header-inner">
-<a aria-label="Big Data Academy home" class="brand" href="../../../index.html">
-<span aria-hidden="true" class="brand-mark"><svg aria-hidden="true" viewbox="0 0 24 24">
-<ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
-<path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg></span>
-<span class="brand-copy"><strong>Big Data Academy</strong><small>Query · move · process · govern</small></span>
-</a>
-<nav aria-label="Primary navigation" class="desktop-nav">
-<a href="../../../index.html#roadmap">Learning path</a>
-<a class="is-active" href="../../../index.html#courses">Courses</a>
-<a href="../../../index.html#method">Method</a>
-<a href="https://github.com/mohammadijoo/Big_Data_Academy" rel="noopener" target="_blank">GitHub</a>
-</nav>
-<div class="header-actions">
-<button aria-label="Toggle color theme" class="icon-button" data-theme-toggle="" type="button">
-<svg aria-hidden="true" viewbox="0 0 24 24">
-<circle cx="12" cy="12" r="4"></circle>
-<path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path>
-</svg>
-</button>
-<button aria-expanded="false" aria-label="Open navigation" class="icon-button mobile-menu-button" data-mobile-menu-button="" type="button">
-<svg aria-hidden="true" viewbox="0 0 24 24">
-<path d="M4 7h16M4 12h16M4 17h16"></path>
-</svg>
-</button>
-</div>
-</div>
-<nav aria-label="Mobile navigation" class="mobile-nav" data-mobile-menu="">
-<a href="../../../index.html#roadmap">Learning path</a>
-<a href="../../../index.html#courses">Courses</a>
-<a href="../../../index.html#method">Method</a>
-<a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
-</nav>
-</header>
-<div class="sidebar-overlay" data-sidebar-overlay=""></div>
-<main class="lesson-shell" id="main-content">
-<aside class="course-sidebar" data-course-sidebar="">
-<div class="sidebar-head">
-<a href="../index.html"><span class="course-glyph">FS</span>
-<div>
-<small>Course 16</small><strong>Firebase and Cloud Firestore</strong>
-</div></a>
-<button aria-label="Close course navigation" data-sidebar-close="" type="button">
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+        >
+          <span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg
+          ></span>
+          <span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          >
+        </a>
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a>
+          <a class="is-active" href="../../../index.html#courses">Courses</a>
+          <a href="../../../index.html#method">Method</a>
+          <a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg>
+          </button>
+          <button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a>
+        <a href="../../../index.html#courses">Courses</a>
+        <a href="../../../index.html#method">Method</a>
+        <a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+        <div class="sidebar-head">
+          <a href="../index.html"
+            ><span class="course-glyph">FS</span>
+            <div>
+              <small>Course 16</small
+              ><strong>Firebase and Cloud Firestore</strong>
+            </div></a
+          >
+          <button
+            aria-label="Close course navigation"
+            data-sidebar-close=""
+            type="button"
+          >
             ×
           </button>
-</div>
-<label class="sidebar-search"><svg aria-hidden="true" viewbox="0 0 24 24">
-<circle cx="11" cy="11" r="7"></circle>
-<path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 135 lessons..." type="search"/></label>
-<nav aria-label="Firebase and Cloud Firestore curriculum" class="sidebar-curriculum">
-<details class="sidebar-chapter">
-<summary>
-<span>01</span>Firestore Foundations, Firebase/Google Cloud,
+        </div>
+        <label class="sidebar-search"
+          ><svg aria-hidden="true" viewbox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-4-4"></path></svg
+          ><input
+            data-sidebar-search=""
+            placeholder="Search 135 lessons..."
+            type="search"
+        /></label>
+        <nav
+          aria-label="Firebase and Cloud Firestore curriculum"
+          class="sidebar-curriculum"
+        >
+          <details class="sidebar-chapter">
+            <summary>
+              <span>01</span>Firestore Foundations, Firebase/Google Cloud,
               Editions, Modes, Locations, and Lab Setup
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>What Cloud Firestore Is: Serverless Document
+            <div>
+              <a class="sidebar-lesson" href="../Chapter01/Lesson1.html"
+                ><span>01</span>What Cloud Firestore Is: Serverless Document
                 Database, Realtime Clients, Strong Consistency, and Workload
-                Fit</a>
-<a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Standard vs Enterprise Editions and Native
-                Core/Pipeline vs MongoDB Compatibility Modes</a>
-<a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>Firebase Projects, Google Cloud Projects,
+                Fit</a
+              >
+              <a class="sidebar-lesson" href="../Chapter01/Lesson2.html"
+                ><span>02</span>Standard vs Enterprise Editions and Native
+                Core/Pipeline vs MongoDB Compatibility Modes</a
+              >
+              <a class="sidebar-lesson" href="../Chapter01/Lesson3.html"
+                ><span>03</span>Firebase Projects, Google Cloud Projects,
                 Databases, Regions/Multi-Regions, Billing, and Responsibility
-                Boundaries</a>
-<a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Create a Database, Configure SDKs/CLI, Use
-                Emulator Suite Where Appropriate, and Verify Reads/Writes</a>
-<a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Build a Reproducible Lab with Authentication,
+                Boundaries</a
+              >
+              <a class="sidebar-lesson" href="../Chapter01/Lesson4.html"
+                ><span>04</span>Create a Database, Configure SDKs/CLI, Use
+                Emulator Suite Where Appropriate, and Verify Reads/Writes</a
+              >
+              <a class="sidebar-lesson" href="../Chapter01/Lesson5.html"
+                ><span>05</span>Build a Reproducible Lab with Authentication,
                 Rules, Test Data, Index Configuration, Logging, and Safe
-                Cleanup</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>02</span>Documents, Collections, Fields, References, Maps,
+                Cleanup</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>02</span>Documents, Collections, Fields, References, Maps,
               Arrays, Timestamps, GeoPoints, and Limits
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>Document/Collection Hierarchy, Paths, IDs,
+            <div>
+              <a class="sidebar-lesson" href="../Chapter02/Lesson1.html"
+                ><span>01</span>Document/Collection Hierarchy, Paths, IDs,
                 Subcollections, and the Absence of Traditional Server-Side Joins
-                in Core Operations</a>
-<a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Supported Native Data Types, Null, Numeric
+                in Core Operations</a
+              >
+              <a class="sidebar-lesson" href="../Chapter02/Lesson2.html"
+                ><span>02</span>Supported Native Data Types, Null, Numeric
                 Ordering, Timestamps, References, GeoPoints, Bytes, Arrays, and
-                Maps</a>
-<a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>Document Size, Field/Path/Nesting Constraints,
-                Index Entry Implications, and Schema Governance</a>
-<a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Auto IDs vs Semantic IDs, Hotspot Risks, Tenant
-                Prefixes, and External Identity Mapping</a>
-<a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Inspect and Validate a Document Schema Across
-                Web/Mobile/Server SDK Serialization Boundaries</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>03</span>Data Modeling by Access Pattern: Embedding,
+                Maps</a
+              >
+              <a class="sidebar-lesson" href="../Chapter02/Lesson3.html"
+                ><span>03</span>Document Size, Field/Path/Nesting Constraints,
+                Index Entry Implications, and Schema Governance</a
+              >
+              <a class="sidebar-lesson" href="../Chapter02/Lesson4.html"
+                ><span>04</span>Auto IDs vs Semantic IDs, Hotspot Risks, Tenant
+                Prefixes, and External Identity Mapping</a
+              >
+              <a class="sidebar-lesson" href="../Chapter02/Lesson5.html"
+                ><span>05</span>Inspect and Validate a Document Schema Across
+                Web/Mobile/Server SDK Serialization Boundaries</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>03</span>Data Modeling by Access Pattern: Embedding,
               Referencing, Duplication, Fan-Out, and Denormalization
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>Start from Screens/Queries/Transactions—not
-                Entity Diagrams—When Designing Firestore Models</a>
-<a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Embed vs Reference vs Duplicate: Read Cost,
-                Write Amplification, Consistency, and Document Limits</a>
-<a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>Subcollections vs Root Collections, Collection
-                Groups, Ownership, Lifecycle, and Security Rules</a>
-<a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>Fan-Out Writes, Materialized Views, Counters,
-                Feeds, and Precomputed Query Shapes</a>
-<a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>Refactor a Relational Model into Firestore and
-                Document Every Consistency and Cost Tradeoff</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>04</span>CRUD with Client and Server SDKs: Reads, Writes,
+            <div>
+              <a class="sidebar-lesson" href="../Chapter03/Lesson1.html"
+                ><span>01</span>Start from Screens/Queries/Transactions—not
+                Entity Diagrams—When Designing Firestore Models</a
+              >
+              <a class="sidebar-lesson" href="../Chapter03/Lesson2.html"
+                ><span>02</span>Embed vs Reference vs Duplicate: Read Cost,
+                Write Amplification, Consistency, and Document Limits</a
+              >
+              <a class="sidebar-lesson" href="../Chapter03/Lesson3.html"
+                ><span>03</span>Subcollections vs Root Collections, Collection
+                Groups, Ownership, Lifecycle, and Security Rules</a
+              >
+              <a class="sidebar-lesson" href="../Chapter03/Lesson4.html"
+                ><span>04</span>Fan-Out Writes, Materialized Views, Counters,
+                Feeds, and Precomputed Query Shapes</a
+              >
+              <a class="sidebar-lesson" href="../Chapter03/Lesson5.html"
+                ><span>05</span>Refactor a Relational Model into Firestore and
+                Document Every Consistency and Cost Tradeoff</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>04</span>CRUD with Client and Server SDKs: Reads, Writes,
               Updates, Deletes, Preconditions, and Converters
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>Get Documents, Create/Set/Merge, Update, Delete,
-                and Understand Missing vs Null Fields</a>
-<a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>Field Paths, Nested Updates, Array Operations,
-                Increment, Server Timestamps, and Atomic Field Transforms</a>
-<a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>Server vs Client SDK
+            <div>
+              <a class="sidebar-lesson" href="../Chapter04/Lesson1.html"
+                ><span>01</span>Get Documents, Create/Set/Merge, Update, Delete,
+                and Understand Missing vs Null Fields</a
+              >
+              <a class="sidebar-lesson" href="../Chapter04/Lesson2.html"
+                ><span>02</span>Field Paths, Nested Updates, Array Operations,
+                Increment, Server Timestamps, and Atomic Field Transforms</a
+              >
+              <a class="sidebar-lesson" href="../Chapter04/Lesson3.html"
+                ><span>03</span>Server vs Client SDK
                 Authentication/Authorization Models and Trusted vs Untrusted
-                Execution</a>
-<a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Data Converters/Typed Models, Serialization,
-                Validation, and Backward-Compatible Schema Evolution</a>
-<a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>Build an Idempotent CRUD Service and Verify
-                Error Handling, Retry, Preconditions, and Observability</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>05</span>Queries: Filters, Ordering, Limits, Cursors,
+                Execution</a
+              >
+              <a class="sidebar-lesson" href="../Chapter04/Lesson4.html"
+                ><span>04</span>Data Converters/Typed Models, Serialization,
+                Validation, and Backward-Compatible Schema Evolution</a
+              >
+              <a class="sidebar-lesson" href="../Chapter04/Lesson5.html"
+                ><span>05</span>Build an Idempotent CRUD Service and Verify
+                Error Handling, Retry, Preconditions, and Observability</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>05</span>Queries: Filters, Ordering, Limits, Cursors,
               Collection Groups, and Query Constraints
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>Equality, Inequality, in/not-in,
+            <div>
+              <a class="sidebar-lesson" href="../Chapter05/Lesson1.html"
+                ><span>01</span>Equality, Inequality, in/not-in,
                 array-contains/array-contains-any, and Compound Query
-                Semantics</a>
-<a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>orderBy, limit/limitToLast,
+                Semantics</a
+              >
+              <a class="sidebar-lesson" href="../Chapter05/Lesson2.html"
+                ><span>02</span>orderBy, limit/limitToLast,
                 startAt/startAfter/endAt/endBefore, and Stable Cursor
-                Pagination</a>
-<a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>Collection Group Queries Across Subcollections
-                and Their Modeling/Security Implications</a>
-<a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Query Limitations, Field Existence Effects,
+                Pagination</a
+              >
+              <a class="sidebar-lesson" href="../Chapter05/Lesson3.html"
+                ><span>03</span>Collection Group Queries Across Subcollections
+                and Their Modeling/Security Implications</a
+              >
+              <a class="sidebar-lesson" href="../Chapter05/Lesson4.html"
+                ><span>04</span>Query Limitations, Field Existence Effects,
                 Index Requirements, and How to Redesign Unsupported Access
-                Patterns</a>
-<a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Create a Query Contract Test Suite Covering
+                Patterns</a
+              >
+              <a class="sidebar-lesson" href="../Chapter05/Lesson5.html"
+                ><span>05</span>Create a Query Contract Test Suite Covering
                 Boundaries, Pagination, Empty Results, and Security
-                Constraints</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>06</span>Indexes:
+                Constraints</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>06</span>Indexes:
               Automatic/Composite/Collection-Group/Vector, Exemptions, and Index
               Cost
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>Single-Field Indexing in Standard Native Mode,
-                Ascending/Descending/Array Entries, and Automatic Behavior</a>
-<a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>Composite Indexes: Ordering, Equality/Range
+            <div>
+              <a class="sidebar-lesson" href="../Chapter06/Lesson1.html"
+                ><span>01</span>Single-Field Indexing in Standard Native Mode,
+                Ascending/Descending/Array Entries, and Automatic Behavior</a
+              >
+              <a class="sidebar-lesson" href="../Chapter06/Lesson2.html"
+                ><span>02</span>Composite Indexes: Ordering, Equality/Range
                 Fields, Collection vs Collection-Group Scope, and Error-Driven
-                Creation</a>
-<a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Index Exemptions for Large Strings/Arrays/Maps,
-                Sequential Fields, TTL Fields, and Write/Storage Cost</a>
-<a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Enterprise Native Indexing Differences and Why
-                Optional Indexing Changes Query-Performance Reasoning</a>
-<a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Audit Index Usage, Remove Redundant Structures,
-                and Validate Query Latency/Cost Before and After Changes</a>
-</div>
-</details>
-<details class="sidebar-chapter" open="">
-<summary>
-<span>07</span>Realtime Listeners: Snapshots, Change Events,
+                Creation</a
+              >
+              <a class="sidebar-lesson" href="../Chapter06/Lesson3.html"
+                ><span>03</span>Index Exemptions for Large Strings/Arrays/Maps,
+                Sequential Fields, TTL Fields, and Write/Storage Cost</a
+              >
+              <a class="sidebar-lesson" href="../Chapter06/Lesson4.html"
+                ><span>04</span>Enterprise Native Indexing Differences and Why
+                Optional Indexing Changes Query-Performance Reasoning</a
+              >
+              <a class="sidebar-lesson" href="../Chapter06/Lesson5.html"
+                ><span>05</span>Audit Index Usage, Remove Redundant Structures,
+                and Validate Query Latency/Cost Before and After Changes</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter" open="">
+            <summary>
+              <span>07</span>Realtime Listeners: Snapshots, Change Events,
               Metadata, Latency, and Listener Lifecycle
             </summary>
-<div>
-<a class="sidebar-lesson" href="Lesson1.html"><span>01</span>Document vs Query Listeners, Initial Snapshot,
-                Incremental Changes, Ordering, and Local Writes</a>
-<a class="sidebar-lesson" href="Lesson2.html"><span>02</span>Snapshot Metadata, Pending Writes, Cache vs
-                Server Sources, and User-Experience Semantics</a>
-<a aria-current="page" class="sidebar-lesson is-current" href="Lesson3.html"><span>03</span>Listener Fan-Out at Scale, Query Selectivity,
-                Reconnects, Resume Behavior, and Bandwidth/Read Cost<i>Current</i></a>
-<a class="sidebar-lesson" href="Lesson4.html"><span>04</span>Unsubscribe/Lifecycle Management in Web/Mobile
-                Frameworks and Avoiding Leaked Listeners</a>
-<a class="sidebar-lesson" href="Lesson5.html"><span>05</span>Design a Realtime Screen with Correct
-                Offline/Online State, Security, Pagination, and Cost Controls</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>08</span>Offline Persistence, Local Cache, Synchronization,
+            <div>
+              <a class="sidebar-lesson" href="Lesson1.html"
+                ><span>01</span>Document vs Query Listeners, Initial Snapshot,
+                Incremental Changes, Ordering, and Local Writes</a
+              >
+              <a class="sidebar-lesson" href="Lesson2.html"
+                ><span>02</span>Snapshot Metadata, Pending Writes, Cache vs
+                Server Sources, and User-Experience Semantics</a
+              >
+              <a
+                aria-current="page"
+                class="sidebar-lesson is-current"
+                href="Lesson3.html"
+                ><span>03</span>Listener Fan-Out at Scale, Query Selectivity,
+                Reconnects, Resume Behavior, and Bandwidth/Read Cost<i
+                  >Current</i
+                ></a
+              >
+              <a class="sidebar-lesson" href="Lesson4.html"
+                ><span>04</span>Unsubscribe/Lifecycle Management in Web/Mobile
+                Frameworks and Avoiding Leaked Listeners</a
+              >
+              <a class="sidebar-lesson" href="Lesson5.html"
+                ><span>05</span>Design a Realtime Screen with Correct
+                Offline/Online State, Security, Pagination, and Cost Controls</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>08</span>Offline Persistence, Local Cache, Synchronization,
               Conflict Behavior, and Offline Indexes
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>Offline Cache Semantics for Android, Apple, and
-                Web Clients: Reads, Writes, Listeners, and Synchronization</a>
-<a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>Last-Write-Wins Behavior for Multiple Offline
-                Changes and Where Transactions Differ</a>
-<a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Memory vs Persistent Cache Options,
-                Multi-Tab/Process Considerations, and Sensitive-Data Risk</a>
-<a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>Local Query Indexes, Cache Growth, User
-                Sign-Out/Data Clearing, and Offline Performance</a>
-<a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Test Airplane-Mode, Restart, Conflicting Writes,
-                Reconnect, and Security-Rule Changes End to End</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>09</span>Transactions, Batched Writes, Atomic Field
+            <div>
+              <a class="sidebar-lesson" href="../Chapter08/Lesson1.html"
+                ><span>01</span>Offline Cache Semantics for Android, Apple, and
+                Web Clients: Reads, Writes, Listeners, and Synchronization</a
+              >
+              <a class="sidebar-lesson" href="../Chapter08/Lesson2.html"
+                ><span>02</span>Last-Write-Wins Behavior for Multiple Offline
+                Changes and Where Transactions Differ</a
+              >
+              <a class="sidebar-lesson" href="../Chapter08/Lesson3.html"
+                ><span>03</span>Memory vs Persistent Cache Options,
+                Multi-Tab/Process Considerations, and Sensitive-Data Risk</a
+              >
+              <a class="sidebar-lesson" href="../Chapter08/Lesson4.html"
+                ><span>04</span>Local Query Indexes, Cache Growth, User
+                Sign-Out/Data Clearing, and Offline Performance</a
+              >
+              <a class="sidebar-lesson" href="../Chapter08/Lesson5.html"
+                ><span>05</span>Test Airplane-Mode, Restart, Conflicting Writes,
+                Reconnect, and Security-Rule Changes End to End</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>09</span>Transactions, Batched Writes, Atomic Field
               Operations, Retries, and Contention
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>Transactions Read-Then-Write Atomically,
+            <div>
+              <a class="sidebar-lesson" href="../Chapter09/Lesson1.html"
+                ><span>01</span>Transactions Read-Then-Write Atomically,
                 Optimistic/Pessimistic Differences by SDK/Edition Context, and
-                Retry Semantics</a>
-<a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>Batched Writes for Atomic Multi-Document Changes
-                Without Reads and Operation Limits</a>
-<a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Increment, arrayUnion/arrayRemove, Server
+                Retry Semantics</a
+              >
+              <a class="sidebar-lesson" href="../Chapter09/Lesson2.html"
+                ><span>02</span>Batched Writes for Atomic Multi-Document Changes
+                Without Reads and Operation Limits</a
+              >
+              <a class="sidebar-lesson" href="../Chapter09/Lesson3.html"
+                ><span>03</span>Increment, arrayUnion/arrayRemove, Server
                 Timestamp, Compare/Precondition Patterns, and Conflict
-                Reduction</a>
-<a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Hot Documents, High-Contention Counters,
-                Sharded/Distributed Counter Patterns, and Idempotency</a>
-<a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Load-Test a Contended Workflow and Redesign It
-                to Meet Throughput Without Violating Correctness</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>10</span>Atomicity Across Business Workflows: Counters,
+                Reduction</a
+              >
+              <a class="sidebar-lesson" href="../Chapter09/Lesson4.html"
+                ><span>04</span>Hot Documents, High-Contention Counters,
+                Sharded/Distributed Counter Patterns, and Idempotency</a
+              >
+              <a class="sidebar-lesson" href="../Chapter09/Lesson5.html"
+                ><span>05</span>Load-Test a Contended Workflow and Redesign It
+                to Meet Throughput Without Violating Correctness</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>10</span>Atomicity Across Business Workflows: Counters,
               Reservations, Idempotency, and Event-Driven Consistency
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Define the True Atomic Boundary: One Document,
-                Transaction Set, or Eventual Multi-Step Workflow</a>
-<a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Distributed/Sharded Counters, Read Aggregation,
-                Write Distribution, and Accuracy/Latency Tradeoffs</a>
-<a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Reservation/Inventory Patterns, Conditional
-                Writes, Expiration, Compensation, and Oversell Prevention</a>
-<a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Idempotency Keys, Exactly-Once Illusions, Cloud
-                Functions/Eventarc Retries, and Deduplication</a>
-<a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>Design a Saga-Like Firestore Workflow with
-                Recovery, Replay, Monitoring, and Manual Repair Paths</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>11</span>Subcollections, Collection Groups, Hierarchies,
+            <div>
+              <a class="sidebar-lesson" href="../Chapter10/Lesson1.html"
+                ><span>01</span>Define the True Atomic Boundary: One Document,
+                Transaction Set, or Eventual Multi-Step Workflow</a
+              >
+              <a class="sidebar-lesson" href="../Chapter10/Lesson2.html"
+                ><span>02</span>Distributed/Sharded Counters, Read Aggregation,
+                Write Distribution, and Accuracy/Latency Tradeoffs</a
+              >
+              <a class="sidebar-lesson" href="../Chapter10/Lesson3.html"
+                ><span>03</span>Reservation/Inventory Patterns, Conditional
+                Writes, Expiration, Compensation, and Oversell Prevention</a
+              >
+              <a class="sidebar-lesson" href="../Chapter10/Lesson4.html"
+                ><span>04</span>Idempotency Keys, Exactly-Once Illusions, Cloud
+                Functions/Eventarc Retries, and Deduplication</a
+              >
+              <a class="sidebar-lesson" href="../Chapter10/Lesson5.html"
+                ><span>05</span>Design a Saga-Like Firestore Workflow with
+                Recovery, Replay, Monitoring, and Manual Repair Paths</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>11</span>Subcollections, Collection Groups, Hierarchies,
               Deletion, and Data Lifecycle
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Deep Hierarchies vs Flat Collections:
-                Queryability, Security, Ownership, and Operational Complexity</a>
-<a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Collection Group Queries and Index/Rules
-                Requirements Across Parent Documents</a>
-<a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Deleting Documents Does Not Automatically Delete
-                Subcollections: Recursive Delete and Orphan Risk</a>
-<a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>Archiving, Soft Delete, Legal Retention, Tenant
-                Deletion, Export, and Lifecycle State Machines</a>
-<a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Implement a Tenant/Data-Subject Deletion Plan
-                that Finds and Verifies All Hierarchical Data</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>12</span>Security Rules Foundations: Authentication Context,
+            <div>
+              <a class="sidebar-lesson" href="../Chapter11/Lesson1.html"
+                ><span>01</span>Deep Hierarchies vs Flat Collections:
+                Queryability, Security, Ownership, and Operational Complexity</a
+              >
+              <a class="sidebar-lesson" href="../Chapter11/Lesson2.html"
+                ><span>02</span>Collection Group Queries and Index/Rules
+                Requirements Across Parent Documents</a
+              >
+              <a class="sidebar-lesson" href="../Chapter11/Lesson3.html"
+                ><span>03</span>Deleting Documents Does Not Automatically Delete
+                Subcollections: Recursive Delete and Orphan Risk</a
+              >
+              <a class="sidebar-lesson" href="../Chapter11/Lesson4.html"
+                ><span>04</span>Archiving, Soft Delete, Legal Retention, Tenant
+                Deletion, Export, and Lifecycle State Machines</a
+              >
+              <a class="sidebar-lesson" href="../Chapter11/Lesson5.html"
+                ><span>05</span>Implement a Tenant/Data-Subject Deletion Plan
+                that Finds and Verifies All Hierarchical Data</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>12</span>Security Rules Foundations: Authentication Context,
               Match Paths, Reads/Writes, and Validation
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>Security Rules Execution Model,
-                request/resource, Auth Context, and Rules Are Not Filters</a>
-<a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Path Matching, Wildcards, Recursive Wildcards,
-                get/exists, and Access-Call Limits</a>
-<a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Separate create/update/delete/read/list/get
-                Permissions and Validate Required/Immutable Fields</a>
-<a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>Role/Ownership Models, Public/Private Documents,
-                Nested Resources, and Deny-by-Default Structure</a>
-<a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Write Emulator-Based Rules Tests for Allowed and
-                Forbidden Cases Before Shipping Client Queries</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>13</span>Advanced Security Rules, Query Compatibility, App
+            <div>
+              <a class="sidebar-lesson" href="../Chapter12/Lesson1.html"
+                ><span>01</span>Security Rules Execution Model,
+                request/resource, Auth Context, and Rules Are Not Filters</a
+              >
+              <a class="sidebar-lesson" href="../Chapter12/Lesson2.html"
+                ><span>02</span>Path Matching, Wildcards, Recursive Wildcards,
+                get/exists, and Access-Call Limits</a
+              >
+              <a class="sidebar-lesson" href="../Chapter12/Lesson3.html"
+                ><span>03</span>Separate create/update/delete/read/list/get
+                Permissions and Validate Required/Immutable Fields</a
+              >
+              <a class="sidebar-lesson" href="../Chapter12/Lesson4.html"
+                ><span>04</span>Role/Ownership Models, Public/Private Documents,
+                Nested Resources, and Deny-by-Default Structure</a
+              >
+              <a class="sidebar-lesson" href="../Chapter12/Lesson5.html"
+                ><span>05</span>Write Emulator-Based Rules Tests for Allowed and
+                Forbidden Cases Before Shipping Client Queries</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>13</span>Advanced Security Rules, Query Compatibility, App
               Check, and Rules Testing
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>Secure Queries by Making Query Constraints
-                Provably Compatible with Rules</a>
-<a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>Rules Functions, Reuse, Complexity, Access-Call
-                Caching, and Avoiding Hidden Cost/Limit Failures</a>
-<a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>App Check for Abuse Reduction: Attestation
+            <div>
+              <a class="sidebar-lesson" href="../Chapter13/Lesson1.html"
+                ><span>01</span>Secure Queries by Making Query Constraints
+                Provably Compatible with Rules</a
+              >
+              <a class="sidebar-lesson" href="../Chapter13/Lesson2.html"
+                ><span>02</span>Rules Functions, Reuse, Complexity, Access-Call
+                Caching, and Avoiding Hidden Cost/Limit Failures</a
+              >
+              <a class="sidebar-lesson" href="../Chapter13/Lesson3.html"
+                ><span>03</span>App Check for Abuse Reduction: Attestation
                 Concepts, Enforcement Boundaries, and Why It Is Not
-                Authorization</a>
-<a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Testing Rules in CI with Emulators, Fixtures,
-                Authentication Claims, and Regression Cases</a>
-<a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Threat-Model a Client App for ID Enumeration,
-                Query Broadening, Forged Fields, Replay, and Rule Drift</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>14</span>IAM, Admin/Server SDKs, Service Accounts,
+                Authorization</a
+              >
+              <a class="sidebar-lesson" href="../Chapter13/Lesson4.html"
+                ><span>04</span>Testing Rules in CI with Emulators, Fixtures,
+                Authentication Claims, and Regression Cases</a
+              >
+              <a class="sidebar-lesson" href="../Chapter13/Lesson5.html"
+                ><span>05</span>Threat-Model a Client App for ID Enumeration,
+                Query Broadening, Forged Fields, Replay, and Rule Drift</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>14</span>IAM, Admin/Server SDKs, Service Accounts,
               Authentication, and Trust Boundaries
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>Firebase Authentication vs Google Cloud IAM vs
-                Firestore Security Rules: Who Authorizes Which Request Path</a>
-<a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>Admin/Server SDKs Bypass Security Rules: Service
-                Account Least Privilege and Application-Layer Authorization</a>
-<a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Custom Claims, Tenant/Role Data, Token Refresh,
-                Revocation, and Avoiding Authorization Only in UI</a>
-<a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Workload Identity/Service Accounts, Keyless
-                Credentials, Secrets, Rotation, and Local Development</a>
-<a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Design Separate Browser/Mobile and Backend
+            <div>
+              <a class="sidebar-lesson" href="../Chapter14/Lesson1.html"
+                ><span>01</span>Firebase Authentication vs Google Cloud IAM vs
+                Firestore Security Rules: Who Authorizes Which Request Path</a
+              >
+              <a class="sidebar-lesson" href="../Chapter14/Lesson2.html"
+                ><span>02</span>Admin/Server SDKs Bypass Security Rules: Service
+                Account Least Privilege and Application-Layer Authorization</a
+              >
+              <a class="sidebar-lesson" href="../Chapter14/Lesson3.html"
+                ><span>03</span>Custom Claims, Tenant/Role Data, Token Refresh,
+                Revocation, and Avoiding Authorization Only in UI</a
+              >
+              <a class="sidebar-lesson" href="../Chapter14/Lesson4.html"
+                ><span>04</span>Workload Identity/Service Accounts, Keyless
+                Credentials, Secrets, Rotation, and Local Development</a
+              >
+              <a class="sidebar-lesson" href="../Chapter14/Lesson5.html"
+                ><span>05</span>Design Separate Browser/Mobile and Backend
                 Access Paths with Explicit Trust, Audit, and Failure
-                Boundaries</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>15</span>Scaling and Hotspots: Key Distribution, Index
+                Boundaries</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>15</span>Scaling and Hotspots: Key Distribution, Index
               Fan-Out, Sequential Values, and Ramp-Up
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Automatic Scaling Does Not Remove Hotspot
-                Physics: Document, Key-Range, and Index Contention</a>
-<a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Sequential Document IDs/Timestamps, Monotonic
-                Fields, High Write Rates, and Index Hotspots</a>
-<a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>The 500/50/5-Style Gradual Traffic Ramp Concept,
-                New Collections, and Migration Warm-Up</a>
-<a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>Index Fan-Out, Large Arrays/Maps,
-                High-Cardinality Fields, and Write Latency/Cost</a>
-<a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Load-Test a High-Write Model, Identify Hotspots,
-                and Redesign Keys, Indexes, or Data Distribution</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>16</span>Aggregation Queries, Server-Side Count/Sum/Avg,
+            <div>
+              <a class="sidebar-lesson" href="../Chapter15/Lesson1.html"
+                ><span>01</span>Automatic Scaling Does Not Remove Hotspot
+                Physics: Document, Key-Range, and Index Contention</a
+              >
+              <a class="sidebar-lesson" href="../Chapter15/Lesson2.html"
+                ><span>02</span>Sequential Document IDs/Timestamps, Monotonic
+                Fields, High Write Rates, and Index Hotspots</a
+              >
+              <a class="sidebar-lesson" href="../Chapter15/Lesson3.html"
+                ><span>03</span>The 500/50/5-Style Gradual Traffic Ramp Concept,
+                New Collections, and Migration Warm-Up</a
+              >
+              <a class="sidebar-lesson" href="../Chapter15/Lesson4.html"
+                ><span>04</span>Index Fan-Out, Large Arrays/Maps,
+                High-Cardinality Fields, and Write Latency/Cost</a
+              >
+              <a class="sidebar-lesson" href="../Chapter15/Lesson5.html"
+                ><span>05</span>Load-Test a High-Write Model, Identify Hotspots,
+                and Redesign Keys, Indexes, or Data Distribution</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>16</span>Aggregation Queries, Server-Side Count/Sum/Avg,
               Materialized Aggregates, and Analytics Boundaries
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>count(), sum(), avg() Semantics, Supported
-                SDKs/Queries, and Index-Entry-Based Cost</a>
-<a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>Aggregations with Filters/Collection Groups and
-                Consistency Expectations</a>
-<a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>When to Maintain Write-Time Aggregates for
-                Realtime Display vs Run Read-Time Aggregations</a>
-<a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>Large-Scale Analytics Limits and
-                Exporting/Replicating Data to BigQuery or Analytical Systems</a>
-<a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Choose Between Query-Time Aggregation,
+            <div>
+              <a class="sidebar-lesson" href="../Chapter16/Lesson1.html"
+                ><span>01</span>count(), sum(), avg() Semantics, Supported
+                SDKs/Queries, and Index-Entry-Based Cost</a
+              >
+              <a class="sidebar-lesson" href="../Chapter16/Lesson2.html"
+                ><span>02</span>Aggregations with Filters/Collection Groups and
+                Consistency Expectations</a
+              >
+              <a class="sidebar-lesson" href="../Chapter16/Lesson3.html"
+                ><span>03</span>When to Maintain Write-Time Aggregates for
+                Realtime Display vs Run Read-Time Aggregations</a
+              >
+              <a class="sidebar-lesson" href="../Chapter16/Lesson4.html"
+                ><span>04</span>Large-Scale Analytics Limits and
+                Exporting/Replicating Data to BigQuery or Analytical Systems</a
+              >
+              <a class="sidebar-lesson" href="../Chapter16/Lesson5.html"
+                ><span>05</span>Choose Between Query-Time Aggregation,
                 Materialized Document, Distributed Counter, and External
-                Warehouse</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>17</span>Vector Search: Embeddings, KNN Indexes, Distance
+                Warehouse</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>17</span>Vector Search: Embeddings, KNN Indexes, Distance
               Measures, Filters, and Retrieval Design
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Embedding Fundamentals, Model Versioning,
-                Dimensions, Similarity/Distance, and Storing Vector Values</a>
-<a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Create/Manage Firestore Vector Indexes and
-                Understand Supported Dimensions/Query Limits</a>
-<a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>K-Nearest-Neighbor Queries, Distance Thresholds,
-                Metadata Filters, and Result Ranking</a>
-<a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Firestore Does Not Generate Embeddings: Vertex
-                AI/External Generation Pipelines, Backfills, and Updates</a>
-<a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Build and Evaluate a Semantic Retrieval Feature
-                with Recall/Quality, Latency, Security, and Cost Measurements</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>18</span>Firestore Enterprise Native Mode: Core vs Pipeline
+            <div>
+              <a class="sidebar-lesson" href="../Chapter17/Lesson1.html"
+                ><span>01</span>Embedding Fundamentals, Model Versioning,
+                Dimensions, Similarity/Distance, and Storing Vector Values</a
+              >
+              <a class="sidebar-lesson" href="../Chapter17/Lesson2.html"
+                ><span>02</span>Create/Manage Firestore Vector Indexes and
+                Understand Supported Dimensions/Query Limits</a
+              >
+              <a class="sidebar-lesson" href="../Chapter17/Lesson3.html"
+                ><span>03</span>K-Nearest-Neighbor Queries, Distance Thresholds,
+                Metadata Filters, and Result Ranking</a
+              >
+              <a class="sidebar-lesson" href="../Chapter17/Lesson4.html"
+                ><span>04</span>Firestore Does Not Generate Embeddings: Vertex
+                AI/External Generation Pipelines, Backfills, and Updates</a
+              >
+              <a class="sidebar-lesson" href="../Chapter17/Lesson5.html"
+                ><span>05</span>Build and Evaluate a Semantic Retrieval Feature
+                with Recall/Quality, Latency, Security, and Cost Measurements</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>18</span>Firestore Enterprise Native Mode: Core vs Pipeline
               Operations and Advanced Querying
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Enterprise Edition Architecture/Query Engine and
-                How Native Core Semantics Differ from Standard</a>
-<a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Pipeline Operations: Pipeline Syntax Mental
+            <div>
+              <a class="sidebar-lesson" href="../Chapter18/Lesson1.html"
+                ><span>01</span>Enterprise Edition Architecture/Query Engine and
+                How Native Core Semantics Differ from Standard</a
+              >
+              <a class="sidebar-lesson" href="../Chapter18/Lesson2.html"
+                ><span>02</span>Pipeline Operations: Pipeline Syntax Mental
                 Model, Advanced Filters/Transforms/Aggregations, and Server SDK
-                Context</a>
-<a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Relational-Style Join Capabilities Through
-                Sub-Pipelines: Power, Cost, and Modeling Implications</a>
-<a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Index-Optional Querying in Enterprise: Query
-                Explain, Performance, and When to Add Indexes</a>
-<a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Translate an Access Pattern Between Standard
+                Context</a
+              >
+              <a class="sidebar-lesson" href="../Chapter18/Lesson3.html"
+                ><span>03</span>Relational-Style Join Capabilities Through
+                Sub-Pipelines: Power, Cost, and Modeling Implications</a
+              >
+              <a class="sidebar-lesson" href="../Chapter18/Lesson4.html"
+                ><span>04</span>Index-Optional Querying in Enterprise: Query
+                Explain, Performance, and When to Add Indexes</a
+              >
+              <a class="sidebar-lesson" href="../Chapter18/Lesson5.html"
+                ><span>05</span>Translate an Access Pattern Between Standard
                 Core Queries and Enterprise Pipeline Operations and Compare
-                Tradeoffs</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>19</span>Firestore with MongoDB Compatibility: Drivers,
+                Tradeoffs</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>19</span>Firestore with MongoDB Compatibility: Drivers,
               MQL/BSON, Tools, and Serverless Differences
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>Enterprise MongoDB Compatibility Mode, MongoDB
-                Protocol/Drivers, Connection Strings, and Authentication</a>
-<a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Supported BSON Types, _id Rules,
+            <div>
+              <a class="sidebar-lesson" href="../Chapter19/Lesson1.html"
+                ><span>01</span>Enterprise MongoDB Compatibility Mode, MongoDB
+                Protocol/Drivers, Connection Strings, and Authentication</a
+              >
+              <a class="sidebar-lesson" href="../Chapter19/Lesson2.html"
+                ><span>02</span>Supported BSON Types, _id Rules,
                 Documents/Collections, MQL Query/CRUD Compatibility, and
-                Limits</a>
-<a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>mongosh, Compass, mongoimport/export,
+                Limits</a
+              >
+              <a class="sidebar-lesson" href="../Chapter19/Lesson3.html"
+                ><span>03</span>mongosh, Compass, mongoimport/export,
                 mongodump/restore, Mongoose, and Tool Compatibility
-                Boundaries</a>
-<a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>Behavior Differences from MongoDB: Commands,
+                Boundaries</a
+              >
+              <a class="sidebar-lesson" href="../Chapter19/Lesson4.html"
+                ><span>04</span>Behavior Differences from MongoDB: Commands,
                 Transactions/Features, Indexing, Change Semantics, and
-                Operational Model</a>
-<a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Port a Small MongoDB Application and Build
-                Compatibility Tests Instead of Assuming Drop-In Equivalence</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>20</span>Migrating MongoDB Workloads to Firestore MongoDB
+                Operational Model</a
+              >
+              <a class="sidebar-lesson" href="../Chapter19/Lesson5.html"
+                ><span>05</span>Port a Small MongoDB Application and Build
+                Compatibility Tests Instead of Assuming Drop-In Equivalence</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>20</span>Migrating MongoDB Workloads to Firestore MongoDB
               Compatibility
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Inventory MongoDB Features, Drivers, Data Types,
+            <div>
+              <a class="sidebar-lesson" href="../Chapter20/Lesson1.html"
+                ><span>01</span>Inventory MongoDB Features, Drivers, Data Types,
                 Indexes, Aggregations, Transactions, and Operational
-                Dependencies</a>
-<a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Compatibility Matrix Testing, Unsupported
-                Features, Semantic Differences, and Application Refactoring</a>
-<a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Bulk Migration with Export/Import or
-                Datastream→Cloud Storage→Dataflow Patterns and Change Capture</a>
-<a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Dual-Run/Cutover Planning, Validation, Lag
-                Monitoring, Read/Write Freeze, and Rollback</a>
-<a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Execute a Migration Rehearsal with Counts,
+                Dependencies</a
+              >
+              <a class="sidebar-lesson" href="../Chapter20/Lesson2.html"
+                ><span>02</span>Compatibility Matrix Testing, Unsupported
+                Features, Semantic Differences, and Application Refactoring</a
+              >
+              <a class="sidebar-lesson" href="../Chapter20/Lesson3.html"
+                ><span>03</span>Bulk Migration with Export/Import or
+                Datastream→Cloud Storage→Dataflow Patterns and Change Capture</a
+              >
+              <a class="sidebar-lesson" href="../Chapter20/Lesson4.html"
+                ><span>04</span>Dual-Run/Cutover Planning, Validation, Lag
+                Monitoring, Read/Write Freeze, and Rollback</a
+              >
+              <a class="sidebar-lesson" href="../Chapter20/Lesson5.html"
+                ><span>05</span>Execute a Migration Rehearsal with Counts,
                 Checksums/Samples, Query Regression, Performance, and Failure
-                Recovery</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>21</span>TTL, Retention, Expiration, Backfills, and
+                Recovery</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>21</span>TTL, Retention, Expiration, Backfills, and
               Lifecycle Automation
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>TTL Policies and Expiration Fields: Asynchronous
-                Deletion Semantics and Non-Instant Guarantees</a>
-<a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>Index Exemptions for TTL Fields, Sequential
-                Timestamp Costs, and Write Throughput Considerations</a>
-<a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Soft Delete vs TTL vs Scheduled/Batch Cleanup vs
-                Archive: Compliance and Product Requirements</a>
-<a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>Backfilling TTL Fields Safely, Monitoring
-                Deletion, Event Side Effects, and Cost</a>
-<a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>Design Retention for Sessions, Events, User
-                Data, Audit Records, and Legal Holds Without Accidental Loss</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>22</span>Backups, Point-in-Time Recovery, Restore, and
+            <div>
+              <a class="sidebar-lesson" href="../Chapter21/Lesson1.html"
+                ><span>01</span>TTL Policies and Expiration Fields: Asynchronous
+                Deletion Semantics and Non-Instant Guarantees</a
+              >
+              <a class="sidebar-lesson" href="../Chapter21/Lesson2.html"
+                ><span>02</span>Index Exemptions for TTL Fields, Sequential
+                Timestamp Costs, and Write Throughput Considerations</a
+              >
+              <a class="sidebar-lesson" href="../Chapter21/Lesson3.html"
+                ><span>03</span>Soft Delete vs TTL vs Scheduled/Batch Cleanup vs
+                Archive: Compliance and Product Requirements</a
+              >
+              <a class="sidebar-lesson" href="../Chapter21/Lesson4.html"
+                ><span>04</span>Backfilling TTL Fields Safely, Monitoring
+                Deletion, Event Side Effects, and Cost</a
+              >
+              <a class="sidebar-lesson" href="../Chapter21/Lesson5.html"
+                ><span>05</span>Design Retention for Sessions, Events, User
+                Data, Audit Records, and Legal Holds Without Accidental Loss</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>22</span>Backups, Point-in-Time Recovery, Restore, and
               Disaster Recovery
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Scheduled Backups, Backup Retention, Database
-                Restore/Clone Concepts, and Access Control</a>
-<a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>PITR Window Semantics, Historical
-                Reads/Recovery, and Accidental Write/Delete Scenarios</a>
-<a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>Export/Import vs Managed Backups/PITR: Different
-                Purposes, RPO/RTO, and Operational Workflows</a>
-<a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Multi-Region Location Does Not Replace Backup:
-                Failure Modes, Logical Corruption, and Operator Mistakes</a>
-<a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Run a Recovery Drill and Measure Data
+            <div>
+              <a class="sidebar-lesson" href="../Chapter22/Lesson1.html"
+                ><span>01</span>Scheduled Backups, Backup Retention, Database
+                Restore/Clone Concepts, and Access Control</a
+              >
+              <a class="sidebar-lesson" href="../Chapter22/Lesson2.html"
+                ><span>02</span>PITR Window Semantics, Historical
+                Reads/Recovery, and Accidental Write/Delete Scenarios</a
+              >
+              <a class="sidebar-lesson" href="../Chapter22/Lesson3.html"
+                ><span>03</span>Export/Import vs Managed Backups/PITR: Different
+                Purposes, RPO/RTO, and Operational Workflows</a
+              >
+              <a class="sidebar-lesson" href="../Chapter22/Lesson4.html"
+                ><span>04</span>Multi-Region Location Does Not Replace Backup:
+                Failure Modes, Logical Corruption, and Operator Mistakes</a
+              >
+              <a class="sidebar-lesson" href="../Chapter22/Lesson5.html"
+                ><span>05</span>Run a Recovery Drill and Measure Data
                 Completeness, RPO, RTO, Rules/Indexes/Configuration, and
-                Application Cutover</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>23</span>Encryption, CMEK, Network Access, Private
+                Application Cutover</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>23</span>Encryption, CMEK, Network Access, Private
               Connectivity, and Data Governance
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter23/Lesson1.html"><span>01</span>Encryption at Rest/In Transit, Google-Managed
+            <div>
+              <a class="sidebar-lesson" href="../Chapter23/Lesson1.html"
+                ><span>01</span>Encryption at Rest/In Transit, Google-Managed
                 Keys, CMEK Concepts, Key Availability, Rotation, and Failure
-                Impact</a>
-<a class="sidebar-lesson" href="../Chapter23/Lesson2.html"><span>02</span>VPC/Private Google Access and Service Perimeter
-                Concepts Where Applicable, Egress Paths, and Trusted Backends</a>
-<a class="sidebar-lesson" href="../Chapter23/Lesson3.html"><span>03</span>Database Locations, Data Residency, Multi-Region
-                Tradeoffs, Replication, and Governance Requirements</a>
-<a class="sidebar-lesson" href="../Chapter23/Lesson4.html"><span>04</span>PII Classification, Field-Level Design, Logging
-                Redaction, Backups, Exports, and Right-to-Delete Workflows</a>
-<a class="sidebar-lesson" href="../Chapter23/Lesson5.html"><span>05</span>Build a Security/Governance Control Matrix
+                Impact</a
+              >
+              <a class="sidebar-lesson" href="../Chapter23/Lesson2.html"
+                ><span>02</span>VPC/Private Google Access and Service Perimeter
+                Concepts Where Applicable, Egress Paths, and Trusted Backends</a
+              >
+              <a class="sidebar-lesson" href="../Chapter23/Lesson3.html"
+                ><span>03</span>Database Locations, Data Residency, Multi-Region
+                Tradeoffs, Replication, and Governance Requirements</a
+              >
+              <a class="sidebar-lesson" href="../Chapter23/Lesson4.html"
+                ><span>04</span>PII Classification, Field-Level Design, Logging
+                Redaction, Backups, Exports, and Right-to-Delete Workflows</a
+              >
+              <a class="sidebar-lesson" href="../Chapter23/Lesson5.html"
+                ><span>05</span>Build a Security/Governance Control Matrix
                 Mapping Threats and Compliance Requirements to Firestore/Google
-                Cloud Controls</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>24</span>Observability: Query Explain, Query Insights, Key
+                Cloud Controls</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>24</span>Observability: Query Explain, Query Insights, Key
               Visualizer, Metrics, Logs, and Troubleshooting
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter24/Lesson1.html"><span>01</span>Cloud Monitoring Metrics for
+            <div>
+              <a class="sidebar-lesson" href="../Chapter24/Lesson1.html"
+                ><span>01</span>Cloud Monitoring Metrics for
                 Reads/Writes/Deletes, Latency, Errors, Quotas, Storage, and
-                Listener Behavior</a>
-<a class="sidebar-lesson" href="../Chapter24/Lesson2.html"><span>02</span>Query Explain to Inspect Execution, Index Use,
-                Scanned/Returned Work, and Optimization Evidence</a>
-<a class="sidebar-lesson" href="../Chapter24/Lesson3.html"><span>03</span>Query Insights to Identify Expensive/Slow Query
-                Patterns and Prioritize Tuning</a>
-<a class="sidebar-lesson" href="../Chapter24/Lesson4.html"><span>04</span>Key Visualizer/Hotspot Diagnostics Where
-                Available, Application Tracing, Logs, and Correlation IDs</a>
-<a class="sidebar-lesson" href="../Chapter24/Lesson5.html"><span>05</span>Build a Troubleshooting Runbook for Permission
+                Listener Behavior</a
+              >
+              <a class="sidebar-lesson" href="../Chapter24/Lesson2.html"
+                ><span>02</span>Query Explain to Inspect Execution, Index Use,
+                Scanned/Returned Work, and Optimization Evidence</a
+              >
+              <a class="sidebar-lesson" href="../Chapter24/Lesson3.html"
+                ><span>03</span>Query Insights to Identify Expensive/Slow Query
+                Patterns and Prioritize Tuning</a
+              >
+              <a class="sidebar-lesson" href="../Chapter24/Lesson4.html"
+                ><span>04</span>Key Visualizer/Hotspot Diagnostics Where
+                Available, Application Tracing, Logs, and Correlation IDs</a
+              >
+              <a class="sidebar-lesson" href="../Chapter24/Lesson5.html"
+                ><span>05</span>Build a Troubleshooting Runbook for Permission
                 Errors, Missing Indexes, Hotspots, Latency, Quota, and Cost
-                Spikes</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>25</span>Cost Engineering, Quotas, Limits, Billing, and
+                Spikes</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>25</span>Cost Engineering, Quotas, Limits, Billing, and
               Capacity/Usage Forecasting
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter25/Lesson1.html"><span>01</span>Read/Write/Delete/Index/Storage/Network/Backup/PITR Billing
-                Dimensions and Edition Differences</a>
-<a class="sidebar-lesson" href="../Chapter25/Lesson2.html"><span>02</span>Listener and Query Read Amplification, Index
+            <div>
+              <a class="sidebar-lesson" href="../Chapter25/Lesson1.html"
+                ><span>01</span
+                >Read/Write/Delete/Index/Storage/Network/Backup/PITR Billing
+                Dimensions and Edition Differences</a
+              >
+              <a class="sidebar-lesson" href="../Chapter25/Lesson2.html"
+                ><span>02</span>Listener and Query Read Amplification, Index
                 Entry Reads, Aggregations, Retries, and Hidden Cost
-                Multipliers</a>
-<a class="sidebar-lesson" href="../Chapter25/Lesson3.html"><span>03</span>Free Tier/Quotas vs Production Limits, Rate
-                Limits, Daily Budgets, Alerts, and Abuse Controls</a>
-<a class="sidebar-lesson" href="../Chapter25/Lesson4.html"><span>04</span>Model Cost per User/Feature/Event and Compare
+                Multipliers</a
+              >
+              <a class="sidebar-lesson" href="../Chapter25/Lesson3.html"
+                ><span>03</span>Free Tier/Quotas vs Production Limits, Rate
+                Limits, Daily Budgets, Alerts, and Abuse Controls</a
+              >
+              <a class="sidebar-lesson" href="../Chapter25/Lesson4.html"
+                ><span>04</span>Model Cost per User/Feature/Event and Compare
                 Denormalization, Fan-Out, Aggregation, and Retention
-                Alternatives</a>
-<a class="sidebar-lesson" href="../Chapter25/Lesson5.html"><span>05</span>Load-Test and Cost-Test a Feature Before Launch
-                with Explicit Volume, Growth, and Worst-Case Assumptions</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>26</span>Testing, Emulator Suite, CI/CD, Index/Rules
+                Alternatives</a
+              >
+              <a class="sidebar-lesson" href="../Chapter25/Lesson5.html"
+                ><span>05</span>Load-Test and Cost-Test a Feature Before Launch
+                with Explicit Volume, Growth, and Worst-Case Assumptions</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>26</span>Testing, Emulator Suite, CI/CD, Index/Rules
               Deployment, and Schema Migration
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter26/Lesson1.html"><span>01</span>Emulator Suite for Firestore/Auth/Functions-Like
-                Integration Testing and Known Differences from Production</a>
-<a class="sidebar-lesson" href="../Chapter26/Lesson2.html"><span>02</span>Seed/Reset Test Data, Deterministic IDs/Clock
-                Handling, and Parallel Test Isolation</a>
-<a class="sidebar-lesson" href="../Chapter26/Lesson3.html"><span>03</span>Version Security Rules and Index Definitions, CI
-                Validation, Staged Deployment, and Rollback</a>
-<a class="sidebar-lesson" href="../Chapter26/Lesson4.html"><span>04</span>Backward-Compatible Document Migrations, Dual
-                Readers/Writers, Backfills, and Feature Flags</a>
-<a class="sidebar-lesson" href="../Chapter26/Lesson5.html"><span>05</span>Create a Production Deployment Checklist
+            <div>
+              <a class="sidebar-lesson" href="../Chapter26/Lesson1.html"
+                ><span>01</span>Emulator Suite for Firestore/Auth/Functions-Like
+                Integration Testing and Known Differences from Production</a
+              >
+              <a class="sidebar-lesson" href="../Chapter26/Lesson2.html"
+                ><span>02</span>Seed/Reset Test Data, Deterministic IDs/Clock
+                Handling, and Parallel Test Isolation</a
+              >
+              <a class="sidebar-lesson" href="../Chapter26/Lesson3.html"
+                ><span>03</span>Version Security Rules and Index Definitions, CI
+                Validation, Staged Deployment, and Rollback</a
+              >
+              <a class="sidebar-lesson" href="../Chapter26/Lesson4.html"
+                ><span>04</span>Backward-Compatible Document Migrations, Dual
+                Readers/Writers, Backfills, and Feature Flags</a
+              >
+              <a class="sidebar-lesson" href="../Chapter26/Lesson5.html"
+                ><span>05</span>Create a Production Deployment Checklist
                 Covering Rules, Indexes, Billing, Backups, Observability, and
-                Rollback</a>
-</div>
-</details>
-<details class="sidebar-chapter">
-<summary>
-<span>27</span>Production Capstone: Design, Secure, Scale, Search,
+                Rollback</a
+              >
+            </div>
+          </details>
+          <details class="sidebar-chapter">
+            <summary>
+              <span>27</span>Production Capstone: Design, Secure, Scale, Search,
               Recover, and Operate a Firestore Application
             </summary>
-<div>
-<a class="sidebar-lesson" href="../Chapter27/Lesson1.html"><span>01</span>Define User Journeys, Data Model, Queries,
+            <div>
+              <a class="sidebar-lesson" href="../Chapter27/Lesson1.html"
+                ><span>01</span>Define User Journeys, Data Model, Queries,
                 Realtime/Offline Needs, Atomicity, Retention, Security, SLOs,
-                and Cost Budget</a>
-<a class="sidebar-lesson" href="../Chapter27/Lesson2.html"><span>02</span>Implement
+                and Cost Budget</a
+              >
+              <a class="sidebar-lesson" href="../Chapter27/Lesson2.html"
+                ><span>02</span>Implement
                 Documents/Indexes/Queries/Listeners/Transactions, Typed SDK
-                Access, Security Rules, and Trusted Backend Paths</a>
-<a class="sidebar-lesson" href="../Chapter27/Lesson3.html"><span>03</span>Add Aggregation, Vector Retrieval, Enterprise
+                Access, Security Rules, and Trusted Backend Paths</a
+              >
+              <a class="sidebar-lesson" href="../Chapter27/Lesson3.html"
+                ><span>03</span>Add Aggregation, Vector Retrieval, Enterprise
                 Pipeline or MongoDB Compatibility Only Where Requirements
-                Justify Them</a>
-<a class="sidebar-lesson" href="../Chapter27/Lesson4.html"><span>04</span>Load-Test Hotspots, Test Offline/Conflict Paths,
+                Justify Them</a
+              >
+              <a class="sidebar-lesson" href="../Chapter27/Lesson4.html"
+                ><span>04</span>Load-Test Hotspots, Test Offline/Conflict Paths,
                 Run Security Tests, Enable Backup/PITR, Monitor Queries, and
-                Rehearse Recovery</a>
-<a class="sidebar-lesson" href="../Chapter27/Lesson5.html"><span>05</span>Present the Architecture with Measured
+                Rehearse Recovery</a
+              >
+              <a class="sidebar-lesson" href="../Chapter27/Lesson5.html"
+                ><span>05</span>Present the Architecture with Measured
                 Cost/Latency, Data-Governance Controls, Known Limits, and
-                Criteria for Choosing Another Database</a>
-</div>
-</details>
-</nav>
-</aside>
-<div class="lesson-main">
-<div class="lesson-mobile-bar">
-<button data-sidebar-open="" type="button">
-<span>Course navigation</span><span>Chapter 07 · Lesson 03</span>
-</button>
-</div>
-<article class="lesson-container">
-<nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
-<a href="../../../index.html">Academy</a><span>/</span><a href="../index.html">Firebase and Cloud Firestore</a><span>/</span><span>Chapter 07 · Lesson 03</span>
-</nav>
-<header class="lesson-header">
-<p class="eyebrow">
+                Criteria for Choosing Another Database</a
+              >
+            </div>
+          </details>
+        </nav>
+      </aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 07 · Lesson 03</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html">Firebase and Cloud Firestore</a
+            ><span>/</span><span>Chapter 07 · Lesson 03</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
               Chapter 07 · Realtime Listeners: Snapshots, Change Events,
               Metadata, Latency, and Listener Lifecycle
             </p>
-<h1>
+            <h1>
               Listener Fan-Out at Scale, Query Selectivity, Reconnects, Resume
               Behavior, and Bandwidth / Read Cost
             </h1>
-<p>
+            <p>
               Reason about Firestore listener fan-out, query selectivity,
               reconnect behavior, Standard versus Enterprise realtime billing,
               bandwidth, and when realtime is the wrong tool.
             </p>
-<div class="lesson-meta">
-<span>Intermediate</span><span>125–150 minutes</span><span>Fan-out + reconnect cost</span><span>Firebase JS 12.19.0 · CLI 15.30.0</span><span>Last reviewed: September 2026</span>
-</div>
-</header>
-<nav aria-label="On this page" class="lesson-toc">
-<strong>On this page</strong>
-<ol data-generated-toc=""></ol>
-</nav>
-<div class="lesson-content">
-<section>
-<h2>Learning outcomes</h2>
-<div class="objectives">
-<div class="objective">
-<span>01</span>
-<p>
+            <div class="lesson-meta">
+              <span>Intermediate</span><span>125–150 minutes</span
+              ><span>Fan-out + reconnect cost</span
+              ><span>Firebase JS 12.19.0 · CLI 15.30.0</span
+              ><span>Last reviewed: September 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
                     Model listener fan-out as clients × initial result size ×
                     subsequent matching changes rather than as a zero-cost
                     “push” feature.
                   </p>
-</div>
-<div class="objective">
-<span>02</span>
-<p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
                     Compare one broad listener with bounded/selective listeners
                     using deterministic AtlasMart updates and explicit event
                     counters.
                   </p>
-</div>
-<div class="objective">
-<span>03</span>
-<p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
                     Explain Standard reconnect billing with and without offline
                     persistence and separate it from Enterprise realtime-update
                     units.
                   </p>
-</div>
-<div class="objective">
-<span>04</span>
-<p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
                     Choose polling, Core realtime listeners, or dedicated event
                     infrastructure based on freshness, fan-out, retention, and
                     side-effect needs.
                   </p>
-</div>
-</div><div class="callout warning course-consistency-note"><strong>Execution and safety note</strong><p>Use the Emulator Suite, a Firebase demo project, or an isolated test project for destructive, security-sensitive, billing-sensitive, migration, backup/restore, or write-heavy exercises unless the lesson explicitly marks managed verification as required. Treat shown output as expected evidence unless it is explicitly identified as captured output, and re-check current Firebase/Google Cloud edition, mode, quota, pricing, and security documentation before production execution.</p></div>
-<div class="callout">
-<strong>Chapter 07 reproducibility baseline · reviewed 15 September
-                  2026</strong>
-<p>
+                </div>
+              </div>
+              <div class="callout warning course-consistency-note">
+                <strong>Execution and safety note</strong>
+                <p>
+                  Use the Emulator Suite, a Firebase demo project, or an
+                  isolated test project for destructive, security-sensitive,
+                  billing-sensitive, migration, backup/restore, or write-heavy
+                  exercises unless the lesson explicitly marks managed
+                  verification as required. Treat shown output as expected
+                  evidence unless it is explicitly identified as captured
+                  output, and re-check current Firebase/Google Cloud edition,
+                  mode, quota, pricing, and security documentation before
+                  production execution.
+                </p>
+              </div>
+              <div class="callout">
+                <strong
+                  >Chapter 07 reproducibility baseline · reviewed 15 September
+                  2026</strong
+                >
+                <p>
                   AtlasMart continues the same environment used in Chapters
                   01–06: project ID <code>demo-atlasmart-firestore</code>,
                   Standard edition / Native mode /
@@ -690,10 +1047,10 @@
                   Browser examples import the pinned Web SDK from Google-hosted
                   modules and connect only to local emulators.
                 </p>
-</div>
-<div class="callout warning">
-<strong>Evidence boundary</strong>
-<p>
+              </div>
+              <div class="callout warning">
+                <strong>Evidence boundary</strong>
+                <p>
                   The authoring environment did not execute a billed Firestore
                   database or collect production listener telemetry. Emulator
                   steps below are deterministic correctness exercises; shown
@@ -703,14 +1060,14 @@
                   production latency percentiles, or all mobile background/OS
                   lifecycle behavior.
                 </p>
-</div>
-</section>
-<section>
-<h2>
+              </div>
+            </section>
+            <section>
+              <h2>
                 1. AtlasMart problem: 100,000 dashboards make one product update
                 expensive
               </h2>
-<p>
+              <p>
                 A single Firestore document update is cheap to imagine from the
                 writer's viewpoint. Realtime cost is driven by the read side
                 too. If many active listeners include that document in their
@@ -719,24 +1076,27 @@
                 owns query selectivity, result size, client count, reconnection
                 pattern, and bandwidth.
               </p>
-<div class="code-window" data-code-block="" data-language="text">
-<div class="code-head">
-<div class="code-title">
-<span class="code-dots"><i></i><i></i><i></i></span>design
+              <div class="code-window" data-code-block="" data-language="text">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span>design
                     model · not a billing invoice
                   </div>
-<button class="copy-code" data-copy-code="" type="button">
-<svg aria-hidden="true" viewbox="0 0 24 24">
-<rect height="11" rx="2" width="11" x="8" y="8"></rect>
-<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
                   </button>
-</div>
-<pre><code class="language-text"><span class="code-line">listener_surface ≈ active_clients × matching_result_set + matching_changes_delivered_over_time</span><span class="code-line"></span><span class="code-line">For Standard:</span><span class="code-line">  initial sync -&gt; document reads (+ applicable index-entry reads)</span><span class="code-line">  add/update -&gt; document read per affected result document</span><span class="code-line">  removed because data changed -&gt; document read</span><span class="code-line">  document deleted -&gt; no listener read charge for that deletion event</span><span class="code-line"></span><span class="code-line">For Enterprise:</span><span class="code-line">  initial query sync -&gt; read units</span><span class="code-line">  subsequent realtime changes -&gt; realtime-update units (size-sensitive)</span><span class="code-line"></span><span class="code-line">Always use current regional pricing and actual usage telemetry for money.</span></code></pre>
-</div>
-</section>
-<section>
-<h2>2. Broad versus scoped query experiment</h2>
-<p>
+                </div>
+                <pre><code class="language-text"><span class="code-line">listener_surface ≈ active_clients × matching_result_set + matching_changes_delivered_over_time</span><span class="code-line"></span><span class="code-line">For Standard:</span><span class="code-line">  initial sync -&gt; document reads (+ applicable index-entry reads)</span><span class="code-line">  add/update -&gt; document read per affected result document</span><span class="code-line">  removed because data changed -&gt; document read</span><span class="code-line">  document deleted -&gt; no listener read charge for that deletion event</span><span class="code-line"></span><span class="code-line">For Enterprise:</span><span class="code-line">  initial query sync -&gt; read units</span><span class="code-line">  subsequent realtime changes -&gt; realtime-update units (size-sensitive)</span><span class="code-line"></span><span class="code-line">Always use current regional pricing and actual usage telemetry for money.</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>2. Broad versus scoped query experiment</h2>
+              <p>
                 Use two listeners against the same six-item fixture. The broad
                 listener tracks the four lowest-stock products globally. The
                 scoped listener tracks up to four low-stock products for
@@ -745,30 +1105,34 @@
                 snapshot count, <code>docChanges()</code> count, approximate
                 JSON payload bytes, and active listener count.
               </p>
-<div class="code-window" data-code-block="" data-language="html">
-<div class="code-head">
-<div class="code-title">
-<span class="code-dots"><i></i><i></i><i></i></span>fanout.html · event instrumentation
+              <div class="code-window" data-code-block="" data-language="html">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >fanout.html · event instrumentation
                   </div>
-<button class="copy-code" data-copy-code="" type="button">
-<svg aria-hidden="true" viewbox="0 0 24 24">
-<rect height="11" rx="2" width="11" x="8" y="8"></rect>
-<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
                   </button>
-</div>
-<pre><code class="language-html"><span class="code-line">&lt;!doctype html&gt;&lt;meta charset="utf-8"&gt;&lt;pre id="out"&gt;&lt;/pre&gt;&lt;script type="module"&gt;</span><span class="code-line">import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";</span><span class="code-line">import { getAuth, connectAuthEmulator, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";</span><span class="code-line">import {</span><span class="code-line">  getFirestore, connectFirestoreEmulator, collection, doc, query, where, orderBy, limit,</span><span class="code-line">  onSnapshot, setDoc, updateDoc, serverTimestamp, disableNetwork, enableNetwork</span><span class="code-line">} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";</span><span class="code-line">const app = initializeApp({ projectId:"demo-atlasmart-firestore", apiKey:"demo-key", appId:"demo-app" });</span><span class="code-line">const db = getFirestore(app); connectFirestoreEmulator(db, "127.0.0.1", 8080);</span><span class="code-line">const auth = getAuth(app); connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings:true });</span><span class="code-line">const credential = await signInAnonymously(auth);</span><span class="code-line">const uid = credential.user.uid;</span><span class="code-line">console.log("uid", uid);</span><span class="code-line">const out=document.querySelector('#out');</span><span class="code-line">const stats={active:0,snapshots:0,changes:0,payloadBytes:0};</span><span class="code-line">const enc=new TextEncoder();</span><span class="code-line">function watch(name,q){</span><span class="code-line">  stats.active++;</span><span class="code-line">  const stop=onSnapshot(q, {includeMetadataChanges:true}, snap=&gt;{</span><span class="code-line">    const rows=snap.docs.map(d=&gt;({id:d.id,...d.data()}));</span><span class="code-line">    const changes=snap.docChanges().map(c=&gt;`${c.type}:${c.doc.id}`);</span><span class="code-line">    stats.snapshots++; stats.changes+=changes.length;</span><span class="code-line">    stats.payloadBytes+=enc.encode(JSON.stringify(rows)).byteLength;</span><span class="code-line">    out.textContent += JSON.stringify({name,meta:snap.metadata,changes,stats:{...stats}})+"\n";</span><span class="code-line">  });</span><span class="code-line">  return ()=&gt;{stop();stats.active--;};</span><span class="code-line">}</span><span class="code-line">const broad=query(collection(db,'catalogItems'),orderBy('stock','asc'),limit(4));</span><span class="code-line">const scoped=query(collection(db,'catalogItems'),where('sellerId','==','seller-a'),orderBy('stock','asc'),limit(4));</span><span class="code-line">const stopBroad=watch('broad',broad), stopScoped=watch('seller-a',scoped);</span><span class="code-line">window.cleanup=()=&gt;{stopBroad();stopScoped();};</span><span class="code-line">&lt;/script&gt;</span></code></pre>
-</div>
-<p>
+                </div>
+                <pre><code class="language-html"><span class="code-line">&lt;!doctype html&gt;&lt;meta charset="utf-8"&gt;&lt;pre id="out"&gt;&lt;/pre&gt;&lt;script type="module"&gt;</span><span class="code-line">import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";</span><span class="code-line">import { getAuth, connectAuthEmulator, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";</span><span class="code-line">import {</span><span class="code-line">  getFirestore, connectFirestoreEmulator, collection, doc, query, where, orderBy, limit,</span><span class="code-line">  onSnapshot, setDoc, updateDoc, serverTimestamp, disableNetwork, enableNetwork</span><span class="code-line">} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";</span><span class="code-line">const app = initializeApp({ projectId:"demo-atlasmart-firestore", apiKey:"demo-key", appId:"demo-app" });</span><span class="code-line">const db = getFirestore(app); connectFirestoreEmulator(db, "127.0.0.1", 8080);</span><span class="code-line">const auth = getAuth(app); connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings:true });</span><span class="code-line">const credential = await signInAnonymously(auth);</span><span class="code-line">const uid = credential.user.uid;</span><span class="code-line">console.log("uid", uid);</span><span class="code-line">const out=document.querySelector('#out');</span><span class="code-line">const stats={active:0,snapshots:0,changes:0,payloadBytes:0};</span><span class="code-line">const enc=new TextEncoder();</span><span class="code-line">function watch(name,q){</span><span class="code-line">  stats.active++;</span><span class="code-line">  const stop=onSnapshot(q, {includeMetadataChanges:true}, snap=&gt;{</span><span class="code-line">    const rows=snap.docs.map(d=&gt;({id:d.id,...d.data()}));</span><span class="code-line">    const changes=snap.docChanges().map(c=&gt;`${c.type}:${c.doc.id}`);</span><span class="code-line">    stats.snapshots++; stats.changes+=changes.length;</span><span class="code-line">    stats.payloadBytes+=enc.encode(JSON.stringify(rows)).byteLength;</span><span class="code-line">    out.textContent += JSON.stringify({name,meta:snap.metadata,changes,stats:{...stats}})+"\n";</span><span class="code-line">  });</span><span class="code-line">  return ()=&gt;{stop();stats.active--;};</span><span class="code-line">}</span><span class="code-line">const broad=query(collection(db,'catalogItems'),orderBy('stock','asc'),limit(4));</span><span class="code-line">const scoped=query(collection(db,'catalogItems'),where('sellerId','==','seller-a'),orderBy('stock','asc'),limit(4));</span><span class="code-line">const stopBroad=watch('broad',broad), stopScoped=watch('seller-a',scoped);</span><span class="code-line">window.cleanup=()=&gt;{stopBroad();stopScoped();};</span><span class="code-line">&lt;/script&gt;</span></code></pre>
+              </div>
+              <p>
                 The byte counter is an application-side approximation of JSON
                 you chose to serialize—not Firestore's network-billing byte
                 count. The change counter is not a billing counter either. Its
                 purpose is comparative: which query causes the screen to receive
                 irrelevant changes under the same mutation workload?
               </p>
-</section>
-<section>
-<h2>3. Reconnects and resume behavior</h2>
-<p>
+            </section>
+            <section>
+              <h2>3. Reconnects and resume behavior</h2>
+              <p>
                 SDK listeners can reconnect automatically after transient
                 connectivity loss. Treat this as state synchronization, not
                 exactly-once event replay. The service/SDK may use internal
@@ -777,7 +1141,7 @@
                 error.” Do not persist callback sequence numbers as if they were
                 durable event offsets.
               </p>
-<p>
+              <p>
                 For Standard mobile/web billing, current documentation
                 distinguishes persistence state: with offline persistence
                 enabled, a disconnect longer than 30 minutes is charged like a
@@ -788,9 +1152,9 @@
                 issued, updated, reconnects, Rules change, or dependent
                 documents change.
               </p>
-<div class="callout">
-<strong>Enterprise is a different meter.</strong>
-<p>
+              <div class="callout">
+                <strong>Enterprise is a different meter.</strong>
+                <p>
                   Enterprise bills initial synchronization in read units and
                   subsequent realtime changes in realtime-update units;
                   update-unit calculation is size-sensitive. Do not apply
@@ -798,114 +1162,114 @@
                   Enterprise. Re-check current region/edition pricing before
                   deployment.
                 </p>
-</div>
-</section>
-<section>
-<h2>4. Bound the result set before tuning listeners</h2>
-<table class="data-table">
-<thead>
-<tr>
-<th>Design</th>
-<th>Freshness</th>
-<th>Fan-out/cost surface</th>
-<th>Failure mode</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Unbounded collection listener</td>
-<td>High</td>
-<td>Grows with entire collection and all matching churn</td>
-<td>Memory/bandwidth/read growth; noisy UI</td>
-</tr>
-<tr>
-<td>Bounded query listener</td>
-<td>High</td>
-<td>
+              </div>
+            </section>
+            <section>
+              <h2>4. Bound the result set before tuning listeners</h2>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Design</th>
+                    <th>Freshness</th>
+                    <th>Fan-out/cost surface</th>
+                    <th>Failure mode</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Unbounded collection listener</td>
+                    <td>High</td>
+                    <td>Grows with entire collection and all matching churn</td>
+                    <td>Memory/bandwidth/read growth; noisy UI</td>
+                  </tr>
+                  <tr>
+                    <td>Bounded query listener</td>
+                    <td>High</td>
+                    <td>
                       Initial bounded set + changes crossing/within boundary
                     </td>
-<td>Top-N churn may replace rows frequently</td>
-</tr>
-<tr>
-<td>Polling one-shot query</td>
-<td>Periodic</td>
-<td>Requests at explicit intervals</td>
-<td>Stale between polls; repeated initial reads</td>
-</tr>
-<tr>
-<td>Dedicated event system</td>
-<td>Event-oriented</td>
-<td>Designed for durable delivery/consumer semantics</td>
-<td>
+                    <td>Top-N churn may replace rows frequently</td>
+                  </tr>
+                  <tr>
+                    <td>Polling one-shot query</td>
+                    <td>Periodic</td>
+                    <td>Requests at explicit intervals</td>
+                    <td>Stale between polls; repeated initial reads</td>
+                  </tr>
+                  <tr>
+                    <td>Dedicated event system</td>
+                    <td>Event-oriented</td>
+                    <td>Designed for durable delivery/consumer semantics</td>
+                    <td>
                       More infrastructure; separate state read still needed
                     </td>
-</tr>
-</tbody>
-</table>
-<p>
+                  </tr>
+                </tbody>
+              </table>
+              <p>
                 Use realtime for the part of the screen that truly needs
                 realtime. A long order-history list can load with cursor
                 pagination while only the current order status has a document
                 listener. “Everything live” is rarely a requirement.
               </p>
-</section>
-<section>
-<h2>
+            </section>
+            <section>
+              <h2>
                 5. Standard vs Enterprise vs Pipeline vs MongoDB compatibility
               </h2>
-<ul>
-<li>
-<strong>Standard Native/Core:</strong> realtime listeners are
+              <ul>
+                <li>
+                  <strong>Standard Native/Core:</strong> realtime listeners are
                   built in; indexes are required for queries.
                 </li>
-<li>
-<strong>Enterprise Native/Core:</strong> realtime listeners
+                <li>
+                  <strong>Enterprise Native/Core:</strong> realtime listeners
                   and offline persistence are available, but optional indexing
                   and Enterprise billing change performance/cost reasoning.
                 </li>
-<li>
-<strong>Enterprise Native/Pipeline:</strong> Pipeline
+                <li>
+                  <strong>Enterprise Native/Pipeline:</strong> Pipeline
                   operations do not support realtime listeners; use Core
                   operations when realtime/offline behavior is required.
                 </li>
-<li>
-<strong>MongoDB compatibility:</strong> change streams are a
+                <li>
+                  <strong>MongoDB compatibility:</strong> change streams are a
                   distinct API/operational model and are currently Preview; do
                   not teach <code>onSnapshot</code> metadata as MongoDB
                   change-stream semantics.
                 </li>
-</ul>
-</section>
-<section>
-<h2>Lab checklist</h2>
-<ol>
-<li>
+              </ul>
+            </section>
+            <section>
+              <h2>Lab checklist</h2>
+              <ol>
+                <li>
                   Run the six-item seed and open <code>fanout.html</code>.
                 </li>
-<li>Record the initial rows for broad and seller-a queries.</li>
-<li>
+                <li>Record the initial rows for broad and seller-a queries.</li>
+                <li>
                   Run <code>node admin-pulse.mjs</code>; compare which mutations
                   changed each result set.
                 </li>
-<li>
+                <li>
                   Call <code>window.cleanup()</code> and verify
                   <code>active</code> returns to zero.
                 </li>
-<li>
+                <li>
                   Reload, disable/enable network, and observe that
                   callback/reconnect count is not a durable-event count.
                 </li>
-<li>
+                <li>
                   Document a production measurement plan: active listeners,
                   result-set sizes, delivered bytes, reconnect rate, Standard
                   read/index-entry metrics or Enterprise units, and p95/p99
                   update-to-render latency.
                 </li>
-</ol>
-</section>
-<section>
-<h2>Production judgment</h2>
-<p>
+              </ol>
+            </section>
+            <section>
+              <h2>Production judgment</h2>
+              <p>
                 Listener scalability is usually a product/query-shape problem
                 before it is an SDK problem. Keep live result sets selective,
                 detach them when hidden, separate durable events from
@@ -913,195 +1277,288 @@
                 broadcast fan-out, consider whether a purpose-built
                 messaging/event channel plus occasional state reads fits better.
               </p>
-</section>
-<section>
-<h2>Knowledge check</h2>
-<ol>
-<li>
+            </section>
+            <section>
+              <h2>Knowledge check</h2>
+              <ol>
+                <li>
                   Why is <code>docChanges().length</code> not a billable-read
                   counter?
                 </li>
-<li>
+                <li>
                   What happens to Standard billing after a reconnect when
                   offline persistence is disabled?
                 </li>
-<li>Why can a scoped listener reduce noise?</li>
-<li>
+                <li>Why can a scoped listener reduce noise?</li>
+                <li>
                   Can listener callbacks be treated as exactly-once event
                   delivery?
                 </li>
-<li>Why separate Standard and Enterprise cost models?</li>
-</ol>
-<details class="answer-toggle">
-<summary>Review the answers</summary>
-<div>
-<p>
-<strong>1.</strong> It is a client change representation;
+                <li>Why separate Standard and Enterprise cost models?</li>
+              </ol>
+              <details class="answer-toggle">
+                <summary>Review the answers</summary>
+                <div>
+                  <p>
+                    <strong>1.</strong> It is a client change representation;
                     billing also depends on initial reads, reconnects,
                     index-entry reads, Rules-dependent reads, edition, and
                     pricing semantics.
                   </p>
-<p>
-<strong>2.</strong> The listener is charged as a new query
+                  <p>
+                    <strong>2.</strong> The listener is charged as a new query
                     on disconnect/reconnect according to current pricing
                     guidance.
                   </p>
-<p>
-<strong>3.</strong> Changes to documents outside the query
+                  <p>
+                    <strong>3.</strong> Changes to documents outside the query
                     result do not need to update that listener, reducing result
                     churn and usually initial/result-set size.
                   </p>
-<p>
-<strong>4.</strong> No. They represent synchronized state
+                  <p>
+                    <strong>4.</strong> No. They represent synchronized state
                     and can be re-observed across local writes, reconnects,
                     remounts, and metadata transitions.
                   </p>
-<p>
-<strong>5.</strong> Standard realtime changes are
+                  <p>
+                    <strong>5.</strong> Standard realtime changes are
                     document-read based; Enterprise separates initial read units
                     from realtime-update units and uses different unit
                     semantics.
                   </p>
-</div>
-</details>
-</section>
-<section>
-<h2>Summary and next step</h2>
-<p>
+                </div>
+              </details>
+            </section>
+            <section>
+              <h2>Summary and next step</h2>
+              <p>
                 You now have a measurable listener surface. Lesson 4 makes
                 ownership explicit in framework/component lifecycle so the
                 application cannot accidentally keep old screens subscribed
                 forever.
               </p>
-</section>
-<section>
-<h2>Authoritative references</h2>
-<ul class="reference-list">
-<li>
-<a href="https://firebase.google.com/docs/firestore/query-data/listen" rel="noopener" target="_blank">Get realtime updates with Cloud Firestore</a>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <ul class="reference-list">
+                <li>
+                  <a
+                    href="https://firebase.google.com/docs/firestore/query-data/listen"
+                    rel="noopener"
+                    target="_blank"
+                    >Get realtime updates with Cloud Firestore</a
+                  >
                   — document/query listeners, initial snapshots,
                   <code>docChanges()</code>, detach/error behavior.
                 </li>
-<li>
-<a href="https://firebase.google.com/docs/firestore/manage-data/enable-offline" rel="noopener" target="_blank">Access data offline</a>
+                <li>
+                  <a
+                    href="https://firebase.google.com/docs/firestore/manage-data/enable-offline"
+                    rel="noopener"
+                    target="_blank"
+                    >Access data offline</a
+                  >
                   — cache behavior, <code>fromCache</code>, metadata-change
                   events, network transitions.
                 </li>
-<li>
-<a href="https://firebase.google.com/docs/reference/js/firestore.snapshotmetadata" rel="noopener" target="_blank">JavaScript <code>SnapshotMetadata</code></a>
+                <li>
+                  <a
+                    href="https://firebase.google.com/docs/reference/js/firestore.snapshotmetadata"
+                    rel="noopener"
+                    target="_blank"
+                    >JavaScript <code>SnapshotMetadata</code></a
+                  >
                   — <code>hasPendingWrites</code> and
                   <code>fromCache</code> semantics.
                 </li>
-<li>
-<a href="https://firebase.google.com/docs/reference/js/firestore.snapshotlistenoptions" rel="noopener" target="_blank">JavaScript <code>SnapshotListenOptions</code></a>
+                <li>
+                  <a
+                    href="https://firebase.google.com/docs/reference/js/firestore.snapshotlistenoptions"
+                    rel="noopener"
+                    target="_blank"
+                    >JavaScript <code>SnapshotListenOptions</code></a
+                  >
                   — metadata updates and listen-source options.
                 </li>
-<li>
-<a href="https://firebase.google.com/docs/firestore/pricing" rel="noopener" target="_blank">Understand Cloud Firestore billing</a>
+                <li>
+                  <a
+                    href="https://firebase.google.com/docs/firestore/pricing"
+                    rel="noopener"
+                    target="_blank"
+                    >Understand Cloud Firestore billing</a
+                  >
                   — Standard listener reads, reconnect charging, index-entry
                   reads, Rules-dependent reads, and bandwidth.
                 </li>
-<li>
-<a href="https://firebase.google.com/docs/firestore/enterprise/pricing" rel="noopener" target="_blank">Firestore Enterprise pricing</a>
+                <li>
+                  <a
+                    href="https://firebase.google.com/docs/firestore/enterprise/pricing"
+                    rel="noopener"
+                    target="_blank"
+                    >Firestore Enterprise pricing</a
+                  >
                   — initial read units and separate realtime-update units.
                 </li>
-<li>
-<a href="https://firebase.google.com/docs/firestore/enterprise/listen-core" rel="noopener" target="_blank">Enterprise Core realtime listeners</a>
+                <li>
+                  <a
+                    href="https://firebase.google.com/docs/firestore/enterprise/listen-core"
+                    rel="noopener"
+                    target="_blank"
+                    >Enterprise Core realtime listeners</a
+                  >
                   — Core listener support and Pipeline listener boundary.
                 </li>
-<li>
-<a href="https://firebase.google.com/docs/firestore/enterprise/pipelines-overview" rel="noopener" target="_blank">Enterprise Native Core/Pipeline overview</a>
+                <li>
+                  <a
+                    href="https://firebase.google.com/docs/firestore/enterprise/pipelines-overview"
+                    rel="noopener"
+                    target="_blank"
+                    >Enterprise Native Core/Pipeline overview</a
+                  >
                   — Core realtime/offline support versus Pipeline query
                   operations.
                 </li>
-<li>
-<a href="https://firebase.google.com/docs/firestore/enterprise/change-streams" rel="noopener" target="_blank">MongoDB-compatibility change streams</a>
+                <li>
+                  <a
+                    href="https://firebase.google.com/docs/firestore/enterprise/change-streams"
+                    rel="noopener"
+                    target="_blank"
+                    >MongoDB-compatibility change streams</a
+                  >
                   — separate Preview change-stream model; do not equate it with
                   Web SDK <code>onSnapshot</code>.
                 </li>
-<li>
-<a href="https://firebase.google.com/support/releases" rel="noopener" target="_blank">Firebase release notes</a>
+                <li>
+                  <a
+                    href="https://firebase.google.com/support/releases"
+                    rel="noopener"
+                    target="_blank"
+                    >Firebase release notes</a
+                  >
                   — current CLI/SDK versions used by this lab.
                 </li>
-</ul>
-</section>
-</div>
-<nav aria-label="Lesson navigation" class="lesson-nav">
-<a class="prev" href="Lesson2.html"><small>Previous lesson</small><strong>Snapshot Metadata, Pending Writes, Cache vs Server Sources, and
-                User-Experience Semantics</strong></a><a class="next" href="Lesson4.html"><small>Next lesson</small><strong>Unsubscribe/Lifecycle Management in Web/Mobile Frameworks and
-                Avoiding Leaked Listeners</strong></a>
-</nav>
-</article>
-<div class="lesson-support">
-<section aria-labelledby="support-title" class="support-section section-shell">
-<div class="support-grid reveal">
-<div>
-<p class="eyebrow">Keep knowledge open</p>
-<h2 id="support-title">Help the academy stay free and grow.</h2>
-<p>
+              </ul>
+            </section>
+          </div>
+          <nav aria-label="Lesson navigation" class="lesson-nav">
+            <a class="prev" href="Lesson2.html"
+              ><small>Previous lesson</small
+              ><strong
+                >Snapshot Metadata, Pending Writes, Cache vs Server Sources, and
+                User-Experience Semantics</strong
+              ></a
+            ><a class="next" href="Lesson4.html"
+              ><small>Next lesson</small
+              ><strong
+                >Unsubscribe/Lifecycle Management in Web/Mobile Frameworks and
+                Avoiding Leaked Listeners</strong
+              ></a
+            >
+          </nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
                   If these tutorials save you time, a small donation supports
                   new lessons, technical review, diagrams, examples, and
                   long-term maintenance.
                 </p>
-<div aria-label="Author links" class="social-row">
-<a href="https://github.com/mohammadijoo" rel="noopener" target="_blank">GitHub
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
                     <svg aria-hidden="true" viewbox="0 0 24 24">
-<path d="M15 3h6v6"></path>
-<path d="M10 14 21 3"></path>
-<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-</svg>
-</a>
-<a href="https://www.linkedin.com/in/abolfazlmohammadijoo" rel="noopener" target="_blank">LinkedIn
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path>
+                    </svg>
+                  </a>
+                  <a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
                     <svg aria-hidden="true" viewbox="0 0 24 24">
-<path d="M15 3h6v6"></path>
-<path d="M10 14 21 3"></path>
-<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-</svg>
-</a>
-<a href="https://mohammadijoo.github.io/" rel="noopener" target="_blank">Website
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path>
+                    </svg>
+                  </a>
+                  <a
+                    href="https://mohammadijoo.github.io/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
                     <svg aria-hidden="true" viewbox="0 0 24 24">
-<path d="M15 3h6v6"></path>
-<path d="M10 14 21 3"></path>
-<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-</svg>
-</a>
-</div>
-</div>
-<div class="donation-card">
-<div class="donation-head">
-<span>ETH</span><small>Ethereum / ERC-20 only</small>
-</div>
-<code data-donation-address="">0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code>
-<button class="button secondary compact" data-copy-donation="" type="button">
-<svg aria-hidden="true" viewbox="0 0 24 24">
-<rect height="11" rx="2" width="11" x="8" y="8"></rect>
-<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>Copy address
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path>
+                    </svg>
+                  </a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                >
+                <button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
                 </button>
-<p>
+                <p>
                   Send only Ethereum or ERC-20 compatible assets to this
                   address.
                 </p>
-</div>
-</div>
-</section>
-</div>
-</div>
-</main>
-<footer class="site-footer">
-<div class="section-shell footer-inner">
-<div>
-<strong>Big Data Academy</strong>
-<p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
             A free, prerequisite-aware path from SQL foundations to distributed
             data systems.
           </p>
-</div>
-<small>Created by
+        </div>
+        <small
+          >Created by
           <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
-          © 2026</small>
-</div>
-</footer>
-<script src="../../../assets/js/main.js"></script>
-<script src="../firebase-firestore-code-bootstrap.js?v=20260920.1"></script><script src="../../../assets/js/lesson.js?v=20260805.4"></script>
-</body>
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../firebase-firestore-code-bootstrap.js?v=20260920.1"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
 </html>

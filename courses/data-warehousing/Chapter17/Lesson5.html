@@ -1,0 +1,1258 @@
+<!doctype html>
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Turn a fixed query corpus, plan evidence, scan accounting, constraint tests, and skew measurements into a physical-design decision record with assumptions, rollback, and migration cautions."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Create a Physical Design from Workload Evidence Rather Than Copying
+      Generic Partition Recommendations | Data Warehousing and Dimensional
+      Modeling | Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <style data-dw-course-consistency>
+      .lesson-header h1, .lesson-content h2, .lesson-content h3,
+      .lesson-content p, .lesson-content li, .lesson-content th,
+      .lesson-content td, .lesson-nav strong, .sidebar-lesson {
+        overflow-wrap: anywhere;
+      }
+      .lesson-content code:not(pre code) {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        white-space: normal;
+      }
+      .lesson-content > *, .objective, .callout, .checkpoint, .code-window {
+        min-width: 0;
+        max-width: 100%;
+      }
+      @media (max-width: 700px) {
+        .lesson-toc ol { columns: 1; }
+        .lesson-content th, .lesson-content td { word-break: break-word; }
+      }
+    </style>
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">DW</span>
+<div>
+<small>Course 17</small><strong>Data Warehousing and Dimensional Modeling</strong>
+</div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">
+            ×
+          </button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewBox="0 0 24 24">
+<circle cx="11" cy="11" r="7"></circle>
+<path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 150 lessons..." type="search"/></label>
+<nav aria-label="Data Warehousing and Dimensional Modeling curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter">
+<summary>
+<span>01</span>Data Warehouse Foundations: OLTP vs OLAP,
+              Analytical Workloads, Architecture, and Lab Dataset
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>Operational vs Analytical Systems: Transaction
+                Shape, History, Concurrency, Query Complexity, and Data
+                Freshness<i>Current</i></a><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Warehouse, Data Mart, ODS, Data Lake, Lakehouse,
+                Semantic Layer, and BI Platform: Responsibilities and
+                Boundaries</a><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>Classic Enterprise Warehouse, Dimensional Bus,
+                Modern ELT, and Lakehouse-Centric Architectural Styles</a><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Batch, Micro-Batch, Streaming/CDC, and
+                Near-Real-Time Warehousing: Freshness vs Complexity Tradeoffs</a><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Define a Course Case Study with Source Systems,
+                Business Processes, KPIs, SLAs, Security, and Data Quality
+                Expectations</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>02</span>Requirements Engineering: Business Processes,
+              Questions, Metrics, Dimensions, and Grain
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>Start from Decisions and Questions:
+                Stakeholders, Use Cases, Reports, Explorations, and Data
+                Products</a><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Identify Business Processes and Events Before
+                Designing Tables</a><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>Declare Grain in One Precise Sentence and Reject
+                Mixed-Grain Facts</a><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Separate Measures, Dimensions, Descriptive
+                Attributes, Degenerate Dimensions, and Operational Metadata</a><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Build a Requirements-to-Model Traceability
+                Matrix Linking Every KPI and Slice to Source and Grain</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>03</span>Dimensional Modeling Foundations: Facts,
+              Dimensions, Star Schemas, and Query Semantics
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>Why Star Schemas Optimize Understandability and
+                Analytical Access Patterns</a><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Fact Tables vs Dimension Tables: Keys, Measures,
+                Descriptors, Width, and Growth Behavior</a><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>Foreign-Key Relationships, Surrogate Keys,
+                Referential Integrity, and Orphan Handling</a><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>Star vs Snowflake vs Flat Wide Tables: Semantic,
+                Performance, Maintenance, and Tooling Tradeoffs</a><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>Model a Sales/Orders Process as a Star Schema
+                and Validate Common BI Queries Against the Declared Grain</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>04</span>Fact Table Design: Additive, Semi-Additive,
+              Non-Additive Measures, and Factless Facts
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>Additive Measures and Safe Summation Across
+                Dimensions</a><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>Semi-Additive Balances/Snapshots: Why Time Often
+                Requires Different Aggregation</a><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>Ratios, Percentages, Averages, Distinct Counts,
+                and Other Non-Additive Metrics</a><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Factless Fact Tables for Coverage, Eligibility,
+                Attendance, Conditions, and Event Occurrence</a><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>Audit a Metric Catalog for Double Counting,
+                Incorrect Grain, and Unsafe Aggregation</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>05</span>Dimension Design: Descriptive Context, Hierarchies,
+              Attributes, and Analytical Usability
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>Dimension Attributes as Human-Readable
+                Analytical Context, Not Operational Normalization Exercises</a><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Natural/Business Keys vs Surrogate Keys, Unknown
+                Members, and Durable Identity</a><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>Hierarchies, Levels, Ragged/Unbalanced
+                Hierarchies, and Drill Paths</a><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Wide Denormalized Dimensions vs Snowflaking,
+                Outriggers, and Maintenance Tradeoffs</a><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Design a Customer/Product/Geography Dimension
+                Set for Usability, History, and Governance</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>06</span>Conformed Dimensions, Enterprise Bus Architecture,
+              and Cross-Process Analytics
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>Conformed Dimensions and Facts: Shared Meaning
+                Across Business Processes</a><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>Bus Matrix: Rows as Processes, Columns as
+                Dimensions, and Incremental Warehouse Delivery</a><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Enterprise Definitions, Stewardship,
+                Master/Reference Data, and Preventing Metric Drift</a><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Shared Date/Product/Customer Dimensions Across
+                Marts with Different Grain</a><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Build a Bus Matrix and Identify Where Supposedly
+                Shared Dimensions Are Not Actually Conformed</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>07</span>Slowly Changing Dimensions: Types 0–7, History, and
+              Effective Dating
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>Type 0/1/2/3 Fundamentals: Preserve, Overwrite,
+                Add Version Rows, or Carry Alternate Values</a><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Type 2 Mechanics: Effective/Expiration Dates,
+                Current Flag, Surrogate Keys, and Non-Overlapping Windows</a><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Hybrid SCD Patterns (Types 4–7),
+                Mini-Dimensions, and Current-vs-Historical Attribute
+                Requirements</a><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Detect Changes Reliably: Hashes, Column
+                Comparison, Source CDC, Null Semantics, and Late Corrections</a><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Implement and Test an SCD2 Load Including Repeat
+                Runs, Backdated Changes, Deletes, and Unknown Members</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>08</span>Special Dimension Patterns: Date/Time,
+              Role-Playing, Junk, Degenerate, Mini, and Inferred Members
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>Date Dimension Rich Attributes, Fiscal
+                Calendars, Holidays, Weeks, and Why Date Is More Than a
+                Timestamp</a><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>Role-Playing Dimensions for Order/Ship/Due Dates
+                and Other Reused Context</a><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Junk Dimensions for Low-Cardinality Flags and
+                Degenerate Dimensions for Transaction Identifiers</a><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>Mini-Dimensions for Rapidly Changing Attributes
+                and Profile/Segment History</a><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Inferred/Early-Arriving Dimension Members and
+                Safe Completion When Source Details Arrive Later</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>09</span>Bridge Tables and Many-to-Many Analytical
+              Relationships
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>Why Direct Many-to-Many Joins Can Duplicate
+                Facts and Corrupt Metrics</a><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>Bridge Tables for Multivalued Dimensions,
+                Groups, Memberships, and Hierarchies</a><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Weighting/Allocation Factors and When Allocated
+                Measures Are Business Rules, Not Technical Tricks</a><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Temporal Membership in Bridges, Effective
+                Dating, and Historical Reconstruction</a><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Validate Many-to-Many Queries with Control
+                Totals to Prove No Double Counting</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>10</span>Transaction, Periodic Snapshot, and Accumulating
+              Snapshot Fact Tables
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Transaction Facts for Atomic Events and
+                Immutable Business Activity</a><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Periodic Snapshots for Inventory, Account
+                Balances, Daily State, and Semi-Additive Metrics</a><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Accumulating Snapshots for Pipeline/Workflow
+                Milestones, Reopened Processes, and Updating Rows</a><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Choosing Multiple Fact Tables for One Business
+                Process Instead of Forcing One Universal Grain</a><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>Model an Order Fulfillment Process Using
+                Transaction + Periodic + Accumulating Facts and Compare
+                Questions Supported</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>11</span>Surrogate Keys, Late-Arriving Facts/Dimensions,
+              Deletes, Restatements, and History Corrections
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Surrogate Key Assignment, Natural Key Reuse,
+                Source-System Key Collisions, and Durable Identity</a><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Late-Arriving Facts: Resolve Dimension Version
+                as of Event Time Without Assigning Current History
+                Incorrectly</a><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Late-Arriving Dimension Changes, Backdated SCD2
+                Splits, and Historical Restatement Policies</a><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>Source Deletes, Soft Deletes, Inactivation, GDPR
+                Erasure, and Analytical Auditability</a><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Design a Correction Workflow that Preserves
+                Reproducibility While Supporting Authorized Restatements</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>12</span>Source System Profiling, Data Contracts, Lineage,
+              and Ingestion Readiness
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>Inventory Sources, Owners, Extraction Methods,
+                Change Mechanisms, SLAs, and Failure Modes</a><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Profile Nulls, Uniqueness, Ranges,
+                Distributions, Referential Integrity, Duplicates, and Drift</a><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Source-to-Target Mapping Specifications,
+                Transform Rules, Data Types, Units, Time Zones, and Codes</a><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>Data Contracts and Schema Change Detection:
+                Compatible vs Breaking Changes</a><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Build a Source Readiness Report and Reject
+                Ambiguous Semantics Before Pipeline Development</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>13</span>Data Quality Engineering: Validation,
+              Standardization, Matching, Reconciliation, and Quarantine
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>Define Data Quality Dimensions: Completeness,
+                Validity, Uniqueness, Consistency, Timeliness, and Accuracy</a><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>Standardize Names, Codes, Units, Time Zones,
+                Encodings, and Reference Data</a><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>Deduplication and Entity Matching:
+                Deterministic/Probabilistic Concepts and Stewardship
+                Boundaries</a><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Quarantine Bad Records, Preserve Raw Evidence,
+                Repair/Reprocess, and Avoid Silent Coercion</a><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Build Reconciliation Tests from Source
+                Counts/Sums/Checksums to Warehouse Facts and Dimensions</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>14</span>ETL vs ELT Architecture: Staging, Raw, Integration,
+              Presentation, and Transform Ownership
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>ETL vs ELT: Compute Location, Pushdown,
+                Auditability, Cost, Lock-In, and Tooling Tradeoffs</a><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>Landing/Raw/Staging/Integration/Presentation
+                Layers and When Each Layer Adds Value</a><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Immutable Raw Data, Replayability, Audit
+                Columns, Batch IDs, Load Timestamps, and Lineage</a><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Transformation Modularity, Reusable Intermediate
+                Models, Dependency Graphs, and Environment Promotion</a><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Design a Layered Pipeline for the Case Study and
+                Justify Every Persisted Intermediate Dataset</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>15</span>Incremental Loading, CDC, Watermarks, High-Water
+              Marks, and Idempotency
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Full Refresh vs Incremental Loads: Volume,
+                Freshness, Correctness, and Recovery Tradeoffs</a><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Timestamp/Sequence Watermarks, Overlap Windows,
+                Clock Skew, Missing Rows, and Source Update Semantics</a><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>Log-Based CDC: Inserts/Updates/Deletes,
+                Before/After Images, Ordering, Transactions, and Schema
+                Evolution</a><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>Idempotent Merge/Upsert Patterns, Batch
+                Identity, Deduplication, and Retry Safety</a><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Prove an Incremental Pipeline Handles Restart,
+                Duplicate Delivery, Late Data, Deletes, and Reprocessing</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>16</span>Orchestration, Dependencies, Scheduling, Backfills,
+              SLAs, and Failure Recovery
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>DAGs, Dependencies, Data Availability
+                Sensors/Checks, and Avoiding Clock-Only Scheduling</a><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>Retries, Timeouts, Idempotent Tasks, Partial
+                Failure, Compensation, and Operator Intervention</a><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>Partition-Aware Backfills, Historical
+                Reprocessing, Resource Isolation, and Protecting Current
+                Loads</a><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>SLAs/SLOs for Freshness, Completeness, Duration,
+                and Downstream Availability</a><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Design an Operational Runbook for a Failed Daily
+                Load Including Root Cause, Repair, Replay, and Communication</a>
+</div>
+</details>
+<details class="sidebar-chapter" open="">
+<summary>
+<span>17</span>Physical Warehouse Design: Schemas, Tables,
+              Constraints, Partitioning, Clustering, and Distribution
+            </summary>
+<div>
+<a class="sidebar-lesson" href="Lesson1.html"><span>01</span>Logical Dimensional Model vs Physical
+                Implementation in Row Stores, Column Stores, and Cloud
+                Warehouses</a><a class="sidebar-lesson" href="Lesson2.html"><span>02</span>Schema/Database Organization, Naming, Ownership,
+                Constraints, and Environment/Domain Boundaries</a><a class="sidebar-lesson" href="Lesson3.html"><span>03</span>Partitioning by Date/Range/Hash: Pruning,
+                Retention, Backfill, Small Partitions, and Skew</a><a class="sidebar-lesson" href="Lesson4.html"><span>04</span>Clustering/Sort Keys, Distribution/Partition
+                Keys, Co-Location, and Engine-Specific Alternatives</a><a aria-current="page" class="sidebar-lesson is-current" href="Lesson5.html"><span>05</span>Create a Physical Design from Workload Evidence
+                Rather Than Copying Generic Partition Recommendations</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>18</span>Columnar Storage, Compression, Encoding, Vectorized
+              Execution, and Analytical Scan Economics
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter18/Lesson1.html"><span>01</span>Row vs Column Storage: Projection, Compression,
+                CPU, Updates, and Analytical Workloads</a><a class="sidebar-lesson" href="../Chapter18/Lesson2.html"><span>02</span>Column Encodings,
+                Dictionary/Run-Length/Delta-Like Compression Concepts and Data
+                Distribution</a><a class="sidebar-lesson" href="../Chapter18/Lesson3.html"><span>03</span>Predicate/Projection Pushdown, Zone Maps/Min-Max
+                Statistics, Partition Pruning, and Data Skipping</a><a class="sidebar-lesson" href="../Chapter18/Lesson4.html"><span>04</span>Vectorized Execution, Batch Processing, SIMD
+                Concepts, and Why Analytical Engines Differ from OLTP DBMSs</a><a class="sidebar-lesson" href="../Chapter18/Lesson5.html"><span>05</span>Estimate Scan Bytes/CPU and Redesign Table
+                Layout to Reduce Work Without Corrupting the Logical Model</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>19</span>Materialized Views, Aggregate Tables, Cubes, and
+              Precomputation
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>When Precomputation Beats Repeated Raw Fact
+                Scans: Latency, Freshness, and Maintenance Cost</a><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Aggregate Fact Tables at Higher Grain and
+                Semantic Rules for Reconciliation to Base Facts</a><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Materialized View Refresh Strategies,
+                Incremental Refresh Concepts, and Dependency Management</a><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>OLAP Cubes/Pre-Aggregation, Sparse Dimensional
+                Combinations, and Modern Semantic Acceleration</a><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Design an Acceleration Layer with Clear
+                Freshness and Correctness Contracts</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>20</span>Semantic Layers, Metrics, Dimensions, Measures, and
+              BI Contracts
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Why a Warehouse Schema Alone Does Not Guarantee
+                Consistent Business Metrics</a><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Central Metric Definitions, Measures vs Metrics,
+                Filters, Time Windows, Currency/Unit Semantics, and Ownership</a><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Semantic Models, Relationships, Drill Paths,
+                Row-Level Security, and Tool Independence</a><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Metric Versioning, Deprecation, Tests,
+                Documentation, and Preventing Dashboard-Specific Business
+                Logic</a><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Build a Governed Metric for Revenue/Active
+                Customer/Retention and Trace It to Facts, Dimensions, and
+                Sources</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>21</span>Data Marts, Domain Data Products, Self-Service
+              Analytics, and Ownership
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>Dependent vs Independent Marts and Why
+                Independent Silos Break Conformance</a><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>Domain-Oriented Marts/Data Products with Shared
+                Enterprise Dimensions and Metrics</a><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Wide Reporting Tables vs Reusable Dimensional
+                Marts: Speed, Duplication, and Semantic Drift</a><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>Self-Service Sandboxes, Certified Data,
+                Promotion, Ownership, and Access Boundaries</a><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>Design a Marketing/Finance/Operations Mart
+                Strategy that Reuses Conformed Data Without Blocking Domain
+                Delivery</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>22</span>Security, Privacy, Row/Column Policies, Masking,
+              and Least-Privilege Analytics
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Authentication, Roles, Groups, Service
+                Identities, Separation of Duties, and Environment Isolation</a><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>Row-Level/Column-Level Security, Dynamic
+                Masking, Tokenization, and Policy Placement</a><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>PII Classification, Purpose Limitation,
+                Retention, Consent, and Right-to-Delete in Historical
+                Warehouses</a><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Secure Views/Semantic Layer Policies vs Physical
+                Data Access and Avoiding Bypass Paths</a><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Threat-Model a Warehouse Including BI Exports,
+                Shared Credentials, Staging Data, Backups, and Over-Broad
+                Analyst Roles</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>23</span>Metadata, Data Catalogs, Lineage, Documentation,
+              Ownership, and Governance
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter23/Lesson1.html"><span>01</span>Technical vs Business Metadata, Data Dictionary,
+                Schema Registry, Metric Catalog, and Glossary</a><a class="sidebar-lesson" href="../Chapter23/Lesson2.html"><span>02</span>Column/Table/Job Lineage from Source to
+                Dashboard and Impact Analysis for Changes</a><a class="sidebar-lesson" href="../Chapter23/Lesson3.html"><span>03</span>Owners, Stewards, SLAs, Certification,
+                Deprecation, and Data Product Contracts</a><a class="sidebar-lesson" href="../Chapter23/Lesson4.html"><span>04</span>Automated Documentation from Code/Models vs
+                Human Business Context and Review</a><a class="sidebar-lesson" href="../Chapter23/Lesson5.html"><span>05</span>Build an Impact Analysis for a Source Column
+                Change and Identify Every Model, Metric, Report, and Consumer at
+                Risk</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>24</span>Testing Analytical Pipelines: Unit, Schema,
+              Quality, Reconciliation, and Regression Tests
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter24/Lesson1.html"><span>01</span>Schema/Contract Tests: Types, Nullability, Keys,
+                Accepted Values, and Relationships</a><a class="sidebar-lesson" href="../Chapter24/Lesson2.html"><span>02</span>Data Quality/Business Tests: Invariants, Ranges,
+                Freshness, Duplicates, and Referential Integrity</a><a class="sidebar-lesson" href="../Chapter24/Lesson3.html"><span>03</span>SCD/Incremental/CDC Tests for History, Late
+                Data, Deletes, Idempotency, and Restart</a><a class="sidebar-lesson" href="../Chapter24/Lesson4.html"><span>04</span>Metric/Reconciliation Tests Against Trusted
+                Source Totals and Prior Period Expectations</a><a class="sidebar-lesson" href="../Chapter24/Lesson5.html"><span>05</span>Create CI + Production Data Tests with Severity,
+                Quarantine, Alerting, and Waiver Governance</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>25</span>Observability and Data Reliability: Freshness,
+              Volume, Schema, Lineage, and Incident Response
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter25/Lesson1.html"><span>01</span>Pipeline Metrics: Duration, Records/Bytes,
+                Error/Reject Counts, Lag, Retries, and Resource Use</a><a class="sidebar-lesson" href="../Chapter25/Lesson2.html"><span>02</span>Data Observability: Freshness, Volume,
+                Distribution, Schema, Lineage, and Quality Changes</a><a class="sidebar-lesson" href="../Chapter25/Lesson3.html"><span>03</span>End-to-End Data SLOs from Source Availability to
+                Certified Dashboard/Data Product</a><a class="sidebar-lesson" href="../Chapter25/Lesson4.html"><span>04</span>Incident Triage: Source Failure vs Pipeline Bug
+                vs Warehouse Performance vs Semantic Error</a><a class="sidebar-lesson" href="../Chapter25/Lesson5.html"><span>05</span>Build a Data Incident Runbook with Detection,
+                Blast Radius, Consumer Communication, Repair, Backfill, and
+                Postmortem</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>26</span>Performance Engineering and Workload Management:
+              Scan Reduction, Joins, Aggregations, and Concurrency
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter26/Lesson1.html"><span>01</span>Profile Representative BI/Ad-Hoc/ELT Workloads
+                by Scan, Join, Shuffle, Spill, Queue, and Tail Latency</a><a class="sidebar-lesson" href="../Chapter26/Lesson2.html"><span>02</span>Join Strategies and Dimensional Modeling
+                Benefits: Broadcast/Hash/Merge Concepts, Cardinality, and
+                Skew</a><a class="sidebar-lesson" href="../Chapter26/Lesson3.html"><span>03</span>Partition/Cluster Pruning, Predicate Pushdown,
+                Materialization, Approximation, and Query Rewrites</a><a class="sidebar-lesson" href="../Chapter26/Lesson4.html"><span>04</span>Workload Management, Queues/Warehouses/Resource
+                Groups, Concurrency Scaling, and Noisy-Neighbor Isolation</a><a class="sidebar-lesson" href="../Chapter26/Lesson5.html"><span>05</span>Benchmark Before/After Changes and Track
+                Performance Regression per Metric/Data Product</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>27</span>Cloud Warehouses and Serverless Analytics:
+              Separation of Storage/Compute, Elasticity, and Cost
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter27/Lesson1.html"><span>01</span>Shared-Nothing vs Disaggregated Storage/Compute
+                vs Serverless Warehouses: Architectural Consequences</a><a class="sidebar-lesson" href="../Chapter27/Lesson2.html"><span>02</span>Elastic Compute, Autoscaling, Concurrency,
+                Pausing, Warehouses/Clusters, and Cold-Start Tradeoffs</a><a class="sidebar-lesson" href="../Chapter27/Lesson3.html"><span>03</span>Object Storage, Columnar Formats, Metadata
+                Services, Caching, and Remote Shuffle Concepts</a><a class="sidebar-lesson" href="../Chapter27/Lesson4.html"><span>04</span>Cost Models:
+                Scan/Compute/Credits/Slots/Storage/Egress and How Physical
+                Design Changes Spend</a><a class="sidebar-lesson" href="../Chapter27/Lesson5.html"><span>05</span>Translate the Vendor-Neutral Model into a Cloud
+                Warehouse and Document Which Optimizations Are
+                Engine-Specific</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>28</span>Lakehouse Coexistence: Open Table Formats,
+              Medallion Layers, Warehouse Serving, and Federation
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter28/Lesson1.html"><span>01</span>Warehouse vs Lakehouse: Governance,
+                Transactions, Performance, Open Formats, and Ecosystem
+                Tradeoffs</a><a class="sidebar-lesson" href="../Chapter28/Lesson2.html"><span>02</span>Bronze/Silver/Gold Layering vs Dimensional
+                Models: Complementary Concepts, Not Automatic Replacements</a><a class="sidebar-lesson" href="../Chapter28/Lesson3.html"><span>03</span>Apache Iceberg/Delta/Hudi Table-Format Concepts,
+                Snapshot Metadata, Schema Evolution, and Warehouse
+                Interoperability</a><a class="sidebar-lesson" href="../Chapter28/Lesson4.html"><span>04</span>Federated Query vs Data Movement, One-Copy
+                Dreams, Performance, Consistency, and Governance</a><a class="sidebar-lesson" href="../Chapter28/Lesson5.html"><span>05</span>Design a Hybrid Lakehouse+Warehouse Architecture
+                with Clear System of Record, Serving, and Data-Movement
+                Boundaries</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>29</span>Migration and Modernization: Legacy EDW, Mart
+              Consolidation, Cloud Moves, and Semantic Preservation
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter29/Lesson1.html"><span>01</span>Inventory Schemas, ETL Jobs, Reports, Stored
+                Procedures, Dependencies, SLAs, and Hidden Business Logic</a><a class="sidebar-lesson" href="../Chapter29/Lesson2.html"><span>02</span>Rehost/Replatform/Refactor Strategies and Why
+                Moving Tables Without Semantics Preserves Technical Debt</a><a class="sidebar-lesson" href="../Chapter29/Lesson3.html"><span>03</span>Parallel Run, Dual Loads, Historical Backfill,
+                CDC Cutover, and Data Reconciliation</a><a class="sidebar-lesson" href="../Chapter29/Lesson4.html"><span>04</span>Preserve/Version Metrics and Semantic Behavior
+                Across Old/New Platforms</a><a class="sidebar-lesson" href="../Chapter29/Lesson5.html"><span>05</span>Build a Migration Acceptance Plan Covering Data,
+                Query Results, Performance, Cost, Security, and Rollback</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>30</span>Production Capstone: Deliver a Governed, Testable,
+              Performant Analytical Warehouse
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter30/Lesson1.html"><span>01</span>Define Business Processes, Bus Matrix, Grain,
+                Facts, Dimensions, Metrics, Source Contracts, SLAs, and Security
+                Requirements</a><a class="sidebar-lesson" href="../Chapter30/Lesson2.html"><span>02</span>Implement Dimensional Models, SCDs/Snapshots,
+                Incremental/CDC Loads, Data Quality, Orchestration, and Semantic
+                Metrics</a><a class="sidebar-lesson" href="../Chapter30/Lesson3.html"><span>03</span>Choose Physical Layout, Materialization, Marts,
+                Workload Isolation, and Cloud/Lakehouse Integration from
+                Measurements</a><a class="sidebar-lesson" href="../Chapter30/Lesson4.html"><span>04</span>Test, Reconcile, Load-Test, Secure, Observe,
+                Backfill, Recover, and Execute a Data Incident/DR Exercise</a><a class="sidebar-lesson" href="../Chapter30/Lesson5.html"><span>05</span>Present the Warehouse as an Evidence-Based Data
+                Product with Lineage, Costs, Known Limitations, Ownership, and
+                Evolution Roadmap</a>
+</div>
+</details>
+</nav>
+</aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 17 · Lesson 05</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html"
+              >Data Warehousing and Dimensional Modeling</a
+            ><span>/</span><span>Chapter 17 · Lesson 05</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 17 · Physical Warehouse Design: Schemas, Tables,
+              Constraints, Partitioning, Clustering, and Distribution
+            </p>
+            <h1>
+              Create a Physical Design from Workload Evidence Rather Than
+              Copying Generic Partition Recommendations
+            </h1>
+            <p>
+              Turn a fixed query corpus, plan evidence, scan accounting,
+              constraint tests, and skew measurements into a physical-design
+              decision record with assumptions, rollback, and migration
+              cautions.
+            </p>
+            <div class="lesson-meta">
+              <span>Intermediate → Advanced</span><span>155–185 minutes</span
+              ><span>Physical-design acceptance lab</span
+              ><span>Python 3.13.5 · SQLite 3.46.1 · local/synthetic</span
+              ><span>Last reviewed: September 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+            <section>
+              <h2>Learning outcomes</h2>
+              <p>
+                AtlasMart now has multiple pieces of evidence: date files prune
+                Q1/Q2, a customer-led access path helps Q3, full scan Q4 remains
+                a full scan, customer hashing is skewed, constraints reject two
+                negative cases, and every layout returns the same query results.
+                The final task is to turn those facts into a reversible
+                decision—not to declare one universal best layout.
+              </p>
+              <div class="objectives">
+                <div class="objective">
+                  <span>01</span>
+                  <p>
+                    Build a physical-design decision from a fixed query corpus,
+                    exact scan accounting, plan evidence, skew, constraints,
+                    lifecycle needs, and rollback cost.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>02</span>
+                  <p>
+                    Reject physical choices that improve one benchmark while
+                    changing logical results or breaking history/recovery
+                    contracts.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>03</span>
+                  <p>
+                    Distinguish deterministic acceptance evidence from
+                    environment-specific latency observations.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>04</span>
+                  <p>
+                    Document which recommendations are portable intents and
+                    which are SQLite/local-harness implementations.
+                  </p>
+                </div>
+                <div class="objective">
+                  <span>05</span>
+                  <p>
+                    Produce a reproducible artifact that future engine
+                    migrations can challenge with new measurements rather than
+                    inherited folklore.
+                  </p>
+                </div>
+              </div>
+              <div class="callout">
+                <strong>Chapter 17 continuity contract</strong>
+                <p>
+                  Physical design must not redefine the business model. The
+                  accepted Chapter 16 current controls remain
+                  <strong
+                    >9 paid order-line facts, 7 paid orders, 11 units, 740 USD
+                    paid GMV, 450 USD cost-at-sale, and 290 USD gross
+                    profit</strong
+                  >. The benchmark harness expands those nine rows
+                  deterministically to 21,600 synthetic rows only to make
+                  physical-access differences observable. Benchmark-scale totals
+                  are test data, not new production controls. Grain, conformed
+                  dimension meaning, SCD history policy, metric formulas, source
+                  contracts, and Chapter 15–16 recovery semantics remain
+                  unchanged.
+                </p>
+              </div>
+              <div class="callout warning">
+                <strong>Execution and guarantee boundary</strong>
+                <p>
+                  The mandatory lab is local, synthetic, and free.
+                  Generation-time validation ran with Python 3.13.5 and SQLite
+                  3.46.1 in UTC. SQLite is used only as a row-store/access-path
+                  harness; it has no native cloud-warehouse clustering or
+                  distributed distribution keys. Date/month/hash file layouts
+                  are deterministic JSONL simulations used to calculate files
+                  and bytes that a dispatcher would scan. The lab never claims
+                  those numbers are Snowflake, BigQuery, Redshift, Databricks,
+                  ClickHouse, or DuckDB behavior.
+                  <code>EXPLAIN QUERY PLAN</code> evidence is SQLite-specific
+                  and its output format is documented as unstable across SQLite
+                  versions; the lessons interpret only the observed SCAN/SEARCH
+                  mechanism, not the literal formatting.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>1. A physical-design decision record starts with invariants</h2>
+              <p>
+                The first line of the decision record is
+                <code>logical_model_changed = false</code>. That matters more
+                than the chosen index. The accepted production controls remain
+                9/7/11/740/450/290. The benchmark is a deterministic 21,600-row
+                expansion with SHA-256
+                <code
+                  >c1ec45150cb017bed341ec1de5f728fbf8df533e77d7b7f1f73418c5f7cc0a4a</code
+                >.
+              </p>
+              <p>
+                The decision record then states the workload, environment,
+                access structures, partition simulation, skew, negative tests,
+                known limitations, and rollback. This makes “why did we choose
+                this?” answerable months later.
+              </p>
+            </section>
+            <section>
+              <h2>2. Decision matrix for this exact local corpus</h2>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Evidence</th>
+                      <th>Observation</th>
+                      <th>Decision consequence</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Q1 daily GMV</td>
+                      <td>
+                        Date layout: 1 file / 23,520 bytes; heap plan SCAN;
+                        indexed plan SEARCH
+                      </td>
+                      <td>
+                        Date-oriented physical pruning/access is justified for
+                        date-bounded work.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Q2 7-day + product</td>
+                      <td>Date layout: 7 files / 164,640 bytes</td>
+                      <td>
+                        Daily grouping still removes most corpus bytes; product
+                        access may need secondary clustering/index.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Q3 customer window</td>
+                      <td>
+                        Customer hash: 1 bucket / 319,200 bytes; SQLite
+                        customer/date SEARCH
+                      </td>
+                      <td>
+                        Customer-led access is useful, but hash skew must be
+                        evaluated before distributed adoption.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Q4 full GMV</td>
+                      <td>
+                        All layouts scan complete 1,411,200-byte file corpus
+                      </td>
+                      <td>
+                        Do not claim partitions remove work for logically full
+                        scans.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Hash skew</td>
+                      <td>16,800 vs 4,800 nonempty rows; ratio 3.5</td>
+                      <td>
+                        Reject balance assumptions; test real
+                        cardinality/frequency before distribution.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Tiny partitions</td>
+                      <td>
+                        240 estimated date×product files, ~5,880 bytes average
+                      </td>
+                      <td>
+                        Avoid this extra granularity in the local fixture; no
+                        evidence it pays for itself.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Constraints</td>
+                      <td>
+                        Zero-quantity and orphan-customer inserts rejected
+                      </td>
+                      <td>
+                        Keep executable integrity checks in harness; retest
+                        target-engine enforcement.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <section>
+                <h2>3. Recommended local design and its portability</h2>
+                <p>
+                  For this harness, keep the atomic
+                  <code>fact_sales</code> logical model; group file-oriented
+                  processing by <code>order_date</code>; use SQLite composite
+                  indexes <code>(order_date, product_id)</code> and
+                  <code>(customer_id, order_date)</code> for selective row-store
+                  access; do not claim distributed placement because SQLite is
+                  single-node. These are not product-neutral commands. The
+                  portable intents are: prune date-bounded scans, support
+                  selective customer/product access, preserve backfill/retention
+                  isolation, avoid extreme file counts, and measure skew before
+                  distributed placement.
+                </p>
+              </section>
+              <section>
+                <h2>4. Benchmark timing is supporting—not deciding—evidence</h2>
+                <p>
+                  Generation-time medians/p95s over 15 warm-cache executions
+                  were recorded in <code>benchmark_report.json</code>. Q1
+                  improved from 0.6883/0.7405 ms heap median/p95 to
+                  0.0585/0.1017 ms indexed; Q3 from 0.9392/1.0185 ms to
+                  0.3155/0.3513 ms. Q4 was essentially unchanged/slightly slower
+                  with indexes. These are real measurements from the generation
+                  environment, but the dataset is tiny, cache was not flushed,
+                  and concurrency is one. They must not be promoted into
+                  production capacity claims.
+                </p>
+                <p>
+                  The deterministic evidence—the same query results, plan class,
+                  exact file bytes, partition counts, and constraint outcomes—is
+                  more reproducible across reruns of this local lab.
+                </p>
+              </section>
+              <section>
+                <h2>5. Controlled failure: optimize one dashboard and externalize the cost</h2>
+                <p>
+                  If the team chooses a high-cardinality partition key because
+                  one dashboard becomes fast, it may create thousands/millions
+                  of objects, slow planning/listing, complicate
+                  retention/backfills, and make batch loads expensive. If it
+                  chooses one distribution key for a single join, other joins
+                  can shuffle more data. Physical design is a portfolio tradeoff
+                  across representative workloads, load paths, backfills,
+                  maintenance, concurrency, and cost.
+                </p>
+                <p>
+                  The repair is a benchmark corpus with query weights and
+                  acceptance thresholds. Add a new physical structure only when
+                  evidence shows it improves the target workload without
+                  violating correctness and with an acceptable
+                  maintenance/rollback burden.
+                </p>
+              </section>
+              <section>
+                <h2>6. Full reproducible AtlasMart lab</h2>
+                <p>
+                  Create <code>ch17_lab.py</code> with the following
+                  standard-library-only script. It deletes/recreates only
+                  <code>atlasmart_ch17_lab/</code>, writes two SQLite databases
+                  and three file-layout variants, runs the fixed query corpus,
+                  records measured timings, performs negative constraint tests,
+                  calculates exact scan bytes/skew, verifies layout-equivalent
+                  results, and writes two JSON reports.
+                </p>
+                <div
+                  class="code-window"
+                  data-code-block=""
+                  data-language="python"
+                >
+                  <div class="code-head">
+                    <div class="code-title">
+                      <span class="code-dots"><i></i><i></i><i></i></span
+                      >ch17_lab.py
+                    </div>
+                    <button class="copy-code" data-copy-code="" type="button">
+                      <svg aria-hidden="true" viewbox="0 0 24 24">
+                        <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                        <path
+                          d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                        ></path></svg
+                      >Copy
+                    </button>
+                  </div>
+                  <pre><code class="language-python"><span class="code-line">from pathlib import Path</span><span class="code-line">import sqlite3, json, hashlib, csv, shutil, statistics, time</span><span class="code-line">from datetime import date, timedelta</span><span class="code-line"></span><span class="code-line">ROOT = Path('/mnt/data/atlasmart_ch17_lab')</span><span class="code-line">if ROOT.exists():</span><span class="code-line">    shutil.rmtree(ROOT)</span><span class="code-line">ROOT.mkdir()</span><span class="code-line">for d in ['db','layouts/date','layouts/month','layouts/hash_customer','reports']:</span><span class="code-line">    (ROOT/d).mkdir(parents=True, exist_ok=True)</span><span class="code-line"></span><span class="code-line">PYTHON_VERSION = __import__('sys').version.split()[0]</span><span class="code-line">SQLITE_VERSION = sqlite3.sqlite_version</span><span class="code-line">TZ = 'UTC'</span><span class="code-line"></span><span class="code-line"># Chapter 16 accepted control state: 9 paid lines, 7 orders, 11 units, 740 GMV, 450 cost, 290 gross profit.</span><span class="code-line">seed = [</span><span class="code-line">    # order_id, line_no, customer_id, product_id, store_id, qty, revenue, cost</span><span class="code-line">    ('O0999',1,'C003','P300','SALES',1,80,50),</span><span class="code-line">    ('O1000',1,'C001','P200','WEB',1,75,45),</span><span class="code-line">    ('O1001',1,'C001','P100','WEB',2,100,60),</span><span class="code-line">    ('O1001',2,'C001','P200','WEB',1,25,15),</span><span class="code-line">    ('O1002',1,'C002','P300','MOBILE',1,195,125),</span><span class="code-line">    ('O1003',1,'C001','P400','WEB',1,100,60),</span><span class="code-line">    ('O1003',2,'C001','P200','WEB',2,55,30),</span><span class="code-line">    ('O1005',1,'C004','P100','MOBILE',1,50,30),</span><span class="code-line">    ('O1006',1,'C002','P100','WEB',1,60,35),</span><span class="code-line">]</span><span class="code-line">assert sum(x[5] for x in seed)==11</span><span class="code-line">assert sum(x[6] for x in seed)==740</span><span class="code-line">assert sum(x[7] for x in seed)==450</span><span class="code-line">assert len({x[0] for x in seed})==7</span><span class="code-line"></span><span class="code-line"># Deterministic benchmark expansion; does not replace continuity controls.</span><span class="code-line">rows=[]</span><span class="code-line">start=date(2026,7,24)</span><span class="code-line">replicas=40</span><span class="code-line">for day_i in range(60):</span><span class="code-line">    d=(start+timedelta(days=day_i)).isoformat()</span><span class="code-line">    for rep in range(replicas):</span><span class="code-line">        for idx,s in enumerate(seed):</span><span class="code-line">            order_id,line_no,cust,prod,store,qty,rev,cost=s</span><span class="code-line">            # Stable unique order id per benchmark replica/day while preserving dimensional distribution.</span><span class="code-line">            oid=f'{order_id}-D{day_i:02d}-R{rep:02d}'</span><span class="code-line">            rows.append((d,oid,line_no,cust,prod,store,qty,rev,cost,rev-cost))</span><span class="code-line"></span><span class="code-line">assert len(rows)==60*replicas*len(seed)</span><span class="code-line">logical_checksum=hashlib.sha256('\n'.join('|'.join(map(str,r)) for r in rows).encode()).hexdigest()</span><span class="code-line"></span><span class="code-line">schema='''</span><span class="code-line">PRAGMA foreign_keys=ON;</span><span class="code-line">CREATE TABLE dim_customer(customer_id TEXT PRIMARY KEY, customer_name TEXT NOT NULL);</span><span class="code-line">CREATE TABLE dim_product(product_id TEXT PRIMARY KEY, product_name TEXT NOT NULL);</span><span class="code-line">CREATE TABLE dim_store(store_id TEXT PRIMARY KEY, store_name TEXT NOT NULL);</span><span class="code-line">CREATE TABLE fact_sales(</span><span class="code-line">  order_date TEXT NOT NULL,</span><span class="code-line">  order_id TEXT NOT NULL,</span><span class="code-line">  line_no INTEGER NOT NULL,</span><span class="code-line">  customer_id TEXT NOT NULL REFERENCES dim_customer(customer_id),</span><span class="code-line">  product_id TEXT NOT NULL REFERENCES dim_product(product_id),</span><span class="code-line">  store_id TEXT NOT NULL REFERENCES dim_store(store_id),</span><span class="code-line">  quantity INTEGER NOT NULL CHECK(quantity &gt; 0),</span><span class="code-line">  revenue_usd INTEGER NOT NULL CHECK(revenue_usd &gt;= 0),</span><span class="code-line">  cost_usd INTEGER NOT NULL CHECK(cost_usd &gt;= 0),</span><span class="code-line">  gross_profit_usd INTEGER NOT NULL,</span><span class="code-line">  PRIMARY KEY(order_id,line_no)</span><span class="code-line">);</span><span class="code-line">'''</span><span class="code-line"></span><span class="code-line">def make_db(path, indexed=False):</span><span class="code-line">    cx=sqlite3.connect(path)</span><span class="code-line">    cx.executescript(schema)</span><span class="code-line">    cx.executemany('INSERT INTO dim_customer VALUES (?,?)',[(f'C{i:03d}',f'Customer {i:03d}') for i in range(1,6)])</span><span class="code-line">    cx.executemany('INSERT INTO dim_product VALUES (?,?)',[(f'P{i}',f'Product {i}') for i in (100,200,300,400)])</span><span class="code-line">    cx.executemany('INSERT INTO dim_store VALUES (?,?)',[('WEB','Web'),('MOBILE','Mobile'),('SALES','Sales')])</span><span class="code-line">    cx.executemany('INSERT INTO fact_sales VALUES (?,?,?,?,?,?,?,?,?,?)',rows)</span><span class="code-line">    if indexed:</span><span class="code-line">        cx.execute('CREATE INDEX idx_fact_sales_date_product ON fact_sales(order_date, product_id)')</span><span class="code-line">        cx.execute('CREATE INDEX idx_fact_sales_customer_date ON fact_sales(customer_id, order_date)')</span><span class="code-line">    cx.commit(); cx.close()</span><span class="code-line"></span><span class="code-line">heap=ROOT/'db/atlasmart_heap.db'; indexed=ROOT/'db/atlasmart_indexed.db'</span><span class="code-line">make_db(heap,False); make_db(indexed,True)</span><span class="code-line"></span><span class="code-line">queries={</span><span class="code-line"> 'Q1_daily_gmv':("SELECT SUM(revenue_usd) FROM fact_sales WHERE order_date=?",('2026-09-21',)),</span><span class="code-line"> 'Q2_date_product':("SELECT SUM(revenue_usd) FROM fact_sales WHERE order_date BETWEEN ? AND ? AND product_id=?",('2026-09-15','2026-09-21','P100')),</span><span class="code-line"> 'Q3_customer_window':("SELECT SUM(revenue_usd) FROM fact_sales WHERE customer_id=? AND order_date BETWEEN ? AND ?",('C002','2026-09-01','2026-09-21')),</span><span class="code-line"> 'Q4_full_gmv':("SELECT SUM(revenue_usd) FROM fact_sales",()),</span><span class="code-line">}</span><span class="code-line"></span><span class="code-line">def explain(db,sql,args):</span><span class="code-line">    cx=sqlite3.connect(db)</span><span class="code-line">    plan=[' | '.join(map(str,r)) for r in cx.execute('EXPLAIN QUERY PLAN '+sql,args)]</span><span class="code-line">    val=cx.execute(sql,args).fetchone()[0]</span><span class="code-line">    cx.close(); return plan,val</span><span class="code-line"></span><span class="code-line">plans={}</span><span class="code-line">for name,(sql,args) in queries.items():</span><span class="code-line">    hp,hv=explain(heap,sql,args); ip,iv=explain(indexed,sql,args)</span><span class="code-line">    assert hv==iv</span><span class="code-line">    plans[name]={'result':hv,'heap_plan':hp,'indexed_plan':ip}</span><span class="code-line"></span><span class="code-line"># Local timing is real but environment-specific; use medians across 15 executions after 3 warmups.</span><span class="code-line">def timing(db,sql,args):</span><span class="code-line">    cx=sqlite3.connect(db)</span><span class="code-line">    for _ in range(3): cx.execute(sql,args).fetchone()</span><span class="code-line">    vals=[]</span><span class="code-line">    for _ in range(15):</span><span class="code-line">        t=time.perf_counter_ns(); cx.execute(sql,args).fetchone(); vals.append((time.perf_counter_ns()-t)/1e6)</span><span class="code-line">    cx.close()</span><span class="code-line">    return {'median_ms':round(statistics.median(vals),4),'p95_ms':round(sorted(vals)[int(0.95*(len(vals)-1))],4),'runs':15}</span><span class="code-line"></span><span class="code-line">timings={n:{'heap':timing(heap,*q),'indexed':timing(indexed,*q)} for n,q in queries.items()}</span><span class="code-line"></span><span class="code-line"># Physical file-layout simulator: write canonical rows as compact JSONL.</span><span class="code-line">def dump_partition(path, part_rows):</span><span class="code-line">    with path.open('w',encoding='utf-8',newline='\n') as f:</span><span class="code-line">        for r in part_rows:</span><span class="code-line">            f.write(json.dumps(r,separators=(',',':'))+'\n')</span><span class="code-line">    return path.stat().st_size</span><span class="code-line"></span><span class="code-line">by_date={}</span><span class="code-line">by_month={}</span><span class="code-line">for r in rows:</span><span class="code-line">    by_date.setdefault(r[0],[]).append(r)</span><span class="code-line">    by_month.setdefault(r[0][:7],[]).append(r)</span><span class="code-line"></span><span class="code-line">date_manifest={d:dump_partition(ROOT/f'layouts/date/{d}.jsonl',rs) for d,rs in sorted(by_date.items())}</span><span class="code-line">month_manifest={m:dump_partition(ROOT/f'layouts/month/{m}.jsonl',rs) for m,rs in sorted(by_month.items())}</span><span class="code-line"></span><span class="code-line"># Stable hash buckets by customer_id, to simulate distribution/co-location reasoning.</span><span class="code-line">def bucket(key,n=8):</span><span class="code-line">    return int(hashlib.sha256(key.encode()).hexdigest()[:16],16)%n</span><span class="code-line">hash_rows={i:[] for i in range(8)}</span><span class="code-line">for r in rows: hash_rows[bucket(r[3])].append(r)</span><span class="code-line">hash_manifest={str(i):dump_partition(ROOT/f'layouts/hash_customer/bucket={i}.jsonl',rs) for i,rs in hash_rows.items()}</span><span class="code-line"></span><span class="code-line"># Dimension co-location using same hash rule.</span><span class="code-line">customers=[f'C{i:03d}' for i in range(1,6)]</span><span class="code-line">customer_buckets={c:bucket(c) for c in customers}</span><span class="code-line">row_bucket_counts={str(i):len(hash_rows[i]) for i in range(8)}</span><span class="code-line">nonempty=[v for v in row_bucket_counts.values() if v]</span><span class="code-line">skew_ratio=round(max(nonempty)/min(nonempty),3)</span><span class="code-line"></span><span class="code-line"># Scan accounting for Q1-Q4 on the file layouts. No database-engine pruning is claimed.</span><span class="code-line">def bytes_sum(man): return sum(man.values())</span><span class="code-line">all_date_bytes=bytes_sum(date_manifest); all_month_bytes=bytes_sum(month_manifest); all_hash_bytes=bytes_sum(hash_manifest)</span><span class="code-line"></span><span class="code-line">def dates_between(a,b):</span><span class="code-line">    return [d for d in date_manifest if a&lt;=d&lt;=b]</span><span class="code-line">scan={</span><span class="code-line"> 'Q1_daily_gmv':{</span><span class="code-line">   'date':{'files':1,'bytes':date_manifest['2026-09-21']},</span><span class="code-line">   'month':{'files':1,'bytes':month_manifest['2026-09']},</span><span class="code-line">   'hash_customer':{'files':8,'bytes':all_hash_bytes},</span><span class="code-line"> },</span><span class="code-line"> 'Q2_date_product':{</span><span class="code-line">   'date':{'files':len(dates_between('2026-09-15','2026-09-21')),'bytes':sum(date_manifest[d] for d in dates_between('2026-09-15','2026-09-21'))},</span><span class="code-line">   'month':{'files':1,'bytes':month_manifest['2026-09']},</span><span class="code-line">   'hash_customer':{'files':8,'bytes':all_hash_bytes},</span><span class="code-line"> },</span><span class="code-line"> 'Q3_customer_window':{</span><span class="code-line">   'date':{'files':len(dates_between('2026-09-01','2026-09-21')),'bytes':sum(date_manifest[d] for d in dates_between('2026-09-01','2026-09-21'))},</span><span class="code-line">   'month':{'files':1,'bytes':month_manifest['2026-09']},</span><span class="code-line">   'hash_customer':{'files':1,'bytes':hash_manifest[str(customer_buckets['C002'])]},</span><span class="code-line"> },</span><span class="code-line"> 'Q4_full_gmv':{</span><span class="code-line">   'date':{'files':len(date_manifest),'bytes':all_date_bytes},</span><span class="code-line">   'month':{'files':len(month_manifest),'bytes':all_month_bytes},</span><span class="code-line">   'hash_customer':{'files':8,'bytes':all_hash_bytes},</span><span class="code-line"> },</span><span class="code-line">}</span><span class="code-line"></span><span class="code-line"># Same query results from partition files, proving layout did not change logical semantics.</span><span class="code-line">def scan_json_files(paths,predicate):</span><span class="code-line">    gmv=0</span><span class="code-line">    for p in paths:</span><span class="code-line">        for line in p.read_text(encoding='utf-8').splitlines():</span><span class="code-line">            r=json.loads(line)</span><span class="code-line">            if predicate(r): gmv+=r[7]</span><span class="code-line">    return gmv</span><span class="code-line"></span><span class="code-line">q1_file=scan_json_files([ROOT/'layouts/date/2026-09-21.jsonl'],lambda r:r[0]=='2026-09-21')</span><span class="code-line">q2_file=scan_json_files([ROOT/f'layouts/date/{d}.jsonl' for d in dates_between('2026-09-15','2026-09-21')],lambda r:'2026-09-15'&lt;=r[0]&lt;='2026-09-21' and r[4]=='P100')</span><span class="code-line">q3_bucket=customer_buckets['C002']</span><span class="code-line">q3_file=scan_json_files([ROOT/f'layouts/hash_customer/bucket={q3_bucket}.jsonl'],lambda r:r[3]=='C002' and '2026-09-01'&lt;=r[0]&lt;='2026-09-21')</span><span class="code-line">q4_file=scan_json_files([ROOT/f'layouts/date/{d}.jsonl' for d in date_manifest],lambda r:True)</span><span class="code-line">assert q1_file==plans['Q1_daily_gmv']['result']</span><span class="code-line">assert q2_file==plans['Q2_date_product']['result']</span><span class="code-line">assert q3_file==plans['Q3_customer_window']['result']</span><span class="code-line">assert q4_file==plans['Q4_full_gmv']['result']</span><span class="code-line"></span><span class="code-line"># Constraints: valid insert succeeds; invalid quantity and orphan customer are rejected.</span><span class="code-line">cx=sqlite3.connect(indexed); cx.execute('PRAGMA foreign_keys=ON')</span><span class="code-line">constraint_results={}</span><span class="code-line">for name,sql,args in [</span><span class="code-line"> ('negative_quantity','INSERT INTO fact_sales VALUES (?,?,?,?,?,?,?,?,?,?)',('2026-09-22','BAD-QTY',1,'C001','P100','WEB',0,10,5,5)),</span><span class="code-line"> ('orphan_customer','INSERT INTO fact_sales VALUES (?,?,?,?,?,?,?,?,?,?)',('2026-09-22','BAD-CUST',1,'C999','P100','WEB',1,10,5,5)),</span><span class="code-line">]:</span><span class="code-line">    try:</span><span class="code-line">        cx.execute(sql,args); cx.rollback(); constraint_results[name]='NOT_REJECTED'</span><span class="code-line">    except sqlite3.IntegrityError as e:</span><span class="code-line">        constraint_results[name]='REJECTED: '+str(e)</span><span class="code-line">cx.close()</span><span class="code-line">assert all(v.startswith('REJECTED') for v in constraint_results.values())</span><span class="code-line"></span><span class="code-line"># Tiny/high-cardinality partition calculation (do not create 21,600 files).</span><span class="code-line">tiny_partition_count=len(date_manifest)*4  # date x product</span><span class="code-line">high_card_partition_count=len(rows)  # one per row/order-line surrogate-like key</span><span class="code-line">avg_date_file=round(all_date_bytes/len(date_manifest),1)</span><span class="code-line">avg_tiny_est=round(all_date_bytes/tiny_partition_count,1)</span><span class="code-line"></span><span class="code-line"># Decision record based on this specific corpus.</span><span class="code-line">decision={</span><span class="code-line"> 'logical_model_changed':False,</span><span class="code-line"> 'benchmark_rows':len(rows),</span><span class="code-line"> 'continuity_controls':{'paid_lines':9,'paid_orders':7,'units':11,'gmv_usd':740,'cost_usd':450,'gross_profit_usd':290},</span><span class="code-line"> 'recommended_local_layout':{</span><span class="code-line">   'fact_sales_processing_partition':'order_date (logical/file partition in this harness)',</span><span class="code-line">   'access_path':'SQLite composite indexes on (order_date, product_id) and (customer_id, order_date)',</span><span class="code-line">   'distribution':'not applicable in single-node SQLite; simulate customer hash only for skew/co-location reasoning'</span><span class="code-line"> },</span><span class="code-line"> 'reasons':[</span><span class="code-line">   'Q1/Q2 date predicates prune the deterministic file corpus substantially.',</span><span class="code-line">   'Q3 benefits from customer-led access; hash-by-customer illustrates possible co-location but is poor for date-only pruning.',</span><span class="code-line">   'Q4 is a full scan by definition, so partitioning does not remove scan work for that query.',</span><span class="code-line">   'Date-by-product tiny partitions multiply file count without changing grain.',</span><span class="code-line">   'Distribution/clustering semantics are engine-specific and require re-benchmarking after migration.'</span><span class="code-line"> ],</span><span class="code-line"> 'rollback':'Keep logical schema/grain unchanged; remove/rebuild indexes or rematerialize file layout from canonical rows if evidence changes.'</span><span class="code-line">}</span><span class="code-line"></span><span class="code-line">report={</span><span class="code-line"> 'runtime':{'python':PYTHON_VERSION,'sqlite':SQLITE_VERSION,'timezone':TZ,'mode':'local/synthetic','cache_note':'SQLite page/OS cache not flushed; plans and byte accounting are primary evidence; timings are environment-specific.'},</span><span class="code-line"> 'logical_checksum':logical_checksum,</span><span class="code-line"> 'rows':len(rows),</span><span class="code-line"> 'plans':plans,</span><span class="code-line"> 'timings_ms':timings,</span><span class="code-line"> 'file_bytes':{'date_total':all_date_bytes,'month_total':all_month_bytes,'hash_total':all_hash_bytes,'date_files':len(date_manifest),'month_files':len(month_manifest),'hash_files':8,'avg_date_file':avg_date_file,'estimated_date_product_files':tiny_partition_count,'estimated_avg_date_product_bytes':avg_tiny_est,'high_cardinality_partition_count':high_card_partition_count},</span><span class="code-line"> 'scan':scan,</span><span class="code-line"> 'hash_distribution':{'customer_buckets':customer_buckets,'row_bucket_counts':row_bucket_counts,'nonempty_skew_ratio':skew_ratio},</span><span class="code-line"> 'constraint_tests':constraint_results,</span><span class="code-line"> 'query_results':{k:v['result'] for k,v in plans.items()},</span><span class="code-line"> 'layout_equivalence':{'Q1':q1_file,'Q2':q2_file,'Q3':q3_file,'Q4':q4_file},</span><span class="code-line"> 'decision':decision,</span><span class="code-line">}</span><span class="code-line">(ROOT/'reports/benchmark_report.json').write_text(json.dumps(report,indent=2),encoding='utf-8')</span><span class="code-line">(ROOT/'reports/physical_design_decision.json').write_text(json.dumps(decision,indent=2),encoding='utf-8')</span><span class="code-line"></span><span class="code-line"># Human-readable concise output used by lesson verification.</span><span class="code-line">print(f'runtime: Python {PYTHON_VERSION} / SQLite {SQLITE_VERSION} / {TZ}')</span><span class="code-line">print('continuity controls: (9, 7, 11, 740, 450, 290)')</span><span class="code-line">print('benchmark rows:',len(rows))</span><span class="code-line">print('query results:',{k:v['result'] for k,v in plans.items()})</span><span class="code-line">print('Q1 heap plan:',plans['Q1_daily_gmv']['heap_plan'])</span><span class="code-line">print('Q1 indexed plan:',plans['Q1_daily_gmv']['indexed_plan'])</span><span class="code-line">print('Q3 indexed plan:',plans['Q3_customer_window']['indexed_plan'])</span><span class="code-line">print('date files/bytes:',len(date_manifest),all_date_bytes)</span><span class="code-line">print('month files/bytes:',len(month_manifest),all_month_bytes)</span><span class="code-line">print('hash bucket counts:',row_bucket_counts,'skew_ratio:',skew_ratio)</span><span class="code-line">print('Q1 date scan:',scan['Q1_daily_gmv']['date'])</span><span class="code-line">print('Q1 hash scan:',scan['Q1_daily_gmv']['hash_customer'])</span><span class="code-line">print('Q3 hash scan:',scan['Q3_customer_window']['hash_customer'])</span><span class="code-line">print('tiny partition estimate:',tiny_partition_count,'files avg_bytes',avg_tiny_est)</span><span class="code-line">print('high-cardinality partition estimate:',high_card_partition_count,'files')</span><span class="code-line">print('constraints:',constraint_results)</span><span class="code-line">print('layout equivalence:',report['layout_equivalence'])</span><span class="code-line">print('decision logical_model_changed:',decision['logical_model_changed'])</span><span class="code-line">print('logical checksum:',logical_checksum)</span><span class="code-line">print('cleanup: rm -rf atlasmart_ch17_lab')</span></code></pre>
+                </div>
+                <h3>Expected acceptance summary</h3>
+                <div
+                  class="code-window"
+                  data-code-block=""
+                  data-language="text"
+                >
+                  <div class="code-head">
+                    <div class="code-title">
+                      <span class="code-dots"><i></i><i></i><i></i></span
+                      >expected_output.txt
+                    </div>
+                    <button class="copy-code" data-copy-code="" type="button">
+                      <svg aria-hidden="true" viewbox="0 0 24 24">
+                        <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                        <path
+                          d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                        ></path></svg
+                      >Copy
+                    </button>
+                  </div>
+                  <pre><code class="language-text"><span class="code-line">runtime: Python 3.13.5 / SQLite 3.46.1 / UTC</span><span class="code-line">continuity controls: (9, 7, 11, 740, 450, 290)</span><span class="code-line">benchmark rows: 21600</span><span class="code-line">query results: {'Q1_daily_gmv': 29600, 'Q2_date_product': 58800, 'Q3_customer_window': 214200, 'Q4_full_gmv': 1776000}</span><span class="code-line">Q1 heap plan: ['3 | 0 | 0 | SCAN fact_sales']</span><span class="code-line">Q1 indexed plan: ['4 | 0 | 0 | SEARCH fact_sales USING INDEX idx_fact_sales_date_product (order_date=?)']</span><span class="code-line">date files/bytes: 60 1411200</span><span class="code-line">month files/bytes: 3 1411200</span><span class="code-line">hash bucket counts: {'0': 4800, '1': 0, '2': 0, '3': 16800, '4': 0, '5': 0, '6': 0, '7': 0} skew_ratio: 3.5</span><span class="code-line">Q1 date scan: {'files': 1, 'bytes': 23520}</span><span class="code-line">Q3 hash scan: {'files': 1, 'bytes': 319200}</span><span class="code-line">tiny partition estimate: 240 files avg_bytes 5880.0</span><span class="code-line">high-cardinality partition estimate: 21600 files</span><span class="code-line">layout equivalence: {'Q1': 29600, 'Q2': 58800, 'Q3': 214200, 'Q4': 1776000}</span><span class="code-line">decision logical_model_changed: False</span><span class="code-line">logical checksum: c1ec45150cb017bed341ec1de5f728fbf8df533e77d7b7f1f73418c5f7cc0a4a</span></code></pre>
+                </div>
+                <h3>Verification checklist</h3>
+                <ul>
+                  <li>
+                    Open <code>reports/benchmark_report.json</code> and confirm
+                    runtime, query corpus, plans, timings, scan bytes, skew,
+                    constraints, and layout-equivalent results are present.
+                  </li>
+                  <li>
+                    Confirm Q1/Q3 are SCAN in the heap database and SEARCH in
+                    the indexed database.
+                  </li>
+                  <li>
+                    Confirm every file-layout query result equals the SQLite
+                    result.
+                  </li>
+                  <li>
+                    Confirm both negative constraint cases begin with
+                    <code>REJECTED:</code>.
+                  </li>
+                  <li>
+                    Confirm <code>physical_design_decision.json</code> says
+                    <code>logical_model_changed: false</code>.
+                  </li>
+                  <li>
+                    Rerun the script; deterministic rows/checksum/scan bytes
+                    must remain stable. Timings may vary.
+                  </li>
+                </ul>
+                <h3>Cleanup/reset</h3>
+                <div
+                  class="code-window"
+                  data-code-block=""
+                  data-language="bash"
+                >
+                  <div class="code-head">
+                    <div class="code-title">
+                      <span class="code-dots"><i></i><i></i><i></i></span
+                      >cleanup.sh
+                    </div>
+                    <button class="copy-code" data-copy-code="" type="button">
+                      <svg aria-hidden="true" viewbox="0 0 24 24">
+                        <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                        <path
+                          d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                        ></path></svg
+                      >Copy
+                    </button>
+                  </div>
+                  <pre><code class="language-bash"><span class="code-line">rm -rf atlasmart_ch17_lab</span><span class="code-line"># Windows PowerShell equivalent:</span><span class="code-line"># Remove-Item -Recurse -Force .tlasmart_ch17_lab</span></code></pre>
+                </div>
+                <p>
+                  Cleanup is appropriate for the synthetic lab. Production
+                  benchmark evidence and decision records should be
+                  versioned/retained according to engineering governance because
+                  they explain why a physical layout exists.
+                </p>
+              </section>
+              <section>
+                <h2>7. Rollback and migration</h2>
+                <p>
+                  The safest physical optimization is reversible around a stable
+                  logical model. If evidence changes, drop/rebuild indexes or
+                  rematerialize file layout from canonical inputs; do not
+                  rewrite metric semantics. Before migration, rerun the corpus
+                  on the target engine and replace SQLite/file-simulator
+                  observations with the target's plan, scan bytes, shuffle/skew,
+                  concurrency, load/backfill, and cost evidence.
+                </p>
+              </section>
+              <section>
+                <h2>8. Bridge to Chapter 18</h2>
+                <p>
+                  Chapter 17 treated file bytes largely as uncompressed physical
+                  accounting and SQLite as a row-store harness. Chapter 18
+                  explains why columnar storage changes the economics:
+                  projection, encoding/compression, predicate/statistics
+                  skipping, and vectorized execution can reduce bytes and CPU
+                  even when the logical model is unchanged. The same discipline
+                  continues—measure the target engine rather than assume a
+                  storage format is automatically fast.
+                </p>
+              </section>
+              <section>
+                <h2>Knowledge check</h2>
+                <div class="checkpoint">
+                  <h3>Check your understanding</h3>
+                  <ol>
+                    <li>What is the first invariant in the decision record?</li>
+                    <li>
+                      Which deterministic evidence is stronger than the local
+                      timing numbers?
+                    </li>
+                    <li>
+                      What local layout is recommended for date-bounded file
+                      processing?
+                    </li>
+                    <li>
+                      Why is customer hash not adopted as a universal layout?
+                    </li>
+                    <li>What is the rollback if the workload changes?</li>
+                  </ol>
+                  <details class="answer-toggle">
+                    <summary>Review the answers</summary>
+                    <div>
+                      <p>
+                        <strong>1.</strong> logical_model_changed = false;
+                        physical optimization must preserve the
+                        dimensional/metric contract.
+                      </p>
+                      <p>
+                        <strong>2.</strong> Query-result equivalence,
+                        SCAN/SEARCH plan class, exact files/bytes, constraint
+                        outcomes, row/bucket counts, and checksum.
+                      </p>
+                      <p>
+                        <strong>3.</strong> Order-date grouping, because Q1/Q2
+                        prune substantially in this specific corpus and it
+                        aligns with retention/backfill reasoning.
+                      </p>
+                      <p>
+                        <strong>4.</strong> It helps a known-customer query but
+                        is poor for date-only queries and shows 3.5× nonempty
+                        skew in this fixture.
+                      </p>
+                      <p>
+                        <strong>5.</strong> Keep the logical model;
+                        remove/rebuild physical indexes/layout and rerun the
+                        corpus rather than migrating business semantics.
+                      </p>
+                    </div>
+                  </details>
+                </div>
+              </section>
+              <section>
+                <h2>Authoritative references</h2>
+                <ul class="reference-list">
+                  <li>
+                    <a
+                      href="https://sqlite.org/eqp.html"
+                      rel="noopener"
+                      target="_blank"
+                      >SQLite — EXPLAIN QUERY PLAN</a
+                    ><span
+                      >Official documentation for interpreting SQLite
+                      SCAN/SEARCH plan evidence; the output format is explicitly
+                      not an application contract.</span
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://sqlite.org/queryplanner.html"
+                      rel="noopener"
+                      target="_blank"
+                      >SQLite — Query Planning</a
+                    ><span
+                      >Background on index-assisted row access in the local
+                      row-store harness.</span
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://sqlite.org/foreignkeys.html"
+                      rel="noopener"
+                      target="_blank"
+                      >SQLite — Foreign Key Support</a
+                    ><span
+                      >Official constraint behavior; the fixture enables
+                      <code>PRAGMA foreign_keys=ON</code> explicitly per
+                      connection.</span
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://sqlite.org/lang_createtable.html"
+                      rel="noopener"
+                      target="_blank"
+                      >SQLite — CREATE TABLE</a
+                    ><span
+                      >DDL reference for PRIMARY KEY, CHECK, and REFERENCES used
+                      in the local constraint test.</span
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://docs.python.org/3/library/sqlite3.html"
+                      rel="noopener"
+                      target="_blank"
+                      >Python — sqlite3</a
+                    ><span
+                      >Standard-library interface used to keep the mandatory lab
+                      dependency-free.</span
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://docs.python.org/3/library/hashlib.html"
+                      rel="noopener"
+                      target="_blank"
+                      >Python — hashlib</a
+                    ><span
+                      >Stable SHA-256 hashing for benchmark checksums and
+                      deterministic hash-bucket assignment.</span
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://www.kimballgroup.com/data-warehouse-business-intelligence-resources/kimball-techniques/dimensional-modeling-techniques/"
+                      rel="noopener"
+                      target="_blank"
+                      >Kimball Group — Dimensional Modeling Techniques</a
+                    ><span
+                      >Background for preserving declared fact/dimension grain
+                      while changing the physical implementation.</span
+                    >
+                  </li>
+                </ul>
+              </section>
+            </section>
+          </div>
+          <nav class="lesson-nav" aria-label="Lesson navigation">
+  <a class="prev" href="Lesson4.html">
+    <small>Previous lesson</small>
+    <strong>Clustering/Sort Keys, Distribution/Partition Keys, Co-Location,
+              and Engine-Specific Alternatives</strong>
+  </a>
+  <a class="next" href="../Chapter18/Lesson1.html">
+    <small>Next lesson</small>
+    <strong>Row vs Column Storage: Projection, Compression, CPU, Updates, and
+              Analytical Workloads</strong>
+  </a>
+</nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://mohammadijoo.github.io/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <small
+          >Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>

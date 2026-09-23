@@ -1,0 +1,1234 @@
+<!doctype html>
+
+<html data-theme="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Turn scan bytes, row-group elimination, compression size, CPU timing, cache policy, and correctness checks into a physical-design decision record that reduces work while leaving the dimensional model and control totals unchanged."
+      name="description"
+    />
+    <meta content="Abolfazl Mohammadijoo" name="author" />
+    <meta content="dark light" name="color-scheme" />
+    <meta content="#05070b" name="theme-color" />
+    <title>
+      Estimate Scan Bytes/CPU and Redesign Table Layout to Reduce Work Without
+      Corrupting the Logical Model | Data Warehousing and Dimensional Modeling |
+      Big Data Academy
+    </title>
+    <link
+      href="../../../assets/icons/favicon.svg"
+      rel="icon"
+      type="image/svg+xml"
+    />
+    <link href="../../../assets/css/styles.css?v=20260805.2" rel="stylesheet" />
+    <style data-dw-course-consistency>
+      .lesson-header h1, .lesson-content h2, .lesson-content h3,
+      .lesson-content p, .lesson-content li, .lesson-content th,
+      .lesson-content td, .lesson-nav strong, .sidebar-lesson {
+        overflow-wrap: anywhere;
+      }
+      .lesson-content code:not(pre code) {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        white-space: normal;
+      }
+      .lesson-content > *, .objective, .callout, .checkpoint, .code-window {
+        min-width: 0;
+        max-width: 100%;
+      }
+      @media (max-width: 700px) {
+        .lesson-toc ol { columns: 1; }
+        .lesson-content th, .lesson-content td { word-break: break-word; }
+      }
+    </style>
+    <script>
+      try {
+        const t = localStorage.getItem("big-data-academy-theme");
+        if (t) document.documentElement.dataset.theme = t;
+        else if (matchMedia("(prefers-color-scheme:light)").matches)
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="lesson-page">
+    <div class="reading-progress" data-reading-progress=""></div>
+    <div aria-hidden="true" class="site-grid"></div>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-header="">
+      <div class="header-inner">
+        <a
+          aria-label="Big Data Academy home"
+          class="brand"
+          href="../../../index.html"
+          ><span aria-hidden="true" class="brand-mark"
+            ><svg aria-hidden="true" viewbox="0 0 24 24">
+              <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+              <path
+                d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"
+              ></path></svg></span
+          ><span class="brand-copy"
+            ><strong>Big Data Academy</strong
+            ><small>Query · move · process · govern</small></span
+          ></a
+        >
+        <nav aria-label="Primary navigation" class="desktop-nav">
+          <a href="../../../index.html#roadmap">Learning path</a
+          ><a class="is-active" href="../../../index.html#courses">Courses</a
+          ><a href="../../../index.html#method">Method</a
+          ><a
+            href="https://github.com/mohammadijoo/Big_Data_Academy"
+            rel="noopener"
+            target="_blank"
+            >GitHub</a
+          >
+        </nav>
+        <div class="header-actions">
+          <button
+            aria-label="Toggle color theme"
+            class="icon-button"
+            data-theme-toggle=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg></button
+          ><button
+            aria-expanded="false"
+            aria-label="Open navigation"
+            class="icon-button mobile-menu-button"
+            data-mobile-menu-button=""
+            type="button"
+          >
+            <svg aria-hidden="true" viewbox="0 0 24 24">
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <nav
+        aria-label="Mobile navigation"
+        class="mobile-nav"
+        data-mobile-menu=""
+      >
+        <a href="../../../index.html#roadmap">Learning path</a
+        ><a href="../../../index.html#courses">Courses</a
+        ><a href="../../../index.html#method">Method</a
+        ><a href="https://github.com/mohammadijoo/Big_Data_Academy">GitHub</a>
+      </nav>
+    </header>
+    <div class="sidebar-overlay" data-sidebar-overlay=""></div>
+    <main class="lesson-shell" id="main-content">
+      <aside class="course-sidebar" data-course-sidebar="">
+<div class="sidebar-head">
+<a href="../index.html"><span class="course-glyph">DW</span>
+<div>
+<small>Course 17</small><strong>Data Warehousing and Dimensional Modeling</strong>
+</div></a>
+<button aria-label="Close course navigation" data-sidebar-close="" type="button">
+            ×
+          </button>
+</div>
+<label class="sidebar-search"><svg aria-hidden="true" viewBox="0 0 24 24">
+<circle cx="11" cy="11" r="7"></circle>
+<path d="m20 20-4-4"></path></svg><input data-sidebar-search="" placeholder="Search 150 lessons..." type="search"/></label>
+<nav aria-label="Data Warehousing and Dimensional Modeling curriculum" class="sidebar-curriculum">
+<details class="sidebar-chapter">
+<summary>
+<span>01</span>Data Warehouse Foundations: OLTP vs OLAP,
+              Analytical Workloads, Architecture, and Lab Dataset
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter01/Lesson1.html"><span>01</span>Operational vs Analytical Systems: Transaction
+                Shape, History, Concurrency, Query Complexity, and Data
+                Freshness<i>Current</i></a><a class="sidebar-lesson" href="../Chapter01/Lesson2.html"><span>02</span>Warehouse, Data Mart, ODS, Data Lake, Lakehouse,
+                Semantic Layer, and BI Platform: Responsibilities and
+                Boundaries</a><a class="sidebar-lesson" href="../Chapter01/Lesson3.html"><span>03</span>Classic Enterprise Warehouse, Dimensional Bus,
+                Modern ELT, and Lakehouse-Centric Architectural Styles</a><a class="sidebar-lesson" href="../Chapter01/Lesson4.html"><span>04</span>Batch, Micro-Batch, Streaming/CDC, and
+                Near-Real-Time Warehousing: Freshness vs Complexity Tradeoffs</a><a class="sidebar-lesson" href="../Chapter01/Lesson5.html"><span>05</span>Define a Course Case Study with Source Systems,
+                Business Processes, KPIs, SLAs, Security, and Data Quality
+                Expectations</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>02</span>Requirements Engineering: Business Processes,
+              Questions, Metrics, Dimensions, and Grain
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter02/Lesson1.html"><span>01</span>Start from Decisions and Questions:
+                Stakeholders, Use Cases, Reports, Explorations, and Data
+                Products</a><a class="sidebar-lesson" href="../Chapter02/Lesson2.html"><span>02</span>Identify Business Processes and Events Before
+                Designing Tables</a><a class="sidebar-lesson" href="../Chapter02/Lesson3.html"><span>03</span>Declare Grain in One Precise Sentence and Reject
+                Mixed-Grain Facts</a><a class="sidebar-lesson" href="../Chapter02/Lesson4.html"><span>04</span>Separate Measures, Dimensions, Descriptive
+                Attributes, Degenerate Dimensions, and Operational Metadata</a><a class="sidebar-lesson" href="../Chapter02/Lesson5.html"><span>05</span>Build a Requirements-to-Model Traceability
+                Matrix Linking Every KPI and Slice to Source and Grain</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>03</span>Dimensional Modeling Foundations: Facts,
+              Dimensions, Star Schemas, and Query Semantics
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter03/Lesson1.html"><span>01</span>Why Star Schemas Optimize Understandability and
+                Analytical Access Patterns</a><a class="sidebar-lesson" href="../Chapter03/Lesson2.html"><span>02</span>Fact Tables vs Dimension Tables: Keys, Measures,
+                Descriptors, Width, and Growth Behavior</a><a class="sidebar-lesson" href="../Chapter03/Lesson3.html"><span>03</span>Foreign-Key Relationships, Surrogate Keys,
+                Referential Integrity, and Orphan Handling</a><a class="sidebar-lesson" href="../Chapter03/Lesson4.html"><span>04</span>Star vs Snowflake vs Flat Wide Tables: Semantic,
+                Performance, Maintenance, and Tooling Tradeoffs</a><a class="sidebar-lesson" href="../Chapter03/Lesson5.html"><span>05</span>Model a Sales/Orders Process as a Star Schema
+                and Validate Common BI Queries Against the Declared Grain</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>04</span>Fact Table Design: Additive, Semi-Additive,
+              Non-Additive Measures, and Factless Facts
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter04/Lesson1.html"><span>01</span>Additive Measures and Safe Summation Across
+                Dimensions</a><a class="sidebar-lesson" href="../Chapter04/Lesson2.html"><span>02</span>Semi-Additive Balances/Snapshots: Why Time Often
+                Requires Different Aggregation</a><a class="sidebar-lesson" href="../Chapter04/Lesson3.html"><span>03</span>Ratios, Percentages, Averages, Distinct Counts,
+                and Other Non-Additive Metrics</a><a class="sidebar-lesson" href="../Chapter04/Lesson4.html"><span>04</span>Factless Fact Tables for Coverage, Eligibility,
+                Attendance, Conditions, and Event Occurrence</a><a class="sidebar-lesson" href="../Chapter04/Lesson5.html"><span>05</span>Audit a Metric Catalog for Double Counting,
+                Incorrect Grain, and Unsafe Aggregation</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>05</span>Dimension Design: Descriptive Context, Hierarchies,
+              Attributes, and Analytical Usability
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter05/Lesson1.html"><span>01</span>Dimension Attributes as Human-Readable
+                Analytical Context, Not Operational Normalization Exercises</a><a class="sidebar-lesson" href="../Chapter05/Lesson2.html"><span>02</span>Natural/Business Keys vs Surrogate Keys, Unknown
+                Members, and Durable Identity</a><a class="sidebar-lesson" href="../Chapter05/Lesson3.html"><span>03</span>Hierarchies, Levels, Ragged/Unbalanced
+                Hierarchies, and Drill Paths</a><a class="sidebar-lesson" href="../Chapter05/Lesson4.html"><span>04</span>Wide Denormalized Dimensions vs Snowflaking,
+                Outriggers, and Maintenance Tradeoffs</a><a class="sidebar-lesson" href="../Chapter05/Lesson5.html"><span>05</span>Design a Customer/Product/Geography Dimension
+                Set for Usability, History, and Governance</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>06</span>Conformed Dimensions, Enterprise Bus Architecture,
+              and Cross-Process Analytics
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter06/Lesson1.html"><span>01</span>Conformed Dimensions and Facts: Shared Meaning
+                Across Business Processes</a><a class="sidebar-lesson" href="../Chapter06/Lesson2.html"><span>02</span>Bus Matrix: Rows as Processes, Columns as
+                Dimensions, and Incremental Warehouse Delivery</a><a class="sidebar-lesson" href="../Chapter06/Lesson3.html"><span>03</span>Enterprise Definitions, Stewardship,
+                Master/Reference Data, and Preventing Metric Drift</a><a class="sidebar-lesson" href="../Chapter06/Lesson4.html"><span>04</span>Shared Date/Product/Customer Dimensions Across
+                Marts with Different Grain</a><a class="sidebar-lesson" href="../Chapter06/Lesson5.html"><span>05</span>Build a Bus Matrix and Identify Where Supposedly
+                Shared Dimensions Are Not Actually Conformed</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>07</span>Slowly Changing Dimensions: Types 0–7, History, and
+              Effective Dating
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter07/Lesson1.html"><span>01</span>Type 0/1/2/3 Fundamentals: Preserve, Overwrite,
+                Add Version Rows, or Carry Alternate Values</a><a class="sidebar-lesson" href="../Chapter07/Lesson2.html"><span>02</span>Type 2 Mechanics: Effective/Expiration Dates,
+                Current Flag, Surrogate Keys, and Non-Overlapping Windows</a><a class="sidebar-lesson" href="../Chapter07/Lesson3.html"><span>03</span>Hybrid SCD Patterns (Types 4–7),
+                Mini-Dimensions, and Current-vs-Historical Attribute
+                Requirements</a><a class="sidebar-lesson" href="../Chapter07/Lesson4.html"><span>04</span>Detect Changes Reliably: Hashes, Column
+                Comparison, Source CDC, Null Semantics, and Late Corrections</a><a class="sidebar-lesson" href="../Chapter07/Lesson5.html"><span>05</span>Implement and Test an SCD2 Load Including Repeat
+                Runs, Backdated Changes, Deletes, and Unknown Members</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>08</span>Special Dimension Patterns: Date/Time,
+              Role-Playing, Junk, Degenerate, Mini, and Inferred Members
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter08/Lesson1.html"><span>01</span>Date Dimension Rich Attributes, Fiscal
+                Calendars, Holidays, Weeks, and Why Date Is More Than a
+                Timestamp</a><a class="sidebar-lesson" href="../Chapter08/Lesson2.html"><span>02</span>Role-Playing Dimensions for Order/Ship/Due Dates
+                and Other Reused Context</a><a class="sidebar-lesson" href="../Chapter08/Lesson3.html"><span>03</span>Junk Dimensions for Low-Cardinality Flags and
+                Degenerate Dimensions for Transaction Identifiers</a><a class="sidebar-lesson" href="../Chapter08/Lesson4.html"><span>04</span>Mini-Dimensions for Rapidly Changing Attributes
+                and Profile/Segment History</a><a class="sidebar-lesson" href="../Chapter08/Lesson5.html"><span>05</span>Inferred/Early-Arriving Dimension Members and
+                Safe Completion When Source Details Arrive Later</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>09</span>Bridge Tables and Many-to-Many Analytical
+              Relationships
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter09/Lesson1.html"><span>01</span>Why Direct Many-to-Many Joins Can Duplicate
+                Facts and Corrupt Metrics</a><a class="sidebar-lesson" href="../Chapter09/Lesson2.html"><span>02</span>Bridge Tables for Multivalued Dimensions,
+                Groups, Memberships, and Hierarchies</a><a class="sidebar-lesson" href="../Chapter09/Lesson3.html"><span>03</span>Weighting/Allocation Factors and When Allocated
+                Measures Are Business Rules, Not Technical Tricks</a><a class="sidebar-lesson" href="../Chapter09/Lesson4.html"><span>04</span>Temporal Membership in Bridges, Effective
+                Dating, and Historical Reconstruction</a><a class="sidebar-lesson" href="../Chapter09/Lesson5.html"><span>05</span>Validate Many-to-Many Queries with Control
+                Totals to Prove No Double Counting</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>10</span>Transaction, Periodic Snapshot, and Accumulating
+              Snapshot Fact Tables
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter10/Lesson1.html"><span>01</span>Transaction Facts for Atomic Events and
+                Immutable Business Activity</a><a class="sidebar-lesson" href="../Chapter10/Lesson2.html"><span>02</span>Periodic Snapshots for Inventory, Account
+                Balances, Daily State, and Semi-Additive Metrics</a><a class="sidebar-lesson" href="../Chapter10/Lesson3.html"><span>03</span>Accumulating Snapshots for Pipeline/Workflow
+                Milestones, Reopened Processes, and Updating Rows</a><a class="sidebar-lesson" href="../Chapter10/Lesson4.html"><span>04</span>Choosing Multiple Fact Tables for One Business
+                Process Instead of Forcing One Universal Grain</a><a class="sidebar-lesson" href="../Chapter10/Lesson5.html"><span>05</span>Model an Order Fulfillment Process Using
+                Transaction + Periodic + Accumulating Facts and Compare
+                Questions Supported</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>11</span>Surrogate Keys, Late-Arriving Facts/Dimensions,
+              Deletes, Restatements, and History Corrections
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter11/Lesson1.html"><span>01</span>Surrogate Key Assignment, Natural Key Reuse,
+                Source-System Key Collisions, and Durable Identity</a><a class="sidebar-lesson" href="../Chapter11/Lesson2.html"><span>02</span>Late-Arriving Facts: Resolve Dimension Version
+                as of Event Time Without Assigning Current History
+                Incorrectly</a><a class="sidebar-lesson" href="../Chapter11/Lesson3.html"><span>03</span>Late-Arriving Dimension Changes, Backdated SCD2
+                Splits, and Historical Restatement Policies</a><a class="sidebar-lesson" href="../Chapter11/Lesson4.html"><span>04</span>Source Deletes, Soft Deletes, Inactivation, GDPR
+                Erasure, and Analytical Auditability</a><a class="sidebar-lesson" href="../Chapter11/Lesson5.html"><span>05</span>Design a Correction Workflow that Preserves
+                Reproducibility While Supporting Authorized Restatements</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>12</span>Source System Profiling, Data Contracts, Lineage,
+              and Ingestion Readiness
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter12/Lesson1.html"><span>01</span>Inventory Sources, Owners, Extraction Methods,
+                Change Mechanisms, SLAs, and Failure Modes</a><a class="sidebar-lesson" href="../Chapter12/Lesson2.html"><span>02</span>Profile Nulls, Uniqueness, Ranges,
+                Distributions, Referential Integrity, Duplicates, and Drift</a><a class="sidebar-lesson" href="../Chapter12/Lesson3.html"><span>03</span>Source-to-Target Mapping Specifications,
+                Transform Rules, Data Types, Units, Time Zones, and Codes</a><a class="sidebar-lesson" href="../Chapter12/Lesson4.html"><span>04</span>Data Contracts and Schema Change Detection:
+                Compatible vs Breaking Changes</a><a class="sidebar-lesson" href="../Chapter12/Lesson5.html"><span>05</span>Build a Source Readiness Report and Reject
+                Ambiguous Semantics Before Pipeline Development</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>13</span>Data Quality Engineering: Validation,
+              Standardization, Matching, Reconciliation, and Quarantine
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter13/Lesson1.html"><span>01</span>Define Data Quality Dimensions: Completeness,
+                Validity, Uniqueness, Consistency, Timeliness, and Accuracy</a><a class="sidebar-lesson" href="../Chapter13/Lesson2.html"><span>02</span>Standardize Names, Codes, Units, Time Zones,
+                Encodings, and Reference Data</a><a class="sidebar-lesson" href="../Chapter13/Lesson3.html"><span>03</span>Deduplication and Entity Matching:
+                Deterministic/Probabilistic Concepts and Stewardship
+                Boundaries</a><a class="sidebar-lesson" href="../Chapter13/Lesson4.html"><span>04</span>Quarantine Bad Records, Preserve Raw Evidence,
+                Repair/Reprocess, and Avoid Silent Coercion</a><a class="sidebar-lesson" href="../Chapter13/Lesson5.html"><span>05</span>Build Reconciliation Tests from Source
+                Counts/Sums/Checksums to Warehouse Facts and Dimensions</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>14</span>ETL vs ELT Architecture: Staging, Raw, Integration,
+              Presentation, and Transform Ownership
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter14/Lesson1.html"><span>01</span>ETL vs ELT: Compute Location, Pushdown,
+                Auditability, Cost, Lock-In, and Tooling Tradeoffs</a><a class="sidebar-lesson" href="../Chapter14/Lesson2.html"><span>02</span>Landing/Raw/Staging/Integration/Presentation
+                Layers and When Each Layer Adds Value</a><a class="sidebar-lesson" href="../Chapter14/Lesson3.html"><span>03</span>Immutable Raw Data, Replayability, Audit
+                Columns, Batch IDs, Load Timestamps, and Lineage</a><a class="sidebar-lesson" href="../Chapter14/Lesson4.html"><span>04</span>Transformation Modularity, Reusable Intermediate
+                Models, Dependency Graphs, and Environment Promotion</a><a class="sidebar-lesson" href="../Chapter14/Lesson5.html"><span>05</span>Design a Layered Pipeline for the Case Study and
+                Justify Every Persisted Intermediate Dataset</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>15</span>Incremental Loading, CDC, Watermarks, High-Water
+              Marks, and Idempotency
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter15/Lesson1.html"><span>01</span>Full Refresh vs Incremental Loads: Volume,
+                Freshness, Correctness, and Recovery Tradeoffs</a><a class="sidebar-lesson" href="../Chapter15/Lesson2.html"><span>02</span>Timestamp/Sequence Watermarks, Overlap Windows,
+                Clock Skew, Missing Rows, and Source Update Semantics</a><a class="sidebar-lesson" href="../Chapter15/Lesson3.html"><span>03</span>Log-Based CDC: Inserts/Updates/Deletes,
+                Before/After Images, Ordering, Transactions, and Schema
+                Evolution</a><a class="sidebar-lesson" href="../Chapter15/Lesson4.html"><span>04</span>Idempotent Merge/Upsert Patterns, Batch
+                Identity, Deduplication, and Retry Safety</a><a class="sidebar-lesson" href="../Chapter15/Lesson5.html"><span>05</span>Prove an Incremental Pipeline Handles Restart,
+                Duplicate Delivery, Late Data, Deletes, and Reprocessing</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>16</span>Orchestration, Dependencies, Scheduling, Backfills,
+              SLAs, and Failure Recovery
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter16/Lesson1.html"><span>01</span>DAGs, Dependencies, Data Availability
+                Sensors/Checks, and Avoiding Clock-Only Scheduling</a><a class="sidebar-lesson" href="../Chapter16/Lesson2.html"><span>02</span>Retries, Timeouts, Idempotent Tasks, Partial
+                Failure, Compensation, and Operator Intervention</a><a class="sidebar-lesson" href="../Chapter16/Lesson3.html"><span>03</span>Partition-Aware Backfills, Historical
+                Reprocessing, Resource Isolation, and Protecting Current
+                Loads</a><a class="sidebar-lesson" href="../Chapter16/Lesson4.html"><span>04</span>SLAs/SLOs for Freshness, Completeness, Duration,
+                and Downstream Availability</a><a class="sidebar-lesson" href="../Chapter16/Lesson5.html"><span>05</span>Design an Operational Runbook for a Failed Daily
+                Load Including Root Cause, Repair, Replay, and Communication</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>17</span>Physical Warehouse Design: Schemas, Tables,
+              Constraints, Partitioning, Clustering, and Distribution
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter17/Lesson1.html"><span>01</span>Logical Dimensional Model vs Physical
+                Implementation in Row Stores, Column Stores, and Cloud
+                Warehouses</a><a class="sidebar-lesson" href="../Chapter17/Lesson2.html"><span>02</span>Schema/Database Organization, Naming, Ownership,
+                Constraints, and Environment/Domain Boundaries</a><a class="sidebar-lesson" href="../Chapter17/Lesson3.html"><span>03</span>Partitioning by Date/Range/Hash: Pruning,
+                Retention, Backfill, Small Partitions, and Skew</a><a class="sidebar-lesson" href="../Chapter17/Lesson4.html"><span>04</span>Clustering/Sort Keys, Distribution/Partition
+                Keys, Co-Location, and Engine-Specific Alternatives</a><a class="sidebar-lesson" href="../Chapter17/Lesson5.html"><span>05</span>Create a Physical Design from Workload Evidence
+                Rather Than Copying Generic Partition Recommendations</a>
+</div>
+</details>
+<details class="sidebar-chapter" open="">
+<summary>
+<span>18</span>Columnar Storage, Compression, Encoding, Vectorized
+              Execution, and Analytical Scan Economics
+            </summary>
+<div>
+<a class="sidebar-lesson" href="Lesson1.html"><span>01</span>Row vs Column Storage: Projection, Compression,
+                CPU, Updates, and Analytical Workloads</a><a class="sidebar-lesson" href="Lesson2.html"><span>02</span>Column Encodings,
+                Dictionary/Run-Length/Delta-Like Compression Concepts and Data
+                Distribution</a><a class="sidebar-lesson" href="Lesson3.html"><span>03</span>Predicate/Projection Pushdown, Zone Maps/Min-Max
+                Statistics, Partition Pruning, and Data Skipping</a><a class="sidebar-lesson" href="Lesson4.html"><span>04</span>Vectorized Execution, Batch Processing, SIMD
+                Concepts, and Why Analytical Engines Differ from OLTP DBMSs</a><a aria-current="page" class="sidebar-lesson is-current" href="Lesson5.html"><span>05</span>Estimate Scan Bytes/CPU and Redesign Table
+                Layout to Reduce Work Without Corrupting the Logical Model</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>19</span>Materialized Views, Aggregate Tables, Cubes, and
+              Precomputation
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter19/Lesson1.html"><span>01</span>When Precomputation Beats Repeated Raw Fact
+                Scans: Latency, Freshness, and Maintenance Cost</a><a class="sidebar-lesson" href="../Chapter19/Lesson2.html"><span>02</span>Aggregate Fact Tables at Higher Grain and
+                Semantic Rules for Reconciliation to Base Facts</a><a class="sidebar-lesson" href="../Chapter19/Lesson3.html"><span>03</span>Materialized View Refresh Strategies,
+                Incremental Refresh Concepts, and Dependency Management</a><a class="sidebar-lesson" href="../Chapter19/Lesson4.html"><span>04</span>OLAP Cubes/Pre-Aggregation, Sparse Dimensional
+                Combinations, and Modern Semantic Acceleration</a><a class="sidebar-lesson" href="../Chapter19/Lesson5.html"><span>05</span>Design an Acceleration Layer with Clear
+                Freshness and Correctness Contracts</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>20</span>Semantic Layers, Metrics, Dimensions, Measures, and
+              BI Contracts
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter20/Lesson1.html"><span>01</span>Why a Warehouse Schema Alone Does Not Guarantee
+                Consistent Business Metrics</a><a class="sidebar-lesson" href="../Chapter20/Lesson2.html"><span>02</span>Central Metric Definitions, Measures vs Metrics,
+                Filters, Time Windows, Currency/Unit Semantics, and Ownership</a><a class="sidebar-lesson" href="../Chapter20/Lesson3.html"><span>03</span>Semantic Models, Relationships, Drill Paths,
+                Row-Level Security, and Tool Independence</a><a class="sidebar-lesson" href="../Chapter20/Lesson4.html"><span>04</span>Metric Versioning, Deprecation, Tests,
+                Documentation, and Preventing Dashboard-Specific Business
+                Logic</a><a class="sidebar-lesson" href="../Chapter20/Lesson5.html"><span>05</span>Build a Governed Metric for Revenue/Active
+                Customer/Retention and Trace It to Facts, Dimensions, and
+                Sources</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>21</span>Data Marts, Domain Data Products, Self-Service
+              Analytics, and Ownership
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter21/Lesson1.html"><span>01</span>Dependent vs Independent Marts and Why
+                Independent Silos Break Conformance</a><a class="sidebar-lesson" href="../Chapter21/Lesson2.html"><span>02</span>Domain-Oriented Marts/Data Products with Shared
+                Enterprise Dimensions and Metrics</a><a class="sidebar-lesson" href="../Chapter21/Lesson3.html"><span>03</span>Wide Reporting Tables vs Reusable Dimensional
+                Marts: Speed, Duplication, and Semantic Drift</a><a class="sidebar-lesson" href="../Chapter21/Lesson4.html"><span>04</span>Self-Service Sandboxes, Certified Data,
+                Promotion, Ownership, and Access Boundaries</a><a class="sidebar-lesson" href="../Chapter21/Lesson5.html"><span>05</span>Design a Marketing/Finance/Operations Mart
+                Strategy that Reuses Conformed Data Without Blocking Domain
+                Delivery</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>22</span>Security, Privacy, Row/Column Policies, Masking,
+              and Least-Privilege Analytics
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter22/Lesson1.html"><span>01</span>Authentication, Roles, Groups, Service
+                Identities, Separation of Duties, and Environment Isolation</a><a class="sidebar-lesson" href="../Chapter22/Lesson2.html"><span>02</span>Row-Level/Column-Level Security, Dynamic
+                Masking, Tokenization, and Policy Placement</a><a class="sidebar-lesson" href="../Chapter22/Lesson3.html"><span>03</span>PII Classification, Purpose Limitation,
+                Retention, Consent, and Right-to-Delete in Historical
+                Warehouses</a><a class="sidebar-lesson" href="../Chapter22/Lesson4.html"><span>04</span>Secure Views/Semantic Layer Policies vs Physical
+                Data Access and Avoiding Bypass Paths</a><a class="sidebar-lesson" href="../Chapter22/Lesson5.html"><span>05</span>Threat-Model a Warehouse Including BI Exports,
+                Shared Credentials, Staging Data, Backups, and Over-Broad
+                Analyst Roles</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>23</span>Metadata, Data Catalogs, Lineage, Documentation,
+              Ownership, and Governance
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter23/Lesson1.html"><span>01</span>Technical vs Business Metadata, Data Dictionary,
+                Schema Registry, Metric Catalog, and Glossary</a><a class="sidebar-lesson" href="../Chapter23/Lesson2.html"><span>02</span>Column/Table/Job Lineage from Source to
+                Dashboard and Impact Analysis for Changes</a><a class="sidebar-lesson" href="../Chapter23/Lesson3.html"><span>03</span>Owners, Stewards, SLAs, Certification,
+                Deprecation, and Data Product Contracts</a><a class="sidebar-lesson" href="../Chapter23/Lesson4.html"><span>04</span>Automated Documentation from Code/Models vs
+                Human Business Context and Review</a><a class="sidebar-lesson" href="../Chapter23/Lesson5.html"><span>05</span>Build an Impact Analysis for a Source Column
+                Change and Identify Every Model, Metric, Report, and Consumer at
+                Risk</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>24</span>Testing Analytical Pipelines: Unit, Schema,
+              Quality, Reconciliation, and Regression Tests
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter24/Lesson1.html"><span>01</span>Schema/Contract Tests: Types, Nullability, Keys,
+                Accepted Values, and Relationships</a><a class="sidebar-lesson" href="../Chapter24/Lesson2.html"><span>02</span>Data Quality/Business Tests: Invariants, Ranges,
+                Freshness, Duplicates, and Referential Integrity</a><a class="sidebar-lesson" href="../Chapter24/Lesson3.html"><span>03</span>SCD/Incremental/CDC Tests for History, Late
+                Data, Deletes, Idempotency, and Restart</a><a class="sidebar-lesson" href="../Chapter24/Lesson4.html"><span>04</span>Metric/Reconciliation Tests Against Trusted
+                Source Totals and Prior Period Expectations</a><a class="sidebar-lesson" href="../Chapter24/Lesson5.html"><span>05</span>Create CI + Production Data Tests with Severity,
+                Quarantine, Alerting, and Waiver Governance</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>25</span>Observability and Data Reliability: Freshness,
+              Volume, Schema, Lineage, and Incident Response
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter25/Lesson1.html"><span>01</span>Pipeline Metrics: Duration, Records/Bytes,
+                Error/Reject Counts, Lag, Retries, and Resource Use</a><a class="sidebar-lesson" href="../Chapter25/Lesson2.html"><span>02</span>Data Observability: Freshness, Volume,
+                Distribution, Schema, Lineage, and Quality Changes</a><a class="sidebar-lesson" href="../Chapter25/Lesson3.html"><span>03</span>End-to-End Data SLOs from Source Availability to
+                Certified Dashboard/Data Product</a><a class="sidebar-lesson" href="../Chapter25/Lesson4.html"><span>04</span>Incident Triage: Source Failure vs Pipeline Bug
+                vs Warehouse Performance vs Semantic Error</a><a class="sidebar-lesson" href="../Chapter25/Lesson5.html"><span>05</span>Build a Data Incident Runbook with Detection,
+                Blast Radius, Consumer Communication, Repair, Backfill, and
+                Postmortem</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>26</span>Performance Engineering and Workload Management:
+              Scan Reduction, Joins, Aggregations, and Concurrency
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter26/Lesson1.html"><span>01</span>Profile Representative BI/Ad-Hoc/ELT Workloads
+                by Scan, Join, Shuffle, Spill, Queue, and Tail Latency</a><a class="sidebar-lesson" href="../Chapter26/Lesson2.html"><span>02</span>Join Strategies and Dimensional Modeling
+                Benefits: Broadcast/Hash/Merge Concepts, Cardinality, and
+                Skew</a><a class="sidebar-lesson" href="../Chapter26/Lesson3.html"><span>03</span>Partition/Cluster Pruning, Predicate Pushdown,
+                Materialization, Approximation, and Query Rewrites</a><a class="sidebar-lesson" href="../Chapter26/Lesson4.html"><span>04</span>Workload Management, Queues/Warehouses/Resource
+                Groups, Concurrency Scaling, and Noisy-Neighbor Isolation</a><a class="sidebar-lesson" href="../Chapter26/Lesson5.html"><span>05</span>Benchmark Before/After Changes and Track
+                Performance Regression per Metric/Data Product</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>27</span>Cloud Warehouses and Serverless Analytics:
+              Separation of Storage/Compute, Elasticity, and Cost
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter27/Lesson1.html"><span>01</span>Shared-Nothing vs Disaggregated Storage/Compute
+                vs Serverless Warehouses: Architectural Consequences</a><a class="sidebar-lesson" href="../Chapter27/Lesson2.html"><span>02</span>Elastic Compute, Autoscaling, Concurrency,
+                Pausing, Warehouses/Clusters, and Cold-Start Tradeoffs</a><a class="sidebar-lesson" href="../Chapter27/Lesson3.html"><span>03</span>Object Storage, Columnar Formats, Metadata
+                Services, Caching, and Remote Shuffle Concepts</a><a class="sidebar-lesson" href="../Chapter27/Lesson4.html"><span>04</span>Cost Models:
+                Scan/Compute/Credits/Slots/Storage/Egress and How Physical
+                Design Changes Spend</a><a class="sidebar-lesson" href="../Chapter27/Lesson5.html"><span>05</span>Translate the Vendor-Neutral Model into a Cloud
+                Warehouse and Document Which Optimizations Are
+                Engine-Specific</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>28</span>Lakehouse Coexistence: Open Table Formats,
+              Medallion Layers, Warehouse Serving, and Federation
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter28/Lesson1.html"><span>01</span>Warehouse vs Lakehouse: Governance,
+                Transactions, Performance, Open Formats, and Ecosystem
+                Tradeoffs</a><a class="sidebar-lesson" href="../Chapter28/Lesson2.html"><span>02</span>Bronze/Silver/Gold Layering vs Dimensional
+                Models: Complementary Concepts, Not Automatic Replacements</a><a class="sidebar-lesson" href="../Chapter28/Lesson3.html"><span>03</span>Apache Iceberg/Delta/Hudi Table-Format Concepts,
+                Snapshot Metadata, Schema Evolution, and Warehouse
+                Interoperability</a><a class="sidebar-lesson" href="../Chapter28/Lesson4.html"><span>04</span>Federated Query vs Data Movement, One-Copy
+                Dreams, Performance, Consistency, and Governance</a><a class="sidebar-lesson" href="../Chapter28/Lesson5.html"><span>05</span>Design a Hybrid Lakehouse+Warehouse Architecture
+                with Clear System of Record, Serving, and Data-Movement
+                Boundaries</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>29</span>Migration and Modernization: Legacy EDW, Mart
+              Consolidation, Cloud Moves, and Semantic Preservation
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter29/Lesson1.html"><span>01</span>Inventory Schemas, ETL Jobs, Reports, Stored
+                Procedures, Dependencies, SLAs, and Hidden Business Logic</a><a class="sidebar-lesson" href="../Chapter29/Lesson2.html"><span>02</span>Rehost/Replatform/Refactor Strategies and Why
+                Moving Tables Without Semantics Preserves Technical Debt</a><a class="sidebar-lesson" href="../Chapter29/Lesson3.html"><span>03</span>Parallel Run, Dual Loads, Historical Backfill,
+                CDC Cutover, and Data Reconciliation</a><a class="sidebar-lesson" href="../Chapter29/Lesson4.html"><span>04</span>Preserve/Version Metrics and Semantic Behavior
+                Across Old/New Platforms</a><a class="sidebar-lesson" href="../Chapter29/Lesson5.html"><span>05</span>Build a Migration Acceptance Plan Covering Data,
+                Query Results, Performance, Cost, Security, and Rollback</a>
+</div>
+</details>
+<details class="sidebar-chapter">
+<summary>
+<span>30</span>Production Capstone: Deliver a Governed, Testable,
+              Performant Analytical Warehouse
+            </summary>
+<div>
+<a class="sidebar-lesson" href="../Chapter30/Lesson1.html"><span>01</span>Define Business Processes, Bus Matrix, Grain,
+                Facts, Dimensions, Metrics, Source Contracts, SLAs, and Security
+                Requirements</a><a class="sidebar-lesson" href="../Chapter30/Lesson2.html"><span>02</span>Implement Dimensional Models, SCDs/Snapshots,
+                Incremental/CDC Loads, Data Quality, Orchestration, and Semantic
+                Metrics</a><a class="sidebar-lesson" href="../Chapter30/Lesson3.html"><span>03</span>Choose Physical Layout, Materialization, Marts,
+                Workload Isolation, and Cloud/Lakehouse Integration from
+                Measurements</a><a class="sidebar-lesson" href="../Chapter30/Lesson4.html"><span>04</span>Test, Reconcile, Load-Test, Secure, Observe,
+                Backfill, Recover, and Execute a Data Incident/DR Exercise</a><a class="sidebar-lesson" href="../Chapter30/Lesson5.html"><span>05</span>Present the Warehouse as an Evidence-Based Data
+                Product with Lineage, Costs, Known Limitations, Ownership, and
+                Evolution Roadmap</a>
+</div>
+</details>
+</nav>
+</aside>
+      <div class="lesson-main">
+        <div class="lesson-mobile-bar">
+          <button data-sidebar-open="" type="button">
+            <span>Course navigation</span><span>Chapter 18 · Lesson 05</span>
+          </button>
+        </div>
+        <article class="lesson-container">
+          <nav aria-label="Breadcrumb" class="lesson-breadcrumbs">
+            <a href="../../../index.html">Academy</a><span>/</span
+            ><a href="../index.html"
+              >Data Warehousing and Dimensional Modeling</a
+            ><span>/</span><span>Chapter 18 · Lesson 05</span>
+          </nav>
+          <header class="lesson-header">
+            <p class="eyebrow">
+              Chapter 18 · Columnar Storage, Compression, Encoding, Vectorized
+              Execution, and Analytical Scan Economics
+            </p>
+            <h1>
+              Estimate Scan Bytes/CPU and Redesign Table Layout to Reduce Work
+              Without Corrupting the Logical Model
+            </h1>
+            <p>
+              Turn scan bytes, row-group elimination, compression size, CPU
+              timing, cache policy, and correctness checks into a
+              physical-design decision record that reduces work while leaving
+              the dimensional model and control totals unchanged.
+            </p>
+            <div class="lesson-meta">
+              <span>Intermediate → Advanced</span><span>175–215 minutes</span
+              ><span>End-to-end scan-economics lab</span
+              ><span>216,000 benchmark rows · deterministic checksum</span
+              ><span>Last reviewed: September 2026</span>
+            </div>
+          </header>
+          <nav aria-label="On this page" class="lesson-toc">
+            <strong>On this page</strong>
+            <ol data-generated-toc=""></ol>
+          </nav>
+          <div class="lesson-content">
+<section>
+  <h2>Learning outcomes</h2>
+  <div class="objectives">
+      <div class="objective"><span>01</span><p>Explain the central warehouse mechanism in “Estimate Scan Bytes/CPU and Redesign Table Layout to Reduce Work
+              Without Corrupting the Logical Model” and connect it to AtlasMart’s declared grain and governed metrics.</p></div>
+      <div class="objective"><span>02</span><p>Keep logical correctness, history, and control totals unchanged while evaluating the lesson’s physical or operational choice.</p></div>
+      <div class="objective"><span>03</span><p>Run or interpret the deterministic local evidence and distinguish what it proves from engine-, cache-, scale-, or cloud-dependent behavior.</p></div>
+      <div class="objective"><span>04</span><p>Diagnose the controlled failure, repair it safely, and state the production checks required before adopting the pattern.</p></div>
+  </div>
+</section>
+
+            <div class="callout">
+              <strong>Continuity guardrail</strong>
+              <p>
+                The Chapter 15–17 canonical current-state controls remain
+                <strong
+                  >9 paid lines, 7 orders, 11 units, 740 USD GMV, 450 USD cost,
+                  and 290 USD gross profit</strong
+                >. Chapter 18 expands those nine seed lines deterministically to
+                216,000 benchmark rows only to make storage mechanisms
+                observable. Benchmark rows are never reported as new production
+                facts.
+              </p>
+            </div>
+            <div class="callout">
+              <strong>Lab contract</strong>
+              <p>
+                <strong>Runtime:</strong> mandatory path uses Python 3 standard
+                library; generation evidence below used Python 3.13.5 and SQLite
+                3.46.1. <strong>Storage:</strong> local filesystem only.
+                <strong>Source:</strong> synthetic AtlasMart sales facts.
+                <strong>Time:</strong> dates are UTC business dates; no
+                time-zone conversion is hidden in the benchmark.
+                <strong>Grain:</strong> one current paid order line.
+                <strong>Security:</strong> synthetic identifiers only; no
+                secrets or PII. <strong>History:</strong> the benchmark is a
+                deterministic physical scale expansion, not a new business
+                history. <strong>Cache:</strong> OS cache is not flushed; timing
+                probes use two warm-ups and seven measured runs.
+                <strong>Cost:</strong> no paid service is required.
+              </p>
+            </div>
+            <section>
+              <h2>1. Optimization must start with a query contract</h2>
+              <p>
+                The capstone query asks for P100 GMV on 2027-01-15 over the
+                benchmark expansion. The logical contract is fixed: one paid
+                order line grain; same date and product predicates; same amount
+                definition; same synthetic expansion; same current-history
+                policy. The query result is
+                <strong>2,660,000 cents (26,600.00 USD)</strong> in every
+                representation.
+              </p>
+              <p>
+                A physical redesign is accepted only if it reduces work while
+                preserving that contract, the 9/7/11/740/450/290 canonical
+                controls, and the benchmark semantic SHA-256
+                <code
+                  >d430abb12f2cd1b4afc56c2d1c168c2860308a9b655fcfbd709bd87eb16ef460</code
+                >.
+              </p>
+            </section>
+            <section>
+              <h2>2. Read the scan-economics evidence before the timing</h2>
+              <div class="table-wrap">
+<table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Representation / query</th>
+                      <th>Rows/groups examined</th>
+                      <th>Compressed bytes opened</th>
+                      <th>Generation median</th>
+                      <th>Interpretation</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>row CSV, selective</td>
+                      <td>216,000 rows</td>
+                      <td>1,344,039</td>
+                      <td>164.878 ms</td>
+                      <td>
+                        Complete row stream parsed because format/harness has no
+                        pruning.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>clustered column store, selective</td>
+                      <td>1/18 groups; 12,000 rows inside group</td>
+                      <td>425</td>
+                      <td>1.231 ms</td>
+                      <td>
+                        17 groups eliminated by date min/max; only
+                        date/product/amount chunks opened.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>shuffled column store, selective</td>
+                      <td>18/18 groups; 216,000 rows</td>
+                      <td>484,495</td>
+                      <td>22.159 ms</td>
+                      <td>
+                        Projection still helps, but date distribution defeats
+                        group skipping.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>clustered column store, full SUM(amount)</td>
+                      <td>18/18 groups</td>
+                      <td>4,020</td>
+                      <td>not used for cross-engine claim</td>
+                      <td>
+                        No row-group elimination; projection reads only amount
+                        chunks.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p>
+                Timing is secondary because parsers and representations differ.
+                Scan bytes/group elimination more directly expose the intended
+                mechanisms. The timings are retained only with environment and
+                cache disclosure.
+              </p>
+            </section>
+            <section>
+              <h2>3. Full reproducible local lab</h2>
+              <p>
+                Save the following as <code>ch18_lab.py</code> and run it from
+                an empty working directory. It creates a disposable
+                <code>atlasmart_ch18_lab/</code> directory containing the row
+                CSV, SQLite row table, clustered and shuffled didactic column
+                stores, manifests, and <code>profile.json</code>. It uses only
+                Python’s standard library.
+              </p>
+              <div
+                class="code-window"
+                data-code-block=""
+                data-language="python"
+              >
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >ch18_lab.py
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-python"><span class="code-line">from __future__ import annotations</span><span class="code-line">import csv, gzip, hashlib, json, os, random, shutil, sqlite3, statistics, struct, time</span><span class="code-line">from collections import Counter</span><span class="code-line">from datetime import date, timedelta</span><span class="code-line">from pathlib import Path</span><span class="code-line"></span><span class="code-line">ROOT = Path('atlasmart_ch18_lab')</span><span class="code-line">ROWGROUP = 12000</span><span class="code-line">REPEATS = 24000</span><span class="code-line">MEASURED = 7</span><span class="code-line">WARMUPS = 2</span><span class="code-line">EPOCH = date(1970,1,1)</span><span class="code-line"></span><span class="code-line">SEED = [</span><span class="code-line">    # order_id,line_no,date,product,customer,channel,qty,amount,cost,status</span><span class="code-line">    ('O1001',1,'2026-09-18','P100','C001','web',2,10000,6000,'paid'),</span><span class="code-line">    ('O1001',2,'2026-09-18','P200','C001','web',1,2500,1500,'paid'),</span><span class="code-line">    ('O1002',1,'2026-09-18','P300','C002','mobile',1,19000,12000,'paid'),</span><span class="code-line">    ('O1003',1,'2026-09-19','P400','C001','web',1,10000,6500,'paid'),</span><span class="code-line">    ('O1005',1,'2026-09-20','P100','C004','mobile',1,5000,3000,'paid'),</span><span class="code-line">    ('O1005',2,'2026-09-20','P400','C004','mobile',1,10000,6500,'paid'),</span><span class="code-line">    ('O1007',1,'2026-09-21','P300','C003','sales',1,7500,4500,'paid'),</span><span class="code-line">    ('O1008',1,'2026-09-21','P200','C002','mobile',2,5000,2500,'paid'),</span><span class="code-line">    ('O1009',1,'2026-09-22','P100','C005','web',1,5000,2500,'paid'),</span><span class="code-line">]</span><span class="code-line"></span><span class="code-line">assert (len(SEED), len({r[0] for r in SEED}), sum(r[6] for r in SEED), sum(r[7] for r in SEED), sum(r[8] for r in SEED), sum(r[7]-r[8] for r in SEED)) == (9,7,11,74000,45000,29000)</span><span class="code-line"></span><span class="code-line">PROD = {v:i for i,v in enumerate(sorted({r[3] for r in SEED}))}</span><span class="code-line">CUST = {v:i for i,v in enumerate(sorted({r[4] for r in SEED}))}</span><span class="code-line">CHAN = {v:i for i,v in enumerate(sorted({r[5] for r in SEED}))}</span><span class="code-line">STAT = {v:i for i,v in enumerate(sorted({r[9] for r in SEED}))}</span><span class="code-line"></span><span class="code-line">SCHEMA = {</span><span class="code-line">    'synthetic_id': ('q', 8),</span><span class="code-line">    'order_date': ('i', 4),</span><span class="code-line">    'order_num': ('i', 4),</span><span class="code-line">    'line_no': ('h', 2),</span><span class="code-line">    'product_code': ('B', 1),</span><span class="code-line">    'customer_code': ('B', 1),</span><span class="code-line">    'channel_code': ('B', 1),</span><span class="code-line">    'quantity': ('h', 2),</span><span class="code-line">    'amount_cents': ('i', 4),</span><span class="code-line">    'cost_cents': ('i', 4),</span><span class="code-line">    'profit_cents': ('i', 4),</span><span class="code-line">    'status_code': ('B', 1),</span><span class="code-line">}</span><span class="code-line"></span><span class="code-line">def day_int(s: str) -&gt; int:</span><span class="code-line">    y,m,d=map(int,s.split('-'))</span><span class="code-line">    return (date(y,m,d)-EPOCH).days</span><span class="code-line"></span><span class="code-line">def make_rows():</span><span class="code-line">    rows=[]</span><span class="code-line">    sid=1</span><span class="code-line">    for rep in range(REPEATS):</span><span class="code-line">        shift=rep % 180</span><span class="code-line">        for base in SEED:</span><span class="code-line">            oid,line,ds,prod,cust,ch,qty,amt,cost,status=base</span><span class="code-line">            d=date.fromisoformat(ds)+timedelta(days=shift)</span><span class="code-line">            order_num=int(oid[1:]) + rep*100</span><span class="code-line">            rows.append((sid,(d-EPOCH).days,order_num,line,PROD[prod],CUST[cust],CHAN[ch],qty,amt,cost,amt-cost,STAT[status]))</span><span class="code-line">            sid+=1</span><span class="code-line">    rows.sort(key=lambda r:(r[1], r[0]))</span><span class="code-line">    return rows</span><span class="code-line"></span><span class="code-line">def sha_rows(rows):</span><span class="code-line">    h=hashlib.sha256()</span><span class="code-line">    for r in rows:</span><span class="code-line">        h.update(('|'.join(map(str,r))+'\n').encode())</span><span class="code-line">    return h.hexdigest()</span><span class="code-line"></span><span class="code-line">def write_csv_gz(rows, path):</span><span class="code-line">    names=list(SCHEMA)</span><span class="code-line">    with gzip.open(path,'wt',newline='',encoding='utf-8',compresslevel=6) as f:</span><span class="code-line">        w=csv.writer(f); w.writerow(names); w.writerows(rows)</span><span class="code-line"></span><span class="code-line">def write_sqlite(rows, path):</span><span class="code-line">    con=sqlite3.connect(path)</span><span class="code-line">    con.execute('PRAGMA journal_mode=OFF')</span><span class="code-line">    con.execute('PRAGMA synchronous=OFF')</span><span class="code-line">    con.execute('CREATE TABLE fact_sales (synthetic_id INTEGER PRIMARY KEY, order_date INTEGER NOT NULL, order_num INTEGER NOT NULL, line_no INTEGER NOT NULL, product_code INTEGER NOT NULL, customer_code INTEGER NOT NULL, channel_code INTEGER NOT NULL, quantity INTEGER NOT NULL, amount_cents INTEGER NOT NULL, cost_cents INTEGER NOT NULL, profit_cents INTEGER NOT NULL, status_code INTEGER NOT NULL)')</span><span class="code-line">    con.executemany('INSERT INTO fact_sales VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',rows)</span><span class="code-line">    con.commit(); con.execute('ANALYZE'); con.commit(); con.close()</span><span class="code-line"></span><span class="code-line">def pack_col(fmt, values):</span><span class="code-line">    return struct.pack('&lt;'+fmt*len(values), *values)</span><span class="code-line"></span><span class="code-line">def unpack_col(fmt, b):</span><span class="code-line">    size=struct.calcsize('&lt;'+fmt)</span><span class="code-line">    return struct.unpack('&lt;'+fmt*(len(b)//size),b)</span><span class="code-line"></span><span class="code-line">def write_column_store(rows, root):</span><span class="code-line">    root.mkdir(parents=True,exist_ok=True)</span><span class="code-line">    dictionaries={'product':PROD,'customer':CUST,'channel':CHAN,'status':STAT}</span><span class="code-line">    (root/'dictionaries.json').write_text(json.dumps(dictionaries,indent=2,sort_keys=True),encoding='utf-8')</span><span class="code-line">    manifest={'row_count':len(rows),'row_group_size':ROWGROUP,'row_groups':[],'schema':SCHEMA}</span><span class="code-line">    names=list(SCHEMA)</span><span class="code-line">    for g,start in enumerate(range(0,len(rows),ROWGROUP)):</span><span class="code-line">        block=rows[start:start+ROWGROUP]</span><span class="code-line">        gd=root/f'rg{g:03d}'; gd.mkdir()</span><span class="code-line">        stats={'row_group':g,'start_row':start,'row_count':len(block),'min_order_date':min(r[1] for r in block),'max_order_date':max(r[1] for r in block),'columns':{}}</span><span class="code-line">        for ci,name in enumerate(names):</span><span class="code-line">            fmt,width=SCHEMA[name]</span><span class="code-line">            raw=pack_col(fmt,[r[ci] for r in block])</span><span class="code-line">            p=gd/f'{name}.bin.gz'</span><span class="code-line">            with gzip.open(p,'wb',compresslevel=6) as f: f.write(raw)</span><span class="code-line">            stats['columns'][name]={'raw_bytes':len(raw),'compressed_bytes':p.stat().st_size}</span><span class="code-line">        manifest['row_groups'].append(stats)</span><span class="code-line">    (root/'manifest.json').write_text(json.dumps(manifest,indent=2,sort_keys=True),encoding='utf-8')</span><span class="code-line">    return manifest</span><span class="code-line"></span><span class="code-line">def col_store_size(root):</span><span class="code-line">    return sum(p.stat().st_size for p in root.rglob('*') if p.is_file())</span><span class="code-line"></span><span class="code-line">def read_col(gd,name):</span><span class="code-line">    fmt,_=SCHEMA[name]</span><span class="code-line">    with gzip.open(gd/f'{name}.bin.gz','rb') as f: b=f.read()</span><span class="code-line">    return unpack_col(fmt,b), (gd/f'{name}.bin.gz').stat().st_size</span><span class="code-line"></span><span class="code-line">def column_query(root,target_day,product_code):</span><span class="code-line">    m=json.loads((root/'manifest.json').read_text())</span><span class="code-line">    total=0; rows_seen=0; groups_seen=0; groups_skipped=0; bytes_read=0</span><span class="code-line">    for rg in m['row_groups']:</span><span class="code-line">        if not (rg['min_order_date'] &lt;= target_day &lt;= rg['max_order_date']):</span><span class="code-line">            groups_skipped+=1; continue</span><span class="code-line">        groups_seen+=1</span><span class="code-line">        gd=root/f"rg{rg['row_group']:03d}"</span><span class="code-line">        days,b=read_col(gd,'order_date'); bytes_read+=b</span><span class="code-line">        prods,b=read_col(gd,'product_code'); bytes_read+=b</span><span class="code-line">        amts,b=read_col(gd,'amount_cents'); bytes_read+=b</span><span class="code-line">        for d,p,a in zip(days,prods,amts):</span><span class="code-line">            rows_seen+=1</span><span class="code-line">            if d==target_day and p==product_code: total+=a</span><span class="code-line">    return {'total_cents':total,'row_groups_read':groups_seen,'row_groups_skipped':groups_skipped,'rows_examined_in_read_groups':rows_seen,'bytes_read':bytes_read}</span><span class="code-line"></span><span class="code-line">def column_full_sum(root):</span><span class="code-line">    m=json.loads((root/'manifest.json').read_text())</span><span class="code-line">    total=0; bytes_read=0</span><span class="code-line">    for rg in m['row_groups']:</span><span class="code-line">        gd=root/f"rg{rg['row_group']:03d}"</span><span class="code-line">        amts,b=read_col(gd,'amount_cents'); bytes_read+=b; total+=sum(amts)</span><span class="code-line">    return total,bytes_read</span><span class="code-line"></span><span class="code-line">def row_csv_query(path,target_day,product_code):</span><span class="code-line">    total=0; count=0</span><span class="code-line">    with gzip.open(path,'rt',newline='',encoding='utf-8') as f:</span><span class="code-line">        rd=csv.reader(f); next(rd)</span><span class="code-line">        for row in rd:</span><span class="code-line">            count+=1</span><span class="code-line">            if int(row[1])==target_day and int(row[4])==product_code:</span><span class="code-line">                total+=int(row[8])</span><span class="code-line">    return {'total_cents':total,'rows_examined':count,'bytes_read':path.stat().st_size}</span><span class="code-line"></span><span class="code-line">def sqlite_query(db,target_day,product_code):</span><span class="code-line">    con=sqlite3.connect(db)</span><span class="code-line">    q='SELECT SUM(amount_cents) FROM fact_sales WHERE order_date=? AND product_code=?'</span><span class="code-line">    plan=con.execute('EXPLAIN QUERY PLAN '+q,(target_day,product_code)).fetchall()</span><span class="code-line">    total=con.execute(q,(target_day,product_code)).fetchone()[0]</span><span class="code-line">    con.close(); return total,plan</span><span class="code-line"></span><span class="code-line">def time_call(fn):</span><span class="code-line">    for _ in range(WARMUPS): fn()</span><span class="code-line">    vals=[]</span><span class="code-line">    for _ in range(MEASURED):</span><span class="code-line">        t=time.perf_counter(); fn(); vals.append((time.perf_counter()-t)*1000)</span><span class="code-line">    return {'median_ms':round(statistics.median(vals),3),'min_ms':round(min(vals),3),'max_ms':round(max(vals),3),'runs':MEASURED,'warmups':WARMUPS}</span><span class="code-line"></span><span class="code-line">def encoding_demo(rows):</span><span class="code-line">    channels=[r[6] for r in rows]</span><span class="code-line">    dates=[r[1] for r in rows]</span><span class="code-line">    # Plain 32-bit code vs minimum 8-bit dictionary codes (didactic sizing).</span><span class="code-line">    plain_channel=len(channels)*4</span><span class="code-line">    dict_channel=len(channels)*1 + sum(len(k.encode())+1 for k in CHAN)</span><span class="code-line">    # RLE on sorted date codes: each run stored as 4-byte value + 4-byte run length.</span><span class="code-line">    runs=1</span><span class="code-line">    for a,b in zip(dates,dates[1:]):</span><span class="code-line">        if a!=b: runs+=1</span><span class="code-line">    rle_date=runs*8</span><span class="code-line">    plain_date=len(dates)*4</span><span class="code-line">    # Delta-like: first int32 + signed int16 deltas for this bounded sorted fixture.</span><span class="code-line">    deltas=[b-a for a,b in zip(dates,dates[1:])]</span><span class="code-line">    assert max(deltas)&lt;=32767 and min(deltas)&gt;=-32768</span><span class="code-line">    delta_date=4+len(deltas)*2</span><span class="code-line">    return {'channel_plain32_bytes':plain_channel,'channel_dictionary_bytes':dict_channel,'date_plain32_bytes':plain_date,'date_rle_bytes':rle_date,'date_runs':runs,'date_delta_like_bytes':delta_date}</span><span class="code-line"></span><span class="code-line">def batch_proxy(rows):</span><span class="code-line">    amounts=[r[8] for r in rows]</span><span class="code-line">    def row_loop():</span><span class="code-line">        s=0</span><span class="code-line">        for v in amounts: s+=v</span><span class="code-line">        return s</span><span class="code-line">    def builtin_batch(): return sum(amounts)</span><span class="code-line">    assert row_loop()==builtin_batch()</span><span class="code-line">    return {'row_loop':time_call(row_loop),'builtin_sum_proxy':time_call(builtin_batch),'note':'Python built-in sum is a C-level batching proxy; this does not prove SIMD.'}</span><span class="code-line"></span><span class="code-line">def main():</span><span class="code-line">    if ROOT.exists(): shutil.rmtree(ROOT)</span><span class="code-line">    ROOT.mkdir()</span><span class="code-line">    rows=make_rows()</span><span class="code-line">    assert len(rows)==216000</span><span class="code-line">    baseline={'lines':9,'orders':7,'units':11,'gmv_usd':740,'cost_usd':450,'profit_usd':290}</span><span class="code-line">    csv_gz=ROOT/'fact_sales_rows.csv.gz'; db=ROOT/'fact_sales.sqlite'; col=ROOT/'column_store_sorted'; shuffled_col=ROOT/'column_store_shuffled'</span><span class="code-line">    write_csv_gz(rows,csv_gz); write_sqlite(rows,db); manifest=write_column_store(rows,col)</span><span class="code-line">    shuffled=list(rows); random.Random(18018).shuffle(shuffled); shuffled_manifest=write_column_store(shuffled,shuffled_col)</span><span class="code-line">    target_day=day_int('2027-01-15'); p100=PROD['P100']</span><span class="code-line">    row_res=row_csv_query(csv_gz,target_day,p100)</span><span class="code-line">    col_res=column_query(col,target_day,p100)</span><span class="code-line">    shuffled_res=column_query(shuffled_col,target_day,p100)</span><span class="code-line">    sql_total,sql_plan=sqlite_query(db,target_day,p100)</span><span class="code-line">    assert row_res['total_cents']==col_res['total_cents']==shuffled_res['total_cents']==sql_total</span><span class="code-line">    full_col,full_col_bytes=column_full_sum(col)</span><span class="code-line">    assert full_col==sum(r[8] for r in rows)</span><span class="code-line">    enc=encoding_demo(rows)</span><span class="code-line">    prof={</span><span class="code-line">      'runtime':{'python':os.sys.version.split()[0],'sqlite':sqlite3.sqlite_version,'storage':'local filesystem','cache_policy':'OS cache not flushed; 2 warmups, 7 measured runs'},</span><span class="code-line">      'canonical_controls':baseline,</span><span class="code-line">      'benchmark':{'rows':len(rows),'date_span_days':180,'row_group_size':ROWGROUP,'row_groups':len(manifest['row_groups']),'semantic_sha256':sha_rows(rows)},</span><span class="code-line">      'sizes':{'row_csv_gz':csv_gz.stat().st_size,'sqlite_db':db.stat().st_size,'column_store_sorted_total':col_store_size(col),'column_store_shuffled_total':col_store_size(shuffled_col)},</span><span class="code-line">      'selective_query':{'target_date':'2027-01-15','product':'P100','row_csv':row_res,'column_store_sorted':col_res,'column_store_shuffled':shuffled_res,'sqlite_total_cents':sql_total,'sqlite_plan':sql_plan},</span><span class="code-line">      'full_sum':{'total_cents':full_col,'column_amount_bytes_read':full_col_bytes},</span><span class="code-line">      'encoding_demo':enc,</span><span class="code-line">      'timing':{'row_csv_selective':time_call(lambda: row_csv_query(csv_gz,target_day,p100)),'column_sorted_selective':time_call(lambda: column_query(col,target_day,p100)),'column_shuffled_selective':time_call(lambda: column_query(shuffled_col,target_day,p100))},</span><span class="code-line">      'batch_proxy':batch_proxy(rows),</span><span class="code-line">      'non_guarantees':['Custom column_store is a didactic row-group/column-chunk harness, not Parquet/ORC.','Cross-representation timings include different parsers and are not portable performance ratios.','Python built-in sum does not demonstrate hardware SIMD.','Min/max metadata enables skipping only when data distribution and predicates make groups excludable.']</span><span class="code-line">    }</span><span class="code-line">    (ROOT/'profile.json').write_text(json.dumps(prof,indent=2,sort_keys=True),encoding='utf-8')</span><span class="code-line">    print('canonical',baseline)</span><span class="code-line">    print('benchmark rows',len(rows),'row groups',len(manifest['row_groups']))</span><span class="code-line">    print('sizes',prof['sizes'])</span><span class="code-line">    print('selective row',row_res)</span><span class="code-line">    print('selective column sorted',col_res)</span><span class="code-line">    print('selective column shuffled',shuffled_res)</span><span class="code-line">    print('sqlite plan',sql_plan)</span><span class="code-line">    print('encoding',enc)</span><span class="code-line">    print('timing',prof['timing'])</span><span class="code-line">    print('batch_proxy',prof['batch_proxy'])</span><span class="code-line">    print('sha256',prof['benchmark']['semantic_sha256'])</span><span class="code-line">    print('cleanup: rm -rf atlasmart_ch18_lab')</span><span class="code-line"></span><span class="code-line">if __name__=='__main__': main()</span></code></pre>
+              </div>
+            </section>
+            <section>
+              <h2>4. Expected acceptance evidence</h2>
+              <div class="code-window" data-code-block="" data-language="text">
+                <div class="code-head">
+                  <div class="code-title">
+                    <span class="code-dots"><i></i><i></i><i></i></span
+                    >expected_output.txt
+                  </div>
+                  <button class="copy-code" data-copy-code="" type="button">
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                      <path
+                        d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                      ></path></svg
+                    >Copy
+                  </button>
+                </div>
+                <pre><code class="language-text"><span class="code-line">canonical {'lines': 9, 'orders': 7, 'units': 11, 'gmv_usd': 740, 'cost_usd': 450, 'profit_usd': 290}</span><span class="code-line">benchmark rows 216000 row groups 18</span><span class="code-line">selective row {'total_cents': 2660000, 'rows_examined': 216000, 'bytes_read': 1344039}</span><span class="code-line">selective column sorted {'total_cents': 2660000, 'row_groups_read': 1, 'row_groups_skipped': 17, 'rows_examined_in_read_groups': 12000, 'bytes_read': 425}</span><span class="code-line">selective column shuffled {'total_cents': 2660000, 'row_groups_read': 18, 'row_groups_skipped': 0, 'rows_examined_in_read_groups': 216000, 'bytes_read': 484495}</span><span class="code-line">sqlite plan [(3, 0, 0, 'SCAN fact_sales')]</span><span class="code-line">encoding {'channel_plain32_bytes': 864000, 'channel_dictionary_bytes': 216017, 'date_plain32_bytes': 864000, 'date_rle_bytes': 1472, 'date_runs': 184, 'date_delta_like_bytes': 432002}</span><span class="code-line">sha256 d430abb12f2cd1b4afc56c2d1c168c2860308a9b655fcfbd709bd87eb16ef460</span><span class="code-line">cleanup: rm -rf atlasmart_ch18_lab</span></code></pre>
+              </div>
+              <p>
+                File-size and timing fields can vary across
+                Python/zlib/filesystem versions. The exact semantic totals,
+                row/group counts, encoding arithmetic, and SHA-256 are
+                deterministic for the provided script.
+              </p>
+            </section>
+            <section>
+              <h2>5. Controlled wrong redesigns and repairs</h2>
+              <div class="table-wrap">
+<table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Tempting change</th>
+                      <th>Failure</th>
+                      <th>Repair / acceptance test</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>
+                        Drop atomic columns because dashboard uses only GMV
+                      </td>
+                      <td>
+                        Destroys drilldown/restatement/reconciliation
+                        capability.
+                      </td>
+                      <td>
+                        Keep atomic governed fact; optimize physical projection
+                        or add governed aggregates later.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Shuffle data but expect min/max skipping</td>
+                      <td>
+                        Every group spans target date; zero groups eliminated.
+                      </td>
+                      <td>
+                        Cluster/sort only if workload evidence justifies
+                        rewrite/maintenance cost.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        Compare a filtered column query to an unfiltered row
+                        query
+                      </td>
+                      <td>Benchmark semantics differ.</td>
+                      <td>
+                        Assert identical totals/filter predicates before
+                        measuring.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Publish local latency ratio as cloud savings</td>
+                      <td>
+                        Different engine, cache, concurrency, storage, and
+                        billing model.
+                      </td>
+                      <td>
+                        Re-run on target platform and map actual scanned
+                        bytes/compute to its pricing contract.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        Mutate raw historical data to create better compression
+                      </td>
+                      <td>Breaks replay/auditability.</td>
+                      <td>
+                        Rebuild derived physical layouts from immutable/governed
+                        inputs; retain versioned manifests.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section>
+              <h2>6. Physical-design decision record</h2>
+              <p>
+                For AtlasMart’s benchmark workload, the evidence supports
+                retaining the logical star schema while favoring column
+                projection and date-local row groups for repeated date-selective
+                analytics. It does <em>not</em> justify a universal row-group
+                size, a specific production codec, or a claim that all queries
+                should be date-clustered. Full-scan measures, product-heavy
+                filters, update frequency, backfills, concurrency, and
+                downstream format support must also be represented in the
+                workload corpus.
+              </p>
+              <div class="callout">
+                <strong>Rollback/migration</strong>
+                <p>
+                  Version physical layouts independently of model semantics.
+                  Before cutover, dual-read a representative query corpus and
+                  reconcile checksums/totals. Keep the previous layout until
+                  consumer compatibility and operational recovery are proven.
+                  Rebuilding the optimized representation from governed Chapter
+                  14 raw/integration data is the preferred rollback path; do not
+                  edit historical facts to “fit” the storage design.
+                </p>
+              </div>
+            </section>
+            <section>
+              <h2>7. Correctness, freshness, security, and observability checklist</h2>
+              <ul>
+                <li>
+                  <strong>Correctness:</strong> query results and canonical
+                  controls must reconcile across old/new layouts.
+                </li>
+                <li>
+                  <strong>Freshness/history:</strong> physical
+                  compaction/rewrite must not lose late corrections or SCD
+                  bindings.
+                </li>
+                <li>
+                  <strong>Idempotency/replay:</strong> same governed input +
+                  layout version yields the same semantic checksum.
+                </li>
+                <li>
+                  <strong>Data quality:</strong> malformed values remain
+                  governed/quarantined upstream; compression never hides them.
+                </li>
+                <li>
+                  <strong>Security/privacy:</strong> synthetic lab only;
+                  production metadata/statistics may expose ranges/cardinality
+                  and must follow access/encryption policy.
+                </li>
+                <li>
+                  <strong>Observability:</strong> record layout version, bytes,
+                  groups/partitions touched, rows, CPU/wall time, spills, cache
+                  state, result hash, and engine version.
+                </li>
+                <li>
+                  <strong>Performance/cost:</strong> measure representative
+                  concurrency and actual platform billing units.
+                </li>
+                <li>
+                  <strong>Compatibility:</strong> validate every reader before
+                  enabling format/encoding features.
+                </li>
+              </ul>
+            </section>
+            <section>
+              <h2>8. Bridge to Chapter 19</h2>
+              <p>
+                Chapter 18 reduces the cost of reading the base fact. Chapter 19
+                asks a different question: when repeated scans remain too
+                expensive, should the warehouse persist precomputed aggregate
+                tables, materialized views, or cube-like structures? The same
+                rule survives: acceleration is accepted only when freshness and
+                reconciliation to the base fact are explicit.
+              </p>
+            </section>
+            <section>
+              <h2>Knowledge check</h2>
+              <div class="checkpoint">
+                <h3>Check your understanding</h3>
+                <ol>
+                  <li>
+                    Why are scan bytes more diagnostic than the local latency
+                    ratio here?
+                  </li>
+                  <li>
+                    Why does the shuffled store still read fewer bytes than the
+                    row CSV?
+                  </li>
+                  <li>
+                    What proves the optimized layout did not corrupt semantics?
+                  </li>
+                  <li>
+                    Why is the full SUM(amount) unable to skip row groups?
+                  </li>
+                  <li>What should happen before a physical-layout cutover?</li>
+                </ol>
+                <details class="answer-toggle">
+                  <summary>Review the answers</summary>
+                  <div>
+                    <p>
+                      <strong>1.</strong> They directly expose
+                      projection/skipping mechanisms while cross-representation
+                      timing includes parser/runtime differences.
+                    </p>
+                    <p>
+                      <strong>2.</strong> Projection reads only
+                      date/product/amount columns even though no groups can be
+                      eliminated.
+                    </p>
+                    <p>
+                      <strong>3.</strong> Equal query totals, canonical
+                      controls, and deterministic semantic checksum.
+                    </p>
+                    <p>
+                      <strong>4.</strong> Every logical row contributes to the
+                      aggregate; only column projection can reduce width.
+                    </p>
+                    <p>
+                      <strong>5.</strong> Dual-read/reconcile representative
+                      queries, test compatibility/recovery, and retain
+                      rollback/rebuild capability.
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section>
+              <h2>Authoritative references</h2>
+              <ul class="reference-list">
+                <li>
+                  <a
+                    href="https://parquet.apache.org/docs/concepts/"
+                    rel="noopener"
+                    target="_blank"
+                    >Apache Parquet — Concepts</a
+                  ><span
+                    >Official terminology for row groups, column chunks, pages,
+                    and the units at which I/O and encoding occur.</span
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://parquet.apache.org/docs/file-format/"
+                    rel="noopener"
+                    target="_blank"
+                    >Apache Parquet — File Format</a
+                  ><span
+                    >Official layout showing column chunks organized inside row
+                    groups and metadata used to locate relevant chunks.</span
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://parquet.apache.org/docs/file-format/data-pages/encodings/"
+                    rel="noopener"
+                    target="_blank"
+                    >Apache Parquet — Encodings</a
+                  ><span
+                    >Official definitions of plain, dictionary,
+                    run-length/bit-packed, and delta encodings. Parquet is a
+                    reference, not a prerequisite for the mandatory lab.</span
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://duckdb.org/docs/current/internals/vector"
+                    rel="noopener"
+                    target="_blank"
+                    >DuckDB — Execution Format</a
+                  ><span
+                    >Current official example of a vectorized analytical engine.
+                    This course uses the page only as a non-prerequisite
+                    reference for the execution concept.</span
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://sqlite.org/eqp.html"
+                    rel="noopener"
+                    target="_blank"
+                    >SQLite — EXPLAIN QUERY PLAN</a
+                  ><span
+                    >Official documentation for the local row-store plan
+                    evidence. The plan text is diagnostic output, not a stable
+                    application API.</span
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://docs.python.org/3/library/gzip.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Python — gzip</a
+                  ><span
+                    >Standard-library compression used by the dependency-free
+                    local storage harness.</span
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://docs.python.org/3/library/struct.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Python — struct</a
+                  ><span
+                    >Standard-library binary packing used for fixed-width
+                    didactic column chunks.</span
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://docs.python.org/3/library/sqlite3.html"
+                    rel="noopener"
+                    target="_blank"
+                    >Python — sqlite3</a
+                  ><span
+                    >Standard-library SQLite interface used for the local
+                    row-oriented table and query-plan evidence.</span
+                  >
+                </li>
+                <li>
+                  <a
+                    href="https://www.kimballgroup.com/data-warehouse-business-intelligence-resources/kimball-techniques/dimensional-modeling-techniques/"
+                    rel="noopener"
+                    target="_blank"
+                    >Kimball Group — Dimensional Modeling Techniques</a
+                  ><span
+                    >Background for keeping dimensional grain and metric
+                    semantics stable while changing physical storage and access
+                    paths.</span
+                  >
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav class="lesson-nav" aria-label="Lesson navigation">
+  <a class="prev" href="Lesson4.html">
+    <small>Previous lesson</small>
+    <strong>Vectorized Execution, Batch Processing, SIMD Concepts, and Why
+              Analytical Engines Differ from OLTP DBMSs</strong>
+  </a>
+  <a class="next" href="../Chapter19/Lesson1.html">
+    <small>Next lesson</small>
+    <strong>When Precomputation Beats Repeated Raw Fact Scans: Latency,
+              Freshness, and Maintenance Cost</strong>
+  </a>
+</nav>
+        </article>
+        <div class="lesson-support">
+          <section
+            aria-labelledby="support-title"
+            class="support-section section-shell"
+          >
+            <div class="support-grid reveal">
+              <div>
+                <p class="eyebrow">Keep knowledge open</p>
+                <h2 id="support-title">Help the academy stay free and grow.</h2>
+                <p>
+                  If these tutorials save you time, a small donation supports
+                  new lessons, technical review, diagrams, examples, and
+                  long-term maintenance.
+                </p>
+                <div aria-label="Author links" class="social-row">
+                  <a
+                    href="https://github.com/mohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >GitHub
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://www.linkedin.com/in/abolfazlmohammadijoo"
+                    rel="noopener"
+                    target="_blank"
+                    >LinkedIn
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg></a
+                  ><a
+                    href="https://mohammadijoo.github.io/"
+                    rel="noopener"
+                    target="_blank"
+                    >Website
+                    <svg aria-hidden="true" viewbox="0 0 24 24">
+                      <path d="M15 3h6v6"></path>
+                      <path d="M10 14 21 3"></path>
+                      <path
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                      ></path></svg
+                  ></a>
+                </div>
+              </div>
+              <div class="donation-card">
+                <div class="donation-head">
+                  <span>ETH</span><small>Ethereum / ERC-20 only</small>
+                </div>
+                <code data-donation-address=""
+                  >0x716c4Ab160C4B66F31a28AE2448BfF68fc3a2ef0</code
+                ><button
+                  class="button secondary compact"
+                  data-copy-donation=""
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewbox="0 0 24 24">
+                    <rect height="11" rx="2" width="11" x="8" y="8"></rect>
+                    <path
+                      d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+                    ></path></svg
+                  >Copy address
+                </button>
+                <p>
+                  Send only Ethereum or ERC-20 compatible assets to this
+                  address.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <div>
+          <strong>Big Data Academy</strong>
+          <p>
+            A free, prerequisite-aware path from SQL foundations to distributed
+            data systems.
+          </p>
+        </div>
+        <small
+          >Created by
+          <a href="https://github.com/mohammadijoo">Abolfazl Mohammadijoo</a> ·
+          © 2026</small
+        >
+      </div>
+    </footer>
+    <script src="../../../assets/js/main.js"></script>
+    <script src="../../../assets/js/lesson.js?v=20260805.4"></script>
+  </body>
+</html>
